@@ -1,15 +1,15 @@
 {
   "expo": {
     "name": "FlalxRN",
-    "slug": "FlalxRN",
+    "slug": "flalx-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo/flalx-logo-large.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
+      "image": "./assets/logo/preview-logo.png",
+      "resizeMode": "cover",
       "backgroundColor": "#ffffff"
     },
     "ios": {
@@ -17,13 +17,24 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/logo/flalx-logo-large.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.alexfam.flalxapp"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/logo/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1ee54fd1-9a7c-4b7c-9e82-8e5739c78ae6"
+      }
+    },
+    "owner": "alexfam",
+    "plugins": [
+      "expo-router",
+      "expo-localization"
+    ]
   }
 }

@@ -9,10 +9,26 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-navigation/native": "^7.1.17",
+    "@react-navigation/stack": "^7.4.7",
+    "@supabase/supabase-js": "^2.55.0",
     "expo": "~53.0.20",
+    "expo-dev-client": "~5.2.4",
+    "expo-router": "~5.1.4",
     "expo-status-bar": "~2.2.3",
+    "i18next": "^25.3.6",
     "react": "19.0.0",
-    "react-native": "0.79.5"
+    "react-dom": "19.0.0",
+    "react-i18next": "^15.6.1",
+    "react-native": "0.79.5",
+    "react-native-dotenv": "^3.4.11",
+    "react-native-localize": "^3.5.2",
+    "react-native-paper": "^5.14.5",
+    "react-native-responsive-fontsize": "^0.5.1",
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-web": "^0.20.0",
+    "expo-localization": "~16.1.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
