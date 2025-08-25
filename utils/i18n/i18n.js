@@ -54,7 +54,7 @@ i18n.use(initReactI18next).init({
   compatibilityJSON: "v3",
   lng: systemLang,
   fallbackLng,
-  translations,
+  resources: translations,
   interpolation: { escapeValue: false },
 });
 

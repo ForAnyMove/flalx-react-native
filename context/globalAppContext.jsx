@@ -6,6 +6,7 @@ import { LIGHT_THEME } from '../constants/themes';
 import themeManager from '../managers/themeManager';
 import sessionManager from '../managers/sessionManager';
 import languageManager from '../managers/languageManager';
+import tabsManager from '../managers/tabsManager';
 
 const ComponentContext = createContext();
 
@@ -26,11 +27,15 @@ const myProfileMock = {
     'https://www.muchbetteradventures.com/magazine/content/images/2024/04/mount-everest-at-sunset.jpg',
 };
 
+const appTabsList = ['store', 'providers', 'jobs'];
+const profileTabsList = ['profile', 'professions', 'settings'];
+
 export const ComponentProvider = ({ children }) => {
-  // const [myProfile, setMyProfile] = useState(myProfileMock);
   const themeController = themeManager();
   const {session, user} = sessionManager();
   const languageController = languageManager();
+  const appTabController = tabsManager({name: 'app' ,defaultTab: appTabsList[0], list: appTabsList});
+  const profileTabController = tabsManager({name: 'profile', defaultTab: profileTabsList[0], list: profileTabsList});
   
   return (
     <ComponentContext.Provider
@@ -39,6 +44,8 @@ export const ComponentProvider = ({ children }) => {
         session,
         user,
         languageController,
+        appTabController,
+        profileTabController,
       }}
     >
       {children}

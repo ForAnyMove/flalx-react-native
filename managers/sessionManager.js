@@ -133,6 +133,52 @@ export default function sessionManager() {
       await AsyncStorage.removeItem('supabase_session');
     }
   }
+  
+  // Обновить данные пользователя
+  async function updateUser(updates) {
+    try {
+      const res = await fetch(`${SERVER_URL}/users/me`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!res.ok) throw new Error("Ошибка обновления профиля");
+
+      const updatedUser = await res.json();
+      setUser(updatedUser); // обновляем локальное состояние
+      console.log("Данные пользователя обновлены:", updatedUser);
+      return updatedUser;
+    } catch (err) {
+      console.error("Ошибка updateUser:", err.message);
+      throw err;
+    }
+  }
+
+  // Удалить пользователя
+  async function deleteUser() {
+    try {
+      const res = await fetch(`${SERVER_URL}/users/me`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Ошибка удаления пользователя");
+
+      console.log("Пользователь удалён");
+
+      // сразу выходим из аккаунта
+      await signOut();
+    } catch (err) {
+      console.error("Ошибка deleteUser:", err.message);
+      throw err;
+    }
+  }
 
   useEffect(() => {
     const { data: subscription } = supabase.auth.onAuthStateChange(
@@ -152,12 +198,17 @@ export default function sessionManager() {
 
   return {
     session: {
-      status: !!session,
+      status: !!session && !!user,
       token: session,
       sendCode: (email) => signInWithEmail(email),
       checkCode: (code) => verifyOtp(code),
       signOut,
+      serverURL: SERVER_URL,
     },
-    user,
+    user: {
+      current: user,
+      update: updateUser,
+      delete: deleteUser,
+    },
   };
 }

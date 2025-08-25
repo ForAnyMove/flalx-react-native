@@ -8,27 +8,48 @@
     "ios": "expo start --ios",
     "web": "expo start --web"
   },
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "react-native-bouncy-checkbox",
+          "react-native-responsive-fontsize",
+          "base64-arraybuffer"
+        ]
+      }
+    }
+  },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "^2.2.0",
-    "@react-navigation/native": "^7.1.17",
+    "@react-native-async-storage/async-storage": "2.1.2",
+    "@react-native-community/datetimepicker": "8.4.1",
+    "@react-native-picker/picker": "^2.11.1",
+    "@react-navigation/native": "^7.1.6",
     "@react-navigation/stack": "^7.4.7",
     "@supabase/supabase-js": "^2.55.0",
-    "expo": "~53.0.20",
+    "base64-arraybuffer": "^1.0.2",
+    "expo": "53.0.22",
     "expo-dev-client": "~5.2.4",
-    "expo-router": "~5.1.4",
+    "expo-file-system": "^18.1.11",
+    "expo-image-picker": "~16.1.4",
+    "expo-localization": "~16.1.6",
+    "expo-router": "~5.1.5",
     "expo-status-bar": "~2.2.3",
     "i18next": "^25.3.6",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-i18next": "^15.6.1",
     "react-native": "0.79.5",
+    "react-native-bouncy-checkbox": "^4.1.2",
     "react-native-dotenv": "^3.4.11",
     "react-native-localize": "^3.5.2",
     "react-native-paper": "^5.14.5",
     "react-native-responsive-fontsize": "^0.5.1",
     "react-native-safe-area-context": "5.4.0",
     "react-native-web": "^0.20.0",
-    "expo-localization": "~16.1.6"
+    "react-native-gesture-handler": "~2.24.0",
+    "react-native-screens": "~4.11.1",
+    "expo-constants": "~17.1.7",
+    "expo-linking": "~7.1.7"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
