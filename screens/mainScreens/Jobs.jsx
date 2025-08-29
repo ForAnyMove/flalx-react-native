@@ -16,10 +16,10 @@ import { useTranslation } from 'react-i18next';
 import { icons } from '../../constants/icons';
 import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
 import NewJobModal from '../../components/NewJobModal';
-import NewScreen from './storeTabs/New';
-import WaitingScreen from './storeTabs/Waiting';
-import InProgressScreen from './storeTabs/InProgress';
-import DoneScreen from './storeTabs/Done';
+import NewScreen from './jobsTabs/New';
+import WaitingScreen from './jobsTabs/Waiting';
+import InProgressScreen from './jobsTabs/InProgress';
+import DoneScreen from './jobsTabs/Done';
 
 const SCREEN_WIDTH =
   Dimensions.get('window').width *
@@ -346,10 +346,10 @@ export default function Jobs() {
           }}
         >
           {[
+            NewScreen,
+            WaitingScreen,
             InProgressScreen,
-            InProgressScreen,
-            InProgressScreen,
-            InProgressScreen,
+            DoneScreen,
           ].map((Component, index) => (
             <View
               key={index}

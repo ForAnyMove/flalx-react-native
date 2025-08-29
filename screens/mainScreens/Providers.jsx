@@ -7,7 +7,7 @@ import SearchPanel from '../../components/SearchPanel';
 import { useComponentContext } from '../../context/globalAppContext';
 
 export default function Providers() {
-  const { themeController, session } = useComponentContext();
+  const { themeController, session, providersController } = useComponentContext();
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');
   const [users, setUsers] = useState([]); // Здесь должен быть массив пользователей
@@ -37,7 +37,7 @@ export default function Providers() {
 
     fetchUsers();
   }, []);
-
+  if (providersController.error) return <Text>{providersController.error}</Text>;
   return (
     <View
       style={[
@@ -57,13 +57,13 @@ export default function Providers() {
           setSelectedTypes={setFilteredJobs}
         />
       </View>
-      {loading ? (
+      {providersController.providers.length <= 0 ? (
         <View>
           <Text>Loading...</Text>
         </View>
       ) : (
         <ScrollView>
-          {users.length > 0 && users
+          {providersController.providers.length > 0 && providersController.providers
             ?.filter(
               (user) =>
                 (filteredJobs.length > 0

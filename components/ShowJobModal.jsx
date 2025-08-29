@@ -29,22 +29,9 @@ import CustomFlatList from './ui/CustomFlatList';
 import DateTimeInput from './ui/DateTimeInput';
 import DateTimeInputDouble from './ui/DateTimeInputDouble';
 
-async function getJobById(jobId, session) {
-  const token = session?.token?.access_token;
-  const res = await fetch(`${session.serverURL}/jobs/${jobId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || 'Failed to fetch job');
-  }
-  return res.json();
-}
-
 export default function ShowJobModal({ closeModal, status, currentJobId }) {
   // const router = useRouter();
-  const { createdJobs, themeController, session, removeJobById, jobsList } =
-    useComponentContext();
+  const { themeController, session, jobsController } = useComponentContext();
   const [newJobModalVisible, setNewJobModalVisible] = useState(false);
   const [isInterestedRequest, setInterestedRequest] = useState(
     status === 'jobs-waiting'
@@ -66,7 +53,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
     (async () => {
       try {
         setLoading(true);
-        const job = await getJobById(currentJobId, session);
+        const job = await jobsController.actions.getJobById(
+          currentJobId,
+          session
+        );
         if (cancelled) return;
         setCurrentJobInfo(job);
         if (job.doneComment) {
@@ -96,6 +86,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
             styles={styles}
             currentJobInfo={currentJobInfo}
             status={status}
+            closeAllModal={closeModal}
           />,
           <TouchableOpacity
             key='updateButton'
@@ -128,13 +119,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               },
             ]}
             onPress={() => {
-              removeJobById(currentJobId);
-              // if (router.canGoBack?.()) {
-              //   router.back();
-              // } else {
-              //   router.replace('/store');
-              // }
-              closeModal();
+              jobsController.actions.deleteJob(currentJobId).then(closeModal());
             }}
           >
             <Text
@@ -155,6 +140,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
             styles={styles}
             currentJobInfo={currentJobInfo}
             status={status}
+            closeAllModal={closeModal}
           />,
         ];
       case 'store-done':
@@ -164,6 +150,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
             styles={styles}
             currentJobInfo={currentJobInfo}
             status={status}
+            closeAllModal={closeModal}
           />,
           <View
             style={[
@@ -180,6 +167,27 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               readOnly
             />
           </View>,
+          !currentJobInfo.isClosed && <TouchableOpacity
+            key='confirmButton'
+            style={[
+              styles.createButton,
+              {
+                backgroundColor:
+                  themeController.current?.buttonColorPrimaryDefault,
+              },
+            ]}
+            onPress={() => jobsController.actions.confirmJob(currentJobId)}
+          >
+            <Text
+              style={{
+                color: 'white',
+                textAlign: 'center',
+                fontWeight: 'bold',
+              }}
+            >
+              Confirm job completion
+            </Text>
+          </TouchableOpacity>,
         ];
       case 'jobs-new':
         return [
@@ -287,7 +295,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                     themeController.current?.buttonColorPrimaryDefault,
                 },
               ]}
-              onPress={() => setInterestedRequest(true)}
+              onPress={() => setConfirmInterestModal(true)}
             >
               <Text
                 style={{
@@ -308,6 +316,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
             styles={styles}
             currentJobInfo={currentJobInfo}
             status={status}
+            closeAllModal={closeModal}
           />,
           <TouchableOpacity
             key='completeBtn'
@@ -318,7 +327,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   themeController.current?.buttonColorPrimaryDefault,
               },
             ]}
-            // onPress={() => setInterestedRequest(true)}
+            onPress={() => jobsController.actions.markJobDone(currentJobId).then(closeModal())}
           >
             <Text
               style={{
@@ -338,6 +347,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
             styles={styles}
             currentJobInfo={currentJobInfo}
             status={status}
+            closeAllModal={closeModal}
           />,
           <View
             style={[
@@ -663,8 +673,12 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   },
                 ]}
                 onPress={() => {
-                  setCancelRequestModal(false);
-                  setInterestedRequest(false);
+                  jobsController.actions
+                    .removeProvider(currentJobId)
+                    .then(() => {
+                      setCancelRequestModal(false);
+                      setInterestedRequest(false);
+                    });
                 }}
               >
                 <Text
@@ -724,8 +738,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   },
                 ]}
                 onPress={() => {
-                  setConfirmInterestModal(false);
-                  setInterestedRequest(true);
+                  jobsController.actions.addProvider(currentJobId).then(() => {
+                    setConfirmInterestModal(false);
+                    setInterestedRequest(true);
+                  });
                 }}
               >
                 <Text

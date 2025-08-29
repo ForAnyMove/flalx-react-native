@@ -15,44 +15,7 @@ export default function NewScreen() {
   const [searchValue, setSearchValue] = useState('');
   const [newJobModalVisible, setNewJobModalVisible] = useState(false);
   const [activeKey, setActiveKey] = useState(null);
-
-    // async function handleAuth(email, password) {
-    //   try {
-    //     // Try to sign up first
-    //     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-    //       email,
-    //       password,
-    //     });
-
-    //     if (signUpError) {
-    //       // If user already exists, try sign in
-    //       if (signUpError.message && signUpError.message.includes('already registered')) {
-    //         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-    //           email,
-    //           password,
-    //         });
-    //         if (signInError) {
-    //           console.error(signInError);
-    //         } else {
-    //           // Signed in successfully
-    //           // You can handle signInData here
-    //         }
-    //       } else {
-    //         console.error(signUpError);
-    //       }
-    //     } else {
-    //       // Signed up successfully
-    //       // You can handle signUpData here
-    //     }
-    //   } catch (err) {
-    //     console.error(err);
-    //   }
-    // }
-
-    // useEffect(() => {
-    //   // Example usage of handleAuth
-    //   handleAuth('john@example.com', 'password123');
-    // }, []);
+  
   return (
     <>
       <View

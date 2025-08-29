@@ -27,4 +27,6 @@ export const icons = {
   arrowLeft: require('../assets/icon/arrow-left.png'),
   defaultAvatar: require('../assets/register/User images/avatar-default.png'),
   camera: require('../assets/icon/photo-camera.png'),
+  email: require('../assets/icon/email.png'),
+  phone: require('../assets/icon/phone.png'),
 };

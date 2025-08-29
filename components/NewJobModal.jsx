@@ -126,7 +126,6 @@ const renderAutocomplete = ({
   </View>
 );
 
-
 async function editJobById(jobId, updates, session) {
   try {
     const token = session?.token?.access_token;
@@ -179,18 +178,6 @@ async function createNewJob(jobData, session) {
   }
 }
 
-async function getJobById(jobId, session) {
-  const token = session?.token?.access_token;
-  const res = await fetch(`${session.serverURL}/jobs/${jobId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || 'Failed to fetch job');
-  }
-  return res.json();
-}
-
 export default function NewJobModal({
   activeKey = '',
   closeModal,
@@ -198,9 +185,8 @@ export default function NewJobModal({
   currentJobId = null,
   initialJob = null,
 }) {
-  const {
-    themeController, session, user
-  } = useComponentContext();
+  const { themeController, session, user, jobsController } =
+    useComponentContext();
 
   // const [initialJob, setInitialJob] = useState(initialJob);
   // const [loading, setLoading] = useState(editMode);
@@ -209,15 +195,21 @@ export default function NewJobModal({
   const [filteredSubTypes, setFilteredSubTypes] = useState(JOB_SUB_TYPES);
   const [filteredProfessions, setFilteredProfessions] = useState(LICENSES);
   // локальные стейты не зависят от async-данных при создании
-  const [type, setType] = useState(initialJob ? initialJob.type || '' :  activeKey || '');
+  const [type, setType] = useState(
+    initialJob ? initialJob.type || '' : activeKey || ''
+  );
   const [subType, setSubType] = useState(initialJob?.subType || '');
   const [profession, setProfession] = useState(initialJob?.profession || '');
   const [description, setDescription] = useState(initialJob?.description || '');
   const [price, setPrice] = useState(initialJob?.price || '');
-  const [images, setImages] = useState(initialJob?.images || []);     // тут будут уже public URLs
+  const [images, setImages] = useState(initialJob?.images || []); // тут будут уже public URLs
   const [location, setLocation] = useState(initialJob?.location || '');
-  const [startDateTime, setStartDateTime] = useState(initialJob?.startDateTime || null);
-  const [endDateTime, setEndDateTime] = useState(initialJob?.endDateTime || null);
+  const [startDateTime, setStartDateTime] = useState(
+    initialJob?.startDateTime || null
+  );
+  const [endDateTime, setEndDateTime] = useState(
+    initialJob?.endDateTime || null
+  );
 
   const [modalVisible, setModalVisible] = useState(false);
   // Состояния для управления фокусом на полях ввода
@@ -228,41 +220,6 @@ export default function NewJobModal({
     subType: false,
     profession: false,
   });
-  
-  // Функция, которая «засеивает» форму из job
-  // const seedFormFromJob = (job) => {
-  //   setType(job.type || '');
-  //   setSubType(job.subType || '');
-  //   setProfession(job.profession || '');
-  //   setDescription(job.description || '');
-  //   setPrice(job.price || '');
-  //   setImages(job.images || []);           // уже URL’ы
-  //   setLocation(job.location || '');
-  //   setStartDateTime(job.startDateTime || null);
-  //   setEndDateTime(job.endDateTime || null);
-  // };
-  
-  // Подгружаем job при редактировании
-  // useEffect(() => {
-  //   if (!editMode || !currentJobId) return;
-  //   let cancelled = false;
-
-  //   (async () => {
-  //     try {
-  //       setLoading(true);
-  //       const job = await getJobById(currentJobId, session);
-  //       if (cancelled) return;
-  //       setInitialJob(job);
-  //       seedFormFromJob(job);
-  //     } catch (e) {
-  //       console.error('Failed to load job:', e);
-  //     } finally {
-  //       if (!cancelled) setLoading(false);
-  //     }
-  //   })();
-
-  //   return () => { cancelled = true; };
-  // }, [editMode, currentJobId, session]);
 
   const handleCreate = () => {
     const newErrors = {
@@ -286,6 +243,8 @@ export default function NewJobModal({
         jobChanges.profession = profession;
       if (description !== initialJob.description)
         jobChanges.description = description;
+      if (JSON.stringify(images) !== JSON.stringify(initialJob.images))
+        jobChanges.images = images;
       if (price !== initialJob.price) jobChanges.price = price;
       if (location !== initialJob.location) jobChanges.location = location;
       // сравнение дат (если обе существуют и разные)
@@ -302,7 +261,7 @@ export default function NewJobModal({
         jobChanges.endDateTime = new Date(endDateTime).toISOString();
       }
       if (Object.keys(jobChanges).length > 0) {
-        editJobById(currentJobId, jobChanges, session);
+        editJobById(currentJobId, jobChanges, session).then(() => jobsController.reloadCreator());
       }
     } else {
       const newJob = {
@@ -323,11 +282,11 @@ export default function NewJobModal({
         creator: user.current.id,
       };
 
-      createNewJob(newJob, session);
+      createNewJob(newJob, session).then(() => jobsController.reloadCreator());
     }
     closeModal();
   };
-const handleImageAdd = async (uris) => {
+  const handleImageAdd = async (uris) => {
     try {
       const uploadedUrls = await Promise.all(
         uris.map(async (uri) => {
@@ -473,15 +432,15 @@ const handleImageAdd = async (uris) => {
           onPress={() => setModalVisible(true)}
           style={styles.addImageButton}
         >
-        <Image
-          source={icons.plus}
-          style={{
-            width: RFPercentage(3), // 14
-            height: RFPercentage(3),
-            tintColor: themeController.current?.buttonTextColorPrimary,
-          }}
-          resizeMode='contain'
-        />
+          <Image
+            source={icons.plus}
+            style={{
+              width: RFPercentage(3), // 14
+              height: RFPercentage(3),
+              tintColor: themeController.current?.buttonTextColorPrimary,
+            }}
+            resizeMode='contain'
+          />
         </TouchableOpacity>
 
         {/* Скролл с картинками */}
@@ -497,15 +456,15 @@ const handleImageAdd = async (uris) => {
                 style={styles.removeIcon}
                 onPress={() => removeImage(index)}
               >
-              <Image
-                source={icons.cross}
-                style={{
-                  width: RFValue(16),
-                  height: RFValue(16),
-                  tintColor: themeController.current?.formInputLabelColor,
-                }}
-                resizeMode='contain'
-              />
+                <Image
+                  source={icons.cross}
+                  style={{
+                    width: RFValue(16),
+                    height: RFValue(16),
+                    tintColor: themeController.current?.formInputLabelColor,
+                  }}
+                  resizeMode='contain'
+                />
               </TouchableOpacity>
             </View>
           ))}
@@ -572,7 +531,10 @@ const handleImageAdd = async (uris) => {
       style={{ flex: 1 }}
     >
       <View
-        style={{ flex: 1, backgroundColor: themeController.current?.backgroundColor }}
+        style={{
+          flex: 1,
+          backgroundColor: themeController.current?.backgroundColor,
+        }}
       >
         <View style={styles.header}>
           <TouchableOpacity
@@ -592,7 +554,10 @@ const handleImageAdd = async (uris) => {
             />
           </TouchableOpacity>
           <Text
-            style={[styles.logo, { color: themeController.current?.primaryColor }]}
+            style={[
+              styles.logo,
+              { color: themeController.current?.primaryColor },
+            ]}
           >
             FLALX
           </Text>
@@ -620,7 +585,10 @@ const handleImageAdd = async (uris) => {
           <TouchableOpacity
             style={[
               styles.createButton,
-              { backgroundColor: themeController.current?.buttonColorPrimaryDefault },
+              {
+                backgroundColor:
+                  themeController.current?.buttonColorPrimaryDefault,
+              },
             ]}
             onPress={handleCreate}
           >
@@ -643,6 +611,7 @@ const handleImageAdd = async (uris) => {
 const styles = StyleSheet.create({
   container: {
     padding: RFValue(14),
+    flex: 1,
   },
   header: {
     flexDirection: 'row',

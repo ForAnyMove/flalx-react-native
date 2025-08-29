@@ -1,103 +1,153 @@
-import { useRouter } from 'expo-router';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useState } from 'react';
-import { Modal, ScrollView, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  Modal,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+// import JobTypeSelector from '../../../components/JobTypeSelector';
 import { RFValue } from 'react-native-responsive-fontsize';
-import NewJobModal from '../../../components/NewJobModal';
-import NewJobTemplateCard from '../../../components/NewJobTemplateCard';
 import SearchPanel from '../../../components/SearchPanel';
+import ShowJobModal from '../../../components/ShowJobModal';
 import { JOB_TYPES } from '../../../constants/jobTypes';
 import { useComponentContext } from '../../../context/globalAppContext';
 
 export default function NewScreen() {
-  const { themeController } = useComponentContext();
-  const router = useRouter();
+  const { themeController, jobsController } = useComponentContext();
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');
-  const [newJobModalVisible, setNewJobModalVisible] = useState(false);
-  const [activeKey, setActiveKey] = useState(null);
+  // const router = useRouter();
+  const [showJobModalVisible, setShowJobModalVisible] = useState(false);
 
-    // async function handleAuth(email, password) {
-    //   try {
-    //     // Try to sign up first
-    //     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-    //       email,
-    //       password,
-    //     });
+  const [currentJobId, setCurrentJobId] = useState(null);
 
-    //     if (signUpError) {
-    //       // If user already exists, try sign in
-    //       if (signUpError.message && signUpError.message.includes('already registered')) {
-    //         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-    //           email,
-    //           password,
-    //         });
-    //         if (signInError) {
-    //           console.error(signInError);
-    //         } else {
-    //           // Signed in successfully
-    //           // You can handle signInData here
-    //         }
-    //       } else {
-    //         console.error(signUpError);
-    //       }
-    //     } else {
-    //       // Signed up successfully
-    //       // You can handle signUpData here
-    //     }
-    //   } catch (err) {
-    //     console.error(err);
-    //   }
-    // }
-
-    // useEffect(() => {
-    //   // Example usage of handleAuth
-    //   handleAuth('john@example.com', 'password123');
-    // }, []);
   return (
-    <>
-      <View
-        style={[
-          styles.container,
-          { backgroundColor: themeController.current?.backgroundColor },
-        ]}
-      >
-        <View>
-          <SearchPanel
-            searchValue={searchValue}
-            setSearchValue={setSearchValue}
-          />
-        </View>
-        {/* <View>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: themeController.current?.backgroundColor },
+      ]}
+    >
+      <View>
+        <SearchPanel
+          searchValue={searchValue}
+          setSearchValue={setSearchValue}
+        />
+      </View>
+      {/* <View>
         <JobTypeSelector selectedTypes={filteredJobs} setSelectedTypes={setFilteredJobs} />
       </View> */}
+      {jobsController.loading.any ? (
+        <Text>Loading...</Text>
+      ) : jobsController.error ? (
+        <Text>{jobsController.error}</Text>
+      ) : (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.cardsWrapper}>
-            {Object.entries(JOB_TYPES)
-              .filter(([key, value]) =>
-                value.toLowerCase().includes(searchValue.toLowerCase())
-              )
-              .map(([key, label]) => (
-                <TouchableOpacity
-                  key={key}
-                  // onPress={() => router.push(`/new-job-modal?key=${key}`)}
-                  onPress={() => {
-                    setNewJobModalVisible(true);
-                    setActiveKey(key);
-                  }}
+          {jobsController.executor.new.map((job, index) => {
+            const hasImage = job.images && job.images.length > 0;
+            return (
+              <TouchableOpacity
+                key={index}
+                style={styles.cardContainer}
+                onPress={() => {
+                  setCurrentJobId(job.id);
+                  // router.push(`/show-job-modal`);
+                  setShowJobModalVisible(true);
+                }}
+              >
+                <View
+                  style={[
+                    styles.cardContent,
+                    {
+                      backgroundColor:
+                        themeController.current?.defaultBlocksBackground,
+                    },
+                  ]}
                 >
-                  <NewJobTemplateCard
-                    templateTitle={label}
-                    imageSource={null} // сюда можешь передавать uri картинки
-                  />
-                </TouchableOpacity>
-              ))}
-          </View>
+                  <View
+                    style={[
+                      styles.imageContainer,
+                      {
+                        backgroundColor:
+                          themeController.current?.defaultBlocksMockBackground,
+                      },
+                    ]}
+                  >
+                    {hasImage ? (
+                      <Image
+                        source={{ uri: job.images[0] }}
+                        style={styles.image}
+                        resizeMode='cover'
+                      />
+                    ) : (
+                      <View style={styles.placeholderImage}>
+                        <FontAwesome6
+                          name='image'
+                          size={20}
+                          color={
+                            themeController.current?.defaultBlocksMockColor
+                          }
+                        />
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.textContent}>
+                    <Text
+                      style={[
+                        styles.title,
+                        { color: themeController.current?.textColor },
+                      ]}
+                    >
+                      {JOB_TYPES[job.type]}
+                    </Text>
+                    {job.description ? (
+                      <Text
+                        style={[
+                          styles.description,
+                          { color: themeController.current?.textColor },
+                        ]}
+                      >
+                        {job.description}
+                      </Text>
+                    ) : null}
+                  </View>
+                  {job.providers?.length > 0 && (
+                    <View
+                      style={[
+                        styles.badge,
+                        {
+                          backgroundColor:
+                            themeController.current?.secondaryBadgeBackground,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.badgeText,
+                          { color: themeController.current?.badgeTextColor },
+                        ]}
+                      >
+                        {job.providers.length}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
-        <Modal visible={newJobModalVisible} animationType="slide">
-          <NewJobModal activeKey={activeKey} closeModal={() => setNewJobModalVisible(false)} />
-        </Modal>
-      </View>
-    </>
+      )}
+      <Modal visible={showJobModalVisible} animationType='slide'>
+        <ShowJobModal
+          closeModal={() => setShowJobModalVisible(false)}
+          status='jobs-new'
+          currentJobId={currentJobId}
+        />
+      </Modal>
+    </View>
   );
 }
 
@@ -109,11 +159,68 @@ const styles = {
     paddingBottom: 0,
   },
   scrollContainer: {
-    paddingBottom: RFValue(20),
+    paddingBottom: 0,
   },
-  cardsWrapper: {
+  cardContainer: {
+    marginBottom: RFValue(8),
+  },
+  cardContent: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    borderRadius: RFValue(5),
+    alignItems: 'center',
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: RFValue(3),
+    elevation: RFValue(2),
+  },
+  imageContainer: {
+    width: RFValue(55),
+    height: RFValue(55),
+    borderTopLeftRadius: RFValue(5),
+    borderBottomLeftRadius: RFValue(5),
     justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: RFValue(10),
+    overflow: 'hidden',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  placeholderImage: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  textContent: {
+    flex: 1,
+    height: '80%',
+  },
+  title: {
+    fontSize: RFValue(12),
+    fontWeight: '600',
+  },
+  description: {
+    fontSize: RFValue(10),
+    marginTop: RFValue(2),
+  },
+  badge: {
+    position: 'absolute',
+    top: RFValue(5),
+    right: RFValue(5),
+    borderRadius: RFValue(999),
+    paddingHorizontal: RFValue(2),
+    paddingVertical: RFValue(2),
+    minWidth: RFValue(16),
+    height: RFValue(16),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    fontWeight: 'bold',
+    fontSize: RFValue(10),
   },
 };

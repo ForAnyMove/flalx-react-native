@@ -23,28 +23,29 @@ import UserSummaryBlock from './UserSummaryBlock';
     }
   }
 
-export default function ProvidersSection({styles, currentJobInfo, status='store-waiting'}) {
-  const { getUserById, activeThemeStyles } = useComponentContext();
+export default function ProvidersSection({styles, currentJobInfo, status='store-waiting', closeAllModal}) {
+  const { providersController, activeThemeStyles } = useComponentContext();
   const [isModalVisible, setIsModalVisible] = useState(false);
-
+  
   function checkListByStatus() {
     switch (status) {
       case 'store-waiting':
         return currentJobInfo?.providers;
       case 'store-in-progress':
-        return [currentJobInfo?.approvedProvider];
+        return [currentJobInfo?.executor];
       case 'store-done':
-        return [currentJobInfo?.approvedProvider];
+        return [currentJobInfo?.executor];
       case 'jobs-in-progress':
         return [currentJobInfo?.creator];
       case 'jobs-done':
         return [currentJobInfo?.creator];
       default:
-        return '';
+        return [];
     }
   }
 
   const providerList = checkListByStatus();
+  console.log('ProvidersSection providerList:', providerList);
   
   const renderProviderList = () => (
     <>
@@ -52,7 +53,7 @@ export default function ProvidersSection({styles, currentJobInfo, status='store-
         <CustomFlatList
           data={providerList || []}
           keyExtractor={(_, index) => index.toString()}
-          renderItem={({ item }) => <UserSummaryBlock status={status} user={getUserById(item)} />}
+          renderItem={({ item }) => <UserSummaryBlock status={status} user={providersController.getUserById(item.id || item)} currentJobId={currentJobInfo?.id} closeAllModal={closeAllModal} />}
           contentContainerStyle={styles.container}
           keyboardShouldPersistTaps='handled'
         />
@@ -60,7 +61,7 @@ export default function ProvidersSection({styles, currentJobInfo, status='store-
         <FlatList
           data={providerList || []}
           keyExtractor={(_, index) => index.toString()}
-          renderItem={({ item }) => <UserSummaryBlock status={status} user={getUserById(item)} />}
+          renderItem={({ item }) => <UserSummaryBlock status={status} user={providersController.getUserById(item.id || item)} currentJobId={currentJobInfo?.id} closeAllModal={closeAllModal} />}
           contentContainerStyle={styles.container}
           keyboardShouldPersistTaps='handled'
         />

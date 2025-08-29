@@ -7,6 +7,8 @@ import themeManager from '../managers/themeManager';
 import sessionManager from '../managers/sessionManager';
 import languageManager from '../managers/languageManager';
 import tabsManager from '../managers/tabsManager';
+import jobsManager from '../managers/jobsManager';
+import providersManager from '../managers/providersManager';
 
 const ComponentContext = createContext();
 
@@ -37,6 +39,9 @@ export const ComponentProvider = ({ children }) => {
   const appTabController = tabsManager({name: 'app' ,defaultTab: appTabsList[0], list: appTabsList});
   const profileTabController = tabsManager({name: 'profile', defaultTab: profileTabsList[0], list: profileTabsList});
   
+  const jobsController = jobsManager({ session, user });
+  const providersController = providersManager({ session });
+
   return (
     <ComponentContext.Provider
       value={{
@@ -46,6 +51,8 @@ export const ComponentProvider = ({ children }) => {
         languageController,
         appTabController,
         profileTabController,
+        jobsController,
+        providersController,
       }}
     >
       {children}

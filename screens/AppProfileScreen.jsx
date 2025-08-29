@@ -17,12 +17,13 @@ import Settings from './mainScreens/profileTabs/Settings';
 export default function AppProfileScreen({ switchToApp }) {
   const { session, profileTabController, themeController } =
     useComponentContext();
+console.log(profileTabController.active);
 
   function renderScreen() {
     switch (profileTabController.active) {
       case 'profile':
         return <Profile />;
-      case 'profession':
+      case 'professions':
         return <Profession />;
       case 'settings':
         return <Settings />;

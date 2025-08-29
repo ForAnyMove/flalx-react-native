@@ -16,41 +16,13 @@ import { JOB_TYPES } from '../../../constants/jobTypes';
 import { useComponentContext } from '../../../context/globalAppContext';
 
 export default function WaitingScreen() {
-  const { themeController, session } =
-    useComponentContext();
+  const { themeController, jobsController } = useComponentContext();
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');
   // const router = useRouter();
   const [showJobModalVisible, setShowJobModalVisible] = useState(false);
 
   const [currentJobId, setCurrentJobId] = useState(null);
-  const [jobs, setJobs] = useState([]); // Здесь должен быть массив пользователей
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const token = session?.token?.access_token;
-
-        const response = await fetch(`${session.serverURL}/jobs/created`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = await response.json();
-        console.log('Fetched Jobs:', data);
-        
-        setJobs(data);
-      } catch (error) {
-        console.error('Ошибка загрузки:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchJobs();
-  }, []);
 
   return (
     <View
@@ -68,12 +40,13 @@ export default function WaitingScreen() {
       {/* <View>
         <JobTypeSelector selectedTypes={filteredJobs} setSelectedTypes={setFilteredJobs} />
       </View> */}
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {jobs
-          .filter((value) =>
-            value.status === 'waiting' && value.type.toLowerCase().includes(searchValue.toLowerCase())
-          )
-          .map((job, index) => {
+      {jobsController.loading.any ? (
+        <Text>Loading...</Text>
+      ) : jobsController.error ? (
+        <Text>{jobsController.error}</Text>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          {jobsController.creator.waiting.map((job, index) => {
             const hasImage = job.images && job.images.length > 0;
             return (
               <TouchableOpacity
@@ -114,7 +87,9 @@ export default function WaitingScreen() {
                         <FontAwesome6
                           name='image'
                           size={20}
-                          color={themeController.current?.defaultBlocksMockColor}
+                          color={
+                            themeController.current?.defaultBlocksMockColor
+                          }
                         />
                       </View>
                     )}
@@ -163,9 +138,14 @@ export default function WaitingScreen() {
               </TouchableOpacity>
             );
           })}
-      </ScrollView>
+        </ScrollView>
+      )}
       <Modal visible={showJobModalVisible} animationType='slide'>
-        <ShowJobModal closeModal={() => setShowJobModalVisible(false)} status='store-waiting' currentJobId={currentJobId} />
+        <ShowJobModal
+          closeModal={() => setShowJobModalVisible(false)}
+          status='store-waiting'
+          currentJobId={currentJobId}
+        />
       </Modal>
     </View>
   );

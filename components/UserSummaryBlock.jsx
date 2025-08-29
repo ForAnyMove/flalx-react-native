@@ -15,11 +15,12 @@ import { JOB_TYPES } from '../constants/jobTypes';
 import { LICENSES } from '../constants/licenses';
 import { useComponentContext } from '../context/globalAppContext';
 
-const UserSummaryBlock = ({ user, status='store-waiting' }) => {
-  const { activeThemeStyles, currentJobId } = useComponentContext();
+const UserSummaryBlock = ({ user, status = 'store-waiting', currentJobId, closeAllModal }) => {
+  const { themeController, session, jobsController } =
+    useComponentContext();
   const [modalVisible, setModalVisible] = useState(false);
   const [showContactInfo, setShowContactInfo] = useState(false);
-  
+  const userId =user.id || user?._j?.id;
   const {
     avatar,
     name,
@@ -30,7 +31,7 @@ const UserSummaryBlock = ({ user, status='store-waiting' }) => {
     about,
     email,
     phoneNumber,
-  } = user;
+  } = user.id ? user : user._j;
 
   return (
     <>
@@ -44,7 +45,7 @@ const UserSummaryBlock = ({ user, status='store-waiting' }) => {
               <Ionicons name='person' size={24} color='#666' />
             </View>
           )}
-          <Text style={styles.nameText}>
+          <Text style={[styles.nameText, { color: themeController.current?.textColor }]}>
             {name} {surname}
           </Text>
         </View>
@@ -52,13 +53,13 @@ const UserSummaryBlock = ({ user, status='store-waiting' }) => {
           onPress={() => setModalVisible(true)}
           style={[
             styles.visitButton,
-            { backgroundColor: activeThemeStyles?.buttonColorPrimaryDefault },
+            { backgroundColor: themeController.current?.buttonColorPrimaryDefault },
           ]}
         >
           <Text
             style={[
               styles.visitButtonText,
-              { color: activeThemeStyles?.buttonTextColorPrimary },
+              { color: themeController.current?.buttonTextColorPrimary },
             ]}
           >
             Visit
@@ -87,13 +88,13 @@ const UserSummaryBlock = ({ user, status='store-waiting' }) => {
               <Ionicons name='person' size={50} color='#666' />
             </View>
           )}
-          <Text style={styles.modalName}>
+          <Text style={[styles.modalName, { color: themeController.current?.textColor }]}>
             {name} {surname}
           </Text>
 
           {/* Professions */}
           <View style={styles.centerRow}>
-            {professions.map((p, index) => (
+            {professions?.map((p, index) => (
               <View key={index} style={styles.professionBadge}>
                 <Text style={styles.professionText}>{LICENSES[p]}</Text>
               </View>
@@ -105,7 +106,7 @@ const UserSummaryBlock = ({ user, status='store-waiting' }) => {
             Types of job I&apos;m looking for
           </Text>
           <View style={styles.wrapRow}>
-            {jobTypes.map((type, index) => (
+            {jobTypes?.map((type, index) => (
               <View key={index} style={styles.typeBadge}>
                 <Text style={styles.typeText}>{JOB_TYPES[type]}</Text>
               </View>
@@ -117,7 +118,7 @@ const UserSummaryBlock = ({ user, status='store-waiting' }) => {
             Sub types of job am I interested
           </Text>
           <View style={styles.wrapRow}>
-            {jobSubTypes.map((sub, index) => (
+            {jobSubTypes?.map((sub, index) => (
               <View key={index} style={styles.typeBadge}>
                 <Text style={styles.typeText}>{JOB_SUB_TYPES[sub]}</Text>
               </View>
@@ -130,12 +131,12 @@ const UserSummaryBlock = ({ user, status='store-waiting' }) => {
 
           {/* Contact Info */}
           <Text style={styles.sectionTitle}>Contact information</Text>
-          {!showContactInfo && status==='store-waiting' ? (
+          {!showContactInfo && status === 'store-waiting' ? (
             <TouchableOpacity
               style={[
                 styles.primaryBtn,
                 {
-                  backgroundColor: activeThemeStyles?.buttonColorPrimaryDefault,
+                  backgroundColor: themeController.current?.buttonColorPrimaryDefault,
                   marginHorizontal: 0,
                 },
               ]}
@@ -144,7 +145,7 @@ const UserSummaryBlock = ({ user, status='store-waiting' }) => {
               <Text
                 style={[
                   styles.primaryText,
-                  { color: activeThemeStyles?.buttonTextColorPrimary },
+                  { color: themeController.current?.buttonTextColorPrimary },
                 ]}
               >
                 Open contact information for 1.50$
@@ -157,37 +158,81 @@ const UserSummaryBlock = ({ user, status='store-waiting' }) => {
             </>
           )}
         </ScrollView>
-        {status==='store-waiting' && <View>
-          {!showContactInfo && (
-            <Text style={{color: '#f33', textAlign: 'center', fontSize: RFValue(10),}}>Open contact information to be able to approve provider</Text>
-          )}
-          <TouchableOpacity
-            style={[
-              styles.primaryBtn,
-              {
-                backgroundColor: showContactInfo
-                  ? activeThemeStyles?.buttonColorPrimaryDefault
-                  : activeThemeStyles?.buttonColorPrimaryDisabled,
-              },
-            ]}
-            onPress={() => {
-              if (showContactInfo) {
-                setModalVisible(false);
-                setShowContactInfo(false);
-
-              }
-            }}
-          >
-            <Text
+        {status === 'store-waiting' && (
+          <View>
+            {!showContactInfo && (
+              <Text
+                style={{
+                  color: '#f33',
+                  textAlign: 'center',
+                  fontSize: RFValue(10),
+                }}
+              >
+                Open contact information to be able to approve provider
+              </Text>
+            )}
+            <TouchableOpacity
               style={[
-                styles.primaryText,
-                { color: activeThemeStyles?.buttonTextColorPrimary },
+                styles.primaryBtn,
+                {
+                  backgroundColor: showContactInfo
+                    ? themeController.current?.buttonColorPrimaryDefault
+                    : themeController.current?.buttonColorPrimaryDisabled,
+                },
               ]}
+              onPress={() => {
+                if (showContactInfo) {
+                  jobsController.actions
+                    .approveProvider(currentJobId, userId)
+                    .then(() => {
+                      setModalVisible(false);
+                      setShowContactInfo(false);
+                      closeAllModal();
+                    });
+                }
+              }}
             >
-              Approve
-            </Text>
-          </TouchableOpacity>
-        </View>}
+              <Text
+                style={[
+                  styles.primaryText,
+                  { color: themeController.current?.buttonTextColorPrimary },
+                ]}
+              >
+                Approve
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {status === 'store-in-progress' && (
+          <View>
+            <TouchableOpacity
+              style={[
+                styles.primaryBtn,
+                {
+                  backgroundColor: themeController.current?.buttonColorPrimaryDefault,
+                  marginHorizontal: RFValue(12),
+                },
+              ]}
+              onPress={() => {
+                jobsController.actions
+                  .removeExecutor(currentJobId)
+                  .then(() => {
+                    setModalVisible(false);
+                    closeAllModal();
+                  });
+              }}
+            >
+              <Text
+                style={[
+                  styles.primaryText,
+                  { color: themeController.current?.buttonTextColorPrimary },
+                ]}
+              >
+                Remove executor
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </Modal>
     </>
   );

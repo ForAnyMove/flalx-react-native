@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,11 @@ import {
   I18nManager,
   Animated,
   Easing,
-} from "react-native";
-import { RFValue } from "react-native-responsive-fontsize";
-import { useTranslation } from "react-i18next";
-import { useComponentContext } from "../context/globalAppContext";
+  Platform,
+} from 'react-native';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { useTranslation } from 'react-i18next';
+import { useComponentContext } from '../context/globalAppContext';
 
 export default function OnboardingScreen({ onFinish }) {
   const { t } = useTranslation();
@@ -25,21 +26,21 @@ export default function OnboardingScreen({ onFinish }) {
 
   const slides = [
     {
-      image: require("../assets/onboarding/onboarding-img-1.png"),
-      title: t("onboarding.first_slide_title"),
-      text: t("onboarding.first_slide_text"),
-      button: t("onboarding.first_slide_btn_text"),
+      image: require('../assets/onboarding/onboarding-img-1.png'),
+      title: t('onboarding.first_slide_title'),
+      text: t('onboarding.first_slide_text'),
+      button: t('onboarding.first_slide_btn_text'),
     },
     {
-      image: require("../assets/onboarding/onboarding-img-2.png"),
-      title: t("onboarding.second_slide_title"),
-      text: t("onboarding.second_slide_text"),
-      button: t("onboarding.second_slide_btn_text"),
+      image: require('../assets/onboarding/onboarding-img-2.png'),
+      title: t('onboarding.second_slide_title'),
+      text: t('onboarding.second_slide_text'),
+      button: t('onboarding.second_slide_btn_text'),
     },
   ];
 
   const isLandscape = width > height;
-  
+
   const animateStepChange = (newStep) => {
     Animated.timing(fadeAnim, {
       toValue: 0,
@@ -66,17 +67,32 @@ export default function OnboardingScreen({ onFinish }) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: themeController.current.backgroundColor }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: themeController.current.backgroundColor },
+        Platform.OS === 'web' && isLandscape && { justifyContent: 'center' },
+      ]}
+    >
       {/* Кнопка пропуска */}
       <TouchableOpacity
         onPress={onFinish}
         style={[
           styles.skipButton,
           isRTL ? { left: RFValue(16) } : { right: RFValue(16) },
+          Platform.OS === 'web' &&
+            isLandscape && {
+              top: RFValue(30),
+            },
         ]}
       >
-        <Text style={[styles.skipText, { color: themeController.current.textColor }]}>
-          {t("onboarding.skip")}
+        <Text
+          style={[
+            styles.skipText,
+            { color: themeController.current.textColor },
+          ]}
+        >
+          {t('onboarding.skip')}
         </Text>
       </TouchableOpacity>
 
@@ -84,25 +100,55 @@ export default function OnboardingScreen({ onFinish }) {
         style={[
           styles.content,
           isLandscape ? styles.contentLandscape : styles.contentPortrait,
+          Platform.OS === 'web' && isLandscape
+            ? styles.webLandscapeContent
+            : null,
           { opacity: fadeAnim },
         ]}
       >
         {/* Картинка */}
-        <View style={styles.imageContainer}>
-          <Image source={slides[step].image} style={styles.image} resizeMode="contain" />
+        <View
+          style={[
+            styles.imageContainer,
+            Platform.OS === 'web' && isLandscape && { flex: 0.9 },
+          ]}
+        >
+          <Image
+            source={slides[step].image}
+            style={styles.image}
+            resizeMode='contain'
+          />
         </View>
 
         {/* Текстовый блок */}
-        <View style={styles.textContainer}>
-          <View style={styles.partContainer}>
-            <Text style={[styles.title, { color: themeController.current.primaryColor }]}>
+        <View
+          style={[
+            styles.textContainer,
+            Platform.OS === 'web' &&
+              isLandscape && { justifyContent: 'center', flex: 1 },
+          ]}
+        >
+          <View style={[styles.partContainer]}>
+            <Text
+              style={[
+                styles.title,
+                { color: themeController.current.primaryColor },
+              ]}
+            >
               {slides[step].title}
             </Text>
-            <Text style={[styles.description, { color: themeController.current.unactiveTextColor }]}>
+            <Text
+              style={[
+                styles.description,
+                { color: themeController.current.unactiveTextColor },
+                Platform.OS === 'web' &&
+                  isLandscape && { marginBottom: RFValue(30), width: '90%' },
+              ]}
+            >
               {slides[step].text}
             </Text>
           </View>
-          <View style={styles.partContainer}>
+          <View style={[styles.partContainer]}>
             {/* Индикатор */}
             <View style={styles.indicatorContainer}>
               {slides.map((_, i) => (
@@ -114,7 +160,7 @@ export default function OnboardingScreen({ onFinish }) {
                         backgroundColor:
                           i === step
                             ? themeController.current.primaryColor
-                            : themeController.current.primaryColor + "80", // полупрозрачный
+                            : themeController.current.primaryColor + '80', // полупрозрачный
                       },
                     ]}
                   />
@@ -125,9 +171,20 @@ export default function OnboardingScreen({ onFinish }) {
             {/* Кнопка */}
             <TouchableOpacity
               onPress={handleNext}
-              style={[styles.button, { backgroundColor: themeController.current.buttonColorPrimaryDefault }]}
+              style={[
+                styles.button,
+                {
+                  backgroundColor:
+                    themeController.current.buttonColorPrimaryDefault,
+                },
+              ]}
             >
-              <Text style={[styles.buttonText, { color: themeController.current.buttonTextColorPrimary }]}>
+              <Text
+                style={[
+                  styles.buttonText,
+                  { color: themeController.current.buttonTextColorPrimary },
+                ]}
+              >
                 {slides[step].button}
               </Text>
             </TouchableOpacity>
@@ -143,37 +200,44 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   skipButton: {
-    position: "absolute",
+    position: 'absolute',
     top: RFValue(20),
     zIndex: 10,
   },
   skipText: {
     fontSize: RFValue(14),
-    fontWeight: "500",
+    fontWeight: '500',
   },
   content: {
     flex: 1,
   },
   contentPortrait: {
-    flexDirection: "column",
+    flexDirection: 'column',
   },
   contentLandscape: {
-    flexDirection: "row",
+    flexDirection: 'row',
+  },
+  webLandscapeContent: {
+    aspectRatio: 2 / 1, // ширина в 2 раза больше высоты
+    maxHeight: '80%',
+    maxWidth: '90%',
+    alignSelf: 'center', // центрирование по горизонтали
+    justifyContent: 'center', // центрирование по вертикали
   },
   imageContainer: {
     flex: 1.5,
-    justifyContent: "flex-end",
-    alignItems: "center",
+    justifyContent: 'flex-end',
+    alignItems: 'center',
     padding: RFValue(10),
   },
   image: {
-    width: "90%",
-    height: "90%",
+    width: '90%',
+    height: '90%',
   },
   textContainer: {
     flex: 1,
-    justifyContent: "space-between",
-    alignItems: "center",
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: RFValue(20),
   },
   partContainer: {
@@ -183,18 +247,18 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: RFValue(20),
-    fontWeight: "700",
-    textAlign: "center",
+    fontWeight: '700',
+    textAlign: 'center',
     marginBottom: RFValue(12),
   },
   description: {
     fontSize: RFValue(14),
-    textAlign: "center",
+    textAlign: 'center',
     lineHeight: RFValue(20),
     marginBottom: RFValue(24),
   },
   indicatorContainer: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: RFValue(8),
     marginBottom: RFValue(24),
   },
@@ -204,13 +268,13 @@ const styles = StyleSheet.create({
     borderRadius: RFValue(3),
   },
   button: {
-    width: "100%",
+    width: '100%',
     paddingVertical: RFValue(12),
     borderRadius: RFValue(8),
-    alignItems: "center",
+    alignItems: 'center',
   },
   buttonText: {
     fontSize: RFValue(16),
-    fontWeight: "600",
+    fontWeight: '600',
   },
 });
