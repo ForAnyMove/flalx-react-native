@@ -1,6 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, ActivityIndicator, View } from "react-native";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ComponentProvider, useComponentContext } from "./context/globalAppContext";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
@@ -9,33 +9,37 @@ import AuthScreen from "./screens/AuthScreen";
 import OnboardingScreen from "./screens/OnboardingScreen";
 import RegisterScreen from "./screens/RegisterScreen";
 import AppScreen from "./screens/AppScreen";
+import { WindowProvider } from "./context/windowContext";
 
 export default function AppWrapper() {
   return (
     <ComponentProvider>
-      <App />
+      <WindowProvider>
+        <App />
+      </WindowProvider>
     </ComponentProvider>
   );
 }
 
 function App() {
-  const { session, user } = useComponentContext();
+  const { session, user, themeController, languageController } = useComponentContext();
   const [isOnboardingShowed, setOnboardingShowed] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  // ждем пока sessionManager загрузит данные
-  useEffect(() => {
-    // Небольшая задержка имитации загрузки (например, пока сессия восстанавливается)
-    const timeout = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(timeout);
-  }, [session, user]);
+  // проверяем готовность всех данных
+  const isReady =
+    session !== undefined &&
+    user !== undefined &&
+    languageController?.current !== undefined;
 
-  if (loading) {
+  if (!isReady) {
     return (
       <SafeAreaProvider>
         <SafeAreaView style={styles.container}>
           <View style={styles.loader}>
-            <ActivityIndicator size="large" color="#000" />
+            <ActivityIndicator
+              size="large"
+              color={themeController?.current?.primaryColor || "blue"}
+            />
           </View>
         </SafeAreaView>
       </SafeAreaProvider>

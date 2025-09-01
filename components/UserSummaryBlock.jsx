@@ -21,6 +21,8 @@ const UserSummaryBlock = ({ user, status = 'store-waiting', currentJobId, closeA
   const [modalVisible, setModalVisible] = useState(false);
   const [showContactInfo, setShowContactInfo] = useState(false);
   const userId =user.id || user?._j?.id;
+  console.log('user', user);
+  
   const {
     avatar,
     name,
@@ -32,7 +34,7 @@ const UserSummaryBlock = ({ user, status = 'store-waiting', currentJobId, closeA
     email,
     phoneNumber,
   } = user.id ? user : user._j;
-
+  
   return (
     <>
       {/* Summary Block */}

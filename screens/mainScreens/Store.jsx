@@ -1,7 +1,5 @@
 import {
   Animated,
-  Dimensions,
-  I18nManager,
   Modal,
   PanResponder,
   Text,
@@ -15,18 +13,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { icons } from '../../constants/icons';
 import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
+import { useWindowInfo } from '../../context/windowContext';
 import NewJobModal from '../../components/NewJobModal';
 import NewScreen from './storeTabs/New';
 import WaitingScreen from './storeTabs/Waiting';
 import InProgressScreen from './storeTabs/InProgress';
 import DoneScreen from './storeTabs/Done';
-
-const SCREEN_WIDTH =
-  Dimensions.get('window').width *
-  (Platform.OS === 'web' &&
-  Dimensions.get('window').height < Dimensions.get('window').width
-    ? 0.8
-    : 1);
 
 const TAB_TITLES = ['new', 'waiting', 'in-progress', 'done'];
 
@@ -38,10 +30,15 @@ const badgeCounts = {
   done: 5,
 };
 
-export default function Store() {
-  const { themeController, appTabController } = useComponentContext();
+export default function Store({ sidebarWidth = 0 }) {
+  const { themeController, appTabController, languageController } =
+    useComponentContext();
   const { t } = useTranslation();
-  const isRTL = I18nManager.isRTL;
+  const isRTL = languageController.isRTL;
+  const { width, height, isLandscape } = useWindowInfo();
+
+  const SCREEN_WIDTH =
+    Platform.OS === 'web' && isLandscape ? width - sidebarWidth : width;
 
   const screenWidthRef = useRef(SCREEN_WIDTH);
   const [screenWidth, setScreenWidth] = useState(SCREEN_WIDTH);
@@ -53,30 +50,19 @@ export default function Store() {
       : 0
   );
 
-  useEffect(() => {
-    const onChange = ({ window }) => {
-      const isLandscape = window.width > window.height;
-      const landscapeMul = Platform.OS === 'web' && isLandscape ? 0.8 : 1;
-      screenWidthRef.current = window.width * landscapeMul;
-      setScreenWidth(window.width * landscapeMul);
-    };
-
-    const subscription = Dimensions.addEventListener('change', onChange);
-
-    // Очистка при размонтировании
-    return () => {
-      if (subscription?.remove) {
-        subscription.remove();
-      } else {
-        // Для старых версий React Native
-        Dimensions.removeEventListener('change', onChange);
-      }
-    };
-  }, []);
-
   const scrollX = useRef(
     new Animated.Value(-storeActiveTab.current * screenWidthRef.current)
   ).current;
+
+  // пересчёт ширины и фиксация scrollX при ресайзе
+  useEffect(() => {
+    const newWidth = SCREEN_WIDTH;
+    screenWidthRef.current = newWidth;
+    setScreenWidth(newWidth);
+
+    // фиксация позиции scrollX для активного таба
+    scrollX.setValue(-storeActiveTab.current * newWidth);
+  }, [SCREEN_WIDTH]);
 
   const tabWidth = screenWidthRef.current / TAB_TITLES.length;
   const positiveScrollX = Animated.multiply(scrollX, -1);
@@ -143,19 +129,16 @@ export default function Store() {
 
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) =>
-        Math.abs(gestureState.dx) > 10 &&
-        Math.abs(gestureState.dx) > Math.abs(gestureState.dy),
-
+      onMoveShouldSetPanResponder: (_, g) =>
+        Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy),
       onPanResponderGrant: () => {
         scrollX.setOffset(scrollX.__getValue());
         scrollX.setValue(0);
         isSwipeRight.current = null;
       },
-
-      onPanResponderMove: (_, gestureState) => {
+      onPanResponderMove: (_, g) => {
         if (isSwipeRight.current === null) {
-          isSwipeRight.current = gestureState.dx > 0; // свайп вправо — true, влево — false
+          isSwipeRight.current = g.dx > 0;
         }
         if (
           (storeActiveTab.current === 0 && isSwipeRight.current) ||
@@ -163,16 +146,14 @@ export default function Store() {
             !isSwipeRight.current)
         )
           return;
-        scrollX.setValue(gestureState.dx);
+        scrollX.setValue(g.dx);
       },
-
-      onPanResponderRelease: (_, gestureState) => {
+      onPanResponderRelease: (_, g) => {
         scrollX.flattenOffset();
-        const dx = gestureState.dx;
+        const dx = g.dx;
         const swipeThreshold = screenWidthRef.current * 0.25;
 
         let newTab = storeActiveTab.current;
-
         if (
           dx < swipeThreshold * -1 &&
           storeActiveTab.current < TAB_TITLES.length - 1
@@ -204,7 +185,7 @@ export default function Store() {
       appTabController.goToSub(TAB_TITLES[index]);
     });
   };
-
+  
   useEffect(() => {
     if (appTabController.activeSubTab) {
       const newIndex = TAB_TITLES.indexOf(appTabController.activeSubTab);
@@ -219,6 +200,10 @@ export default function Store() {
       }
     }
   }, [appTabController.activeSubTab]);
+  
+// высота панели
+const panelHeight =
+  Platform.OS === 'web' && isLandscape ? height*0.08 : RFPercentage(10);
 
   return (
     <View style={{ flex: 1, userSelect: 'none' }}>
@@ -226,12 +211,17 @@ export default function Store() {
       <View
         style={{
           flexDirection: 'row',
-          height: RFPercentage(10),
+          height: panelHeight,
           backgroundColor: themeController.current?.backgroundColor,
           overflow: 'hidden',
         }}
       >
-        {TAB_TITLES.map((title, idx) => (
+        {TAB_TITLES.map((title, idx) => {
+    const iconSize = panelHeight * 0.35;
+    const fontSize = panelHeight * 0.2;
+    const badgeSize = panelHeight * 0.25;
+
+          return (
           <TouchableOpacity
             key={idx}
             onPress={() => handleTabPress(idx)}
@@ -239,7 +229,7 @@ export default function Store() {
               flex: 1,
               alignItems: 'center',
               justifyContent: 'flex-end',
-              paddingBottom: RFValue(3),
+          paddingBottom: panelHeight * 0.1,
             }}
           >
             {/* Иконка */}
@@ -249,34 +239,31 @@ export default function Store() {
               >
                 <Image
                   source={icons[`${title}-dark`]}
-                  style={{
-                    width: RFValue(20),
-                    height: RFValue(20),
-                  }}
+              style={{ width: iconSize, height: iconSize }}
                   resizeMode='contain'
                 />
               </Animated.View>
-              {/* Badge если count > 0 */}
+              {/* Badge */}
               {badgeCounts[title] > 0 && (
                 <View
                   style={{
                     position: 'absolute',
-                    top: -RFValue(4),
-                    right: -RFValue(10),
-                    minWidth: RFValue(12),
-                    height: RFValue(12),
-                    borderRadius: RFValue(8),
+                top: -badgeSize * 0.3,
+                right: -badgeSize * 0.5,
+                minWidth: badgeSize,
+                height: badgeSize,
+                borderRadius: badgeSize / 2,
                     backgroundColor:
                       themeController.current?.mainBadgeBackground,
                     justifyContent: 'center',
                     alignItems: 'center',
-                    paddingHorizontal: RFValue(3),
+                paddingHorizontal: badgeSize * 0.3,
                   }}
                 >
                   <Text
                     style={{
                       color: themeController.current?.badgeTextColor,
-                      fontSize: RFValue(8),
+                  fontSize: badgeSize * 0.6,
                       fontWeight: 'bold',
                     }}
                   >
@@ -288,16 +275,17 @@ export default function Store() {
             {/* Заголовок */}
             <View
               style={{
-                height: RFPercentage(5), // Высота для 2 строк
-                justifyContent: 'center', // Центровка по вертикали
-                paddingHorizontal: RFValue(4), // Чуть больше пространства по бокам
+            height: panelHeight * 0.35, 
+                justifyContent: 'center',
+                paddingHorizontal: RFValue(4),
               }}
             >
               <Animated.Text
                 style={{
                   color: interpolatedColorValues[idx],
                   fontWeight: 'bold',
-                  textAlign: 'center', // Центровка по горизонтали
+                  textAlign: 'center',
+              fontSize: fontSize,
                 }}
                 numberOfLines={2}
                 ellipsizeMode='tail'
@@ -306,36 +294,23 @@ export default function Store() {
               </Animated.Text>
             </View>
           </TouchableOpacity>
-        ))}
-
-        {/* Анимированное подчёркивание */}
+        )})}
+        {/* underline */}
         <Animated.View
           style={{
             position: 'absolute',
             bottom: 0,
             left: underlineTranslateX,
             width: underlineAnimatedWidth,
-            height: RFValue(2),
+      height: panelHeight * 0.05,
             backgroundColor: themeController.current?.primaryColor,
             borderRadius: RFValue(2),
             zIndex: 2,
           }}
         />
-        {/* Внутренняя псевдо-тень */}
-        <View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: RFValue(2),
-            backgroundColor: themeController.current?.formInputBackground,
-            zIndex: 1,
-          }}
-        />
       </View>
 
-      {/* Контент с анимацией и свайпом */}
+      {/* Контент */}
       <View style={{ flex: 1 }} {...panResponder.panHandlers}>
         <Animated.View
           style={{
@@ -360,6 +335,8 @@ export default function Store() {
           )}
         </Animated.View>
       </View>
+
+      {/* Кнопка + */}
       <TouchableOpacity
         style={{
           backgroundColor: themeController.current?.mainBadgeBackground,
@@ -372,9 +349,7 @@ export default function Store() {
           right: RFPercentage(2),
           bottom: RFPercentage(2),
           ...Platform.select({
-            web: {
-              right: RFPercentage(4),
-            },
+            web: { right: RFPercentage(4) },
           }),
         }}
         onPress={() => setNewJobModalVisible(true)}
@@ -382,13 +357,14 @@ export default function Store() {
         <Image
           source={icons.plus}
           style={{
-            width: RFPercentage(3), // 14
+            width: RFPercentage(3),
             height: RFPercentage(3),
             tintColor: themeController.current?.buttonTextColorPrimary,
           }}
           resizeMode='contain'
         />
       </TouchableOpacity>
+
       <Modal visible={newJobModalVisible} animationType='slide'>
         <NewJobModal closeModal={() => setNewJobModalVisible(false)} />
       </Modal>

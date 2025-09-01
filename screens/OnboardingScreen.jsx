@@ -5,7 +5,6 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  useWindowDimensions,
   I18nManager,
   Animated,
   Easing,
@@ -14,12 +13,21 @@ import {
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
+import { useWindowInfo } from '../context/windowContext'; // ✅ заменили useWindowDimensions
+
+// универсальная функция адаптации размеров
+const getResponsiveSize = (mobileSize, webSize) => {
+  if (Platform.OS === 'web') {
+    return webSize; // фикс/уменьшенный размер для веба
+  }
+  return RFValue(mobileSize);
+};
 
 export default function OnboardingScreen({ onFinish }) {
   const { t } = useTranslation();
-  const { themeController } = useComponentContext();
-  const { width, height } = useWindowDimensions();
-  const isRTL = I18nManager.isRTL;
+  const { themeController, languageController } = useComponentContext();
+  const { width, height, isLandscape } = useWindowInfo(); // ✅ теперь из контекста
+  const isRTL = languageController.isRTL;
 
   const [step, setStep] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -38,8 +46,6 @@ export default function OnboardingScreen({ onFinish }) {
       button: t('onboarding.second_slide_btn_text'),
     },
   ];
-
-  const isLandscape = width > height;
 
   const animateStepChange = (newStep) => {
     Animated.timing(fadeAnim, {
@@ -66,6 +72,10 @@ export default function OnboardingScreen({ onFinish }) {
     }
   };
 
+  const skipBtnStyle = isRTL
+    ? { left: getResponsiveSize(16, 20) }
+    : { right: getResponsiveSize(10, 20) };
+
   return (
     <View
       style={[
@@ -79,10 +89,10 @@ export default function OnboardingScreen({ onFinish }) {
         onPress={onFinish}
         style={[
           styles.skipButton,
-          isRTL ? { left: RFValue(16) } : { right: RFValue(16) },
+          skipBtnStyle,
           Platform.OS === 'web' &&
             isLandscape && {
-              top: RFValue(30),
+              top: getResponsiveSize(30, 24),
             },
         ]}
       >
@@ -99,7 +109,9 @@ export default function OnboardingScreen({ onFinish }) {
       <Animated.View
         style={[
           styles.content,
-          isLandscape ? styles.contentLandscape : styles.contentPortrait,
+          isLandscape
+            ? { flexDirection: isRTL ? 'row-reverse' : 'row' }
+            : styles.contentPortrait,
           Platform.OS === 'web' && isLandscape
             ? styles.webLandscapeContent
             : null,
@@ -116,7 +128,7 @@ export default function OnboardingScreen({ onFinish }) {
           <Image
             source={slides[step].image}
             style={styles.image}
-            resizeMode='contain'
+            resizeMode="contain"
           />
         </View>
 
@@ -142,7 +154,10 @@ export default function OnboardingScreen({ onFinish }) {
                 styles.description,
                 { color: themeController.current.unactiveTextColor },
                 Platform.OS === 'web' &&
-                  isLandscape && { marginBottom: RFValue(30), width: '90%' },
+                  isLandscape && {
+                    marginBottom: getResponsiveSize(30, 20),
+                    width: '90%',
+                  },
               ]}
             >
               {slides[step].text}
@@ -160,7 +175,7 @@ export default function OnboardingScreen({ onFinish }) {
                         backgroundColor:
                           i === step
                             ? themeController.current.primaryColor
-                            : themeController.current.primaryColor + '80', // полупрозрачный
+                            : themeController.current.primaryColor + '80',
                       },
                     ]}
                   />
@@ -196,33 +211,25 @@ export default function OnboardingScreen({ onFinish }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   skipButton: {
     position: 'absolute',
     top: RFValue(20),
     zIndex: 10,
   },
   skipText: {
-    fontSize: RFValue(14),
+    fontSize: getResponsiveSize(14, 12),
     fontWeight: '500',
   },
-  content: {
-    flex: 1,
-  },
-  contentPortrait: {
-    flexDirection: 'column',
-  },
-  contentLandscape: {
-    flexDirection: 'row',
-  },
+  content: { flex: 1 },
+  contentPortrait: { flexDirection: 'column' },
   webLandscapeContent: {
-    aspectRatio: 2 / 1, // ширина в 2 раза больше высоты
+    aspectRatio: 2 / 1,
     maxHeight: '80%',
-    maxWidth: '90%',
-    alignSelf: 'center', // центрирование по горизонтали
-    justifyContent: 'center', // центрирование по вертикали
+    maxWidth: '85%',
+    paddingHorizontal: '5%',
+    alignSelf: 'center',
+    justifyContent: 'center',
   },
   imageContainer: {
     flex: 1.5,
@@ -230,10 +237,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: RFValue(10),
   },
-  image: {
-    width: '90%',
-    height: '90%',
-  },
+  image: { width: '90%', height: '90%' },
   textContainer: {
     flex: 1,
     justifyContent: 'space-between',
@@ -246,35 +250,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: RFValue(20),
+    fontSize: getResponsiveSize(20, 18),
     fontWeight: '700',
     textAlign: 'center',
-    marginBottom: RFValue(12),
+    marginBottom: getResponsiveSize(12, 8),
   },
   description: {
-    fontSize: RFValue(14),
+    fontSize: getResponsiveSize(14, 13),
     textAlign: 'center',
-    lineHeight: RFValue(20),
-    marginBottom: RFValue(24),
+    lineHeight: getResponsiveSize(20, 18),
+    marginBottom: getResponsiveSize(24, 16),
   },
   indicatorContainer: {
     flexDirection: 'row',
-    gap: RFValue(8),
-    marginBottom: RFValue(24),
+    gap: getResponsiveSize(8, 6),
+    marginBottom: getResponsiveSize(24, 16),
   },
   indicator: {
-    width: RFValue(20),
-    height: RFValue(6),
-    borderRadius: RFValue(3),
+    width: getResponsiveSize(20, 14),
+    height: getResponsiveSize(6, 4),
+    borderRadius: getResponsiveSize(3, 2),
   },
   button: {
-    width: '100%',
-    paddingVertical: RFValue(12),
-    borderRadius: RFValue(8),
+    width: Platform.OS === 'web' ? '70%' : '100%',
+    paddingVertical: getResponsiveSize(12, 10),
+    borderRadius: getResponsiveSize(8, 6),
     alignItems: 'center',
+    alignSelf: 'center',
   },
   buttonText: {
-    fontSize: RFValue(16),
+    fontSize: getResponsiveSize(16, 14),
     fontWeight: '600',
   },
 });

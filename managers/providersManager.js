@@ -6,6 +6,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
  *   providers: [],           // список всех "других" пользователей
  *   getUserById: fn,         // (id) => Promise<User>
  *   reload: fn,              // перезагрузить список
+ *   getCommentsWritten: fn,  // (id?) => Promise<Comment[]>
+ *   getCommentsReceived: fn, // (id?) => Promise<Comment[]>
+ *   setComment: fn,          // (userId, { text, status }) => Promise<Comment>
+ *   refreshUserComments: fn, // (userId) => Promise<Comment[]>
  *   loading: bool,
  *   error: string|null
  * }
@@ -97,6 +101,55 @@ export default function providersManager({ session }) {
     return user;
   }
 
+  // добавить комментарий
+  async function setComment(userId, { text, status }) {
+    if (!userId || !text || !status) return null;
+
+    const res = await safeFetch(`${serverURL}/users/${userId}/comments`, {
+      method: "POST",
+      headers: { ...authHeaders, "Content-Type": "application/json" },
+      body: JSON.stringify({ text, status }),
+    });
+
+    // обновим кэш
+    setCache((prev) => {
+      const comments = prev[userId]?.comments || [];
+      return {
+        ...prev,
+        [userId]: { ...prev[userId], comments: [res, ...comments] },
+      };
+    });
+
+    return res;
+  }
+
+  // получить комментарии, написанные юзером (author)
+  async function getCommentsWritten(userId) {
+    const query = userId ? `?id=${userId}` : "";
+    return safeFetch(`${serverURL}/users/author/comments${query}`, {
+      headers: authHeaders,
+    });
+  }
+
+  // получить комментарии, оставленные юзеру (target)
+  async function getCommentsReceived(userId) {
+    const query = userId ? `?id=${userId}` : "";
+    return safeFetch(`${serverURL}/users/target/comments${query}`, {
+      headers: authHeaders,
+    });
+  }
+
+  // обновить комментарии для конкретного юзера и записать в кэш
+  async function refreshUserComments(userId) {
+    if (!userId) return [];
+    const comments = await getCommentsReceived(userId);
+    setCache((prev) => ({
+      ...prev,
+      [userId]: { ...(prev[userId] || {}), comments },
+    }));
+    return comments;
+  }
+
   // авто-загрузка, как только есть сессия
   useEffect(() => {
     if (serverURL && token) {
@@ -111,5 +164,9 @@ export default function providersManager({ session }) {
     reload,
     loading,
     error,
+    setComment,
+    getCommentsWritten,
+    getCommentsReceived,
+    refreshUserComments,
   };
 }

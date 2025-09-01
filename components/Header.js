@@ -1,32 +1,47 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View, Platform } from 'react-native';
 import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
 import { useComponentContext } from '../context/globalAppContext';
+import { useWindowInfo } from '../context/windowContext';
+import { icons } from '../constants/icons';
+
+// адаптивный размер
+const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
+  if (Platform.OS === 'web') {
+    return isLandscape ? webSize*1.6 : RFValue(mobileSize);
+  }
+  return RFValue(mobileSize);
+};
 
 export default function Header({ switchToProfile }) {
-  const { themeController } = useComponentContext();
-  const router = useRouter();
-  const userAvatar = null; // Здесь позже будет аватар
+  const { themeController, user } = useComponentContext();
+  const { isLandscape, height } = useWindowInfo();
+  const userAvatar = user.current?.avatar;
 
   return (
     <View
       style={[
         styles.container,
-        { backgroundColor: themeController.current?.backgroundColor },
+        { backgroundColor: themeController.current?.backgroundColor, height: Platform.OS === 'web' && isLandscape ? height*0.07 : RFPercentage(7)},
       ]}
     >
-      <Text style={styles.logoText}>Flalx</Text>
+      <Text
+        style={[
+          styles.logoText,
+          { fontSize: getResponsiveSize(18, height*0.02, isLandscape) },
+        ]}
+      >
+        Flalx
+      </Text>
       <TouchableOpacity onPress={() => switchToProfile()}>
-        {userAvatar ? (
-          <Image source={{ uri: userAvatar }} style={styles.avatar} />
-        ) : (
-          <Ionicons
-            name='person-circle-outline'
-            size={RFValue(30)}
-            color='#888'
+          <Image
+            source={userAvatar ? { uri: userAvatar } : icons.defaultAvatarInverse }
+            style={{
+              width: getResponsiveSize(30, height*0.03, isLandscape),
+              height: getResponsiveSize(30, height*0.03, isLandscape),
+              borderRadius: getResponsiveSize(30, height*0.03, isLandscape),
+            }}
           />
-        )}
       </TouchableOpacity>
     </View>
   );
@@ -34,21 +49,14 @@ export default function Header({ switchToProfile }) {
 
 const styles = StyleSheet.create({
   container: {
-    height: RFPercentage(7),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: RFValue(12),
   },
   logoText: {
-    fontSize: RFValue(18),
     textTransform: 'uppercase',
     fontWeight: 'bold',
     color: '#0A62EA',
-  },
-  avatar: {
-    width: RFValue(20),
-    height: RFValue(20),
-    borderRadius: RFValue(20),
   },
 });

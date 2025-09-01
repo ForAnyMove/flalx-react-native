@@ -1,32 +1,76 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { FlatList, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  FlatList,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useComponentContext } from '../context/globalAppContext';
 import CustomFlatList from './ui/CustomFlatList';
 import UserSummaryBlock from './UserSummaryBlock';
 
-  function showTitleByStatus(status) {
-    switch (status) {
-      case 'store-waiting':
-        return 'Interested Providers';
-      case 'store-in-progress':
-        return 'Provider working on request';
-      case 'store-done':
-        return 'Provider complete request';
-      case 'jobs-in-progress':
-        return 'Customer placed request';
-      case 'jobs-done':
-        return 'Customer placed request';
-      default:
-        return '';
-    }
+function showTitleByStatus(status) {
+  switch (status) {
+    case 'store-waiting':
+      return 'Interested Providers';
+    case 'store-in-progress':
+      return 'Provider working on request';
+    case 'store-done':
+      return 'Provider complete request';
+    case 'jobs-in-progress':
+      return 'Customer placed request';
+    case 'jobs-done':
+      return 'Customer placed request';
+    default:
+      return '';
   }
+}
 
-export default function ProvidersSection({styles, currentJobInfo, status='store-waiting', closeAllModal}) {
+function UserSummaryBlockWrapper({
+  userId,
+  status,
+  currentJobId,
+  closeAllModal,
+  providersController,
+}) {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    providersController.getUserById(userId).then((u) => {
+      if (active) setUser(u);
+    });
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  if (!user) return null; // или можно <Loader />
+
+  return (
+    <UserSummaryBlock
+      status={status}
+      user={user}
+      currentJobId={currentJobId}
+      closeAllModal={closeAllModal}
+    />
+  );
+}
+
+export default function ProvidersSection({
+  styles,
+  currentJobInfo,
+  status = 'store-waiting',
+  closeAllModal,
+}) {
   const { providersController, activeThemeStyles } = useComponentContext();
   const [isModalVisible, setIsModalVisible] = useState(false);
-  
+
   function checkListByStatus() {
     switch (status) {
       case 'store-waiting':
@@ -46,14 +90,22 @@ export default function ProvidersSection({styles, currentJobInfo, status='store-
 
   const providerList = checkListByStatus();
   console.log('ProvidersSection providerList:', providerList);
-  
+
   const renderProviderList = () => (
     <>
       {Platform.OS === 'web' ? (
         <CustomFlatList
           data={providerList || []}
           keyExtractor={(_, index) => index.toString()}
-          renderItem={({ item }) => <UserSummaryBlock status={status} user={providersController.getUserById(item.id || item)} currentJobId={currentJobInfo?.id} closeAllModal={closeAllModal} />}
+          renderItem={({ item }) => (
+            <UserSummaryBlockWrapper
+              status={status}
+              userId={item.id || item}
+              currentJobId={currentJobInfo?.id}
+              closeAllModal={closeAllModal}
+              providersController={providersController}
+            />
+          )}
           contentContainerStyle={styles.container}
           keyboardShouldPersistTaps='handled'
         />
@@ -61,38 +113,78 @@ export default function ProvidersSection({styles, currentJobInfo, status='store-
         <FlatList
           data={providerList || []}
           keyExtractor={(_, index) => index.toString()}
-          renderItem={({ item }) => <UserSummaryBlock status={status} user={providersController.getUserById(item.id || item)} currentJobId={currentJobInfo?.id} closeAllModal={closeAllModal} />}
+          renderItem={({ item }) => (
+            <UserSummaryBlock
+              status={status}
+              user={providersController.getUserById(item.id || item)}
+              currentJobId={currentJobInfo?.id}
+              closeAllModal={closeAllModal}
+            />
+          )}
           contentContainerStyle={styles.container}
           keyboardShouldPersistTaps='handled'
         />
       )}
     </>
   );
-  
+
   return (
     <View
       style={[
         styles.inputBlock,
-        { backgroundColor: activeThemeStyles?.formInputBackground, maxHeight: RFValue(200), overflow: 'hidden' },
+        {
+          backgroundColor: activeThemeStyles?.formInputBackground,
+          maxHeight: RFValue(200),
+          overflow: 'hidden',
+        },
       ]}
       key='providers'
     >
       <View>
         <View style={styleRow.header}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {status==='store-waiting' && providerList?.length > 0 && (
-              <View style={[styles.badge, { backgroundColor: activeThemeStyles?.secondaryBadgeBackground }]}> 
-                <Text style={[styles.badgeText, { color: activeThemeStyles?.badgeTextColor }]}> 
-                  {providerList.length} 
+            {status === 'store-waiting' && providerList?.length > 0 && (
+              <View
+                style={[
+                  styles.badge,
+                  {
+                    backgroundColor:
+                      activeThemeStyles?.secondaryBadgeBackground,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.badgeText,
+                    { color: activeThemeStyles?.badgeTextColor },
+                  ]}
+                >
+                  {providerList.length}
                 </Text>
               </View>
             )}
-            <Text style={[styles.label, {marginBottom: 0, marginLeft: RFValue(8)}]}>{showTitleByStatus(status)}</Text>
+            <Text
+              style={[
+                styles.label,
+                { marginBottom: 0, marginLeft: RFValue(8) },
+              ]}
+            >
+              {showTitleByStatus(status)}
+            </Text>
           </View>
 
-          {status==='store-waiting' && <Pressable onPress={() => setIsModalVisible(true)} style={styleRow.iconButton}>
-            <Ionicons name="expand" size={RFValue(16)} color={activeThemeStyles?.textColor} />
-          </Pressable>}
+          {status === 'store-waiting' && (
+            <Pressable
+              onPress={() => setIsModalVisible(true)}
+              style={styleRow.iconButton}
+            >
+              <Ionicons
+                name='expand'
+                size={RFValue(16)}
+                color={activeThemeStyles?.textColor}
+              />
+            </Pressable>
+          )}
         </View>
       </View>
 
@@ -103,11 +195,20 @@ export default function ProvidersSection({styles, currentJobInfo, status='store-
         animationType='slide'
         presentationStyle='fullScreen'
       >
-        <View style={[styleRow.modalContainer, { backgroundColor: activeThemeStyles?.backgroundColor }]}>
+        <View
+          style={[
+            styleRow.modalContainer,
+            { backgroundColor: activeThemeStyles?.backgroundColor },
+          ]}
+        >
           <View style={styleRow.modalHeader}>
             <Text style={styleRow.modalTitle}>Interested Providers</Text>
             <Pressable onPress={() => setIsModalVisible(false)}>
-              <Ionicons name="contract" size={RFValue(18)} color={activeThemeStyles?.textColor} />
+              <Ionicons
+                name='contract'
+                size={RFValue(18)}
+                color={activeThemeStyles?.textColor}
+              />
             </Pressable>
           </View>
           {renderProviderList()}

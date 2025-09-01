@@ -1,6 +1,19 @@
+import { jobTypesTranslations } from './jobTypesTranslations';
+import { jobSubTypesTranslations } from './jobSubTypesTranslations';
+import { licensesTranslations } from './licensesTranslations';
+
 export const translations = {
   en: {
     translation: {
+      jobTypes: {
+        ...jobTypesTranslations.en,
+      },
+      jobSubTypes: {
+        ...jobSubTypesTranslations.en,
+      },
+      licenses: {
+        ...licensesTranslations.en,
+      },
       onboarding: {
         skip: 'Skip',
         first_slide_title: 'Welcome!',
@@ -46,6 +59,8 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         resend_modal_text: 'A new code has been sent to your email.',
         ok: 'OK',
         invalid_email: 'Enter a valid email',
+        clear_code: 'Clear code',
+        invalid_code: 'Invalid code',
       },
       tabs: {
         store: 'Store',
@@ -59,20 +74,81 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         'in-progress': 'In Progress',
         done: 'Done',
       },
+      my_profile: {
+        first_name: 'First Name',
+        surname: 'Surname',
+        about: 'About',
+        location: 'Location',
+        email: 'Email',
+        phone: 'Phone Number',
+        cupons: 'Cupons',
+        subscription: 'Subscription',
+        payment: 'Payment method',
+        change_password: 'Change Password',
+        logout: 'Logout',
+        export_data: 'Export data',
+        delete: 'Delete User',
+      },
+      settings: {
+        language: 'Language',
+        language_en: 'English',
+        language_he: 'Hebrew',
+        theme: 'Theme',
+        theme_light: 'Light',
+        theme_dark: 'Dark',
+        location: 'Location',
+        notifications: 'Notifications',
+        about: 'About',
+        regulations: 'Regulations',
+        have_question: 'Do you have a question?',
+        just_cheer: 'Just want to cheer?',
+      },
+      common: {
+        visit: 'Visit',
+        close: 'Close',
+        search: 'Search',
+        no_results: 'No results found',
+      },
+      profile: {
+        professions: 'Professions',
+        job_types: 'Types of jobs',
+        job_subtypes: 'Job subtypes',
+        about_me: 'About me',
+        contact_info: 'Contact information',
+        open_contact_info: 'Open contact information for $1.50',
+      },
+      comments: {
+        title: 'Comments',
+        all: 'All',
+        positive: 'Positive',
+        negative: 'Negative',
+        add: 'Add comment',
+        placeholder: 'Write your comment...',
+        submit: 'Submit',
+      },
     },
   },
   he: {
     translation: {
+      jobTypes: {
+        ...jobTypesTranslations.he,
+      },
+      jobSubTypes: {
+        ...jobSubTypesTranslations.he,
+      },
+      licenses: {
+        ...licensesTranslations.he,
+      },
       onboarding: {
         skip: 'לְדַלֵג',
-        onboarding_first_slide_title: 'קַבָּלַת פָּנִים!',
-        onboarding_first_slide_text:
+        first_slide_title: 'קַבָּלַת פָּנִים!',
+        first_slide_text:
           'אפליקציה זו נוצרה על ידי חשמלאים,\nעבור חשמלאים. מהיום אתה לא לבד,\nברוכים הבאים לקהילה',
-        onboarding_first_slide_btn_text: 'הַבָּא',
-        onboarding_second_slide_title: 'מציאת פרילנסרים בקלות',
-        onboarding_second_slide_text:
+        first_slide_btn_text: 'הַבָּא',
+        second_slide_title: 'מציאת פרילנסרים בקלות',
+        second_slide_text:
           'אתה יכול להעלות משרות שיש לך לאפליקציה\nולמצוא פרילנסרים מוכשרים בקלות ובפשטות\nלעזור לך לבצע את העבודה',
-        onboarding_second_slide_btn_text: 'בואו נתחיל',
+        second_slide_btn_text: 'בואו נתחיל',
       },
       register: {
         terms_title: 'תקנון',
@@ -110,6 +186,8 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         resend_modal_text: 'קוד חדש נשלח לאימייל שלך.',
         ok: 'אוקיי',
         invalid_email: 'הזן אימייל תקין',
+        clear_code: 'נקה קוד',
+        invalid_code: 'קוד שגוי',
       },
       tabs: {
         store: 'חנות',
@@ -122,6 +200,58 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         waiting: 'בהמתנה',
         'in-progress': 'בתהליך',
         done: 'בוצע',
+      },
+      my_profile: {
+        first_name: 'שם פרטי',
+        surname: 'שם משפחה',
+        about: 'אודות',
+        location: 'מיקום',
+        email: 'אימייל',
+        phone: 'טלפון',
+        cupons: 'קופונים',
+        subscription: 'מנוי',
+        payment: 'אמצעי תשלום',
+        change_password: 'שנה סיסמה',
+        logout: 'התנתקות',
+        export_data: 'ייצוא נתונים',
+        delete: 'מחק משתמש',
+      },
+      settings: {
+        language: 'שפה',
+        language_en: 'אנגלית',
+        language_he: 'עברית',
+        theme: 'ערכת נושא',
+        theme_light: 'בהיר',
+        theme_dark: 'כהה',
+        location: 'מיקום',
+        notifications: 'התראות',
+        about: 'אודות',
+        regulations: 'תקנות',
+        have_question: 'יש לך שאלה?',
+        just_cheer: 'רק רוצה לעודד?',
+      },
+      common: {
+        visit: 'בקר',
+        close: 'סגור',
+        search: 'חפש',
+        no_results: 'לא נמצאו תוצאות',
+      },
+      profile: {
+        professions: 'מקצועות',
+        job_types: 'סוגי עבודות',
+        job_subtypes: 'תתי עבודות',
+        about_me: 'עליי',
+        contact_info: 'פרטי קשר',
+        open_contact_info: 'פתח פרטי קשר ב־1.50$',
+      },
+      comments: {
+        title: 'תגובות',
+        all: 'הכל',
+        positive: 'חיוביות',
+        negative: 'שליליות',
+        add: 'הוסף תגובה',
+        placeholder: 'כתוב את התגובה שלך...',
+        submit: 'שלח',
       },
     },
   },

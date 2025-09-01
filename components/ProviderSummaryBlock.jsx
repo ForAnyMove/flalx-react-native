@@ -1,19 +1,35 @@
 import { useState } from 'react';
-import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View, Platform } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useComponentContext } from '../context/globalAppContext';
 import { JOB_TYPES } from '../constants/jobTypes';
 import { JOB_SUB_TYPES } from '../constants/jobSubTypes';
 import { LICENSES } from '../constants/licenses';
 import { icons } from '../constants/icons';
+import { useWindowInfo } from '../context/windowContext';
 import { useTranslation } from 'react-i18next';
+import CommentsSection from './CommentsSection';
 
 const ProviderSummaryBlock = ({ user }) => {
   const { t } = useTranslation();
-  const { themeController } = useComponentContext();
+  const { themeController, languageController } = useComponentContext();
+  const { height, isLandscape } = useWindowInfo();
+  const isRTL = languageController.isRTL;
+
   const [modalVisible, setModalVisible] = useState(false);
   const [showContactInfo, setShowContactInfo] = useState(false);
-  
+
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const sizes = {
+    font: isWebLandscape ? height * 0.016 : RFValue(12),
+    small: isWebLandscape ? height * 0.014 : RFValue(10),
+    avatar: isWebLandscape ? height * 0.06 : RFValue(33),
+    modalAvatar: isWebLandscape ? height * 0.1 : RFValue(75),
+    icon: isWebLandscape ? height * 0.035 : RFValue(28),
+    padding: isWebLandscape ? height * 0.01 : RFValue(10),
+    cardWidth: isWebLandscape ? '32%' : '100%', // 👈 3 в ряд для web-landscape
+  };
+
   const {
     avatar,
     name,
@@ -23,134 +39,223 @@ const ProviderSummaryBlock = ({ user }) => {
     jobSubTypes,
     about,
     email,
-    phoneNumber
+    phoneNumber,
   } = user;
 
   return (
     <>
       {/* Summary Block */}
-      <View style={styles.summaryContainer}>
-        <View style={styles.avatarNameContainer}>
+      <View
+        style={[
+          styles.summaryContainer,
+          {
+            width: sizes.cardWidth,
+            padding: sizes.padding,
+            flexDirection: isRTL ? 'row-reverse' : 'row',
+            backgroundColor: themeController.current?.formInputBackground,
+            borderRadius: isWebLandscape ? height * 0.01 : RFValue(8),
+          },
+        ]}
+      >
+        <View
+          style={[
+            styles.avatarNameContainer,
+            { flexDirection: isRTL ? 'row-reverse' : 'row' },
+          ]}
+        >
           {avatar ? (
-            <Image source={{ uri: avatar }} style={styles.avatar} />
+            <Image
+              source={{ uri: avatar }}
+              style={{
+                width: sizes.avatar,
+                height: sizes.avatar,
+                borderRadius: sizes.avatar / 2,
+              }}
+            />
           ) : (
-            <View style={styles.avatarPlaceholder}>
+            <View
+              style={[
+                styles.avatarPlaceholder,
+                {
+                  width: sizes.avatar,
+                  height: sizes.avatar,
+                  borderRadius: sizes.avatar / 2,
+                },
+              ]}
+            >
               <Image source={icons.person} style={{ width: '100%', height: '100%' }} />
             </View>
           )}
-          <Text style={styles.nameText}>{name} {surname}</Text>
+          <Text
+            style={{
+              fontSize: sizes.font,
+              fontWeight: '600', // 👈 вернул жирность
+              color: themeController.current?.textColor,
+              marginHorizontal: RFValue(8),
+            }}
+          >
+            {name} {surname}
+          </Text>
         </View>
-        <TouchableOpacity onPress={() => setModalVisible(true)} style={[styles.visitButton, { backgroundColor: themeController.current?.buttonColorPrimaryDefault }]}>
-          <Text style={[styles.visitButtonText, { color: themeController.current?.buttonTextColorPrimary}]}>Visit</Text>
+        <TouchableOpacity
+          onPress={() => setModalVisible(true)}
+          style={[
+            styles.visitButton,
+            {
+              backgroundColor: themeController.current?.buttonColorPrimaryDefault,
+              paddingHorizontal: sizes.padding,
+            },
+          ]}
+        >
+          <Text
+            style={{
+              fontSize: sizes.small,
+              fontWeight: '600',
+              color: themeController.current?.buttonTextColorPrimary,
+            }}
+          >
+            {t('common.visit')}
+          </Text>
         </TouchableOpacity>
       </View>
 
       {/* Fullscreen Modal */}
       <Modal visible={modalVisible} animationType="slide">
-        <View style={styles.modalHeader}>
+        <View style={[styles.modalHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
           <TouchableOpacity
             onPress={() => {
               setModalVisible(false);
               setShowContactInfo(false);
             }}
           >
-            <Image source={icons.back} style={{ width: RFValue(28), height: RFValue(28) }} />
+            <Image
+              source={icons.back}
+              style={{
+                width: sizes.icon,
+                height: sizes.icon,
+                tintColor: themeController.current?.textColor,
+              }}
+            />
           </TouchableOpacity>
           <Text style={styles.modalTitle}>FLALX</Text>
         </View>
-        <ScrollView contentContainerStyle={styles.modalContent}>
+        <ScrollView contentContainerStyle={{ padding: sizes.padding }}>
           {avatar ? (
-            <Image source={{ uri: avatar }} style={styles.modalAvatar} />
+            <Image
+              source={{ uri: avatar }}
+              style={{
+                width: sizes.modalAvatar,
+                height: sizes.modalAvatar,
+                borderRadius: sizes.modalAvatar / 2,
+                alignSelf: 'center',
+              }}
+            />
           ) : (
-            <View style={styles.modalAvatarPlaceholder}>
-              <Image source={icons.person} style={{ width: RFValue(40), height: RFValue(40) }} />
+            <View
+              style={[
+                styles.modalAvatarPlaceholder,
+                {
+                  width: sizes.modalAvatar,
+                  height: sizes.modalAvatar,
+                  borderRadius: sizes.modalAvatar / 2,
+                },
+              ]}
+            >
+              <Image source={icons.person} style={{ width: '60%', height: '60%' }} />
             </View>
           )}
-          <Text style={styles.modalName}>{name} {surname}</Text>
+          <Text
+            style={{
+              fontSize: sizes.font,
+              fontWeight: '600',
+              textAlign: 'center',
+              marginBottom: RFValue(6),
+              color: themeController.current?.textColor,
+            }}
+          >
+            {name} {surname}
+          </Text>
 
           {/* Professions */}
+          <Text style={styles.sectionTitle}>{t('profile.professions')}</Text>
           <View style={styles.centerRow}>
-            {professions?.map((p, index) => (
-              <View key={index} style={styles.professionBadge}>
-                <Text style={styles.professionText}>{LICENSES[p]}</Text>
+            {professions?.map((p, i) => (
+              <View key={i} style={styles.professionBadge}>
+                <Text style={{ fontSize: sizes.small }}>{LICENSES[p]}</Text>
               </View>
             ))}
           </View>
 
           {/* Job Types */}
-          <Text style={styles.sectionTitle}>Types of job I&apos;m looking for</Text>
+          <Text style={styles.sectionTitle}>{t('profile.job_types')}</Text>
           <View style={styles.wrapRow}>
-            {jobTypes?.map((type, index) => (
-              <View key={index} style={styles.typeBadge}>
-                <Text style={styles.typeText}>{JOB_TYPES[type]}</Text>
+            {jobTypes?.map((type, i) => (
+              <View key={i} style={styles.typeBadge}>
+                <Text style={{ fontSize: sizes.small }}>{JOB_TYPES[type]}</Text>
               </View>
             ))}
           </View>
 
           {/* Sub Types */}
-          <Text style={styles.sectionTitle}>Sub types of job am I interested</Text>
+          <Text style={styles.sectionTitle}>{t('profile.job_subtypes')}</Text>
           <View style={styles.wrapRow}>
-            {jobSubTypes?.map((sub, index) => (
-              <View key={index} style={styles.typeBadge}>
-                <Text style={styles.typeText}>{JOB_SUB_TYPES[sub]}</Text>
+            {jobSubTypes?.map((sub, i) => (
+              <View key={i} style={styles.typeBadge}>
+                <Text style={{ fontSize: sizes.small }}>{JOB_SUB_TYPES[sub]}</Text>
               </View>
             ))}
           </View>
 
           {/* About */}
-          <Text style={styles.sectionTitle}>A little about me</Text>
-          <Text style={styles.aboutText}>{about}</Text>
+          <Text style={styles.sectionTitle}>{t('profile.about_me')}</Text>
+          <Text style={{ fontSize: sizes.small, color: '#444' }}>{about}</Text>
 
           {/* Contact Info */}
-          <Text style={styles.sectionTitle}>Contact information</Text>
+          <Text style={styles.sectionTitle}>{t('profile.contact_info')}</Text>
           {!showContactInfo ? (
             <TouchableOpacity
               style={[
                 styles.primaryBtn,
-                {
-                  backgroundColor: themeController.current?.buttonColorPrimaryDefault,
-                  marginHorizontal: 0,
-                },
+                { backgroundColor: themeController.current?.buttonColorPrimaryDefault },
               ]}
               onPress={() => setShowContactInfo(true)}
             >
               <Text
-                style={[
-                  styles.primaryText,
-                  { color: themeController.current?.buttonTextColorPrimary },
-                ]}
+                style={{
+                  fontSize: sizes.small,
+                  color: themeController.current?.buttonTextColorPrimary,
+                }}
               >
-                Open contact information for 1.50$
+                {t('profile.open_contact_info')}
               </Text>
             </TouchableOpacity>
           ) : (
             <>
-              <Text style={styles.contactInfo}>📞 {phoneNumber}</Text>
-              <Text style={styles.contactInfo}>✉️ {email}</Text>
+              <Text style={{ fontSize: sizes.small }}>📞 {phoneNumber}</Text>
+              <Text style={{ fontSize: sizes.small }}>✉️ {email}</Text>
             </>
           )}
+          <CommentsSection userId={user.id} allowAdd={true} />
         </ScrollView>
-          <TouchableOpacity
-            style={[
-              styles.primaryBtn,
-              {
-                backgroundColor: themeController.current?.buttonColorPrimaryDefault,
-              },
-            ]}
-            onPress={() => {
-              setModalVisible(false);
-              setShowContactInfo(false);
+        <TouchableOpacity
+          style={[
+            styles.primaryBtn,
+            { backgroundColor: themeController.current?.buttonColorPrimaryDefault },
+          ]}
+          onPress={() => {
+            setModalVisible(false);
+            setShowContactInfo(false);
+          }}
+        >
+          <Text
+            style={{
+              fontSize: sizes.small,
+              color: themeController.current?.buttonTextColorPrimary,
             }}
           >
-            <Text
-              style={[
-                styles.primaryText,
-                { color: themeController.current?.buttonTextColorPrimary },
-              ]}
-            >
-              Close
-            </Text>
-          </TouchableOpacity>
+            {t('common.close')}
+          </Text>
+        </TouchableOpacity>
       </Modal>
     </>
   );
@@ -160,138 +265,25 @@ export default ProviderSummaryBlock;
 
 const styles = StyleSheet.create({
   summaryContainer: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: RFValue(10),
+    marginBottom: RFValue(8),
   },
-  avatarNameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: RFValue(33),
-    height: RFValue(33),
-    borderRadius: RFValue(21),
-    marginRight: RFValue(10),
-  },
-  avatarPlaceholder: {
-    width: RFValue(33),
-    height: RFValue(33),
-    borderRadius: RFValue(21),
-    backgroundColor: '#ddd',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: RFValue(10),
-  },
-  nameText: {
-    fontSize: RFValue(12),
-    fontWeight: '500',
-  },
-  visitButton: {
-    paddingHorizontal: RFValue(14),
-    paddingVertical: RFValue(5),
-    borderRadius: RFValue(5),
-  },
-  visitButtonText: {
-    fontWeight: '600',
-  },
-  modalContent: {
-    padding: RFValue(14),
-    paddingBottom: RFValue(20),
-  },
-  modalAvatar: {
-    width: RFValue(75),
-    height: RFValue(75),
-    borderRadius: RFValue(50),
-    alignSelf: 'center',
-    marginBottom: RFValue(10),
-  },
-  modalAvatarPlaceholder: {
-    width: RFValue(75),
-    height: RFValue(75),
-    borderRadius: RFValue(50),
-    backgroundColor: '#ddd',
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
-    marginBottom: RFValue(10),
-  },
-  modalName: {
-    fontSize: RFValue(16),
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: RFValue(6),
-  },
-  centerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    marginBottom: RFValue(12),
-  },
-  wrapRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: RFValue(4),
-    marginBottom: RFValue(10),
-  },
-  professionBadge: {
-    backgroundColor: '#eee',
-    paddingHorizontal: RFValue(6),
-    paddingVertical: RFValue(4),
-    borderRadius: RFValue(5),
-    marginHorizontal: RFValue(4),
-    marginVertical: RFValue(1),
-  },
-  professionText: {
-    fontSize: RFValue(10),
-    color: '#444',
-  },
-  typeBadge: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: RFValue(6),
-    paddingHorizontal: RFValue(6),
-    paddingVertical: RFValue(4),
-    margin: RFValue(2),
-  },
-  typeText: {
-    fontSize: RFValue(10),
-    color: '#444',
-  },
-  sectionTitle: {
-    fontWeight: '600',
-    fontSize: RFValue(12),
-    marginBottom: RFValue(5),
-    color: '#333',
-  },
-  aboutText: {
-    fontSize: RFValue(10),
-    color: '#444',
-    marginBottom: RFValue(12),
-  },
+  avatarNameContainer: { alignItems: 'center' },
+  avatarPlaceholder: { backgroundColor: '#ddd', justifyContent: 'center', alignItems: 'center' },
+  visitButton: { borderRadius: RFValue(5) },
   modalHeader: {
-    flexDirection: 'row',
     alignItems: 'center',
     padding: RFValue(10),
     borderBottomWidth: 1,
     borderColor: '#ccc',
     justifyContent: 'space-between',
   },
-  modalTitle: {
-    fontSize: RFValue(20),
-    fontWeight: 'bold',
-    color: '#0A62EA',
-  },
-  primaryBtn: {
-    padding: RFValue(12),
-    marginHorizontal: RFValue(12),
-    borderRadius: RFValue(6),
-    alignItems: 'center',
-    marginVertical: RFValue(5),
-  },
-  primaryText: {
-    fontSize: RFValue(12),
-    fontWeight: 'bold',
-  },
+  modalTitle: { fontSize: RFValue(18), fontWeight: 'bold', color: '#0A62EA' },
+  sectionTitle: { fontWeight: '600', marginBottom: RFValue(5), color: '#333' },
+  centerRow: { flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', marginBottom: RFValue(10) },
+  wrapRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: RFValue(10) },
+  professionBadge: { backgroundColor: '#eee', padding: RFValue(4), borderRadius: RFValue(5), margin: RFValue(2) },
+  typeBadge: { borderWidth: 1, borderColor: '#ccc', borderRadius: RFValue(6), padding: RFValue(4), margin: RFValue(2) },
+  primaryBtn: { padding: RFValue(10), margin: RFValue(10), borderRadius: RFValue(6), alignItems: 'center' },
 });

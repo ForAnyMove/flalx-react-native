@@ -7,258 +7,342 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Platform,
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
 import { useState } from 'react';
 import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
 import { icons } from '../../../constants/icons';
+import { useWindowInfo } from '../../../context/windowContext';
+import { useTranslation } from 'react-i18next';
 
 export default function Profile() {
-  const { user, themeController } = useComponentContext();
+  const { user, themeController, languageController, session } = useComponentContext();
   const [userState, setUserState] = useState(user.current || {});
+  const { height, isLandscape } = useWindowInfo();
+  const { t } = useTranslation();
+  const isRTL = languageController.isRTL;
+
+  // базовые размеры (для мобайла и портретного веба)
+  const baseFont = RFValue(12);
+  const avatarSize = RFValue(100);
+  const btnPadding = RFValue(10);
+  const btnFont = RFValue(12);
+  const btnWidth = '100%';
+  const fieldFont = RFValue(10);
+  const fieldPadding = RFValue(10);
+  const fieldMargin = RFValue(12);
+  const containerPadding = RFValue(5);
+  const containerWidth = '100%';
+  const iconSize = RFValue(16);
+
+
+  // для web-landscape переопределяем
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const sizes = {
+    baseFont: isWebLandscape ? height * 0.016 : baseFont,
+    avatarSize: isWebLandscape ? height * 0.13 : avatarSize,
+    btnPadding: isWebLandscape ? height * 0.0144 : btnPadding,
+    btnMargin: isWebLandscape ? height * 0 : RFValue(12),
+    btnFont: isWebLandscape ? height * 0.017 : btnFont,
+    btnWidth: isWebLandscape ? '32%' : btnWidth,
+    fieldFont: isWebLandscape ? height * 0.0145 : fieldFont,
+    fieldPadding: isWebLandscape ? height * 0.009 : fieldPadding,
+    fieldMargin: isWebLandscape ? height * 0 : fieldMargin,
+    containerPadding: isWebLandscape ? height*0.02 : containerPadding,
+    containerWidth: isWebLandscape ? '98%' : containerWidth,
+    iconSize: isWebLandscape ? RFValue(8) : iconSize,
+    paddingVertical: isWebLandscape ? height * 0.005 : RFPercentage(2),
+  };
 
   return (
     <ScrollView
       style={[
         styles.userProfile,
-        { backgroundColor: themeController.current?.backgroundColor },
+        { backgroundColor: themeController.current?.backgroundColor, paddingVertical: sizes.paddingVertical },
       ]}
+      contentContainerStyle={{
+        alignItems: isWebLandscape ? 'center' : 'stretch',
+      }}
     >
-      <View style={{ paddingHorizontal: RFValue(5) }}>
+      <View
+        style={{
+          paddingHorizontal: sizes.containerPadding,
+          width: sizes.containerWidth,
+        }}
+      >
         <ImageBackground
           source={userState?.profileBack}
-          resizeMode='cover'
+          resizeMode="cover"
           style={[
             styles.profileBack,
             {
               backgroundColor:
                 themeController.current?.profileDefaultBackground,
+              height: isWebLandscape ? height * 0.3 : RFPercentage(30),
+              marginBottom: isWebLandscape ? height * 0.01 : RFValue(12),
+              borderRadius: isWebLandscape ? RFValue(5) : RFValue(10),
             },
           ]}
         >
-          {userState?.avatar && (
-            <Image
-              source={
-                useState.avatar ? { uri: userState.avatar } : icons.person
-              }
-              style={{
-                width: RFValue(100),
-                height: RFValue(100),
-                borderRadius: RFValue(100),
-                backgroundColor: '#ccc',
-              }}
-            />
-          )}
+          <Image
+            source={
+              userState.avatar
+                ? { uri: userState.avatar }
+                : icons.defaultAvatarInverse
+            }
+            style={{
+              width: sizes.avatarSize,
+              height: sizes.avatarSize,
+              borderRadius: sizes.avatarSize / 2,
+              backgroundColor: '#ccc',
+            }}
+          />
         </ImageBackground>
 
-        <InfoField
-          label='First Name'
-          value={userState?.name}
-          changeInfo={(newText) =>
-            setUserState((prev) => ({ ...prev, name: newText }))
-          }
-        />
-        <InfoField
-          label='Surname'
-          value={userState?.surname}
-          changeInfo={(newText) =>
-            setUserState((prev) => ({ ...prev, surname: newText }))
-          }
-        />
-        <InfoField
-          label='About'
-          value={userState?.about}
-          changeInfo={(newText) =>
-            setUserState((prev) => ({ ...prev, about: newText }))
-          }
-          multiline
-        />
-        <InfoField
-          label='Location'
-          value={userState?.location || 'Not set'}
-          changeInfo={(newText) =>
-            setUserState((prev) => ({ ...prev, location: newText }))
-          }
-        />
-        <InfoField
-          label='Email'
-          value={userState?.email}
-          changeInfo={(newText) =>
-            setUserState((prev) => ({ ...prev, email: newText }))
-          }
-        />
-        <InfoField
-          label='Phone Number'
-          value={userState?.phoneNumber}
-          changeInfo={(newText) =>
-            setUserState((prev) => ({ ...prev, phoneNumber: newText }))
-          }
-        />
+        {/* Инфо-поля */}
+        <View
+          style={{
+            flexDirection: isWebLandscape ? 'row' : 'column',
+            flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
+            justifyContent: isWebLandscape ? 'space-between' : 'center',
+            gap: RFValue(6),
+            direction: isRTL ? 'rtl' : 'ltr',
+          }}
+        >
+          {[
+            { key: 'first_name', value: userState?.name, field: 'name' },
+            { key: 'surname', value: userState?.surname, field: 'surname' },
+            { key: 'about', value: userState?.about, field: 'about', multiline: true },
+            { key: 'location', value: userState?.location || '', field: 'location' },
+            { key: 'email', value: userState?.email, field: 'email' },
+            { key: 'phone', value: userState?.phoneNumber, field: 'phoneNumber' },
+          ].map((f) => (
+            <InfoField
+              key={f.key}
+              label={t(`my_profile.${f.key}`)}
+              value={f.value}
+              changeInfo={(v) => setUserState((p) => ({ ...p, [f.field]: v }))}
+              baseFont={sizes.fieldFont}
+              fieldPadding={sizes.fieldPadding}
+              fieldMargin={sizes.fieldMargin}
+              iconSize={sizes.iconSize}
+              isLandscape={isLandscape}
+              multiline={f.multiline}
+            />
+          ))}
+        </View>
+
         <View
           style={[
             styles.breakLine,
-            { backgroundColor: themeController.current?.breakLineColor },
+            { backgroundColor: themeController.current?.breakLineColor, marginVertical: isWebLandscape ? height * 0.015 : RFValue(12) },
           ]}
         />
-        <TouchableOpacity
-          style={[
-            styles.primaryBtn,
-            {
-              backgroundColor:
-                themeController.current?.buttonColorPrimaryDefault,
-            },
-          ]}
+
+        {/* Первые 3 кнопки */}
+        <View
+          style={{
+            flexDirection: isWebLandscape ? 'row' : 'column',
+            flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
+            justifyContent: isWebLandscape ? 'space-between' : 'center',
+            gap: RFValue(6),
+            direction: isRTL ? 'rtl' : 'ltr',
+          }}
         >
-          <Text
-            style={[
-              styles.primaryText,
-              { color: themeController.current?.buttonTextColorPrimary },
-            ]}
-          >
-            Cupones
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.primaryBtn,
-            {
-              backgroundColor:
-                themeController.current?.buttonColorPrimaryDefault,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.primaryText,
-              { color: themeController.current?.buttonTextColorPrimary },
-            ]}
-          >
-            Subscription
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.primaryBtn,
-            {
-              backgroundColor:
-                themeController.current?.buttonColorPrimaryDefault,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.primaryText,
-              { color: themeController.current?.buttonTextColorPrimary },
-            ]}
-          >
-            Payment method
-          </Text>
-        </TouchableOpacity>
+          {['cupons', 'subscription', 'payment'].map((key) => (
+            <TouchableOpacity
+              key={key}
+              style={[
+                styles.primaryBtn,
+                {
+                  backgroundColor:
+                    themeController.current?.buttonColorPrimaryDefault,
+                  padding: sizes.btnPadding,
+                  marginBottom: sizes.btnMargin,
+                  width: sizes.btnWidth,
+                  borderRadius: isWebLandscape ? RFValue(3) : RFValue(5),
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.primaryText,
+                  {
+                    fontSize: sizes.btnFont,
+                    color: themeController.current?.buttonTextColorPrimary,
+                  },
+                ]}
+              >
+                {t(`my_profile.${key}`)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         <View
           style={[
             styles.breakLine,
-            { backgroundColor: themeController.current?.breakLineColor },
+            { backgroundColor: themeController.current?.breakLineColor, marginVertical: isWebLandscape ? height * 0.015 : RFValue(12) },
           ]}
         />
-        <TouchableOpacity
-          style={[
-            styles.primaryReverseBtn,
-            {
-              backgroundColor: themeController.current?.buttonTextColorPrimary,
-              borderColor: themeController.current?.buttonColorPrimaryDefault,
-            },
-          ]}
+
+        {/* Остальные кнопки */}
+        <View
+          style={{
+            flexDirection: isWebLandscape ? 'row' : 'column',
+            flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
+            justifyContent: isWebLandscape ? 'space-between' : 'center',
+            gap: RFValue(6),
+            direction: isRTL ? 'rtl' : 'ltr',
+            marginBottom: isWebLandscape ? height * 0.02 : RFValue(12),
+          }}
         >
-          <Text
-            style={[
-              styles.primaryText,
-              { color: themeController.current?.buttonColorPrimaryDefault },
-            ]}
-          >
-            Cupones
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.secondaryReverseBtn,
+          {[
             {
-              backgroundColor:
-                themeController.current?.buttonTextColorSecondary,
-              borderColor: themeController.current?.buttonColorSecondaryDefault,
+              key: 'change_password',
+              style: styles.primaryReverseBtn,
+              textStyle: styles.primaryText,
+              bg: themeController.current?.buttonTextColorPrimary,
+              color: themeController.current?.buttonColorPrimaryDefault,
+              border: themeController.current?.buttonColorPrimaryDefault,
+              onPress: () => {},
             },
-          ]}
-        >
-          <Text
-            style={[
-              styles.secondaryText,
-              { color: themeController.current?.buttonColorSecondaryDefault },
-            ]}
-          >
-            Subscription
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.secondaryReverseBtn,
             {
-              backgroundColor:
-                themeController.current?.buttonTextColorSecondary,
-              borderColor: themeController.current?.buttonColorSecondaryDefault,
+              key: 'logout',
+              style: styles.secondaryReverseBtn,
+              textStyle: styles.secondaryText,
+              bg: themeController.current?.buttonTextColorSecondary,
+              color: themeController.current?.buttonColorSecondaryDefault,
+              border: themeController.current?.buttonColorSecondaryDefault,
+              onPress: () => {session.signOut()},
             },
-          ]}
-        >
-          <Text
-            style={[
-              styles.secondaryText,
-              { color: themeController.current?.buttonColorSecondaryDefault },
-            ]}
-          >
-            Payment method
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.secondaryBtn,
             {
-              backgroundColor:
-                themeController.current?.buttonColorSecondaryDefault,
+              key: 'export_data',
+              style: styles.secondaryReverseBtn,
+              textStyle: styles.secondaryText,
+              bg: themeController.current?.buttonTextColorSecondary,
+              color: themeController.current?.buttonColorSecondaryDefault,
+              border: themeController.current?.buttonColorSecondaryDefault,
+              onPress: () => {},
             },
-          ]}
+          ].map((btn) => (
+            <TouchableOpacity
+              key={btn.key}
+              onPress={btn.onPress}
+              style={[
+                btn.style,
+                {
+                  backgroundColor: btn.bg,
+                  borderColor: btn.border,
+                  padding: sizes.btnPadding,
+                  marginBottom: sizes.btnMargin,
+                  width: sizes.btnWidth,
+                  borderRadius: isWebLandscape ? RFValue(3) : RFValue(5),
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  btn.textStyle,
+                  { fontSize: sizes.btnFont, color: btn.color },
+                ]}
+              >
+                {t(`my_profile.${btn.key}`)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View
+          style={{
+            flexDirection: isWebLandscape ? 'row' : 'column',
+            flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
+            justifyContent: 'center',
+            gap: RFValue(6),
+            direction: isRTL ? 'rtl' : 'ltr',
+          }}
         >
-          <Text
-            style={[
-              styles.secondaryText,
-              { color: themeController.current?.buttonTextColorSecondary },
-            ]}
-          >
-            Cupones
-          </Text>
-        </TouchableOpacity>
+          {[
+            {
+              key: 'delete',
+              style: styles.secondaryBtn,
+              textStyle: styles.secondaryText,
+              bg: themeController.current?.buttonColorSecondaryDefault,
+              color: themeController.current?.buttonTextColorSecondary,
+              onPress: () => {},
+            },
+          ].map((btn) => (
+            <TouchableOpacity
+              key={btn.key}
+              onPress={btn.onPress}
+              style={[
+                btn.style,
+                {
+                  backgroundColor: btn.bg,
+                  borderColor: btn.border,
+                  padding: sizes.btnPadding,
+                  marginBottom: sizes.btnMargin,
+                  width: sizes.btnWidth,
+                  borderRadius: isWebLandscape ? RFValue(3) : RFValue(5),
+                  onPress: () => {},
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  btn.textStyle,
+                  { fontSize: sizes.btnFont, color: btn.color },
+                ]}
+              >
+                {t(`my_profile.${btn.key}`)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
     </ScrollView>
   );
 }
 
-function InfoField({ label, value, changeInfo, multiline = false }) {
+function InfoField({
+  label,
+  value,
+  changeInfo,
+  multiline = false,
+  baseFont,
+  fieldPadding,
+  fieldMargin,
+  iconSize,
+  isLandscape,
+}) {
   const { themeController } = useComponentContext();
   const [editMode, setEditMode] = useState(false);
   const [textValue, setTextValue] = useState(value);
+
   return (
     <View
       style={[
         styles.profileInfoString,
         {
+          width: Platform.OS === 'web' && isLandscape ? '32%' : '100%',
+          paddingVertical: fieldPadding,
+          marginBottom: fieldMargin,
           backgroundColor: editMode
             ? themeController.current?.formInputBackgroundEditMode
             : themeController.current?.formInputBackground,
+          borderRadius:  Platform.OS === 'web' && isLandscape ? RFValue(3) : RFValue(5),
+          paddingHorizontal: Platform.OS === 'web' && isLandscape ? RFValue(8) : RFValue(14),
         },
       ]}
     >
-      <View style={{ width: '80%' }}>
+      <View style={{ flex: 1 }}>
         <Text
           style={[
             styles.profileInfoLabel,
-            { color: themeController.current?.formInputLabelColor },
+            {
+              fontSize: baseFont * 0.9,
+              color: themeController.current?.formInputLabelColor,
+            },
           ]}
         >
           {label}
@@ -267,17 +351,23 @@ function InfoField({ label, value, changeInfo, multiline = false }) {
           <TextInput
             style={[
               styles.profileInfoText,
-              { color: themeController.current?.formInputTextColor },
+              {
+                fontSize: baseFont,
+                color: themeController.current?.formInputTextColor,
+              },
             ]}
             value={textValue}
             onChangeText={setTextValue}
-            multiline
+            multiline={multiline}
           />
         ) : (
           <Text
             style={[
               styles.profileInfoText,
-              { color: themeController.current?.formInputTextColor },
+              {
+                fontSize: baseFont,
+                color: themeController.current?.formInputTextColor,
+              },
             ]}
           >
             {textValue}
@@ -294,7 +384,12 @@ function InfoField({ label, value, changeInfo, multiline = false }) {
           >
             <Image
               source={icons.cancel}
-              style={[styles.icon, { tintColor: '#00000080' }]}
+              style={{
+                width: iconSize,
+                height: iconSize,
+                resizeMode: 'contain',
+                tintColor: '#00000080',
+              }}
             />
           </TouchableOpacity>
           <TouchableOpacity
@@ -305,7 +400,12 @@ function InfoField({ label, value, changeInfo, multiline = false }) {
           >
             <Image
               source={icons.checkCircle}
-              style={[styles.icon, { tintColor: '#00000080' }]}
+              style={{
+                width: iconSize,
+                height: iconSize,
+                resizeMode: 'contain',
+                tintColor: '#00000080',
+              }}
             />
           </TouchableOpacity>
         </View>
@@ -313,7 +413,12 @@ function InfoField({ label, value, changeInfo, multiline = false }) {
         <TouchableOpacity onPress={() => setEditMode(true)}>
           <Image
             source={icons.edit}
-            style={[styles.icon, { tintColor: '#00000080' }]}
+            style={{
+              width: iconSize,
+              height: iconSize,
+              resizeMode: 'contain',
+              tintColor: '#00000080',
+            }}
           />
         </TouchableOpacity>
       )}
@@ -322,13 +427,9 @@ function InfoField({ label, value, changeInfo, multiline = false }) {
 }
 
 const styles = StyleSheet.create({
-  userProfile: {
-    flex: 1,
-    paddingVertical: RFPercentage(2),
-  },
+  userProfile: { flex: 1, paddingVertical: RFPercentage(2) },
   profileBack: {
     width: '100%',
-    height: RFPercentage(30),
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: RFValue(10),
@@ -336,81 +437,42 @@ const styles = StyleSheet.create({
     marginBottom: RFValue(12),
   },
   profileInfoString: {
-    marginBottom: RFValue(12),
     borderRadius: 8,
     paddingHorizontal: RFValue(14),
-    paddingVertical: RFValue(10),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  breakLine: {
-    width: '100%',
-    height: 1,
-    marginBottom: RFValue(16),
-  },
+  breakLine: { width: '100%', height: 1, marginVertical: RFValue(12) },
   primaryBtn: {
-    padding: RFValue(10),
     borderRadius: RFValue(5),
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: RFValue(12),
   },
-  primaryText: {
-    fontWeight: 'bold',
-    fontSize: RFValue(12),
-  },
-  primaryReverseBtn: {
-    padding: RFValue(10),
-    borderRadius: RFValue(5),
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: RFValue(12),
-    borderWidth: 1,
-  },
-  primaryReverseText: {
-    fontWeight: 'bold',
-    fontSize: RFValue(12),
-  },
+  primaryText: { fontWeight: 'bold' },
   secondaryBtn: {
-    padding: RFValue(10),
     borderRadius: RFValue(5),
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: RFValue(12),
   },
-  secondaryText: {
-    fontWeight: 'bold',
-    fontSize: RFValue(12),
+  secondaryText: { fontWeight: 'bold' },
+  primaryReverseBtn: {
+    borderRadius: RFValue(5),
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    marginBottom: RFValue(12),
   },
   secondaryReverseBtn: {
-    padding: RFValue(10),
     borderRadius: RFValue(5),
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: RFValue(12),
     borderWidth: 1,
+    marginBottom: RFValue(12),
   },
-  secondaryReverseText: {
-    fontWeight: 'bold',
-    fontSize: RFValue(12),
-  },
-  profileInfoLabel: {
-    fontWeight: 'bold',
-    marginBottom: RFValue(4),
-    fontSize: RFValue(10),
-  },
-  profileInfoText: {
-    fontSize: RFValue(10),
-    width: '100%',
-  },
-  editPanel: {
-    flexDirection: 'row',
-    gap: RFValue(5),
-  },
-  icon: {
-    width: RFValue(18),
-    height: RFValue(18),
-    resizeMode: 'contain',
-  },
+  profileInfoLabel: { fontWeight: 'bold', marginBottom: RFValue(4) },
+  profileInfoText: { width: '100%' },
+  editPanel: { flexDirection: 'row', gap: RFValue(5) },
 });

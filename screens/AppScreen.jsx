@@ -1,3 +1,5 @@
+// AppScreen.jsx
+import React, { useState } from 'react';
 import {
   Text,
   View,
@@ -5,50 +7,43 @@ import {
   Image,
   StyleSheet,
   Platform,
-  Dimensions,
-  I18nManager,
 } from 'react-native';
-import { useComponentContext } from '../context/globalAppContext';
-import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useComponentContext } from '../context/globalAppContext';
+import { useWindowInfo } from '../context/windowContext'; // 👈 добавили
 import AppMainScreen from './AppMainScreen';
 import AppProfileScreen from './AppProfileScreen';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { icons } from '../constants/icons';
 
-function useOrientation() {
-  const [orientation, setOrientation] = useState(getOrientation());
-
-  function getOrientation() {
-    const { width, height } = Dimensions.get('window');
-    return width > height ? 'landscape' : 'portrait';
-  }
-
-  useEffect(() => {
-    const subscription = Dimensions.addEventListener('change', () => {
-      setOrientation(getOrientation());
-    });
-
-    return () => subscription?.remove();
-  }, []);
-
-  return orientation;
-}
-
 export default function AppScreen() {
-  const { appTabController, profileTabController, themeController } =
-    useComponentContext();
-  const [screenName, setScreenName] = useState('app');
+  const {
+    appTabController,
+    profileTabController,
+    themeController,
+    languageController,
+  } = useComponentContext();
+
   const { t } = useTranslation();
-  const isRTL = I18nManager.isRTL;
+  const [screenName, setScreenName] = useState('app');
+  const isRTL = languageController.isRTL;
 
-  const { width, height } = Dimensions.get('window');
-  const isLandscape = width > height;
-  const orientation = useOrientation();
+  // ✅ Берём размеры и ориентацию из WindowProvider
+  const { width, height, isLandscape } = useWindowInfo();
 
+  const theme = themeController.current;
   const tabController =
     screenName === 'app' ? appTabController : profileTabController;
-  const theme = themeController.current;
+
+  // ширина боковой панели зависит от высоты
+  const sidebarWidth =
+    Platform.OS === 'web' && isLandscape
+      ? Math.max(90, Math.min(280, height * 0.22))
+      : 0;
+
+  // размеры для боковой панели (web+landscape) зависят от высоты
+  const iconSizeSide = Math.max(12, Math.min(30, height * 0.025));
+  const fontSizeSide = Math.max(9, Math.min(30, height * 0.018));
 
   const renderTab = (tabName = 'profile', isSub = false) => {
     const icon = icons[tabName];
@@ -57,35 +52,67 @@ export default function AppScreen() {
     const isActive =
       tabController.active === tabName ||
       tabController.activeSubTab === tabName;
+
+    const isSideMenu = Platform.OS === 'web' && isLandscape;
+    const isSubActive = isSub && tabController.activeSubTab === tabName;
+
     return (
       <TouchableOpacity
         key={tabName}
+        onPress={() =>
+          isSub ? tabController.goToSub(tabName) : tabController.goTo(tabName)
+        }
         style={[
           styles.tabContainer,
           isSub && styles.subTab,
-          { opacity: isActive ? 1 : 0.5 },
+          isSideMenu && {
+            flexDirection: isRTL ? 'row-reverse' : 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingVertical: 6,
+            paddingHorizontal: 0,
+            marginVertical: height*0.007,
+          },
+          // isSub &&
+          //   (isRTL
+          //     ? { paddingRight: RFValue(12) }
+          //     : { paddingLeft: RFValue(12) }),
+          isSubActive && {
+            backgroundColor: theme.buttonColorPrimaryDefault + '22',
+            borderRadius: RFValue(6),
+          },
+          { opacity: isActive || isSubActive ? 1 : 0.6 },
         ]}
-        onPress={() => {
-          isSub ? tabController.goToSub(tabName) : tabController.goTo(tabName);
-        }}
       >
-        <Image source={icon} style={styles.icon} />
-        {isLandscape && Platform.OS === 'web' ? (
-          <Text
-            style={[styles.tabText, { color: theme.tabBarTextColorActive }]}
-          >
-            {t(`tabs.${tabName}`)}
-          </Text>
-        ) : (
-          <Text
-            style={[
-              styles.tabTextBottom,
-              { color: theme.tabBarTextColorActive },
-            ]}
-          >
-            {t(`tabs.${tabName}`)}
-          </Text>
-        )}
+        <Image
+          source={icon}
+          style={
+            isSideMenu
+              ? {
+                  width: iconSizeSide,
+                  height: iconSizeSide,
+                  resizeMode: 'contain',
+                  marginHorizontal: 6,
+                }
+              : styles.icon
+          }
+        />
+        <Text
+          style={
+            isSideMenu
+              ? {
+                  fontSize: fontSizeSide,
+                  color: theme.tabBarTextColorActive,
+                  flexShrink: 1,
+                  textAlign: isRTL ? 'right' : 'left',
+                }
+              : [styles.tabTextBottom, { color: theme.tabBarTextColorActive }]
+          }
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {t(`tabs.${tabName}`)}
+        </Text>
       </TouchableOpacity>
     );
   };
@@ -97,7 +124,7 @@ export default function AppScreen() {
         <View
           style={[
             styles.sidebar,
-            { backgroundColor: theme.tabBarBackground },
+            { backgroundColor: theme.tabBarBackground, width: sidebarWidth },
             isRTL ? { right: 0 } : { left: 0 },
           ]}
         >
@@ -115,7 +142,7 @@ export default function AppScreen() {
       );
     }
 
-    // нижняя панель
+    // нижняя панель (мобильная)
     return (
       <View
         style={[styles.bottomBar, { backgroundColor: theme.tabBarBackground }]}
@@ -132,16 +159,19 @@ export default function AppScreen() {
         flexDirection: !isLandscape ? 'column' : isRTL ? 'row' : 'row-reverse',
       }}
     >
-      {/* Контент */}
       <View style={{ flex: 1 }}>
         {screenName === 'app' ? (
-          <AppMainScreen switchToProfile={() => setScreenName('profile')} />
+          <AppMainScreen
+            sidebarWidth={sidebarWidth}
+            switchToProfile={() => setScreenName('profile')}
+          />
         ) : (
-          <AppProfileScreen switchToApp={() => setScreenName('app')} />
+          <AppProfileScreen
+            sidebarWidth={sidebarWidth}
+            switchToApp={() => setScreenName('app')}
+          />
         )}
       </View>
-
-      {/* Панель навигации */}
       {renderNav()}
     </View>
   );
@@ -151,35 +181,30 @@ const styles = StyleSheet.create({
   bottomBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: RFValue(10),
+    paddingVertical: RFValue(10), // адаптив для мобилок
   },
   sidebar: {
-    // position: 'absolute',
-    width: '20%',
-    paddingVertical: RFValue(20),
-    paddingHorizontal: RFValue(10),
+    paddingVertical: RFValue(6),
+    paddingHorizontal: RFValue(8),
     justifyContent: 'flex-start',
   },
   tabContainer: {
     alignItems: 'center',
-    marginVertical: RFValue(8),
+    marginVertical: RFValue(6),
   },
   subTab: {
-    marginLeft: RFValue(20),
     flexDirection: 'row',
     alignItems: 'center',
   },
+  // иконки
   icon: {
-    width: RFValue(24),
-    height: RFValue(24),
+    width: RFValue(22),
+    height: RFValue(22),
     resizeMode: 'contain',
   },
-  tabText: {
-    fontSize: RFValue(14),
-    marginLeft: RFValue(8),
-  },
+  // текст для нижней панели
   tabTextBottom: {
     fontSize: RFValue(12),
-    marginTop: RFValue(4),
+    marginTop: RFValue(3),
   },
 });

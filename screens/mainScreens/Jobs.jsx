@@ -1,7 +1,5 @@
 import {
   Animated,
-  Dimensions,
-  I18nManager,
   Modal,
   PanResponder,
   Text,
@@ -15,22 +13,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { icons } from '../../constants/icons';
 import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
+import { useWindowInfo } from '../../context/windowContext';
 import NewJobModal from '../../components/NewJobModal';
 import NewScreen from './jobsTabs/New';
 import WaitingScreen from './jobsTabs/Waiting';
 import InProgressScreen from './jobsTabs/InProgress';
 import DoneScreen from './jobsTabs/Done';
 
-const SCREEN_WIDTH =
-  Dimensions.get('window').width *
-  (Platform.OS === 'web' &&
-  Dimensions.get('window').height < Dimensions.get('window').width
-    ? 0.8
-    : 1);
-
 const TAB_TITLES = ['new', 'waiting', 'in-progress', 'done'];
 
-// Тестовые значения для badge
 const badgeCounts = {
   new: 0,
   waiting: 3,
@@ -38,10 +29,16 @@ const badgeCounts = {
   done: 5,
 };
 
-export default function Jobs() {
-  const { themeController, appTabController } = useComponentContext();
+export default function Jobs({ sidebarWidth }) {
+  const { themeController, appTabController, languageController } =
+    useComponentContext();
   const { t } = useTranslation();
-  const isRTL = I18nManager.isRTL;
+  const isRTL = languageController.isRTL;
+
+  const { width, height, isLandscape } = useWindowInfo();
+
+  const SCREEN_WIDTH =
+    Platform.OS === 'web' && isLandscape ? width - sidebarWidth : width;
 
   const screenWidthRef = useRef(SCREEN_WIDTH);
   const [screenWidth, setScreenWidth] = useState(SCREEN_WIDTH);
@@ -54,25 +51,12 @@ export default function Jobs() {
   );
 
   useEffect(() => {
-    const onChange = ({ window }) => {
-      const isLandscape = window.width > window.height;
-      const landscapeMul = Platform.OS === 'web' && isLandscape ? 0.8 : 1;
-      screenWidthRef.current = window.width * landscapeMul;
-      setScreenWidth(window.width * landscapeMul);
-    };
-
-    const subscription = Dimensions.addEventListener('change', onChange);
-
-    // Очистка при размонтировании
-    return () => {
-      if (subscription?.remove) {
-        subscription.remove();
-      } else {
-        // Для старых версий React Native
-        Dimensions.removeEventListener('change', onChange);
-      }
-    };
-  }, []);
+    const newWidth = SCREEN_WIDTH;
+    screenWidthRef.current = newWidth;
+    setScreenWidth(newWidth);
+    // фиксируем scrollX при ресайзе
+    scrollX.setValue(-storeActiveTab.current * newWidth);
+  }, [SCREEN_WIDTH]);
 
   const scrollX = useRef(
     new Animated.Value(-storeActiveTab.current * screenWidthRef.current)
@@ -143,19 +127,16 @@ export default function Jobs() {
 
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) =>
-        Math.abs(gestureState.dx) > 10 &&
-        Math.abs(gestureState.dx) > Math.abs(gestureState.dy),
-
+      onMoveShouldSetPanResponder: (_, g) =>
+        Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy),
       onPanResponderGrant: () => {
         scrollX.setOffset(scrollX.__getValue());
         scrollX.setValue(0);
         isSwipeRight.current = null;
       },
-
-      onPanResponderMove: (_, gestureState) => {
+      onPanResponderMove: (_, g) => {
         if (isSwipeRight.current === null) {
-          isSwipeRight.current = gestureState.dx > 0; // свайп вправо — true, влево — false
+          isSwipeRight.current = g.dx > 0;
         }
         if (
           (storeActiveTab.current === 0 && isSwipeRight.current) ||
@@ -163,16 +144,14 @@ export default function Jobs() {
             !isSwipeRight.current)
         )
           return;
-        scrollX.setValue(gestureState.dx);
+        scrollX.setValue(g.dx);
       },
-
-      onPanResponderRelease: (_, gestureState) => {
+      onPanResponderRelease: (_, g) => {
         scrollX.flattenOffset();
-        const dx = gestureState.dx;
+        const dx = g.dx;
         const swipeThreshold = screenWidthRef.current * 0.25;
 
         let newTab = storeActiveTab.current;
-
         if (
           dx < swipeThreshold * -1 &&
           storeActiveTab.current < TAB_TITLES.length - 1
@@ -220,122 +199,114 @@ export default function Jobs() {
     }
   }, [appTabController.activeSubTab]);
 
+  // высота панели
+  const panelHeight =
+    Platform.OS === 'web' && isLandscape ? height * 0.08 : RFPercentage(10);
+
   return (
     <View style={{ flex: 1, userSelect: 'none' }}>
       {/* Заголовки вкладок */}
       <View
         style={{
           flexDirection: 'row',
-          height: RFPercentage(10),
+          height: panelHeight,
           backgroundColor: themeController.current?.backgroundColor,
           overflow: 'hidden',
         }}
       >
-        {TAB_TITLES.map((title, idx) => (
-          <TouchableOpacity
-            key={idx}
-            onPress={() => handleTabPress(idx)}
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              paddingBottom: RFValue(3),
-            }}
-          >
-            {/* Иконка */}
-            <View style={{ position: 'relative' }}>
-              <Animated.View
-                style={{ opacity: interpolatedOpacityValues[idx] }}
-              >
-                <Image
-                  source={icons[`${title}-dark`]}
-                  style={{
-                    width: RFValue(20),
-                    height: RFValue(20),
-                  }}
-                  resizeMode='contain'
-                />
-              </Animated.View>
-              {/* Badge если count > 0 */}
-              {badgeCounts[title] > 0 && (
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: -RFValue(4),
-                    right: -RFValue(10),
-                    minWidth: RFValue(12),
-                    height: RFValue(12),
-                    borderRadius: RFValue(8),
-                    backgroundColor:
-                      themeController.current?.mainBadgeBackground,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    paddingHorizontal: RFValue(3),
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: themeController.current?.badgeTextColor,
-                      fontSize: RFValue(8),
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    {badgeCounts[title]}
-                  </Text>
-                </View>
-              )}
-            </View>
-            {/* Заголовок */}
-            <View
+        {TAB_TITLES.map((title, idx) => {
+          const iconSize = panelHeight * 0.35;
+          const fontSize = panelHeight * 0.2;
+          const badgeSize = panelHeight * 0.25;
+
+          return (
+            <TouchableOpacity
+              key={idx}
+              onPress={() => handleTabPress(idx)}
               style={{
-                height: RFPercentage(5), // Высота для 2 строк
-                justifyContent: 'center', // Центровка по вертикали
-                paddingHorizontal: RFValue(4), // Чуть больше пространства по бокам
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                paddingBottom: panelHeight * 0.1,
               }}
             >
-              <Animated.Text
-                style={{
-                  color: interpolatedColorValues[idx],
-                  fontWeight: 'bold',
-                  textAlign: 'center', // Центровка по горизонтали
-                }}
-                numberOfLines={2}
-                ellipsizeMode='tail'
-              >
-                {t(`tabs.${title}`)}
-              </Animated.Text>
-            </View>
-          </TouchableOpacity>
-        ))}
+              {/* Иконка */}
+              <View style={{ position: 'relative' }}>
+                <Animated.View style={{ opacity: interpolatedOpacityValues[idx] }}>
+                  <Image
+                    source={icons[`${title}-dark`]}
+                    style={{ width: iconSize, height: iconSize }}
+                    resizeMode="contain"
+                  />
+                </Animated.View>
+                {badgeCounts[title] > 0 && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: -badgeSize * 0.3,
+                      right: -badgeSize * 0.5,
+                      minWidth: badgeSize,
+                      height: badgeSize,
+                      borderRadius: badgeSize / 2,
+                      backgroundColor: themeController.current?.mainBadgeBackground,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      paddingHorizontal: badgeSize * 0.3,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: themeController.current?.badgeTextColor,
+                        fontSize: badgeSize * 0.6,
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {badgeCounts[title]}
+                    </Text>
+                  </View>
+                )}
+              </View>
 
-        {/* Анимированное подчёркивание */}
+              {/* Заголовок */}
+              <View
+                style={{
+                  height: panelHeight * 0.35,
+                  justifyContent: 'center',
+                  paddingHorizontal: RFValue(4),
+                }}
+              >
+                <Animated.Text
+                  style={{
+                    color: interpolatedColorValues[idx],
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    fontSize,
+                  }}
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
+                  {t(`tabs.${title}`)}
+                </Animated.Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+        {/* underline */}
         <Animated.View
           style={{
             position: 'absolute',
             bottom: 0,
             left: underlineTranslateX,
             width: underlineAnimatedWidth,
-            height: RFValue(2),
+            height: panelHeight * 0.05,
             backgroundColor: themeController.current?.primaryColor,
             borderRadius: RFValue(2),
             zIndex: 2,
           }}
         />
-        {/* Внутренняя псевдо-тень */}
-        <View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: RFValue(2),
-            backgroundColor: themeController.current?.formInputBackground,
-            zIndex: 1,
-          }}
-        />
       </View>
 
-      {/* Контент с анимацией и свайпом */}
+      {/* Контент */}
       <View style={{ flex: 1 }} {...panResponder.panHandlers}>
         <Animated.View
           style={{
@@ -345,25 +316,23 @@ export default function Jobs() {
             transform: [{ translateX: scrollX }],
           }}
         >
-          {[
-            NewScreen,
-            WaitingScreen,
-            InProgressScreen,
-            DoneScreen,
-          ].map((Component, index) => (
-            <View
-              key={index}
-              style={{
-                width: screenWidthRef.current,
-                flex: 1,
-              }}
-            >
-              <Component />
-            </View>
-          ))}
+          {[NewScreen, WaitingScreen, InProgressScreen, DoneScreen].map(
+            (Component, index) => (
+              <View
+                key={index}
+                style={{
+                  width: screenWidthRef.current,
+                  flex: 1,
+                }}
+              >
+                <Component />
+              </View>
+            )
+          )}
         </Animated.View>
       </View>
-      <Modal visible={newJobModalVisible} animationType='slide'>
+
+      <Modal visible={newJobModalVisible} animationType="slide">
         <NewJobModal closeModal={() => setNewJobModalVisible(false)} />
       </Modal>
     </View>

@@ -93,6 +93,7 @@ export default function sessionManager() {
 
     if (error) {
       console.error('Ошибка проверки кода:', error.message);
+      throw new Error(`Ошибка проверки кода: ${error.message}`);
     } else {
       console.log('Успешный вход:', data);
       await saveSession(data.session);

@@ -6,18 +6,27 @@ import {
   Image,
   StyleSheet,
   View,
+  Platform,
 } from 'react-native';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
-import { RFValue } from 'react-native-responsive-fontsize';
+import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
 import Profile from './mainScreens/profileTabs/Profile';
 import Profession from './mainScreens/profileTabs/Profession';
 import Settings from './mainScreens/profileTabs/Settings';
+import { useWindowInfo } from '../context/windowContext';
+
+const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
+  if (Platform.OS === 'web') {
+    return isLandscape ? webSize*1.6 : RFValue(mobileSize);
+  }
+  return RFValue(mobileSize);
+};
 
 export default function AppProfileScreen({ switchToApp }) {
   const { session, profileTabController, themeController } =
     useComponentContext();
-console.log(profileTabController.active);
+  const { isLandscape, height } = useWindowInfo();
 
   function renderScreen() {
     switch (profileTabController.active) {
@@ -39,6 +48,7 @@ console.log(profileTabController.active);
           {
             backgroundColor: themeController.current?.backgroundColor,
             borderBottomColor: themeController.current?.formInputBackground,
+            height: Platform.OS === 'web' && isLandscape ? height*0.07 : RFPercentage(7)
           },
         ]}
       >
@@ -47,13 +57,13 @@ console.log(profileTabController.active);
           <Image
             source={icons.back}
             style={{
-              width: RFValue(24),
-              height: RFValue(24),
+              width: getResponsiveSize(20, height*0.02, isLandscape),
+              height: getResponsiveSize(20, height*0.02, isLandscape),
               margin: RFValue(10),
             }}
           />
         </TouchableOpacity>
-        <Text style={styles.logoText}>Flalx</Text>
+        <Text style={[styles.logoText, { fontSize: getResponsiveSize(18, height*0.02, isLandscape) }]}>Flalx</Text>
       </View>
       {renderScreen()}
     </>
@@ -63,7 +73,6 @@ console.log(profileTabController.active);
 const styles = StyleSheet.create({
   profileHeader: {
     width: '100%',
-    height: '8%',
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -71,7 +80,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   logoText: {
-    fontSize: RFValue(22),
+    fontSize: RFValue(20),
     textTransform: 'uppercase',
     fontWeight: 'bold',
     color: '#0A62EA',
