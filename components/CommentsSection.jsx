@@ -16,7 +16,7 @@ import { useComponentContext } from '../context/globalAppContext';
 import { useTranslation } from 'react-i18next';
 import { icons } from '../constants/icons';
 
-export default function CommentsSection({ userId, allowAdd }) {
+export default function CommentsSection({ userId, allowAdd=false }) {
   const { height, isLandscape } = useWindowInfo();
   const { themeController, providersController } = useComponentContext();
   const { t } = useTranslation();

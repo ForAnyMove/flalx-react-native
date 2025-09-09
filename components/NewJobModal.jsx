@@ -3,6 +3,7 @@ import {
   FlatList,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -22,24 +23,36 @@ import DateTimeInputDouble from './ui/DateTimeInputDouble';
 import ImagePickerModal from './ui/ImagePickerModal';
 import { icons } from '../constants/icons';
 import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
+import { useWindowInfo } from '../context/windowContext';
+import { useTranslation } from 'react-i18next';
 
-const WebAbsoluteWrapper = ({ children, style }) => {
+const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
+  if (Platform.OS === 'web') {
+    return isLandscape ? webSize * 1.6 : RFValue(mobileSize);
+  }
+  return RFValue(mobileSize);
+};
+
+const WebAbsoluteWrapper = ({ children, style, landscapeStyles }) => {
   if (Platform.OS === 'web') {
     return (
       <div
         style={{
           position: 'absolute',
-          top: style?.top ?? 0,
+          top: landscapeStyles?.top ?? style?.top ?? 0,
           left: style?.left ?? 0,
           right: style?.right ?? 0,
           backgroundColor: style?.backgroundColor ?? 'white',
           border: style?.borderWidth
             ? `${style.borderWidth}px solid ${style.borderColor}`
             : undefined,
-          borderRadius: style?.borderRadius ?? 0,
-          maxHeight: style?.maxHeight ?? undefined,
+          borderRadius:
+            landscapeStyles?.borderRadius ?? style?.borderRadius ?? 0,
+          maxHeight:
+            landscapeStyles?.maxHeight ?? style?.maxHeight ?? undefined,
           overflow: style?.overflow ?? 'hidden',
           zIndex: 999,
+          // width: '80%',
         }}
       >
         {children}
@@ -63,9 +76,30 @@ const renderAutocomplete = ({
   focusStates,
   error,
   backgroundColor = '#DFDFFF',
+  rtl = false,
+  isWebLandscape = false,
+  sizeOverrides = {},
 }) => (
-  <View style={[styles.inputBlock, { backgroundColor }]}>
-    <Text style={styles.label}>{label}</Text>
+  <View
+    style={[
+      styles.inputBlock,
+      { backgroundColor },
+      isWebLandscape && {
+        padding: sizeOverrides.padding,
+        borderRadius: sizeOverrides.borderRadius,
+        marginBottom: 0,
+      },
+    ]}
+  >
+    <Text
+      style={[
+        styles.label,
+        rtl && { textAlign: 'right' },
+        isWebLandscape && { fontSize: sizeOverrides.font },
+      ]}
+    >
+      {label}
+    </Text>
     <View
       style={[
         styles.autocompleteContainer,
@@ -99,14 +133,31 @@ const renderAutocomplete = ({
         }
         placeholder={placeholder}
         placeholderTextColor={error ? '#FF0000' : '#999'}
-        style={styles.input}
+        style={[
+          styles.input,
+          rtl && { textAlign: 'right' },
+          isWebLandscape && {
+            padding: sizeOverrides.padding,
+            fontSize: sizeOverrides.inputFont,
+            borderRadius: sizeOverrides.borderRadius,
+          },
+        ]}
       />
       {Object.keys(filtered).length > 0 && focusStates[stateFocusIndex] && (
-        <WebAbsoluteWrapper style={styles.suggestionBox}>
+        <WebAbsoluteWrapper
+          style={styles.suggestionBox}
+          landscapeStyles={
+            isWebLandscape && {
+              maxHeight: sizeOverrides.thumb,
+              borderRadius: sizeOverrides.borderRadius,
+              top: sizeOverrides.thumbGap,
+            }
+          }
+        >
           {Object.keys(filtered).map((item, index) => (
             <TouchableOpacity
               key={index}
-              style={{ zIndex: 999 }}
+              style={{ zIndex: 1999 }}
               onPress={() => {
                 setValue(item);
                 setFiltered([]);
@@ -117,7 +168,14 @@ const renderAutocomplete = ({
                 });
               }}
             >
-              <Text style={styles.suggestionItem}>{options[item]}</Text>
+              <Text
+                style={[
+                  styles.suggestionItem,
+                  isWebLandscape && { padding: sizeOverrides.padding },
+                ]}
+              >
+                {options[item]}
+              </Text>
             </TouchableOpacity>
           ))}
         </WebAbsoluteWrapper>
@@ -178,18 +236,49 @@ async function createNewJob(jobData, session) {
   }
 }
 
+// варианты статусов и цены
+const STATUS_OPTIONS = [
+  { key: 'default', i18n: 'default', price: 0.99 },
+  { key: 'top', i18n: 'top', price: 4.99 },
+  { key: 'verified', i18n: 'verified', price: 2.99 },
+];
+
 export default function NewJobModal({
   activeKey = '',
   closeModal,
   editMode = false,
   currentJobId = null,
   initialJob = null,
+  executorId,
 }) {
-  const { themeController, session, user, jobsController } =
+  const { themeController, session, user, jobsController, languageController } =
     useComponentContext();
+  const { width, height, isLandscape, sidebarWidth = 0 } = useWindowInfo();
+  const { t } = useTranslation();
+  const isRTL = languageController.isRTL;
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
-  // const [initialJob, setInitialJob] = useState(initialJob);
-  // const [loading, setLoading] = useState(editMode);
+  // размеры
+  const sizes = {
+    font: isWebLandscape ? height * 0.016 : RFValue(12),
+    inputFont: isWebLandscape ? height * 0.014 : RFValue(10),
+    padding: isWebLandscape ? height * 0.01 : RFValue(8),
+    margin: isWebLandscape ? height * 0.012 : RFValue(10),
+    borderRadius: isWebLandscape ? height * 0.006 : RFValue(5),
+    thumb: isWebLandscape ? height * 0.12 : RFValue(80),
+    thumbGap: isWebLandscape ? height * 0.05 : RFValue(28),
+    headerMargin: isWebLandscape ? height * 0.03 : RFValue(5),
+    modalPadding: isWebLandscape ? height * 0.014 : RFValue(12),
+    modalRadius: isWebLandscape ? height * 0.006 : RFValue(5),
+    modalTitle: isWebLandscape ? height * 0.022 : RFValue(16),
+    modalSub: isWebLandscape ? height * 0.016 : RFValue(12),
+    chipFont: isWebLandscape ? height * 0.016 : RFValue(12),
+    chipPadV: isWebLandscape ? height * 0.009 : RFValue(6),
+    chipPadH: isWebLandscape ? height * 0.016 : RFValue(12),
+    chipGap: isWebLandscape ? height * 0.012 : RFValue(8),
+    modalCardW: isWebLandscape ? Math.min(height * 0.56, 520) : '88%',
+    btnH: isWebLandscape ? height * 0.06 : RFValue(42),
+  };
 
   const [filteredTypes, setFilteredTypes] = useState(JOB_TYPES);
   const [filteredSubTypes, setFilteredSubTypes] = useState(JOB_SUB_TYPES);
@@ -210,8 +299,15 @@ export default function NewJobModal({
   const [endDateTime, setEndDateTime] = useState(
     initialJob?.endDateTime || null
   );
+  const [status, setStatus] = useState('default');
+  const selectedOption =
+    STATUS_OPTIONS.find((o) => o.key === status) || STATUS_OPTIONS[0];
+
+  const [statusModalVisible, setStatusModalVisible] = useState(false);
+  const [plansModalVisible, setPlansModalVisible] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
+
   // Состояния для управления фокусом на полях ввода
   const [focusStates, setFocusStates] = useState([false, false, false]);
 
@@ -261,7 +357,9 @@ export default function NewJobModal({
         jobChanges.endDateTime = new Date(endDateTime).toISOString();
       }
       if (Object.keys(jobChanges).length > 0) {
-        editJobById(currentJobId, jobChanges, session).then(() => jobsController.reloadCreator());
+        editJobById(currentJobId, jobChanges, session).then(() =>
+          jobsController.reloadCreator()
+        );
       }
     } else {
       const newJob = {
@@ -278,14 +376,17 @@ export default function NewJobModal({
           : null,
         endDateTime: endDateTime ? new Date(endDateTime).toISOString() : null,
         // createdAt: new Date().toISOString(),
-        status: 'waiting', // статус задания
+        status: status, // статус задания
         creator: user.current.id,
       };
-
+      if (executorId) {
+        newJob.personalExecutor = executorId;
+      }
       createNewJob(newJob, session).then(() => jobsController.reloadCreator());
     }
     closeModal();
   };
+
   const handleImageAdd = async (uris) => {
     try {
       const uploadedUrls = await Promise.all(
@@ -332,7 +433,7 @@ export default function NewJobModal({
 
   const formContent = [
     renderAutocomplete({
-      label: 'Type',
+      label: t('newJob.type', { defaultValue: 'Type' }),
       value: type,
       setValue: (text) => {
         setType(text);
@@ -343,16 +444,21 @@ export default function NewJobModal({
       filtered: filteredTypes,
       setFiltered: setFilteredTypes,
       options: JOB_TYPES,
-      placeholder: 'Select or type...',
+      placeholder: t('newJob.selectOrType', {
+        defaultValue: 'Select or type...',
+      }),
       stateFocusIndex: 0,
       setFocusStates: setFocusStates,
       filterOptions: filterOptions,
       focusStates: focusStates,
       error: fieldErrors.type,
       backgroundColor: themeController.current?.formInputBackground,
+      rtl: isRTL,
+      isWebLandscape,
+      sizeOverrides: sizes,
     }),
     renderAutocomplete({
-      label: 'Sub type',
+      label: t('newJob.subType', { defaultValue: 'Sub type' }),
       value: subType,
       setValue: (text) => {
         setSubType(text);
@@ -363,16 +469,23 @@ export default function NewJobModal({
       filtered: filteredSubTypes,
       setFiltered: setFilteredSubTypes,
       options: JOB_SUB_TYPES,
-      placeholder: 'Select or type...',
+      placeholder: t('newJob.selectOrType', {
+        defaultValue: 'Select or type...',
+      }),
       stateFocusIndex: 1,
       setFocusStates: setFocusStates,
       filterOptions: filterOptions,
       focusStates: focusStates,
       error: fieldErrors.subType,
       backgroundColor: themeController.current?.formInputBackground,
+      rtl: isRTL,
+      isWebLandscape,
+      sizeOverrides: sizes,
     }),
     renderAutocomplete({
-      label: 'Profession (optional)',
+      label: t('newJob.profession', {
+        defaultValue: 'Profession (optional)',
+      }),
       value: profession,
       setValue: (text) => {
         setProfession(text);
@@ -383,28 +496,54 @@ export default function NewJobModal({
       filtered: filteredProfessions,
       setFiltered: setFilteredProfessions,
       options: LICENSES,
-      placeholder: 'Select...',
+      placeholder: t('newJob.select', { defaultValue: 'Select...' }),
       stateFocusIndex: 2,
       setFocusStates: setFocusStates,
       filterOptions: filterOptions,
       focusStates: focusStates,
       error: fieldErrors.profession,
       backgroundColor: themeController.current?.formInputBackground,
+      rtl: isRTL,
+      isWebLandscape,
+      sizeOverrides: sizes,
     }),
     <View
       style={[
         styles.inputBlock,
         { backgroundColor: themeController.current?.formInputBackground },
+        isWebLandscape && {
+          padding: sizes.padding,
+          borderRadius: sizes.borderRadius,
+          marginBottom: sizes.margin,
+        },
       ]}
       key='description'
     >
-      <Text style={styles.label}>Description</Text>
+      <Text
+        style={[
+          styles.label,
+          isRTL && { textAlign: 'right' },
+          isWebLandscape && { fontSize: sizes.font },
+        ]}
+      >
+        {t('newJob.description', { defaultValue: 'Description' })}
+      </Text>
       <TextInput
         value={description}
         onChangeText={setDescription}
-        placeholder='Type...'
+        placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
         placeholderTextColor={'#999'}
-        style={[styles.input, { height: RFValue(70) }]}
+        style={[
+          styles.input,
+          { height: RFValue(70) },
+          isRTL && { textAlign: 'right' },
+          isWebLandscape && {
+            height: height * 0.12,
+            padding: sizes.padding,
+            fontSize: sizes.inputFont,
+            borderRadius: sizes.borderRadius,
+          },
+        ]}
         multiline
       />
     </View>,
@@ -412,25 +551,70 @@ export default function NewJobModal({
       style={[
         styles.inputBlock,
         { backgroundColor: themeController.current?.formInputBackground },
+        isWebLandscape && {
+          padding: sizes.padding,
+          borderRadius: sizes.borderRadius,
+          marginBottom: sizes.margin,
+        },
       ]}
       key='price'
     >
-      <Text style={styles.label}>Price</Text>
+      <Text
+        style={[
+          styles.label,
+          isRTL && { textAlign: 'right' },
+          isWebLandscape && { fontSize: sizes.font },
+        ]}
+      >
+        {t('newJob.price', { defaultValue: 'Price' })}
+      </Text>
       <TextInput
         value={price}
         onChangeText={setPrice}
-        placeholder='Type...'
+        placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
         placeholderTextColor={'#999'}
-        style={styles.input}
+        style={[
+          styles.input,
+          isRTL && { textAlign: 'right' },
+          isWebLandscape && {
+            padding: sizes.padding,
+            fontSize: sizes.inputFont,
+            borderRadius: sizes.borderRadius,
+          },
+        ]}
         keyboardType='numeric'
       />
     </View>,
     <View style={styles.imageInputBlock} key='images'>
-      <View style={styles.imageRow}>
+      <Text
+        style={[
+          styles.label,
+          { marginBottom: RFValue(8) },
+          isRTL && { textAlign: 'right' },
+          isWebLandscape && {
+            fontSize: sizes.font,
+            marginBottom: sizes.margin / 2,
+          },
+        ]}
+      >
+        {t('newJob.uploadingPhotos', { defaultValue: 'Uploading photos' })}
+      </Text>
+      <View
+        style={[styles.imageRow, isRTL && { flexDirection: 'row-reverse' }]}
+      >
         {/* Кнопка добавления */}
         <TouchableOpacity
           onPress={() => setModalVisible(true)}
-          style={styles.addImageButton}
+          style={[
+            styles.addImageButton,
+            {
+              width: sizes.thumb,
+              height: sizes.thumb,
+              borderRadius: sizes.borderRadius,
+              marginRight: isRTL ? 0 : sizes.margin / 2,
+              marginLeft: isRTL ? sizes.margin / 2 : 0,
+            },
+          ]}
         >
           <Image
             source={icons.plus}
@@ -450,8 +634,27 @@ export default function NewJobModal({
           contentContainerStyle={styles.imageScrollContainer}
         >
           {images.map((uri, index) => (
-            <View key={index} style={styles.imageWrapper}>
-              <Image source={{ uri }} style={styles.imageThumbnail} />
+            <View
+              key={index}
+              style={[
+                styles.imageWrapper,
+                isWebLandscape && {
+                  marginRight: isRTL ? 0 : sizes.margin / 2,
+                  marginLeft: isRTL ? sizes.margin / 2 : 0,
+                },
+              ]}
+            >
+              <Image
+                source={{ uri }}
+                style={[
+                  styles.imageThumbnail,
+                  isWebLandscape && {
+                    width: sizes.thumb,
+                    height: sizes.thumb,
+                    borderRadius: sizes.borderRadius,
+                  },
+                ]}
+              />
               <TouchableOpacity
                 style={styles.removeIcon}
                 onPress={() => removeImage(index)}
@@ -481,29 +684,54 @@ export default function NewJobModal({
       style={[
         styles.inputBlock,
         { backgroundColor: themeController.current?.formInputBackground },
+        isWebLandscape && {
+          padding: sizes.padding,
+          borderRadius: sizes.borderRadius,
+          marginBottom: sizes.margin,
+        },
       ]}
       key='location'
     >
-      <Text style={styles.label}>Location</Text>
+      <Text
+        style={[
+          styles.label,
+          isRTL && { textAlign: 'right' },
+          isWebLandscape && { fontSize: sizes.font },
+        ]}
+      >
+        {t('newJob.location', { defaultValue: 'Location' })}
+      </Text>
       <TextInput
         value={location}
         onChangeText={setLocation}
-        placeholder='Type...'
+        placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
         placeholderTextColor={'#999'}
-        style={styles.input}
+        style={[
+          styles.input,
+          isRTL && { textAlign: 'right' },
+          isWebLandscape && {
+            padding: sizes.padding,
+            fontSize: sizes.inputFont,
+            borderRadius: sizes.borderRadius,
+          },
+        ]}
       />
     </View>,
     <View style={styles.row} key='dateTimeRange'>
       {Platform.OS !== 'android' ? (
         <DateTimeInput
           key='startDateTime'
-          label='Start Date & Time'
+          label={t('newJob.startDateTime', {
+            defaultValue: 'Start date and time',
+          })}
           value={startDateTime}
           onChange={setStartDateTime}
         />
       ) : (
         <DateTimeInputDouble
-          label='Start Date & Time'
+          label={t('newJob.startDateTime', {
+            defaultValue: 'Start date and time',
+          })}
           value={startDateTime}
           onChange={setStartDateTime}
         />
@@ -511,19 +739,515 @@ export default function NewJobModal({
       {Platform.OS !== 'android' ? (
         <DateTimeInput
           key='endDateTime'
-          label='End Date & Time'
+          label={t('newJob.endDateTime', {
+            defaultValue: 'End date and time',
+          })}
           value={endDateTime}
           onChange={setEndDateTime}
         />
       ) : (
         <DateTimeInputDouble
-          label='End Date & Time'
+          label={t('newJob.endDateTime', {
+            defaultValue: 'End date and time',
+          })}
           value={endDateTime}
           onChange={setEndDateTime}
         />
       )}
     </View>,
   ];
+
+  const bg = themeController.current?.formInputBackground;
+
+  // --- GRID (ТОЛЬКО веб-альбомная ориентация) ---
+  // const GridWebLandscape = () => {
+  //   return (
+  //     <ScrollView
+  //       contentContainerStyle={[styles.container, { padding: sizes.margin }]}
+  //       keyboardShouldPersistTaps='handled'
+  //     >
+  //       <View
+  //         direction={isRTL ? 'rtl' : 'ltr'}
+  //         style={[
+  //           styles.gridContainer,
+  //           {
+  //             justifyContent: isRTL ? 'end' : 'start',
+  //             position: 'relative',
+  //             gridRowGap: height * 0.02,
+  //           },
+  //         ]}
+  //       >
+  //         {/* Row 1: Type (1/2) + Description (1/2, высота побольше) */}
+  //         <View
+  //           style={[
+  //             styles.gridHalf,
+  //             {
+  //               // marginBottom: sizes.margin,
+  //               zIndex: 10,
+  //               gridArea: isRTL ? '1 / 2 / 2 / 3' : '1 / 1 / 2 / 2',
+  //             },
+  //           ]}
+  //         >
+  //           {renderAutocomplete({
+  //             label: t('newJob.type', { defaultValue: 'Type' }),
+  //             value: type,
+  //             setValue: (text) => {
+  //               setType(text);
+  //               if (fieldErrors.type && text) {
+  //                 setFieldErrors((prev) => ({ ...prev, type: false }));
+  //               }
+  //             },
+  //             filtered: filteredTypes,
+  //             setFiltered: setFilteredTypes,
+  //             options: JOB_TYPES,
+  //             placeholder: t('newJob.selectOrType', {
+  //               defaultValue: 'Select or type...',
+  //             }),
+  //             stateFocusIndex: 0,
+  //             setFocusStates: setFocusStates,
+  //             filterOptions,
+  //             focusStates,
+  //             error: fieldErrors.type,
+  //             backgroundColor: bg,
+  //             rtl: isRTL,
+  //             isWebLandscape,
+  //             sizeOverrides: sizes,
+  //           })}
+  //         </View>
+
+  //         <View
+  //           style={[
+  //             styles.gridHalf,
+  //             {
+  //               // marginBottom: sizes.margin,
+  //               zIndex: 9,
+  //               gridArea: isRTL ? '1 / 1 / 3 / 2' : '1 / 2 / 3 / 3',
+  //             },
+  //           ]}
+  //         >
+  //           <View
+  //             style={[
+  //               styles.inputBlock,
+  //               { backgroundColor: bg },
+  //               {
+  //                 padding: sizes.padding,
+  //                 borderRadius: sizes.borderRadius,
+  //                 marginBottom: 0,
+  //                 height: '100%',
+  //               },
+  //             ]}
+  //           >
+  //             <Text
+  //               style={[
+  //                 styles.label,
+  //                 isRTL && { textAlign: 'right' },
+  //                 { fontSize: sizes.font },
+  //               ]}
+  //             >
+  //               {t('newJob.description', { defaultValue: 'Description' })}
+  //             </Text>
+  //             <TextInput
+  //               value={description}
+  //               onChangeText={setDescription}
+  //               placeholder={t('newJob.typePlaceholder', {
+  //                 defaultValue: 'Type...',
+  //               })}
+  //               placeholderTextColor={'#999'}
+  //               style={{
+  //                 padding: sizes.padding,
+  //                 fontSize: sizes.inputFont,
+  //                 borderRadius: sizes.borderRadius,
+  //                 height: height * 0.12,
+  //                 backgroundColor: 'transparent',
+  //                 textAlign: isRTL ? 'right' : 'left',
+  //               }}
+  //               multiline
+  //             />
+  //           </View>
+  //         </View>
+
+  //         {/* Row 2: Sub type (1/2) + Price (1/2) */}
+  //         <View
+  //           style={[
+  //             styles.gridHalf,
+  //             {
+  //               // marginBottom: sizes.margin,
+  //               zIndex: 8,
+  //               gridArea: isRTL ? '2 / 2 / 3 / 3' : '2 / 1 / 3 / 2',
+  //             },
+  //           ]}
+  //         >
+  //           {renderAutocomplete({
+  //             label: t('newJob.subType', { defaultValue: 'Sub type' }),
+  //             value: subType,
+  //             setValue: (text) => {
+  //               setSubType(text);
+  //               if (fieldErrors.subType && text) {
+  //                 setFieldErrors((prev) => ({ ...prev, subType: false }));
+  //               }
+  //             },
+  //             filtered: filteredSubTypes,
+  //             setFiltered: setFilteredSubTypes,
+  //             options: JOB_SUB_TYPES,
+  //             placeholder: t('newJob.selectOrType', {
+  //               defaultValue: 'Select or type...',
+  //             }),
+  //             stateFocusIndex: 1,
+  //             setFocusStates: setFocusStates,
+  //             filterOptions,
+  //             focusStates,
+  //             error: fieldErrors.subType,
+  //             backgroundColor: bg,
+  //             rtl: isRTL,
+  //             isWebLandscape,
+  //             sizeOverrides: sizes,
+  //           })}
+  //         </View>
+
+  //         {/* Row 3: Profession (1/2) + Location (1/2) */}
+  //         <View
+  //           style={[
+  //             styles.gridHalf,
+  //             {
+  //               // marginBottom: sizes.margin,
+  //               zIndex: 7,
+  //               gridArea: isRTL ? '3 / 2 / 4 / 3' : '3 / 1 / 4 / 2',
+  //             },
+  //           ]}
+  //         >
+  //           {renderAutocomplete({
+  //             label: t('newJob.profession', {
+  //               defaultValue: 'Profession (optional)',
+  //             }),
+  //             value: profession,
+  //             setValue: (text) => {
+  //               setProfession(text);
+  //               if (fieldErrors.profession && text) {
+  //                 setFieldErrors((prev) => ({ ...prev, profession: false }));
+  //               }
+  //             },
+  //             filtered: filteredProfessions,
+  //             setFiltered: setFilteredProfessions,
+  //             options: LICENSES,
+  //             placeholder: t('newJob.select', { defaultValue: 'Select...' }),
+  //             stateFocusIndex: 2,
+  //             setFocusStates: setFocusStates,
+  //             filterOptions,
+  //             focusStates,
+  //             error: fieldErrors.profession,
+  //             backgroundColor: bg,
+  //             rtl: isRTL,
+  //             isWebLandscape,
+  //             sizeOverrides: sizes,
+  //           })}
+  //         </View>
+
+  //         <View
+  //           key='price'
+  //           style={[
+  //             styles.gridHalf,
+  //             {
+  //               // marginBottom: sizes.margin,
+  //               zIndex: 6,
+  //               gridArea: isRTL ? '3 / 1 / 4 / 2' : '3 / 2 / 4 / 3',
+  //             },
+  //           ]}
+  //         >
+  //           <View
+  //             style={[
+  //               styles.inputBlock,
+  //               { backgroundColor: bg },
+  //               {
+  //                 padding: sizes.padding,
+  //                 borderRadius: sizes.borderRadius,
+  //                 marginBottom: 0,
+  //               },
+  //             ]}
+  //           >
+  //             <Text
+  //               style={[
+  //                 styles.label,
+  //                 isRTL && { textAlign: 'right' },
+  //                 { fontSize: sizes.font },
+  //               ]}
+  //             >
+  //               {t('newJob.price', { defaultValue: 'Price' })}
+  //             </Text>
+  //             <TextInput
+  //               key='priceInput'
+  //               value={price}
+  //               onChangeText={setPrice}
+  //               placeholder={t('newJob.typePlaceholder', {
+  //                 defaultValue: 'Type...',
+  //               })}
+  //               placeholderTextColor={'#999'}
+  //               style={{
+  //                 padding: sizes.padding,
+  //                 fontSize: sizes.inputFont,
+  //                 borderRadius: sizes.borderRadius,
+  //                 backgroundColor: 'transparent',
+  //                 textAlign: isRTL ? 'right' : 'left',
+  //               }}
+  //               keyboardType='numeric'
+  //             />
+  //           </View>
+  //         </View>
+
+  //         {/* Row 4: Uploading photos (full) */}
+  //         <View
+  //           style={[
+  //             styles.gridFull,
+  //             {
+  //               // marginBottom: sizes.margin,
+  //               zIndex: 5,
+  //               gridArea: isRTL ? '4 / 1 / 6 / 3' : '4 / 1 / 6 / 3',
+  //             },
+  //           ]}
+  //         >
+  //           <Text
+  //             style={[
+  //               styles.label,
+  //               isRTL && { textAlign: 'right' },
+  //               { fontSize: sizes.font, marginBottom: sizes.margin / 2 },
+  //             ]}
+  //           >
+  //             {t('newJob.uploadingPhotos', {
+  //               defaultValue: 'Uploading photos',
+  //             })}
+  //           </Text>
+
+  //           <View
+  //             style={[
+  //               styles.imageRow,
+  //               isRTL && { flexDirection: 'row-reverse' },
+  //             ]}
+  //           >
+  //             <TouchableOpacity
+  //               onPress={() => setModalVisible(true)}
+  //               style={[
+  //                 styles.addImageButton,
+  //                 {
+  //                   width: sizes.thumb,
+  //                   height: sizes.thumb,
+  //                   borderRadius: sizes.borderRadius,
+  //                   marginRight: isRTL ? 0 : sizes.margin / 2,
+  //                   marginLeft: isRTL ? sizes.margin / 2 : 0,
+  //                 },
+  //               ]}
+  //             >
+  //               <Image
+  //                 source={icons.plus}
+  //                 style={{
+  //                   width: RFPercentage(3),
+  //                   height: RFPercentage(3),
+  //                   tintColor: themeController.current?.buttonTextColorPrimary,
+  //                 }}
+  //                 resizeMode='contain'
+  //               />
+  //             </TouchableOpacity>
+
+  //             <ScrollView
+  //               horizontal
+  //               showsHorizontalScrollIndicator={false}
+  //               contentContainerStyle={[
+  //                 styles.imageScrollContainer,
+  //                 isRTL && { flexDirection: 'row-reverse' },
+  //               ]}
+  //             >
+  //               {images.map((uri, index) => (
+  //                 <View
+  //                   key={index}
+  //                   style={[
+  //                     styles.imageWrapper,
+  //                     {
+  //                       marginRight: isRTL ? 0 : sizes.margin / 2,
+  //                       marginLeft: isRTL ? sizes.margin / 2 : 0,
+  //                     },
+  //                   ]}
+  //                 >
+  //                   <Image
+  //                     source={{ uri }}
+  //                     style={{
+  //                       width: sizes.thumb,
+  //                       height: sizes.thumb,
+  //                       borderRadius: sizes.borderRadius,
+  //                     }}
+  //                   />
+  //                   <TouchableOpacity
+  //                     style={styles.removeIcon}
+  //                     onPress={() => removeImage(index)}
+  //                   >
+  //                     <Image
+  //                       source={icons.cross}
+  //                       style={{
+  //                         width: RFValue(16),
+  //                         height: RFValue(16),
+  //                         tintColor:
+  //                           themeController.current?.formInputLabelColor,
+  //                       }}
+  //                       resizeMode='contain'
+  //                     />
+  //                   </TouchableOpacity>
+  //                 </View>
+  //               ))}
+  //             </ScrollView>
+  //           </View>
+  //         </View>
+
+  //         <View
+  //           style={[
+  //             styles.gridHalf,
+  //             {
+  //               // marginBottom: sizes.margin,
+  //               zIndex: 4,
+  //               gridArea: isRTL ? '6 / 2 / 7 / 3' : '6 / 1 / 7 / 2',
+  //             },
+  //           ]}
+  //         >
+  //           <View
+  //             style={[
+  //               styles.inputBlock,
+  //               { backgroundColor: bg },
+  //               {
+  //                 padding: sizes.padding,
+  //                 borderRadius: sizes.borderRadius,
+  //                 marginBottom: 0,
+  //               },
+  //             ]}
+  //           >
+  //             <Text
+  //               style={[
+  //                 styles.label,
+  //                 isRTL && { textAlign: 'right' },
+  //                 { fontSize: sizes.font },
+  //               ]}
+  //             >
+  //               {t('newJob.location', { defaultValue: 'Location' })}
+  //             </Text>
+  //             <TextInput
+  //               value={location}
+  //               onChangeText={setLocation}
+  //               placeholder={t('newJob.typePlaceholder', {
+  //                 defaultValue: 'Type...',
+  //               })}
+  //               placeholderTextColor={'#999'}
+  //               style={{
+  //                 padding: sizes.padding,
+  //                 fontSize: sizes.inputFont,
+  //                 borderRadius: sizes.borderRadius,
+  //                 backgroundColor: 'transparent',
+  //                 textAlign: isRTL ? 'right' : 'left',
+  //               }}
+  //             />
+  //           </View>
+  //         </View>
+
+  //         {/* Row 5: Start/End date (1/2 + 1/2) */}
+  //         <View
+  //           style={[
+  //             styles.gridHalf,
+  //             {
+  //               // marginBottom: sizes.margin,
+  //               zIndex: 3,
+  //               gridArea: isRTL ? '7 / 2 / 8 / 3' : '7 / 1 / 8 / 2',
+  //             },
+  //             { flexDirection: isRTL ? 'row-reverse' : 'row' },
+  //           ]}
+  //         >
+  //           {Platform.OS !== 'android' ? (
+  //             <DateTimeInput
+  //               key='startDateTime'
+  //               label={t('newJob.startDateTime', {
+  //                 defaultValue: 'Start date and time',
+  //               })}
+  //               value={startDateTime}
+  //               onChange={setStartDateTime}
+  //             />
+  //           ) : (
+  //             <DateTimeInputDouble
+  //               label={t('newJob.startDateTime', {
+  //                 defaultValue: 'Start date and time',
+  //               })}
+  //               value={startDateTime}
+  //               onChange={setStartDateTime}
+  //             />
+  //           )}
+  //         </View>
+
+  //         <View
+  //           style={[
+  //             styles.gridHalf,
+  //             {
+  //               // marginBottom: sizes.margin,
+  //               zIndex: 2,
+  //               gridArea: isRTL ? '7 / 1 / 8 / 2' : '7 / 2 / 8 / 3',
+  //             },
+  //             { flexDirection: isRTL ? 'row-reverse' : 'row' },
+  //           ]}
+  //         >
+  //           {Platform.OS !== 'android' ? (
+  //             <DateTimeInput
+  //               key='endDateTime'
+  //               label={t('newJob.endDateTime', {
+  //                 defaultValue: 'End date and time',
+  //               })}
+  //               value={endDateTime}
+  //               onChange={setEndDateTime}
+  //             />
+  //           ) : (
+  //             <DateTimeInputDouble
+  //               label={t('newJob.endDateTime', {
+  //                 defaultValue: 'End date and time',
+  //               })}
+  //               value={endDateTime}
+  //               onChange={setEndDateTime}
+  //             />
+  //           )}
+  //         </View>
+  //         {/* Bottom button (слева, зеркалим для RTL) */}
+  //         <View
+  //           style={[
+  //             // styles.bottomButtonWrapper,
+  //             {
+  //               alignItems: isRTL ? 'flex-end' : 'flex-start',
+  //               backgroundColor: themeController.current?.backgroundColor,
+  //               zIndex: 1,
+  //               gridArea: isRTL ? '8 / 1 / 9 / 3' : '8 / 1 / 9 / 3',
+  //             },
+  //           ]}
+  //         >
+  //           <TouchableOpacity
+  //             style={[
+  //               styles.createButton,
+  //               {
+  //                 backgroundColor:
+  //                   themeController.current?.buttonColorPrimaryDefault,
+  //                 width: '60%',
+  //                 alignSelf: isRTL ? 'flex-end' : 'flex-start',
+  //                 paddingVertical: sizes.padding * 1.2,
+  //                 borderRadius: sizes.borderRadius,
+  //               },
+  //             ]}
+  //             onPress={handleCreate}
+  //           >
+  //             <Text
+  //               style={{
+  //                 color: 'white',
+  //                 textAlign: 'center',
+  //                 fontWeight: 'bold',
+  //                 fontSize: sizes.font,
+  //               }}
+  //             >
+  //               {editMode
+  //                 ? t('common.save', { defaultValue: 'Save' })
+  //                 : t('common.create', { defaultValue: 'Create' })}
+  //             </Text>
+  //           </TouchableOpacity>
+  //         </View>
+  //       </View>
+  //     </ScrollView>
+  //   );
+  // };
 
   return (
     <KeyboardAvoidingView
@@ -536,18 +1260,24 @@ export default function NewJobModal({
           backgroundColor: themeController.current?.backgroundColor,
         }}
       >
-        <View style={styles.header}>
-          <TouchableOpacity
-            // onPress={() =>
-            //   router.canGoBack?.() ? router.back() : router.replace('/store')
-            // }
-            onPress={() => closeModal()}
-          >
+        <View
+          style={[
+            styles.header,
+            {
+              backgroundColor: themeController.current?.backgroundColor,
+              borderBottomColor: themeController.current?.formInputBackground,
+              height: isWebLandscape ? height * 0.07 : RFPercentage(7),
+              paddingHorizontal: RFValue(14),
+              marginBottom: sizes.headerMargin,
+            },
+          ]}
+        >
+          <TouchableOpacity onPress={() => closeModal()}>
             <Image
               source={icons.cross}
               style={{
-                width: RFValue(20),
-                height: RFValue(20),
+                width: getResponsiveSize(20, height * 0.02, isLandscape),
+                height: getResponsiveSize(20, height * 0.02, isLandscape),
                 tintColor: themeController.current?.formInputLabelColor,
               }}
               resizeMode='contain'
@@ -556,7 +1286,10 @@ export default function NewJobModal({
           <Text
             style={[
               styles.logo,
-              { color: themeController.current?.primaryColor },
+              {
+                color: themeController.current?.primaryColor,
+                fontSize: getResponsiveSize(18, height * 0.02, isLandscape),
+              },
             ]}
           >
             FLALX
@@ -564,13 +1297,527 @@ export default function NewJobModal({
         </View>
 
         {Platform.OS === 'web' ? (
-          <CustomFlatList
-            data={formContent}
-            keyExtractor={(_, index) => index.toString()}
-            renderItem={({ item }) => item}
-            contentContainerStyle={styles.container}
-            keyboardShouldPersistTaps='handled'
-          />
+          <>
+            {isWebLandscape ? (
+              // <GridWebLandscape />
+
+              <ScrollView
+                contentContainerStyle={[
+                  styles.container,
+                  { padding: sizes.margin },
+                ]}
+                keyboardShouldPersistTaps='handled'
+              >
+                <View
+                  direction={isRTL ? 'rtl' : 'ltr'}
+                  style={[
+                    styles.gridContainer,
+                    {
+                      justifyContent: isRTL ? 'end' : 'start',
+                      position: 'relative',
+                      gridRowGap: height * 0.02,
+                    },
+                  ]}
+                >
+                  {/* Row 1: Type (1/2) + Description (1/2, высота побольше) */}
+                  <View
+                    style={[
+                      styles.gridHalf,
+                      {
+                        // marginBottom: sizes.margin,
+                        zIndex: 10,
+                        gridArea: isRTL ? '1 / 2 / 2 / 3' : '1 / 1 / 2 / 2',
+                      },
+                    ]}
+                  >
+                    {renderAutocomplete({
+                      label: t('newJob.type', { defaultValue: 'Type' }),
+                      value: type,
+                      setValue: (text) => {
+                        setType(text);
+                        if (fieldErrors.type && text) {
+                          setFieldErrors((prev) => ({ ...prev, type: false }));
+                        }
+                      },
+                      filtered: filteredTypes,
+                      setFiltered: setFilteredTypes,
+                      options: JOB_TYPES,
+                      placeholder: t('newJob.selectOrType', {
+                        defaultValue: 'Select or type...',
+                      }),
+                      stateFocusIndex: 0,
+                      setFocusStates: setFocusStates,
+                      filterOptions,
+                      focusStates,
+                      error: fieldErrors.type,
+                      backgroundColor: bg,
+                      rtl: isRTL,
+                      isWebLandscape,
+                      sizeOverrides: sizes,
+                    })}
+                  </View>
+
+                  <View
+                    style={[
+                      styles.gridHalf,
+                      {
+                        // marginBottom: sizes.margin,
+                        zIndex: 9,
+                        gridArea: isRTL ? '1 / 1 / 3 / 2' : '1 / 2 / 3 / 3',
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.inputBlock,
+                        { backgroundColor: bg },
+                        {
+                          padding: sizes.padding,
+                          borderRadius: sizes.borderRadius,
+                          marginBottom: 0,
+                          height: '100%',
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.label,
+                          isRTL && { textAlign: 'right' },
+                          { fontSize: sizes.font },
+                        ]}
+                      >
+                        {t('newJob.description', {
+                          defaultValue: 'Description',
+                        })}
+                      </Text>
+                      <TextInput
+                        value={description}
+                        onChangeText={setDescription}
+                        placeholder={t('newJob.typePlaceholder', {
+                          defaultValue: 'Type...',
+                        })}
+                        placeholderTextColor={'#999'}
+                        style={{
+                          padding: sizes.padding,
+                          fontSize: sizes.inputFont,
+                          borderRadius: sizes.borderRadius,
+                          height: height * 0.12,
+                          backgroundColor: 'transparent',
+                          textAlign: isRTL ? 'right' : 'left',
+                        }}
+                        multiline
+                      />
+                    </View>
+                  </View>
+
+                  {/* Row 2: Sub type (1/2) + Price (1/2) */}
+                  <View
+                    style={[
+                      styles.gridHalf,
+                      {
+                        // marginBottom: sizes.margin,
+                        zIndex: 8,
+                        gridArea: isRTL ? '2 / 2 / 3 / 3' : '2 / 1 / 3 / 2',
+                      },
+                    ]}
+                  >
+                    {renderAutocomplete({
+                      label: t('newJob.subType', { defaultValue: 'Sub type' }),
+                      value: subType,
+                      setValue: (text) => {
+                        setSubType(text);
+                        if (fieldErrors.subType && text) {
+                          setFieldErrors((prev) => ({
+                            ...prev,
+                            subType: false,
+                          }));
+                        }
+                      },
+                      filtered: filteredSubTypes,
+                      setFiltered: setFilteredSubTypes,
+                      options: JOB_SUB_TYPES,
+                      placeholder: t('newJob.selectOrType', {
+                        defaultValue: 'Select or type...',
+                      }),
+                      stateFocusIndex: 1,
+                      setFocusStates: setFocusStates,
+                      filterOptions,
+                      focusStates,
+                      error: fieldErrors.subType,
+                      backgroundColor: bg,
+                      rtl: isRTL,
+                      isWebLandscape,
+                      sizeOverrides: sizes,
+                    })}
+                  </View>
+
+                  {/* Row 3: Profession (1/2) + Location (1/2) */}
+                  <View
+                    style={[
+                      styles.gridHalf,
+                      {
+                        // marginBottom: sizes.margin,
+                        zIndex: 7,
+                        gridArea: isRTL ? '3 / 2 / 4 / 3' : '3 / 1 / 4 / 2',
+                      },
+                    ]}
+                  >
+                    {renderAutocomplete({
+                      label: t('newJob.profession', {
+                        defaultValue: 'Profession (optional)',
+                      }),
+                      value: profession,
+                      setValue: (text) => {
+                        setProfession(text);
+                        if (fieldErrors.profession && text) {
+                          setFieldErrors((prev) => ({
+                            ...prev,
+                            profession: false,
+                          }));
+                        }
+                      },
+                      filtered: filteredProfessions,
+                      setFiltered: setFilteredProfessions,
+                      options: LICENSES,
+                      placeholder: t('newJob.select', {
+                        defaultValue: 'Select...',
+                      }),
+                      stateFocusIndex: 2,
+                      setFocusStates: setFocusStates,
+                      filterOptions,
+                      focusStates,
+                      error: fieldErrors.profession,
+                      backgroundColor: bg,
+                      rtl: isRTL,
+                      isWebLandscape,
+                      sizeOverrides: sizes,
+                    })}
+                  </View>
+
+                  <View
+                    key='price'
+                    style={[
+                      styles.gridHalf,
+                      {
+                        // marginBottom: sizes.margin,
+                        zIndex: 6,
+                        gridArea: isRTL ? '3 / 1 / 4 / 2' : '3 / 2 / 4 / 3',
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.inputBlock,
+                        { backgroundColor: bg },
+                        {
+                          padding: sizes.padding,
+                          borderRadius: sizes.borderRadius,
+                          marginBottom: 0,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.label,
+                          isRTL && { textAlign: 'right' },
+                          { fontSize: sizes.font },
+                        ]}
+                      >
+                        {t('newJob.price', { defaultValue: 'Price' })}
+                      </Text>
+                      <TextInput
+                        key='priceInput'
+                        value={price}
+                        onChangeText={setPrice}
+                        placeholder={t('newJob.typePlaceholder', {
+                          defaultValue: 'Type...',
+                        })}
+                        placeholderTextColor={'#999'}
+                        style={{
+                          padding: sizes.padding,
+                          fontSize: sizes.inputFont,
+                          borderRadius: sizes.borderRadius,
+                          backgroundColor: 'transparent',
+                          textAlign: isRTL ? 'right' : 'left',
+                        }}
+                        keyboardType='numeric'
+                      />
+                    </View>
+                  </View>
+
+                  {/* Row 4: Uploading photos (full) */}
+                  <View
+                    style={[
+                      styles.gridFull,
+                      {
+                        // marginBottom: sizes.margin,
+                        zIndex: 5,
+                        gridArea: isRTL ? '4 / 1 / 6 / 3' : '4 / 1 / 6 / 3',
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.label,
+                        isRTL && { textAlign: 'right' },
+                        {
+                          fontSize: sizes.font,
+                          marginBottom: sizes.margin / 2,
+                        },
+                      ]}
+                    >
+                      {t('newJob.uploadingPhotos', {
+                        defaultValue: 'Uploading photos',
+                      })}
+                    </Text>
+
+                    <View
+                      style={[
+                        styles.imageRow,
+                        isRTL && { flexDirection: 'row-reverse' },
+                      ]}
+                    >
+                      <TouchableOpacity
+                        onPress={() => setModalVisible(true)}
+                        style={[
+                          styles.addImageButton,
+                          {
+                            width: sizes.thumb,
+                            height: sizes.thumb,
+                            borderRadius: sizes.borderRadius,
+                            marginRight: isRTL ? 0 : sizes.margin / 2,
+                            marginLeft: isRTL ? sizes.margin / 2 : 0,
+                          },
+                        ]}
+                      >
+                        <Image
+                          source={icons.plus}
+                          style={{
+                            width: RFPercentage(3),
+                            height: RFPercentage(3),
+                            tintColor:
+                              themeController.current?.buttonTextColorPrimary,
+                          }}
+                          resizeMode='contain'
+                        />
+                      </TouchableOpacity>
+
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={[
+                          styles.imageScrollContainer,
+                          isRTL && { flexDirection: 'row-reverse' },
+                        ]}
+                      >
+                        {images.map((uri, index) => (
+                          <View
+                            key={index}
+                            style={[
+                              styles.imageWrapper,
+                              {
+                                marginRight: isRTL ? 0 : sizes.margin / 2,
+                                marginLeft: isRTL ? sizes.margin / 2 : 0,
+                              },
+                            ]}
+                          >
+                            <Image
+                              source={{ uri }}
+                              style={{
+                                width: sizes.thumb,
+                                height: sizes.thumb,
+                                borderRadius: sizes.borderRadius,
+                              }}
+                            />
+                            <TouchableOpacity
+                              style={styles.removeIcon}
+                              onPress={() => removeImage(index)}
+                            >
+                              <Image
+                                source={icons.cross}
+                                style={{
+                                  width: RFValue(16),
+                                  height: RFValue(16),
+                                  tintColor:
+                                    themeController.current
+                                      ?.formInputLabelColor,
+                                }}
+                                resizeMode='contain'
+                              />
+                            </TouchableOpacity>
+                          </View>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  </View>
+
+                  <View
+                    style={[
+                      styles.gridHalf,
+                      {
+                        // marginBottom: sizes.margin,
+                        zIndex: 4,
+                        gridArea: isRTL ? '6 / 2 / 7 / 3' : '6 / 1 / 7 / 2',
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.inputBlock,
+                        { backgroundColor: bg },
+                        {
+                          padding: sizes.padding,
+                          borderRadius: sizes.borderRadius,
+                          marginBottom: 0,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.label,
+                          isRTL && { textAlign: 'right' },
+                          { fontSize: sizes.font },
+                        ]}
+                      >
+                        {t('newJob.location', { defaultValue: 'Location' })}
+                      </Text>
+                      <TextInput
+                        value={location}
+                        onChangeText={setLocation}
+                        placeholder={t('newJob.typePlaceholder', {
+                          defaultValue: 'Type...',
+                        })}
+                        placeholderTextColor={'#999'}
+                        style={{
+                          padding: sizes.padding,
+                          fontSize: sizes.inputFont,
+                          borderRadius: sizes.borderRadius,
+                          backgroundColor: 'transparent',
+                          textAlign: isRTL ? 'right' : 'left',
+                        }}
+                      />
+                    </View>
+                  </View>
+
+                  {/* Row 5: Start/End date (1/2 + 1/2) */}
+                  <View
+                    style={[
+                      styles.gridHalf,
+                      {
+                        // marginBottom: sizes.margin,
+                        zIndex: 3,
+                        gridArea: isRTL ? '7 / 2 / 8 / 3' : '7 / 1 / 8 / 2',
+                      },
+                      { flexDirection: isRTL ? 'row-reverse' : 'row' },
+                    ]}
+                  >
+                    {Platform.OS !== 'android' ? (
+                      <DateTimeInput
+                        key='startDateTime'
+                        label={t('newJob.startDateTime', {
+                          defaultValue: 'Start date and time',
+                        })}
+                        value={startDateTime}
+                        onChange={setStartDateTime}
+                      />
+                    ) : (
+                      <DateTimeInputDouble
+                        label={t('newJob.startDateTime', {
+                          defaultValue: 'Start date and time',
+                        })}
+                        value={startDateTime}
+                        onChange={setStartDateTime}
+                      />
+                    )}
+                  </View>
+
+                  <View
+                    style={[
+                      styles.gridHalf,
+                      {
+                        // marginBottom: sizes.margin,
+                        zIndex: 2,
+                        gridArea: isRTL ? '7 / 1 / 8 / 2' : '7 / 2 / 8 / 3',
+                      },
+                      { flexDirection: isRTL ? 'row-reverse' : 'row' },
+                    ]}
+                  >
+                    {Platform.OS !== 'android' ? (
+                      <DateTimeInput
+                        key='endDateTime'
+                        label={t('newJob.endDateTime', {
+                          defaultValue: 'End date and time',
+                        })}
+                        value={endDateTime}
+                        onChange={setEndDateTime}
+                      />
+                    ) : (
+                      <DateTimeInputDouble
+                        label={t('newJob.endDateTime', {
+                          defaultValue: 'End date and time',
+                        })}
+                        value={endDateTime}
+                        onChange={setEndDateTime}
+                      />
+                    )}
+                  </View>
+                  {/* Bottom button (слева, зеркалим для RTL) */}
+                  <View
+                    style={[
+                      // styles.bottomButtonWrapper,
+                      {
+                        alignItems: isRTL ? 'flex-end' : 'flex-start',
+                        backgroundColor:
+                          themeController.current?.backgroundColor,
+                        zIndex: 1,
+                        gridArea: isRTL ? '8 / 1 / 9 / 3' : '8 / 1 / 9 / 3',
+                      },
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={[
+                        styles.createButton,
+                        {
+                          backgroundColor:
+                            themeController.current?.buttonColorPrimaryDefault,
+                          width: '60%',
+                          alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                          paddingVertical: sizes.padding * 1.2,
+                          borderRadius: sizes.borderRadius,
+                        },
+                      ]}
+                      onPress={
+                        editMode
+                          ? () => handleCreate()
+                          : () => setStatusModalVisible(true)
+                      }
+                    >
+                      <Text
+                        style={{
+                          color: 'white',
+                          textAlign: 'center',
+                          fontWeight: 'bold',
+                          fontSize: sizes.font,
+                        }}
+                      >
+                        {editMode
+                          ? t('common.save', { defaultValue: 'Save' })
+                          : t('common.create', { defaultValue: 'Create' })}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </ScrollView>
+            ) : (
+              <CustomFlatList
+                data={formContent}
+                keyExtractor={(_, index) => index.toString()}
+                renderItem={({ item }) => item}
+                contentContainerStyle={styles.container}
+                keyboardShouldPersistTaps='handled'
+              />
+            )}
+          </>
         ) : (
           <FlatList
             data={formContent}
@@ -581,29 +1828,351 @@ export default function NewJobModal({
           />
         )}
 
-        <View style={styles.bottomButtonWrapper}>
+        {!isWebLandscape && (
+          <View style={styles.bottomButtonWrapper}>
+            <TouchableOpacity
+              style={[
+                styles.createButton,
+                {
+                  backgroundColor:
+                    themeController.current?.buttonColorPrimaryDefault,
+                },
+              ]}
+              onPress={
+                editMode
+                  ? () => handleCreate()
+                  : () => setStatusModalVisible(true)
+              }
+            >
+              <Text
+                style={{
+                  color: 'white',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                }}
+              >
+                {editMode
+                  ? t('common.save', { defaultValue: 'Save' })
+                  : t('common.create', { defaultValue: 'Create' })}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+      {/* <Modal visible={statusModalVisible} animationType='fade' transparent >
+        <View style={{width: 500, height: 500, backgroundColor: themeController.current?.backgroundColor}}>
+          <Text>Test</Text>
+          <TouchableOpacity onPress={() => {
+            handleCreate()
+            setStatusModalVisible(false);
+          }}>
+            <Text>OK</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => {
+            setStatusModalVisible(false);
+          }}>
+            <Text>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal> */}
+      {/* STATUS PICKER MODAL */}
+      <Modal visible={statusModalVisible} animationType='fade' transparent>
+        {/* кликабельная подложка с отступом под сайдбар на web-landscape */}
+        <View
+          style={[
+            styles.backdrop,
+            { flexDirection: isRTL ? 'row-reverse' : 'row' },
+          ]}
+        >
+          {/* пустая зона над сайдбаром — клик закрывает */}
+          {isWebLandscape ? (
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={() => setStatusModalVisible(false)}
+              style={{ width: sidebarWidth, height: '100%' }}
+            />
+          ) : null}
+
+          {/* рабочая область — центрируем карточку */}
           <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => setStatusModalVisible(false)}
+            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}
+          >
+            <View
+              style={[
+                styles.centerArea,
+                { width: isWebLandscape ? width - sidebarWidth : '100%' },
+              ]}
+            >
+              {/* сама карточка; клики внутри НЕ закрывают */}
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={(e) => e.stopPropagation()}
+                style={[
+                  styles.modalCard,
+                  {
+                    backgroundColor: themeController.current?.backgroundColor,
+                    borderRadius: sizes.modalRadius,
+                    padding: sizes.modalPadding,
+                    width: sizes.modalCardW,
+                  },
+                ]}
+              >
+                <TouchableOpacity
+                  onPress={() => setStatusModalVisible(false)}
+                  style={{ alignSelf: isRTL ? 'flex-end' : 'flex-start' }}
+                >
+                  <Image
+                    source={icons.cross}
+                    style={{
+                      width: getResponsiveSize(20, height * 0.02, isLandscape),
+                      height: getResponsiveSize(20, height * 0.02, isLandscape),
+                      tintColor: themeController.current?.formInputLabelColor,
+                    }}
+                    resizeMode='contain'
+                  />
+                </TouchableOpacity>
+                {/* заголовок */}
+                <Text
+                  style={{
+                    fontSize: sizes.modalTitle,
+                    fontWeight: '700',
+                    color: themeController.current?.textColor,
+                    textAlign: 'center',
+                    marginBottom:
+                      sizes.modalPadHalf || sizes.modalPadding * 0.6,
+                  }}
+                >
+                  {t('newJob.statusModal.title', {
+                    defaultValue: 'Choose the post type to publish',
+                  })}
+                </Text>
+
+                {/* подзаголовок (второй ряд) */}
+                <Text
+                  style={{
+                    fontSize: sizes.modalSub,
+                    color: themeController.current?.formInputLabelColor,
+                    textAlign: 'center',
+                    marginBottom: sizes.modalPadding,
+                  }}
+                >
+                  {t('newJob.statusModal.subtitle', {
+                    defaultValue: 'Select how your request will be shown',
+                  })}
+                </Text>
+
+                {/* плашки статусов */}
+                <View
+                  style={{
+                    flexDirection: isRTL ? 'row-reverse' : 'row',
+                    flexWrap: 'wrap',
+                    gap: sizes.chipGap,
+                    marginBottom: sizes.modalPadding,
+                  }}
+                >
+                  {STATUS_OPTIONS.map((opt) => {
+                    const active = status === opt.key;
+                    return (
+                      <TouchableOpacity
+                        key={opt.key}
+                        onPress={() => setStatus(opt.key)}
+                        style={[
+                          styles.chip,
+                          {
+                            paddingVertical: sizes.chipPadV,
+                            paddingHorizontal: sizes.chipPadH,
+                            borderRadius: sizes.modalRadius,
+                            borderWidth: 1,
+                            borderColor: active
+                              ? themeController.current
+                                  ?.buttonColorPrimaryDefault
+                              : themeController.current?.unactiveTextColor,
+                            backgroundColor: active
+                              ? themeController.current
+                                  ?.buttonColorPrimaryDefault
+                              : themeController.current?.formInputBackground,
+                            flexDirection: isRTL ? 'row-reverse' : 'row',
+                            alignItems: 'center',
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={{
+                            fontSize: sizes.chipFont,
+                            fontWeight: '600',
+                            color: active
+                              ? themeController.current?.buttonTextColorPrimary
+                              : themeController.current?.unactiveTextColor,
+                            marginHorizontal: RFValue(2),
+                          }}
+                        >
+                          {t(`newJob.statusModal.option.${opt.i18n}`, {
+                            defaultValue:
+                              opt.key === 'default'
+                                ? 'Default'
+                                : opt.key === 'top'
+                                ? 'Top'
+                                : 'Verified',
+                          })}
+                        </Text>
+
+                        {/* маленький PRO-бейдж для некоторых опций */}
+                        {/* {opt.pro && (
+                    <View
+                      style={{
+                        marginHorizontal: isRTL ? 0 : RFValue(6),
+                        marginLeft: isRTL ? RFValue(6) : 0,
+                        backgroundColor: themeController.current?.formInputBackground,
+                        paddingHorizontal: sizes.chipPadH * 0.5,
+                        paddingVertical: sizes.chipPadV * 0.5,
+                        borderRadius: sizes.modalRadius * 0.7,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: isWebLandscape ? height * 0.012 : RFValue(10),
+                          color: themeController.current?.formInputLabelColor,
+                          fontWeight: '600',
+                        }}
+                      >
+                        {t('newJob.statusModal.proBadge', {
+                          defaultValue: 'For PRO users',
+                        })}
+                      </Text>
+                    </View>
+                  )} */}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                {/* кнопка тарифов */}
+                <TouchableOpacity
+                  onPress={() => setPlansModalVisible(true)}
+                  style={{
+                    height: sizes.btnH,
+                    borderRadius: sizes.modalRadius,
+                    borderWidth: 1,
+                    borderColor:
+                      themeController.current?.buttonColorPrimaryDefault,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: sizes.modalPadding * 0.8,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: sizes.modalSub,
+                      color: themeController.current?.buttonColorPrimaryDefault,
+                      fontWeight: '600',
+                    }}
+                  >
+                    {t('newJob.statusModal.buttons.viewPlans', {
+                      defaultValue: 'See pricing plans',
+                    })}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* кнопка подтверждения с ценой */}
+                <TouchableOpacity
+                  onPress={() => {
+                    handleCreate();
+                    setStatusModalVisible(false);
+                  }}
+                  style={{
+                    height: sizes.btnH,
+                    borderRadius: sizes.modalRadius,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor:
+                      themeController.current?.buttonColorPrimaryDefault,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: sizes.modalSub,
+                      fontWeight: '800',
+                      color: themeController.current?.buttonTextColorPrimary,
+                    }}
+                  >
+                    {t('newJob.statusModal.buttons.confirmWithPrice', {
+                      defaultValue: 'Publish for {{price}}',
+                      price:
+                        selectedOption.price === 0
+                          ? t('newJob.statusModal.free', {
+                              defaultValue: 'Free',
+                            })
+                          : `$${selectedOption.price.toFixed(2)}`,
+                    })}
+                  </Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/* PLANS MODAL (простая заглушка, такой же фон/центрирование) */}
+      <Modal visible={plansModalVisible} animationType='fade' transparent>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => setPlansModalVisible(false)}
+          style={styles.backdrop}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
             style={[
-              styles.createButton,
+              styles.modalCard,
               {
-                backgroundColor:
-                  themeController.current?.buttonColorPrimaryDefault,
+                backgroundColor: themeController.current?.backgroundColor,
+                borderRadius: sizes.modalRadius,
+                padding: sizes.modalPadding,
+                width: sizes.modalCardW,
+                alignSelf: 'center',
               },
             ]}
-            onPress={handleCreate}
           >
             <Text
               style={{
-                color: 'white',
+                fontSize: sizes.modalTitle,
+                fontWeight: '700',
+                color: themeController.current?.textColor,
                 textAlign: 'center',
-                fontWeight: 'bold',
+                marginBottom: sizes.modalPadding,
               }}
             >
-              {editMode ? 'Save' : 'Create'}
+              {t('newJob.statusModal.plansTitle', {
+                defaultValue: 'Pricing plans',
+              })}
             </Text>
+            <TouchableOpacity
+              onPress={() => setPlansModalVisible(false)}
+              style={{
+                marginTop: sizes.modalPadding,
+                height: sizes.btnH,
+                borderRadius: sizes.modalRadius,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor:
+                  themeController.current?.buttonColorPrimaryDefault,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: sizes.modalSub,
+                  fontWeight: '700',
+                  color: themeController.current?.buttonTextColorPrimary,
+                }}
+              >
+                {t('common.close', { defaultValue: 'Close' })}
+              </Text>
+            </TouchableOpacity>
           </TouchableOpacity>
-        </View>
-      </View>
+        </TouchableOpacity>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -617,7 +2186,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: RFValue(14),
+    borderBottomWidth: 1,
   },
   logo: {
     fontSize: RFValue(20),
@@ -647,6 +2216,7 @@ const styles = StyleSheet.create({
   },
   input: {
     padding: RFValue(8),
+    width: '100%',
   },
   autocompleteContainer: {
     position: 'relative',
@@ -740,5 +2310,40 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 0,
     elevation: 4,
+  },
+  gridContainer: {
+    width: '100%',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 30%)',
+    gridTemplateRows: 'repeat(6)',
+    gridColumnGap: '1%',
+  },
+  gridHalf: {
+    width: '100%',
+  },
+  gridFull: {
+    width: '100%',
+  },
+  backdrop: {
+    flex: 1,
+    alignItems: 'stretch',
+    justifyContent: 'center',
+  },
+  centerArea: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+  modalCard: {
+    // цвета/радиусы/паддинги задаём из sizes в JSX
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: RFValue(10),
+    shadowOffset: { width: 0, height: RFValue(6) },
+    elevation: 8,
+  },
+  chip: {
+    // базовые параметры, динамика — в JSX
   },
 });

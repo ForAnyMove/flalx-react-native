@@ -7,25 +7,40 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  TouchableWithoutFeedback,
   View,
+  Image,
 } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
+import { RFValue, RFPercentage } from 'react-native-responsive-fontsize';
 import { useComponentContext } from '../context/globalAppContext';
 import CustomFlatList from './ui/CustomFlatList';
 import UserSummaryBlock from './UserSummaryBlock';
+import { useWindowInfo } from '../context/windowContext'; // ориентация/размеры
+import { useTranslation } from 'react-i18next'; // ⬅️ переводы
+import { icons } from '../constants/icons';
 
-function showTitleByStatus(status) {
+function showTitleByStatus(status, t) {
   switch (status) {
     case 'store-waiting':
-      return 'Interested Providers';
+      return t('providers.title.storeWaiting', {
+        defaultValue: 'Interested Providers',
+      });
     case 'store-in-progress':
-      return 'Provider working on request';
+      return t('providers.title.storeInProgress', {
+        defaultValue: 'Provider working on request',
+      });
     case 'store-done':
-      return 'Provider complete request';
+      return t('providers.title.storeDone', {
+        defaultValue: 'Provider complete request',
+      });
     case 'jobs-in-progress':
-      return 'Customer placed request';
+      return t('providers.title.jobsInProgress', {
+        defaultValue: 'Customer placed request',
+      });
     case 'jobs-done':
-      return 'Customer placed request';
+      return t('providers.title.jobsDone', {
+        defaultValue: 'Customer placed request',
+      });
     default:
       return '';
   }
@@ -68,8 +83,46 @@ export default function ProvidersSection({
   status = 'store-waiting',
   closeAllModal,
 }) {
-  const { providersController, activeThemeStyles } = useComponentContext();
+  const { providersController, themeController, languageController } =
+    useComponentContext();
+  const { t } = useTranslation();
+  const isRTL = languageController?.isRTL;
   const [isModalVisible, setIsModalVisible] = useState(false);
+
+  // размеры/ориентация экрана
+  const { width, height, isLandscape, sidebarWidth } = useWindowInfo?.() || {
+    width: 1280,
+    height: 800,
+    isLandscape: false,
+  };
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  // размеры (в веб-альбомной — компактнее и от высоты)
+  const sizes = {
+    font: isWebLandscape ? height * 0.016 : RFValue(12),
+    inputFont: isWebLandscape ? height * 0.014 : RFValue(10),
+    padding: isWebLandscape ? height * 0.01 : RFValue(8),
+    margin: isWebLandscape ? height * 0.012 : RFValue(10),
+    borderRadius: isWebLandscape ? height * 0.006 : RFValue(5),
+    thumb: isWebLandscape ? height * 0.12 : RFValue(80),
+    headerHeight: isWebLandscape ? height * 0.07 : RFPercentage(7),
+    icon: isWebLandscape ? height * 0.035 : RFValue(16),
+    horizontalGap: isWebLandscape ? width * 0.01 : 0,
+  };
+
+  // сетка 3×N для веб-альбомной
+  const gridContainerStyleWeb = isWebLandscape
+    ? {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+        gridAutoRows: 'auto',
+        gridColumnGap: sizes.horizontalGap || RFValue(8),
+        gridRowGap: sizes.horizontalGap || RFValue(8),
+        alignItems: 'start',
+        justifyItems: 'stretch',
+        direction: isRTL ? 'rtl' : 'ltr',
+      }
+    : null;
 
   function checkListByStatus() {
     switch (status) {
@@ -89,8 +142,6 @@ export default function ProvidersSection({
   }
 
   const providerList = checkListByStatus();
-  console.log('ProvidersSection providerList:', providerList);
-
   const renderProviderList = () => (
     <>
       {Platform.OS === 'web' ? (
@@ -98,15 +149,17 @@ export default function ProvidersSection({
           data={providerList || []}
           keyExtractor={(_, index) => index.toString()}
           renderItem={({ item }) => (
-            <UserSummaryBlockWrapper
-              status={status}
-              userId={item.id || item}
-              currentJobId={currentJobInfo?.id}
-              closeAllModal={closeAllModal}
-              providersController={providersController}
-            />
+            <View style={styleRow.gridItem}>
+              <UserSummaryBlockWrapper
+                status={status}
+                userId={item.id || item}
+                currentJobId={currentJobInfo?.id}
+                closeAllModal={closeAllModal}
+                providersController={providersController}
+              />
+            </View>
           )}
-          contentContainerStyle={styles.container}
+          contentContainerStyle={[styles.container, gridContainerStyleWeb]}
           keyboardShouldPersistTaps='handled'
         />
       ) : (
@@ -129,92 +182,148 @@ export default function ProvidersSection({
   );
 
   return (
-    <View
-      style={[
-        styles.inputBlock,
-        {
-          backgroundColor: activeThemeStyles?.formInputBackground,
-          maxHeight: RFValue(200),
-          overflow: 'hidden',
-        },
-      ]}
-      key='providers'
-    >
-      <View>
-        <View style={styleRow.header}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {status === 'store-waiting' && providerList?.length > 0 && (
-              <View
+    <>
+      <View
+        style={[
+          styles.inputBlock,
+          {
+            backgroundColor: themeController.current?.formInputBackground,
+            maxHeight: isWebLandscape ? height * 0.25 : RFValue(200),
+            overflow: 'hidden',
+          },
+        ]}
+        key='providers'
+      >
+        <View>
+          <View
+            style={[styleRow.header, isRTL && { flexDirection: 'row-reverse' }]}
+          >
+            <View
+              style={[
+                { flexDirection: 'row', alignItems: 'center', gap: isWebLandscape
+                      ? sizes.margin / 2
+                      : RFValue(8) },
+                // isRTL && { flexDirection: 'row-reverse' },
+              ]}
+            >
+              {status === 'store-waiting' && providerList?.length > 0 && (
+                <View
+                  style={[
+                    styles.badge,
+                    {
+                      backgroundColor:
+                        themeController.current?.secondaryBadgeBackground,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.badgeText,
+                      { color: themeController.current?.badgeTextColor },
+                    ]}
+                  >
+                    {providerList.length}
+                  </Text>
+                </View>
+              )}
+              <Text
                 style={[
-                  styles.badge,
+                  styles.label,
                   {
-                    backgroundColor:
-                      activeThemeStyles?.secondaryBadgeBackground,
+                    marginBottom: 0,
+                    fontSize: sizes.font,
+                    textAlign: isRTL ? 'right' : 'left',
                   },
                 ]}
               >
-                <Text
-                  style={[
-                    styles.badgeText,
-                    { color: activeThemeStyles?.badgeTextColor },
-                  ]}
-                >
-                  {providerList.length}
-                </Text>
-              </View>
+                {showTitleByStatus(status, t)}
+              </Text>
+            </View>
+
+            {status === 'store-waiting' && (
+              <Pressable
+                onPress={() => setIsModalVisible(true)}
+                style={[styleRow.iconButton, { padding: sizes.padding / 2 }]}
+              >
+                <Image
+                  source={icons.fullScreen}
+                  style={{
+                    width: sizes.icon,
+                    height: sizes.icon,
+                    tintColor: themeController.current?.textColor || 'black',
+                    opacity: 0.4,
+                  }}
+                />
+              </Pressable>
             )}
-            <Text
-              style={[
-                styles.label,
-                { marginBottom: 0, marginLeft: RFValue(8) },
-              ]}
-            >
-              {showTitleByStatus(status)}
-            </Text>
           </View>
-
-          {status === 'store-waiting' && (
-            <Pressable
-              onPress={() => setIsModalVisible(true)}
-              style={styleRow.iconButton}
-            >
-              <Ionicons
-                name='expand'
-                size={RFValue(16)}
-                color={activeThemeStyles?.textColor}
-              />
-            </Pressable>
-          )}
         </View>
+
+        {renderProviderList()}
       </View>
-
-      {renderProviderList()}
-
       <Modal
         visible={isModalVisible}
         animationType='slide'
-        presentationStyle='fullScreen'
+        // presentationStyle='fullScreen'
+        transparent
       >
-        <View
-          style={[
-            styleRow.modalContainer,
-            { backgroundColor: activeThemeStyles?.backgroundColor },
-          ]}
-        >
-          <View style={styleRow.modalHeader}>
-            <Text style={styleRow.modalTitle}>Interested Providers</Text>
-            <Pressable onPress={() => setIsModalVisible(false)}>
-              <Ionicons
-                name='contract'
-                size={RFValue(18)}
-                color={activeThemeStyles?.textColor}
-              />
-            </Pressable>
+        <TouchableWithoutFeedback onPress={() => setIsModalVisible(false)}>
+          <View style={{ flex: 1 }}>
+            <TouchableWithoutFeedback>
+              <View
+                style={[
+                  styleRow.modalContainer,
+                  {
+                    backgroundColor: themeController.current?.backgroundColor,
+                    padding: sizes.padding,
+                    paddingTop: isWebLandscape ? height * 0.04 : RFValue(30),
+                    ...(isWebLandscape && {
+                      width: width - sidebarWidth,
+                      alignSelf: isRTL ? 'flex-start' : 'flex-end',
+                    }),
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styleRow.modalHeader,
+                    isRTL && { flexDirection: 'row-reverse' },
+                    {
+                      marginBottom: isWebLandscape
+                        ? sizes.margin / 1.2
+                        : RFValue(10),
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styleRow.modalTitle,
+                      {
+                        fontSize: sizes.font * 1.1,
+                        textAlign: isRTL ? 'right' : 'left',
+                      },
+                    ]}
+                  >
+                    {t('providers.modalTitle', {
+                      defaultValue: 'Interested Providers',
+                    })}
+                  </Text>
+                  <Pressable onPress={() => setIsModalVisible(false)}>
+                    <Ionicons
+                      name='contract'
+                      size={sizes.icon}
+                      color={themeController.current?.textColor}
+                      opacity={0.4}
+                    />
+                  </Pressable>
+                </View>
+                {renderProviderList()}
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-          {renderProviderList()}
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
-    </View>
+    </>
   );
 }
 
@@ -241,5 +350,9 @@ const styleRow = StyleSheet.create({
   modalTitle: {
     fontSize: RFValue(16),
     fontWeight: 'bold',
+  },
+  // элемент сетки
+  gridItem: {
+    width: '100%',
   },
 });

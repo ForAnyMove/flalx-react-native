@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   Image,
   Modal,
+  Platform,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -12,23 +13,44 @@ import { useComponentContext } from '../../../context/globalAppContext';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { RFValue } from 'react-native-responsive-fontsize';
 import SearchPanel from '../../../components/SearchPanel';
-import ShowJobModal from '../../../components/ShowJobModal';
-import { JOB_TYPES } from '../../../constants/jobTypes';
+import { useWindowInfo } from '../../../context/windowContext';
+import { useTranslation } from 'react-i18next';
 
-export default function DoneScreen() {
-  const { themeController, jobsController } = useComponentContext();
+export default function DoneScreen({
+  setShowJobModalVisible,
+  setCurrentJobId,
+  setJobModalStatus,
+}) {
+  const { themeController, jobsController, languageController } =
+    useComponentContext();
+  const { height, isLandscape } = useWindowInfo();
+  const { t } = useTranslation();
+  const isRTL = languageController.isRTL;
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');
-  // const router = useRouter();
-  const [showJobModalVisible, setShowJobModalVisible] = useState(false);
 
-  const [currentJobId, setCurrentJobId] = useState(null);
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
+  // размеры для web-landscape
+  const sizes = {
+    cardRadius: isWebLandscape ? height * 0.007 : RFValue(5),
+    cardShadow: isWebLandscape ? height * 0.001 : RFValue(3),
+    imageSize: isWebLandscape ? height * 0.09 : RFValue(55),
+    fontTitle: isWebLandscape ? height * 0.018 : RFValue(12),
+    fontDescription: isWebLandscape ? height * 0.015 : RFValue(10),
+    badgeSize: isWebLandscape ? height * 0.025 : RFValue(16),
+    badgeFont: isWebLandscape ? height * 0.014 : RFValue(10),
+    scrollContainerWidth: isWebLandscape ? '60%' : '100%',
+    badgePosition: isWebLandscape ? height * 0.005 : RFValue(5),
+  };
   return (
     <View
       style={[
         styles.container,
-        { backgroundColor: themeController.current?.backgroundColor },
+        {
+          backgroundColor: themeController.current?.backgroundColor,
+          direction: isRTL ? 'rtl' : 'ltr',
+        },
       ]}
     >
       <View>
@@ -45,7 +67,12 @@ export default function DoneScreen() {
       ) : jobsController.error ? (
         <Text>{jobsController.error}</Text>
       ) : (
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContainer,
+            { width: sizes.scrollContainerWidth },
+          ]}
+        >
           {jobsController.executor.done.map((job, index) => {
             const hasImage = job.images && job.images.length > 0;
             return (
@@ -55,6 +82,7 @@ export default function DoneScreen() {
                 onPress={() => {
                   setCurrentJobId(job.id);
                   setShowJobModalVisible(true);
+                  setJobModalStatus('jobs-done');
                 }}
               >
                 <View
@@ -63,6 +91,8 @@ export default function DoneScreen() {
                     {
                       backgroundColor:
                         themeController.current?.defaultBlocksBackground,
+                      borderRadius: sizes.cardRadius,
+                      shadowRadius: sizes.cardShadow,
                     },
                   ]}
                 >
@@ -70,8 +100,28 @@ export default function DoneScreen() {
                     style={[
                       styles.imageContainer,
                       {
+                        width: sizes.imageSize,
+                        height: sizes.imageSize,
                         backgroundColor:
                           themeController.current?.defaultBlocksMockBackground,
+                        ...(isRTL
+                          ? {
+                              marginLeft: RFValue(10),
+                              marginRight: 0,
+                            }
+                          : {
+                              marginRight: RFValue(10),
+                              marginLeft: 0,
+                            }),
+                        ...(isRTL && Platform.OS === 'web'
+                          ? {
+                              borderTopRightRadius: sizes.cardRadius,
+                              borderBottomRightRadius: sizes.cardRadius,
+                            }
+                          : {
+                              borderTopLeftRadius: sizes.cardRadius,
+                              borderBottomLeftRadius: sizes.cardRadius,
+                            }),
                       },
                     ]}
                   >
@@ -85,7 +135,7 @@ export default function DoneScreen() {
                       <View style={styles.placeholderImage}>
                         <FontAwesome6
                           name='image'
-                          size={RFValue(20)}
+                          size={sizes.fontTitle}
                           color={
                             themeController.current?.defaultBlocksMockColor
                           }
@@ -97,55 +147,36 @@ export default function DoneScreen() {
                     <Text
                       style={[
                         styles.title,
-                        { color: themeController.current?.textColor },
+                        {
+                          color: themeController.current?.textColor,
+                          fontSize: sizes.fontTitle,
+                        },
                       ]}
                     >
-                      {JOB_TYPES[job.type]}
+                      {t(`jobTypes.${job.type}`)}
                     </Text>
                     {job.description ? (
                       <Text
                         style={[
                           styles.description,
-                          { color: themeController.current?.textColor },
+                          {
+                            color: themeController.current?.textColor,
+                            textAlign:
+                              isRTL && Platform.OS === 'web' ? 'right' : 'left',
+                            fontSize: sizes.fontDescription,
+                          },
                         ]}
                       >
                         {job.description}
                       </Text>
                     ) : null}
                   </View>
-                  {/* {job.providers?.length > 0 && (
-                    <View
-                      style={[
-                        styles.badge,
-                        {
-                          backgroundColor:
-                            themeController.current?.secondaryBadgeBackground,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.badgeText,
-                          { color: themeController.current?.badgeTextColor },
-                        ]}
-                      >
-                        {job.providers.length}
-                      </Text>
-                    </View>
-                  )} */}
                 </View>
               </TouchableOpacity>
             );
           })}
         </ScrollView>
       )}
-      <Modal visible={showJobModalVisible} animationType='slide'>
-        <ShowJobModal
-          closeModal={() => setShowJobModalVisible(false)}
-          status='jobs-done'
-          currentJobId={currentJobId}
-        />
-      </Modal>
     </View>
   );
 }

@@ -1,5 +1,4 @@
 import {
-  FontAwesome6,
   MaterialCommunityIcons,
   MaterialIcons,
 } from '@expo/vector-icons';
@@ -17,7 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
+import { RFValue, RFPercentage } from 'react-native-responsive-fontsize';
 import { JOB_SUB_TYPES } from '../constants/jobSubTypes';
 import { JOB_TYPES } from '../constants/jobTypes';
 import { LICENSES } from '../constants/licenses';
@@ -28,10 +27,39 @@ import ProvidersSection from './ProvidersSection';
 import CustomFlatList from './ui/CustomFlatList';
 import DateTimeInput from './ui/DateTimeInput';
 import DateTimeInputDouble from './ui/DateTimeInputDouble';
+import { useTranslation } from 'react-i18next';
+import { useWindowInfo } from '../context/windowContext';
+import { icons } from '../constants/icons';
+
+const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
+  if (Platform.OS === 'web') {
+    return isLandscape ? webSize * 1.6 : RFValue(mobileSize);
+  }
+  return RFValue(mobileSize);
+};
 
 export default function ShowJobModal({ closeModal, status, currentJobId }) {
   // const router = useRouter();
-  const { themeController, session, jobsController } = useComponentContext();
+  const { themeController, session, jobsController, languageController } =
+    useComponentContext();
+  const { t } = useTranslation();
+  const { width, height, isLandscape } = useWindowInfo();
+  const isRTL = languageController?.isRTL;
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  // размеры (только для веб-альбомной — иначе RFValue как было)
+  const sizes = {
+    font: isWebLandscape ? height * 0.016 : RFValue(12),
+    inputFont: isWebLandscape ? height * 0.014 : RFValue(10),
+    padding: isWebLandscape ? height * 0.01 : RFValue(8),
+    margin: isWebLandscape ? height * 0.012 : RFValue(10),
+    borderRadius: isWebLandscape ? height * 0.006 : RFValue(5),
+    thumb: isWebLandscape ? height * 0.12 : RFValue(80),
+    headerHeight: isWebLandscape ? height * 0.07 : RFPercentage(7),
+    icon: isWebLandscape ? height * 0.035 : RFValue(16),
+    horizontalGap: isWebLandscape ? width*0.01 : 0,
+  };
+
   const [newJobModalVisible, setNewJobModalVisible] = useState(false);
   const [isInterestedRequest, setInterestedRequest] = useState(
     status === 'jobs-waiting'
@@ -88,50 +116,76 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
             status={status}
             closeAllModal={closeModal}
           />,
-          <TouchableOpacity
-            key='updateButton'
-            style={[
-              styles.createButton,
-              {
-                backgroundColor:
-                  themeController.current?.buttonColorPrimaryDefault,
-              },
-            ]}
-            onPress={() => setNewJobModalVisible(true)}
-          >
-            <Text
-              style={{
-                color: 'white',
-                textAlign: 'center',
-                fontWeight: 'bold',
-              }}
-            >
-              Update
-            </Text>
-          </TouchableOpacity>,
-          <TouchableOpacity
-            key='closeButton'
-            style={[
-              styles.createButton,
-              {
-                backgroundColor:
-                  themeController.current?.buttonColorSecondaryDefault,
-              },
-            ]}
-            onPress={() => {
-              jobsController.actions.deleteJob(currentJobId).then(closeModal());
+          <View
+            style={{
+              width: '100%',
+              gap: sizes.horizontalGap,
+              flexDirection: isWebLandscape
+                ? isRTL
+                  ? 'row-reverse'
+                  : 'row'
+                : 'column',
             }}
           >
-            <Text
-              style={{
-                color: 'white',
-                textAlign: 'center',
-                fontWeight: 'bold',
+            <TouchableOpacity
+              key='updateButton'
+              style={[
+                styles.createButton,
+                {
+                  backgroundColor:
+                    themeController.current?.buttonColorPrimaryDefault,
+                  ...(isWebLandscape && {
+                    paddingVertical: sizes.padding * 1.2,
+                    borderRadius: sizes.borderRadius,
+                    width: '30%',
+                  }),
+                },
+              ]}
+              onPress={() => setNewJobModalVisible(true)}
+            >
+              <Text
+                style={{
+                  color: 'white',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  ...(isWebLandscape && { fontSize: sizes.font }),
+                }}
+              >
+                {t('showJob.buttons.update', { defaultValue: 'Update' })}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              key='closeButton'
+              style={[
+                styles.createButton,
+                {
+                  backgroundColor:
+                    themeController.current?.buttonColorSecondaryDefault,
+                  ...(isWebLandscape && {
+                    paddingVertical: sizes.padding * 1.2,
+                    borderRadius: sizes.borderRadius, 
+                    width: '30%',
+                  }),
+                },
+              ]}
+              onPress={() => {
+                jobsController.actions
+                  .deleteJob(currentJobId)
+                  .then(closeModal());
               }}
             >
-              Close
-            </Text>
-          </TouchableOpacity>,
+              <Text
+                style={{
+                  color: 'white',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  ...(isWebLandscape && { fontSize: sizes.font }),
+                }}
+              >
+                {t('showJob.buttons.close', { defaultValue: 'Close' })}
+              </Text>
+            </TouchableOpacity>
+          </View>,
         ];
       case 'store-in-progress':
         return [
@@ -159,35 +213,52 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
             ]}
             key='provider-comments'
           >
-            <Text style={styles.label}>Provider comments</Text>
+            <Text style={[styles.label, isRTL && { textAlign: 'right' }]}>
+              {t('showJob.fields.providerComments', {
+                defaultValue: 'Provider comments',
+              })}
+            </Text>
             <TextInput
               value={currentJobInfo?.doneComment || ''}
-              style={[styles.input, { height: RFValue(70) }]}
+              style={[
+                styles.input,
+                { height: RFValue(70) },
+                isRTL && { textAlign: 'right' },
+              ]}
               multiline
               readOnly
             />
           </View>,
-          !currentJobInfo.isClosed && <TouchableOpacity
-            key='confirmButton'
-            style={[
-              styles.createButton,
-              {
-                backgroundColor:
-                  themeController.current?.buttonColorPrimaryDefault,
-              },
-            ]}
-            onPress={() => jobsController.actions.confirmJob(currentJobId)}
-          >
-            <Text
-              style={{
-                color: 'white',
-                textAlign: 'center',
-                fontWeight: 'bold',
-              }}
+          !currentJobInfo?.isClosed && (
+            <TouchableOpacity
+              key='confirmButton'
+              style={[
+                styles.createButton,
+                {
+                  backgroundColor:
+                    themeController.current?.buttonColorPrimaryDefault,
+                  ...(isWebLandscape && {
+                    paddingVertical: sizes.padding * 1.2,
+                    borderRadius: sizes.borderRadius,
+                  }),
+                },
+              ]}
+              onPress={() => jobsController.actions.confirmJob(currentJobId)}
             >
-              Confirm job completion
-            </Text>
-          </TouchableOpacity>,
+              <Text
+                style={{
+                  color: 'white',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  ...(isWebLandscape && { fontSize: sizes.font }),
+                }}
+              >
+                {t('showJob.buttons.confirmCompletion', {
+                  defaultValue: 'Confirm job completion',
+                })}
+              </Text>
+            </TouchableOpacity>
+          ),
         ];
       case 'jobs-new':
         return [
@@ -201,6 +272,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                     backgroundColor: 'transparent',
                     borderColor: 'red',
                     borderWidth: 1,
+                    ...(isWebLandscape && {
+                      paddingVertical: sizes.padding * 1.2,
+                      borderRadius: sizes.borderRadius,
+                    }),
                   },
                 ]}
                 onPress={() => setCancelRequestModal(true)}
@@ -210,19 +285,26 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                     color: 'red',
                     textAlign: 'center',
                     fontWeight: 'bold',
+                    ...(isWebLandscape && { fontSize: sizes.font }),
                   }}
                 >
-                  Cancel request
+                  {t('showJob.buttons.cancelRequest', {
+                    defaultValue: 'Cancel request',
+                  })}
                 </Text>
               </TouchableOpacity>
               <Text
                 style={[
                   styles.waitText,
                   { color: themeController.current?.unactiveTextColor },
+                  isRTL && { textAlign: 'right' },
+                  isWebLandscape && { fontSize: sizes.inputFont },
                 ]}
                 key='waitText'
               >
-                Wait for a call from the customer...
+                {t('showJob.messages.waitForCall', {
+                  defaultValue: 'Wait for a call from the customer...',
+                })}
               </Text>
             </>
           ) : (
@@ -233,6 +315,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 {
                   backgroundColor:
                     themeController.current?.buttonColorPrimaryDefault,
+                  ...(isWebLandscape && {
+                    paddingVertical: sizes.padding * 1.2,
+                    borderRadius: sizes.borderRadius,
+                  }),
                 },
               ]}
               onPress={() => setConfirmInterestModal(true)}
@@ -242,9 +328,12 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   color: 'white',
                   textAlign: 'center',
                   fontWeight: 'bold',
+                  ...(isWebLandscape && { fontSize: sizes.font }),
                 }}
               >
-                I am interested in the job
+                {t('showJob.buttons.interested', {
+                  defaultValue: 'I am interested in the job',
+                })}
               </Text>
             </TouchableOpacity>
           ),
@@ -261,6 +350,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                     backgroundColor: 'transparent',
                     borderColor: 'red',
                     borderWidth: 1,
+                    ...(isWebLandscape && {
+                      paddingVertical: sizes.padding * 1.2,
+                      borderRadius: sizes.borderRadius,
+                    }),
                   },
                 ]}
                 onPress={() => setCancelRequestModal(true)}
@@ -270,19 +363,26 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                     color: 'red',
                     textAlign: 'center',
                     fontWeight: 'bold',
+                    ...(isWebLandscape && { fontSize: sizes.font }),
                   }}
                 >
-                  Cancel request
+                  {t('showJob.buttons.cancelRequest', {
+                    defaultValue: 'Cancel request',
+                  })}
                 </Text>
               </TouchableOpacity>
               <Text
                 style={[
                   styles.waitText,
                   { color: themeController.current?.unactiveTextColor },
+                  isRTL && { textAlign: 'right' },
+                  isWebLandscape && { fontSize: sizes.inputFont },
                 ]}
                 key='waitText'
               >
-                Wait for a call from the customer...
+                {t('showJob.messages.waitForCall', {
+                  defaultValue: 'Wait for a call from the customer...',
+                })}
               </Text>
             </>
           ) : (
@@ -293,6 +393,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 {
                   backgroundColor:
                     themeController.current?.buttonColorPrimaryDefault,
+                  ...(isWebLandscape && {
+                    paddingVertical: sizes.padding * 1.2,
+                    borderRadius: sizes.borderRadius,
+                  }),
                 },
               ]}
               onPress={() => setConfirmInterestModal(true)}
@@ -302,9 +406,12 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   color: 'white',
                   textAlign: 'center',
                   fontWeight: 'bold',
+                  ...(isWebLandscape && { fontSize: sizes.font }),
                 }}
               >
-                I am interested in the job
+                {t('showJob.buttons.interested', {
+                  defaultValue: 'I am interested in the job',
+                })}
               </Text>
             </TouchableOpacity>
           ),
@@ -325,18 +432,29 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               {
                 backgroundColor:
                   themeController.current?.buttonColorPrimaryDefault,
+                ...(isWebLandscape && {
+                  paddingVertical: sizes.padding * 1.2,
+                  borderRadius: sizes.borderRadius,
+                }),
               },
             ]}
-            onPress={() => jobsController.actions.markJobDone(currentJobId).then(closeModal())}
+            onPress={() =>
+              jobsController.actions
+                .markJobDone(currentJobId)
+                .then(closeModal())
+            }
           >
             <Text
               style={{
                 color: 'white',
                 textAlign: 'center',
                 fontWeight: 'bold',
+                ...(isWebLandscape && { fontSize: sizes.font }),
               }}
             >
-              Mark as completed
+              {t('showJob.buttons.markCompleted', {
+                defaultValue: 'Mark as completed',
+              })}
             </Text>
           </TouchableOpacity>,
         ];
@@ -356,10 +474,24 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
             ]}
             key='provider-comments'
           >
-            <View style={styles.editableTitlePanel}>
-              <Text style={styles.label}>My comments</Text>
+            <View
+              style={[
+                styles.editableTitlePanel,
+                isRTL && { flexDirection: 'row-reverse' },
+              ]}
+            >
+              <Text style={[styles.label, isRTL && { textAlign: 'right' }]}>
+                {t('showJob.fields.myComments', {
+                  defaultValue: 'My comments',
+                })}
+              </Text>
               {editableCommentState ? (
-                <View style={styles.editPanel}>
+                <View
+                  style={[
+                    styles.editPanel,
+                    isRTL && { flexDirection: 'row-reverse' },
+                  ]}
+                >
                   <TouchableOpacity
                     onPress={() => {
                       setEditableCommentState(false);
@@ -397,7 +529,11 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
             </View>
             <TextInput
               value={editableCommentValue}
-              style={[styles.input, { height: RFValue(70) }]}
+              style={[
+                styles.input,
+                { height: RFValue(70) },
+                isRTL && { textAlign: 'right' },
+              ]}
               onChangeText={setEditableCommentValue}
               multiline
               readOnly={!editableCommentState}
@@ -417,10 +553,12 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
       ]}
       key='type'
     >
-      <Text style={styles.label}>Type</Text>
+      <Text style={[styles.label, isRTL && { textAlign: 'right' }]}>
+        {t('showJob.fields.type', { defaultValue: 'Type' })}
+      </Text>
       <TextInput
         value={JOB_TYPES[currentJobInfo?.type] || '-'}
-        style={styles.input}
+        style={[styles.input, isRTL && { textAlign: 'right' }]}
         readOnly
       />
     </View>,
@@ -431,10 +569,12 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
       ]}
       key='subType'
     >
-      <Text style={styles.label}>Sub type</Text>
+      <Text style={[styles.label, isRTL && { textAlign: 'right' }]}>
+        {t('showJob.fields.subType', { defaultValue: 'Sub type' })}
+      </Text>
       <TextInput
         value={JOB_SUB_TYPES[currentJobInfo?.subType] || '-'}
-        style={styles.input}
+        style={[styles.input, isRTL && { textAlign: 'right' }]}
         readOnly
       />
     </View>,
@@ -443,12 +583,14 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
         styles.inputBlock,
         { backgroundColor: themeController.current?.formInputBackground },
       ]}
-      key='subType'
+      key='profession'
     >
-      <Text style={styles.label}>Profession</Text>
+      <Text style={[styles.label, isRTL && { textAlign: 'right' }]}>
+        {t('showJob.fields.profession', { defaultValue: 'Profession' })}
+      </Text>
       <TextInput
         value={LICENSES[currentJobInfo?.profession] || '-'}
-        style={styles.input}
+        style={[styles.input, isRTL && { textAlign: 'right' }]}
         readOnly
       />
     </View>,
@@ -459,10 +601,16 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
       ]}
       key='description'
     >
-      <Text style={styles.label}>Description</Text>
+      <Text style={[styles.label, isRTL && { textAlign: 'right' }]}>
+        {t('showJob.fields.description', { defaultValue: 'Description' })}
+      </Text>
       <TextInput
         value={currentJobInfo?.description || ''}
-        style={[styles.input, { height: RFValue(70) }]}
+        style={[
+          styles.input,
+          { height: RFValue(70) },
+          isRTL && { textAlign: 'right' },
+        ]}
         multiline
         readOnly
       />
@@ -474,24 +622,37 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
       ]}
       key='price'
     >
-      <Text style={styles.label}>Price</Text>
+      <Text style={[styles.label, isRTL && { textAlign: 'right' }]}>
+        {t('showJob.fields.price', { defaultValue: 'Price' })}
+      </Text>
       <TextInput
         value={currentJobInfo?.price || '-'}
-        style={styles.input}
+        style={[styles.input, isRTL && { textAlign: 'right' }]}
         keyboardType='numeric'
         readOnly
       />
     </View>,
     <View style={styles.imageInputBlock} key='images'>
-      <View style={styles.imageRow}>
+      <View
+        style={[styles.imageRow, isRTL && { flexDirection: 'row-reverse' }]}
+      >
         {/* Скролл с картинками */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.imageScrollContainer}
+          contentContainerStyle={[
+            styles.imageScrollContainer,
+            isRTL && { flexDirection: 'row-reverse' },
+          ]}
         >
           {currentJobInfo?.images.map((uri, index) => (
-            <View key={index} style={styles.imageWrapper}>
+            <View
+              key={index}
+              style={[
+                styles.imageWrapper,
+                isRTL && { marginRight: 0, marginLeft: 8 },
+              ]}
+            >
               <Image source={{ uri }} style={styles.imageThumbnail} />
             </View>
           ))}
@@ -505,24 +666,29 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
       ]}
       key='location'
     >
-      <Text style={styles.label}>Location</Text>
+      <Text style={[styles.label, isRTL && { textAlign: 'right' }]}>
+        {t('showJob.fields.location', { defaultValue: 'Location' })}
+      </Text>
       <TextInput
         value={currentJobInfo?.location || '-'}
-        style={styles.input}
+        style={[styles.input, isRTL && { textAlign: 'right' }]}
         readOnly
       />
     </View>,
-    <View style={styles.row} key='dateTimeRange'>
+    <View
+      style={[styles.row, isRTL && { flexDirection: 'row-reverse' }]}
+      key='dateTimeRange'
+    >
       {Platform.OS !== 'android' ? (
         <DateTimeInput
           key='startDateTime'
-          label='Start'
+          label={t('showJob.fields.start', { defaultValue: 'Start' })}
           value={currentJobInfo?.startDateTime}
           readOnly={true}
         />
       ) : (
         <DateTimeInputDouble
-          label='Start'
+          label={t('showJob.fields.start', { defaultValue: 'Start' })}
           value={currentJobInfo?.startDateTime}
           readOnly={true}
         />
@@ -530,13 +696,13 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
       {Platform.OS !== 'android' ? (
         <DateTimeInput
           key='endDateTime'
-          label='End'
+          label={t('showJob.fields.end', { defaultValue: 'End' })}
           value={currentJobInfo?.endDateTime}
           readOnly={true}
         />
       ) : (
         <DateTimeInputDouble
-          label='End'
+          label={t('showJob.fields.end', { defaultValue: 'End' })}
           value={currentJobInfo?.endDateTime}
           readOnly={true}
         />
@@ -544,6 +710,9 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
     </View>,
     ...extraUiByStatus(status),
   ];
+
+  // Грид версия (только веб-альбомная)
+  const bg = themeController.current?.formInputBackground;
 
   return (
     <KeyboardAvoidingView
@@ -560,7 +729,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
           }}
         >
           <Text style={{ color: themeController.current?.textColor }}>
-            Loading...
+            {t('showJob.messages.loading', { defaultValue: 'Loading...' })}
           </Text>
         </View>
       ) : (
@@ -570,19 +739,40 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
             backgroundColor: themeController.current?.backgroundColor,
           }}
         >
-          <View style={styles.header}>
+          <View
+            style={[
+              styles.header,
+              {
+                height: sizes.headerHeight,
+                padding: sizes.padding,
+                backgroundColor: themeController.current?.backgroundColor,
+              },
+              isRTL && {flexDirection: 'row-reverse'}
+            ]}
+          >
             <TouchableOpacity
               // onPress={() =>
               //   router.canGoBack?.() ? router.back() : router.replace('/store')
               // }
               onPress={() => closeModal()}
             >
-              <Text style={styles.closeButton}>✕</Text>
+              <Image
+                source={icons.cross}
+                style={{
+                  opacity: 0.8,
+                  width: sizes.icon,
+                  height: sizes.icon,
+                  tintColor: themeController.current?.textColor || 'black',
+                }}
+              />
             </TouchableOpacity>
             <Text
               style={[
                 styles.logo,
-                { color: themeController.current?.primaryColor },
+                {
+                  color: themeController.current?.primaryColor,
+                  fontSize: getResponsiveSize(20, height * 0.02, isLandscape),
+                },
               ]}
             >
               FLALX
@@ -593,22 +783,421 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               // }
               onPress={() => setHistoryModal(true)}
             >
-              <FontAwesome6
-                name='clock-rotate-left'
-                size={RFValue(16)}
-                color={themeController.current?.textColor}
+              <Image
+                source={icons.history}
+                style={{
+                  opacity: 0.8,
+                  width: sizes.icon,
+                  height: sizes.icon,
+                  tintColor: themeController.current?.textColor || 'black',
+                }}
               />
             </TouchableOpacity>
           </View>
 
           {Platform.OS === 'web' ? (
-            <CustomFlatList
-              data={formContent}
-              keyExtractor={(_, index) => index.toString()}
-              renderItem={({ item }) => item}
-              contentContainerStyle={styles.container}
-              keyboardShouldPersistTaps='handled'
-            />
+            isWebLandscape ? (
+              <ScrollView
+                contentContainerStyle={[
+                  styles.container,
+                  { padding: sizes.margin },
+                ]}
+                keyboardShouldPersistTaps='handled'
+              >
+                <View
+                  direction={isRTL ? 'rtl' : 'ltr'}
+                  style={[
+                    styles.gridContainer,
+                    {
+                      justifyContent: isRTL ? 'end' : 'start',
+                      position: 'relative',
+                      gridRowGap: height * 0.02,
+                    },
+                  ]}
+                >
+                  {/* Колонка 1: Type */}
+                  <View
+                    style={{
+                      gridArea: isRTL ? '1 / 2 / 2 / 3' : '1 / 1 / 2 / 2',
+                    }}
+                  >
+                    <View
+                      style={[
+                        styles.inputBlock,
+                        {
+                          backgroundColor: bg,
+                          padding: sizes.padding,
+                          borderRadius: sizes.borderRadius,
+                          marginBottom: 0,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.label,
+                          isRTL && { textAlign: 'right' },
+                          { fontSize: sizes.font },
+                        ]}
+                      >
+                        {t('showJob.fields.type', { defaultValue: 'Type' })}
+                      </Text>
+                      <TextInput
+                        value={JOB_TYPES[currentJobInfo?.type] || '-'}
+                        style={{
+                          padding: sizes.padding,
+                          fontSize: sizes.inputFont,
+                          borderRadius: sizes.borderRadius,
+                          backgroundColor: 'transparent',
+                          textAlign: isRTL ? 'right' : 'left',
+                        }}
+                        readOnly
+                      />
+                    </View>
+                  </View>
+
+                  {/* Колонка 2 (растянутая по высоте): Description */}
+                  <View
+                    style={{
+                      gridArea: isRTL ? '1 / 1 / 3 / 2' : '1 / 2 / 3 / 3',
+                    }}
+                  >
+                    <View
+                      style={[
+                        styles.inputBlock,
+                        {
+                          backgroundColor: bg,
+                          padding: sizes.padding,
+                          borderRadius: sizes.borderRadius,
+                          height: '100%',
+                          marginBottom: 0,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.label,
+                          isRTL && { textAlign: 'right' },
+                          { fontSize: sizes.font },
+                        ]}
+                      >
+                        {t('showJob.fields.description', {
+                          defaultValue: 'Description',
+                        })}
+                      </Text>
+                      <TextInput
+                        value={currentJobInfo?.description || ''}
+                        style={{
+                          padding: sizes.padding,
+                          fontSize: sizes.inputFont,
+                          borderRadius: sizes.borderRadius,
+                          height: height * 0.12,
+                          backgroundColor: 'transparent',
+                          textAlign: isRTL ? 'right' : 'left',
+                        }}
+                        multiline
+                        readOnly
+                      />
+                    </View>
+                  </View>
+
+                  {/* Sub type */}
+                  <View
+                    style={{
+                      gridArea: isRTL ? '2 / 2 / 3 / 3' : '2 / 1 / 3 / 2',
+                    }}
+                  >
+                    <View
+                      style={[
+                        styles.inputBlock,
+                        {
+                          backgroundColor: bg,
+                          padding: sizes.padding,
+                          borderRadius: sizes.borderRadius,
+                          marginBottom: 0,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.label,
+                          isRTL && { textAlign: 'right' },
+                          { fontSize: sizes.font },
+                        ]}
+                      >
+                        {t('showJob.fields.subType', {
+                          defaultValue: 'Sub type',
+                        })}
+                      </Text>
+                      <TextInput
+                        value={JOB_SUB_TYPES[currentJobInfo?.subType] || '-'}
+                        style={{
+                          padding: sizes.padding,
+                          fontSize: sizes.inputFont,
+                          borderRadius: sizes.borderRadius,
+                          backgroundColor: 'transparent',
+                          textAlign: isRTL ? 'right' : 'left',
+                        }}
+                        readOnly
+                      />
+                    </View>
+                  </View>
+
+                  {/* Profession */}
+                  <View
+                    style={{
+                      gridArea: isRTL ? '3 / 2 / 4 / 3' : '3 / 1 / 4 / 2',
+                    }}
+                  >
+                    <View
+                      style={[
+                        styles.inputBlock,
+                        {
+                          backgroundColor: bg,
+                          padding: sizes.padding,
+                          borderRadius: sizes.borderRadius,
+                          marginBottom: 0,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.label,
+                          isRTL && { textAlign: 'right' },
+                          { fontSize: sizes.font },
+                        ]}
+                      >
+                        {t('showJob.fields.profession', {
+                          defaultValue: 'Profession',
+                        })}
+                      </Text>
+                      <TextInput
+                        value={LICENSES[currentJobInfo?.profession] || '-'}
+                        style={{
+                          padding: sizes.padding,
+                          fontSize: sizes.inputFont,
+                          borderRadius: sizes.borderRadius,
+                          backgroundColor: 'transparent',
+                          textAlign: isRTL ? 'right' : 'left',
+                        }}
+                        readOnly
+                      />
+                    </View>
+                  </View>
+
+                  {/* Price */}
+                  <View
+                    style={{
+                      gridArea: isRTL ? '3 / 1 / 4 / 2' : '3 / 2 / 4 / 3',
+                    }}
+                  >
+                    <View
+                      style={[
+                        styles.inputBlock,
+                        {
+                          backgroundColor: bg,
+                          padding: sizes.padding,
+                          borderRadius: sizes.borderRadius,
+                          marginBottom: 0,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.label,
+                          isRTL && { textAlign: 'right' },
+                          { fontSize: sizes.font },
+                        ]}
+                      >
+                        {t('showJob.fields.price', { defaultValue: 'Price' })}
+                      </Text>
+                      <TextInput
+                        value={currentJobInfo?.price || '-'}
+                        style={{
+                          padding: sizes.padding,
+                          fontSize: sizes.inputFont,
+                          borderRadius: sizes.borderRadius,
+                          backgroundColor: 'transparent',
+                          textAlign: isRTL ? 'right' : 'left',
+                        }}
+                        keyboardType='numeric'
+                        readOnly
+                      />
+                    </View>
+                  </View>
+
+                  {/* Photos (full width) */}
+                  <View style={{ gridArea: '4 / 1 / 6 / 3' }}>
+                    <Text
+                      style={[
+                        styles.label,
+                        isRTL && { textAlign: 'right' },
+                        {
+                          fontSize: sizes.font,
+                          marginBottom: sizes.margin / 2,
+                        },
+                      ]}
+                    >
+                      {t('showJob.fields.uploadingPhotos', {
+                        defaultValue: 'Uploading photos',
+                      })}
+                    </Text>
+                    <View
+                      style={[
+                        styles.imageRow,
+                        isRTL && { flexDirection: 'row-reverse' },
+                      ]}
+                    >
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={[
+                          styles.imageScrollContainer,
+                          isRTL && { flexDirection: 'row-reverse' },
+                        ]}
+                      >
+                        {currentJobInfo?.images.map((uri, index) => (
+                          <View
+                            key={index}
+                            style={[
+                              styles.imageWrapper,
+                              isRTL && { marginRight: 0, marginLeft: 8 },
+                            ]}
+                          >
+                            <Image
+                              source={{ uri }}
+                              style={{
+                                width: sizes.thumb,
+                                height: sizes.thumb,
+                                borderRadius: sizes.borderRadius,
+                              }}
+                            />
+                          </View>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  </View>
+
+                  {/* Location */}
+                  <View
+                    style={{
+                      gridArea: isRTL ? '6 / 2 / 7 / 3' : '6 / 1 / 7 / 2',
+                    }}
+                  >
+                    <View
+                      style={[
+                        styles.inputBlock,
+                        {
+                          backgroundColor: bg,
+                          padding: sizes.padding,
+                          borderRadius: sizes.borderRadius,
+                          marginBottom: 0,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.label,
+                          isRTL && { textAlign: 'right' },
+                          { fontSize: sizes.font },
+                        ]}
+                      >
+                        {t('showJob.fields.location', {
+                          defaultValue: 'Location',
+                        })}
+                      </Text>
+                      <TextInput
+                        value={currentJobInfo?.location || '-'}
+                        style={{
+                          padding: sizes.padding,
+                          fontSize: sizes.inputFont,
+                          borderRadius: sizes.borderRadius,
+                          backgroundColor: 'transparent',
+                          textAlign: isRTL ? 'right' : 'left',
+                        }}
+                        readOnly
+                      />
+                    </View>
+                  </View>
+
+                  {/* Start date */}
+                  <View
+                    style={{
+                      gridArea: isRTL ? '7 / 2 / 8 / 3' : '7 / 1 / 8 / 2',
+                    }}
+                  >
+                    <View
+                      style={{ flexDirection: isRTL ? 'row-reverse' : 'row' }}
+                    >
+                      {Platform.OS !== 'android' ? (
+                        <DateTimeInput
+                          key='startDateTime'
+                          label={t('showJob.fields.start', {
+                            defaultValue: 'Start',
+                          })}
+                          value={currentJobInfo?.startDateTime}
+                          readOnly={true}
+                        />
+                      ) : (
+                        <DateTimeInputDouble
+                          label={t('showJob.fields.start', {
+                            defaultValue: 'Start',
+                          })}
+                          value={currentJobInfo?.startDateTime}
+                          readOnly={true}
+                        />
+                      )}
+                    </View>
+                  </View>
+
+                  {/* End date */}
+                  <View
+                    style={{
+                      gridArea: isRTL ? '7 / 1 / 8 / 2' : '7 / 2 / 8 / 3',
+                    }}
+                  >
+                    <View
+                      style={{ flexDirection: isRTL ? 'row-reverse' : 'row' }}
+                    >
+                      {Platform.OS !== 'android' ? (
+                        <DateTimeInput
+                          key='endDateTime'
+                          label={t('showJob.fields.end', {
+                            defaultValue: 'End',
+                          })}
+                          value={currentJobInfo?.endDateTime}
+                          readOnly={true}
+                        />
+                      ) : (
+                        <DateTimeInputDouble
+                          label={t('showJob.fields.end', {
+                            defaultValue: 'End',
+                          })}
+                          value={currentJobInfo?.endDateTime}
+                          readOnly={true}
+                        />
+                      )}
+                    </View>
+                  </View>
+                </View>
+
+                {/* Остальные элементы ВНЕ сетки, обычной колонкой */}
+                <View
+                  style={{ marginTop: sizes.margin, gap: sizes.margin / 2 }}
+                >
+                  {extraUiByStatus(status).map((node, idx) => (
+                    <View key={`extra-${idx}`}>{node}</View>
+                  ))}
+                </View>
+              </ScrollView>
+            ) : (
+              <CustomFlatList
+                data={formContent}
+                keyExtractor={(_, index) => index.toString()}
+                renderItem={({ item }) => item}
+                contentContainerStyle={styles.container}
+                keyboardShouldPersistTaps='handled'
+              />
+            )
           ) : (
             <FlatList
               data={formContent}
@@ -640,17 +1229,30 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               style={[
                 styles.message,
                 { color: themeController.current?.textColor },
+                isRTL && { textAlign: 'right' },
+                isWebLandscape && { fontSize: sizes.font },
               ]}
             >
-              Are you sure to cancel the request?
+              {t('showJob.messages.confirmCancelTitle', {
+                defaultValue: 'Are you sure to cancel the request?',
+              })}
             </Text>
-            <View style={styles.buttonRow}>
+            <View
+              style={[
+                styles.buttonRow,
+                isRTL && { flexDirection: 'row-reverse' },
+              ]}
+            >
               <TouchableOpacity
                 style={[
                   styles.button,
                   {
                     backgroundColor:
                       themeController.current?.buttonColorPrimaryDefault,
+                    ...(isWebLandscape && {
+                      paddingVertical: sizes.padding,
+                      borderRadius: sizes.borderRadius,
+                    }),
                   },
                 ]}
                 onPress={() => setCancelRequestModal(false)}
@@ -659,9 +1261,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   style={[
                     styles.buttonText,
                     { color: themeController.current?.buttonTextColorPrimary },
+                    isWebLandscape && { fontSize: sizes.font },
                   ]}
                 >
-                  No
+                  {t('common.no', { defaultValue: 'No' })}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -670,6 +1273,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   {
                     backgroundColor:
                       themeController.current?.buttonColorPrimaryDisabled,
+                    ...(isWebLandscape && {
+                      paddingVertical: sizes.padding,
+                      borderRadius: sizes.borderRadius,
+                    }),
                   },
                 ]}
                 onPress={() => {
@@ -685,9 +1292,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   style={[
                     styles.buttonText,
                     { color: themeController.current?.buttonTextColorPrimary },
+                    isWebLandscape && { fontSize: sizes.font },
                   ]}
                 >
-                  Yes
+                  {t('common.yes', { defaultValue: 'Yes' })}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -722,9 +1330,14 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               style={[
                 styles.message,
                 { color: themeController.current?.textColor },
+                isRTL && { textAlign: 'right' },
+                isWebLandscape && { fontSize: sizes.font },
               ]}
             >
-              To continue this action, you need to pay or subscribe
+              {t('showJob.paywall.notice', {
+                defaultValue:
+                  'To continue this action, you need to pay or subscribe',
+              })}
             </Text>
             <View style={styles.buttonColumn}>
               <TouchableOpacity
@@ -735,6 +1348,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                     borderColor:
                       themeController.current?.buttonColorPrimaryDefault,
                     borderWidth: 1,
+                    ...(isWebLandscape && {
+                      paddingVertical: sizes.padding,
+                      borderRadius: sizes.borderRadius,
+                    }),
                   },
                 ]}
                 onPress={() => {
@@ -750,9 +1367,12 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                     {
                       color: themeController.current?.buttonColorPrimaryDefault,
                     },
+                    isWebLandscape && { fontSize: sizes.font },
                   ]}
                 >
-                  Buy for 0.99$
+                  {t('showJob.buttons.buy099', {
+                    defaultValue: 'Buy for 0.99$',
+                  })}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -761,6 +1381,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   {
                     backgroundColor:
                       themeController.current?.buttonColorPrimaryDefault,
+                    ...(isWebLandscape && {
+                      paddingVertical: sizes.padding,
+                      borderRadius: sizes.borderRadius,
+                    }),
                   },
                 ]}
                 // onPress={() => {
@@ -772,9 +1396,12 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   style={[
                     styles.buttonText,
                     { color: themeController.current?.buttonTextColorPrimary },
+                    isWebLandscape && { fontSize: sizes.font },
                   ]}
                 >
-                  Get a subscription
+                  {t('showJob.buttons.getSubscription', {
+                    defaultValue: 'Get a subscription',
+                  })}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -968,5 +1595,14 @@ const styles = StyleSheet.create({
   editPanel: {
     flexDirection: 'row',
     gap: RFValue(5),
+  },
+
+  // ====== ГРИД ДЛЯ ВЕБ-Альбомной (как в прошлом компоненте) ======
+  gridContainer: {
+    width: '100%',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 30%)',
+    gridTemplateRows: 'repeat(8)',
+    gridColumnGap: '1%',
   },
 });

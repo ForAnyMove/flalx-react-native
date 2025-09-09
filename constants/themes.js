@@ -41,6 +41,8 @@ export const LIGHT_THEME = {
   verifiedGradientEndColor: '#faec5d',
   topMarkerColor: '#ffaf40',
   topGradientEndColor: '#bff891',
+  personalMarkerColor: '#C701FE',
+  personalGradientEndColor: '#c629f2',
 };
 
 export const DARK_THEME = {

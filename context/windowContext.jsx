@@ -6,29 +6,47 @@ const WindowContext = createContext(null);
 export function WindowProvider({ children }) {
   const getWindow = () => {
     const { width, height } = Dimensions.get("window");
-    return { width, height, isLandscape: width > height };
+    const isLandscape = width > height;
+
+    // 👇 вычисляем sidebarWidth сразу тут
+    const sidebarWidth =
+      Platform.OS === "web" && isLandscape
+        ? Math.max(90, Math.min(280, height * 0.22))
+        : 0;
+
+    return { width, height, isLandscape, sidebarWidth };
   };
 
   const [windowInfo, setWindowInfo] = useState(getWindow());
 
   useEffect(() => {
-    // на native
     const sub = Dimensions.addEventListener("change", ({ window }) => {
+      const isLandscape = window.width > window.height;
+
       setWindowInfo({
         width: window.width,
         height: window.height,
-        isLandscape: window.width > window.height,
+        isLandscape,
+        sidebarWidth:
+          Platform.OS === "web" && isLandscape
+            ? Math.max(90, Math.min(280, window.height * 0.22))
+            : 0,
       });
     });
 
-    // на web ловим resize напрямую
     if (Platform.OS === "web") {
       const onResize = () => {
         const { innerWidth, innerHeight } = window;
+        const isLandscape = innerWidth > innerHeight;
+
         setWindowInfo({
           width: innerWidth,
           height: innerHeight,
-          isLandscape: innerWidth > innerHeight,
+          isLandscape,
+          sidebarWidth:
+            Platform.OS === "web" && isLandscape
+              ? Math.max(90, Math.min(280, innerHeight * 0.22))
+              : 0,
         });
       };
       window.addEventListener("resize", onResize);

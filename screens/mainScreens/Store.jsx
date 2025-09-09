@@ -19,8 +19,11 @@ import NewScreen from './storeTabs/New';
 import WaitingScreen from './storeTabs/Waiting';
 import InProgressScreen from './storeTabs/InProgress';
 import DoneScreen from './storeTabs/Done';
+import JobModalWrapper from '../../components/JobModalWrapper';
+import ShowJobModal from '../../components/ShowJobModal';
 
 const TAB_TITLES = ['new', 'waiting', 'in-progress', 'done'];
+const TAB_TITLES_RTL = ['done', 'in-progress', 'waiting', 'new'];
 
 // Тестовые значения для badge
 const badgeCounts = {
@@ -30,23 +33,33 @@ const badgeCounts = {
   done: 5,
 };
 
-export default function Store({ sidebarWidth = 0 }) {
+export default function Store() {
   const { themeController, appTabController, languageController } =
     useComponentContext();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
-  const { width, height, isLandscape } = useWindowInfo();
+  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
+  const isWebLandscape = isLandscape && Platform.OS === 'web';
 
-  const SCREEN_WIDTH =
-    Platform.OS === 'web' && isLandscape ? width - sidebarWidth : width;
+  const orderedTabs = isRTL ? TAB_TITLES_RTL : TAB_TITLES;
+  const orderedScreens = isRTL
+    ? [DoneScreen, InProgressScreen, WaitingScreen, NewScreen]
+    : [NewScreen, WaitingScreen, InProgressScreen, DoneScreen];
+
+  const SCREEN_WIDTH = isWebLandscape ? width - sidebarWidth : width;
 
   const screenWidthRef = useRef(SCREEN_WIDTH);
   const [screenWidth, setScreenWidth] = useState(SCREEN_WIDTH);
+  // Стейты для модальных окон
   const [newJobModalVisible, setNewJobModalVisible] = useState(false);
+  const [activeKey, setActiveKey] = useState(null);
+  const [showJobModalVisible, setShowJobModalVisible] = useState(false);
+  const [currentJobId, setCurrentJobId] = useState(null);
+  const [jobModalStatus, setJobModalStatus] = useState(null);
 
   const storeActiveTab = useRef(
-    TAB_TITLES.indexOf(appTabController.activeSubTab) >= 0
-      ? TAB_TITLES.indexOf(appTabController.activeSubTab)
+    orderedTabs.indexOf(appTabController.activeSubTab) >= 0
+      ? orderedTabs.indexOf(appTabController.activeSubTab)
       : 0
   );
 
@@ -64,19 +77,19 @@ export default function Store({ sidebarWidth = 0 }) {
     scrollX.setValue(-storeActiveTab.current * newWidth);
   }, [SCREEN_WIDTH]);
 
-  const tabWidth = screenWidthRef.current / TAB_TITLES.length;
+  const tabWidth = screenWidthRef.current / orderedTabs.length;
   const positiveScrollX = Animated.multiply(scrollX, -1);
 
   const isSwipeRight = useRef(null);
 
   const underlineAnimatedWidth = useMemo(() => {
     return positiveScrollX.interpolate({
-      inputRange: TAB_TITLES.flatMap((_, i) => [
+      inputRange: orderedTabs.flatMap((_, i) => [
         (i - 0.5) * screenWidth,
         i * screenWidth,
         (i + 0.5) * screenWidth,
       ]),
-      outputRange: TAB_TITLES.flatMap(() => [
+      outputRange: orderedTabs.flatMap(() => [
         tabWidth * 1,
         tabWidth * 0.7,
         tabWidth * 1,
@@ -87,8 +100,8 @@ export default function Store({ sidebarWidth = 0 }) {
 
   const underlineTranslateX = useMemo(() => {
     return positiveScrollX.interpolate({
-      inputRange: TAB_TITLES.map((_, i) => i * screenWidth),
-      outputRange: TAB_TITLES.map(
+      inputRange: orderedTabs.map((_, i) => i * screenWidth),
+      outputRange: orderedTabs.map(
         (_, i) => i * tabWidth + (tabWidth - tabWidth * 0.7) / 2
       ),
       extrapolate: 'clamp',
@@ -96,7 +109,7 @@ export default function Store({ sidebarWidth = 0 }) {
   }, [screenWidth, tabWidth, positiveScrollX]);
 
   const interpolatedColorValues = useMemo(() => {
-    return TAB_TITLES.map((_, i) =>
+    return orderedTabs.map((_, i) =>
       positiveScrollX.interpolate({
         inputRange: [
           (i - 1) * screenWidth,
@@ -114,7 +127,7 @@ export default function Store({ sidebarWidth = 0 }) {
   }, [screenWidth, themeController.current, positiveScrollX]);
 
   const interpolatedOpacityValues = useMemo(() => {
-    return TAB_TITLES.map((_, i) =>
+    return orderedTabs.map((_, i) =>
       positiveScrollX.interpolate({
         inputRange: [
           (i - 1) * screenWidth,
@@ -142,7 +155,7 @@ export default function Store({ sidebarWidth = 0 }) {
         }
         if (
           (storeActiveTab.current === 0 && isSwipeRight.current) ||
-          (storeActiveTab.current === TAB_TITLES.length - 1 &&
+          (storeActiveTab.current === orderedTabs.length - 1 &&
             !isSwipeRight.current)
         )
           return;
@@ -156,7 +169,7 @@ export default function Store({ sidebarWidth = 0 }) {
         let newTab = storeActiveTab.current;
         if (
           dx < swipeThreshold * -1 &&
-          storeActiveTab.current < TAB_TITLES.length - 1
+          storeActiveTab.current < orderedTabs.length - 1
         ) {
           newTab = storeActiveTab.current + 1;
         } else if (dx > swipeThreshold && storeActiveTab.current > 0) {
@@ -169,7 +182,7 @@ export default function Store({ sidebarWidth = 0 }) {
           useNativeDriver: false,
         }).start(() => {
           storeActiveTab.current = newTab;
-          appTabController.goToSub(TAB_TITLES[newTab]);
+          appTabController.goToSub(orderedTabs[newTab]);
         });
       },
     })
@@ -182,13 +195,13 @@ export default function Store({ sidebarWidth = 0 }) {
       useNativeDriver: false,
     }).start(() => {
       storeActiveTab.current = index;
-      appTabController.goToSub(TAB_TITLES[index]);
+      appTabController.goToSub(orderedTabs[index]);
     });
   };
-  
+
   useEffect(() => {
     if (appTabController.activeSubTab) {
-      const newIndex = TAB_TITLES.indexOf(appTabController.activeSubTab);
+      const newIndex = orderedTabs.indexOf(appTabController.activeSubTab);
       if (newIndex >= 0 && newIndex !== storeActiveTab.current) {
         Animated.timing(scrollX, {
           toValue: -newIndex * screenWidthRef.current,
@@ -200,13 +213,22 @@ export default function Store({ sidebarWidth = 0 }) {
       }
     }
   }, [appTabController.activeSubTab]);
-  
-// высота панели
-const panelHeight =
-  Platform.OS === 'web' && isLandscape ? height*0.08 : RFPercentage(10);
+
+  // высота панели
+  const panelHeight =
+    Platform.OS === 'web' && isLandscape ? height * 0.08 : RFPercentage(10);
+
+  // следим за сменой isRTL и синхронизируем активный таб
+  useEffect(() => {
+    const newIndex = orderedTabs.indexOf(appTabController.activeSubTab);
+    if (newIndex >= 0) {
+      storeActiveTab.current = newIndex;
+      scrollX.setValue(-newIndex * screenWidthRef.current);
+    }
+  }, [isRTL, orderedTabs]);
 
   return (
-    <View style={{ flex: 1, userSelect: 'none' }}>
+    <View style={{ flex: 1, userSelect: 'none'}}>
       {/* Заголовки вкладок */}
       <View
         style={{
@@ -216,85 +238,86 @@ const panelHeight =
           overflow: 'hidden',
         }}
       >
-        {TAB_TITLES.map((title, idx) => {
-    const iconSize = panelHeight * 0.35;
-    const fontSize = panelHeight * 0.2;
-    const badgeSize = panelHeight * 0.25;
+        {orderedTabs.map((title, idx) => {
+          const iconSize = panelHeight * 0.35;
+          const fontSize = panelHeight * 0.2;
+          const badgeSize = panelHeight * 0.25;
 
           return (
-          <TouchableOpacity
-            key={idx}
-            onPress={() => handleTabPress(idx)}
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-          paddingBottom: panelHeight * 0.1,
-            }}
-          >
-            {/* Иконка */}
-            <View style={{ position: 'relative' }}>
-              <Animated.View
-                style={{ opacity: interpolatedOpacityValues[idx] }}
-              >
-                <Image
-                  source={icons[`${title}-dark`]}
-              style={{ width: iconSize, height: iconSize }}
-                  resizeMode='contain'
-                />
-              </Animated.View>
-              {/* Badge */}
-              {badgeCounts[title] > 0 && (
-                <View
-                  style={{
-                    position: 'absolute',
-                top: -badgeSize * 0.3,
-                right: -badgeSize * 0.5,
-                minWidth: badgeSize,
-                height: badgeSize,
-                borderRadius: badgeSize / 2,
-                    backgroundColor:
-                      themeController.current?.mainBadgeBackground,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                paddingHorizontal: badgeSize * 0.3,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: themeController.current?.badgeTextColor,
-                  fontSize: badgeSize * 0.6,
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    {badgeCounts[title]}
-                  </Text>
-                </View>
-              )}
-            </View>
-            {/* Заголовок */}
-            <View
+            <TouchableOpacity
+              key={idx}
+              onPress={() => handleTabPress(idx)}
               style={{
-            height: panelHeight * 0.35, 
-                justifyContent: 'center',
-                paddingHorizontal: RFValue(4),
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                paddingBottom: panelHeight * 0.1,
               }}
             >
-              <Animated.Text
+              {/* Иконка */}
+              <View style={{ position: 'relative' }}>
+                <Animated.View
+                  style={{ opacity: interpolatedOpacityValues[idx] }}
+                >
+                  <Image
+                    source={icons[`${title}-dark`]}
+                    style={{ width: iconSize, height: iconSize }}
+                    resizeMode='contain'
+                  />
+                </Animated.View>
+                {/* Badge */}
+                {badgeCounts[title] > 0 && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: -badgeSize * 0.3,
+                      right: -badgeSize * 0.5,
+                      minWidth: badgeSize,
+                      height: badgeSize,
+                      borderRadius: badgeSize / 2,
+                      backgroundColor:
+                        themeController.current?.mainBadgeBackground,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      paddingHorizontal: badgeSize * 0.3,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: themeController.current?.badgeTextColor,
+                        fontSize: badgeSize * 0.6,
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {badgeCounts[title]}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              {/* Заголовок */}
+              <View
                 style={{
-                  color: interpolatedColorValues[idx],
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-              fontSize: fontSize,
+                  height: panelHeight * 0.35,
+                  justifyContent: 'center',
+                  paddingHorizontal: RFValue(4),
                 }}
-                numberOfLines={2}
-                ellipsizeMode='tail'
               >
-                {t(`tabs.${title}`)}
-              </Animated.Text>
-            </View>
-          </TouchableOpacity>
-        )})}
+                <Animated.Text
+                  style={{
+                    color: interpolatedColorValues[idx],
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    fontSize: fontSize,
+                  }}
+                  numberOfLines={2}
+                  ellipsizeMode='tail'
+                >
+                  {t(`tabs.${title}`)}
+                </Animated.Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
         {/* underline */}
         <Animated.View
           style={{
@@ -302,7 +325,7 @@ const panelHeight =
             bottom: 0,
             left: underlineTranslateX,
             width: underlineAnimatedWidth,
-      height: panelHeight * 0.05,
+            height: panelHeight * 0.05,
             backgroundColor: themeController.current?.primaryColor,
             borderRadius: RFValue(2),
             zIndex: 2,
@@ -315,24 +338,29 @@ const panelHeight =
         <Animated.View
           style={{
             flexDirection: 'row',
-            width: screenWidthRef.current * TAB_TITLES.length,
+            width: screenWidthRef.current * orderedTabs.length,
             flex: 1,
             transform: [{ translateX: scrollX }],
           }}
         >
-          {[NewScreen, WaitingScreen, InProgressScreen, DoneScreen].map(
-            (Component, index) => (
-              <View
-                key={index}
-                style={{
-                  width: screenWidthRef.current,
-                  flex: 1,
-                }}
-              >
-                <Component />
-              </View>
-            )
-          )}
+          {orderedScreens.map((Component, index) => (
+            <View
+              key={index}
+              style={{
+                width: screenWidthRef.current,
+                flex: 1,
+              }}
+            >
+              <Component
+                newJobModalVisible={newJobModalVisible}
+                setNewJobModalVisible={setNewJobModalVisible}
+                setActiveKey={setActiveKey}
+                setShowJobModalVisible={setShowJobModalVisible}
+                setCurrentJobId={setCurrentJobId}
+                setJobModalStatus={setJobModalStatus}
+              />
+            </View>
+          ))}
         </Animated.View>
       </View>
 
@@ -340,34 +368,72 @@ const panelHeight =
       <TouchableOpacity
         style={{
           backgroundColor: themeController.current?.mainBadgeBackground,
-          width: RFPercentage(5),
-          height: RFPercentage(5),
-          borderRadius: RFValue(25),
+          width: isWebLandscape ? height * 0.05 : RFPercentage(5),
+          height: isWebLandscape ? height * 0.05 : RFPercentage(5),
+          borderRadius: isWebLandscape ? height * 0.05 : RFPercentage(5),
           justifyContent: 'center',
           alignItems: 'center',
           position: 'absolute',
-          right: RFPercentage(2),
+          ...(isRTL
+            ? {
+                left: RFPercentage(2),
+              }
+            : {
+                right: RFPercentage(2),
+              }),
           bottom: RFPercentage(2),
           ...Platform.select({
             web: { right: RFPercentage(4) },
           }),
         }}
-        onPress={() => setNewJobModalVisible(true)}
+        onPress={() => {
+          setNewJobModalVisible(true);
+          setActiveKey(null);
+        }}
       >
         <Image
           source={icons.plus}
           style={{
-            width: RFPercentage(3),
-            height: RFPercentage(3),
+            width: isWebLandscape ? height * 0.03 : RFPercentage(3),
+            height: isWebLandscape ? height * 0.03 : RFPercentage(3),
             tintColor: themeController.current?.buttonTextColorPrimary,
           }}
           resizeMode='contain'
         />
       </TouchableOpacity>
 
-      <Modal visible={newJobModalVisible} animationType='slide'>
-        <NewJobModal closeModal={() => setNewJobModalVisible(false)} />
-      </Modal>
+      {isWebLandscape ? (
+        <JobModalWrapper visible={newJobModalVisible} main={true}>
+          <NewJobModal
+            closeModal={() => setNewJobModalVisible(false)}
+            activeKey={activeKey}
+          />
+        </JobModalWrapper>
+      ) : (
+        <Modal visible={newJobModalVisible} animationType='slide' transparent>
+          <NewJobModal
+            closeModal={() => setNewJobModalVisible(false)}
+            activeKey={activeKey}
+          />
+        </Modal>
+      )}
+      {isWebLandscape ? (
+        <JobModalWrapper visible={showJobModalVisible} main={true}>
+          <ShowJobModal
+            closeModal={() => setShowJobModalVisible(false)}
+            status={jobModalStatus}
+            currentJobId={currentJobId}
+          />
+        </JobModalWrapper>
+      ) : (
+        <Modal visible={showJobModalVisible} animationType='slide'>
+          <ShowJobModal
+            closeModal={() => setShowJobModalVisible(false)}
+            status={jobModalStatus}
+            currentJobId={currentJobId}
+          />
+        </Modal>
+      )}
     </View>
   );
 }

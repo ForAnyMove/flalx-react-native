@@ -24,9 +24,10 @@ const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
 };
 
 export default function AppProfileScreen({ switchToApp }) {
-  const { session, profileTabController, themeController } =
+  const { session, profileTabController, themeController, languageController } =
     useComponentContext();
   const { isLandscape, height } = useWindowInfo();
+  const isRTL = languageController?.isRTL;
 
   function renderScreen() {
     switch (profileTabController.active) {
@@ -48,14 +49,15 @@ export default function AppProfileScreen({ switchToApp }) {
           {
             backgroundColor: themeController.current?.backgroundColor,
             borderBottomColor: themeController.current?.formInputBackground,
-            height: Platform.OS === 'web' && isLandscape ? height*0.07 : RFPercentage(7)
+            height: Platform.OS === 'web' && isLandscape ? height*0.07 : RFPercentage(7),
+            flexDirection: isRTL ? 'row-reverse' : 'row'
           },
         ]}
       >
         {/* Back button to /store */}
         <TouchableOpacity onPress={() => switchToApp()} style={styles.backBtn}>
           <Image
-            source={icons.back}
+            source={isRTL ? icons.forward : icons.back}
             style={{
               width: getResponsiveSize(20, height*0.02, isLandscape),
               height: getResponsiveSize(20, height*0.02, isLandscape),

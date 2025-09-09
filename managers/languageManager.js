@@ -33,10 +33,10 @@ export default function languageManager() {
     const isRTL = ["he", "ar"].includes(lang);
     setRtl(isRTL);
 
-    if (Platform.OS !== "web") {
-      I18nManager.allowRTL(isRTL);
-      I18nManager.forceRTL(isRTL);
-    }
+    // if (Platform.OS !== "web") {
+    //   I18nManager.allowRTL(isRTL);
+    //   I18nManager.forceRTL(isRTL);
+    // }
 
     if (Platform.OS === "web") {
       localStorage.setItem("app_language", lang);

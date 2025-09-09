@@ -29,17 +29,11 @@ export default function AppScreen() {
   const isRTL = languageController.isRTL;
 
   // ✅ Берём размеры и ориентацию из WindowProvider
-  const { width, height, isLandscape } = useWindowInfo();
+  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
 
   const theme = themeController.current;
   const tabController =
     screenName === 'app' ? appTabController : profileTabController;
-
-  // ширина боковой панели зависит от высоты
-  const sidebarWidth =
-    Platform.OS === 'web' && isLandscape
-      ? Math.max(90, Math.min(280, height * 0.22))
-      : 0;
 
   // размеры для боковой панели (web+landscape) зависят от высоты
   const iconSizeSide = Math.max(12, Math.min(30, height * 0.025));
@@ -145,7 +139,7 @@ export default function AppScreen() {
     // нижняя панель (мобильная)
     return (
       <View
-        style={[styles.bottomBar, { backgroundColor: theme.tabBarBackground }]}
+        style={[styles.bottomBar, { backgroundColor: theme.tabBarBackground, flexDirection: isRTL ? 'row-reverse' : 'row' }]}
       >
         {tabController.list.map((tab) => renderTab(tab))}
       </View>
@@ -159,7 +153,7 @@ export default function AppScreen() {
         flexDirection: !isLandscape ? 'column' : isRTL ? 'row' : 'row-reverse',
       }}
     >
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, width: width, height: height, overflow: 'hidden' }}>
         {screenName === 'app' ? (
           <AppMainScreen
             sidebarWidth={sidebarWidth}

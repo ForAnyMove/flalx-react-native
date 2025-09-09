@@ -31,4 +31,8 @@ export const icons = {
   email: require('../assets/icon/email.png'),
   phone: require('../assets/icon/phone.png'),
   delete: require('../assets/icon/delete.png'),
+  arrowDown: require('../assets/icon/arrow-down.png'),
+  history: require('../assets/icon/history.png'),
+  fullScreen: require('../assets/icon/full-screen.png'),
+  smallScreen: require('../assets/icon/full-screen.png'),
 };

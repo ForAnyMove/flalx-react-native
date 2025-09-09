@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, Text, View, Platform } from 'react-native';
+import { ScrollView, Text, View, Platform, Modal } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import JobTypeSelector from '../../components/JobTypeSelector';
 import ProviderSummaryBlock from '../../components/ProviderSummaryBlock';
 import SearchPanel from '../../components/SearchPanel';
 import { useComponentContext } from '../../context/globalAppContext';
 import { useWindowInfo } from '../../context/windowContext';
+import JobModalWrapper from '../../components/JobModalWrapper';
+import NewJobModal from '../../components/NewJobModal';
 
 export default function Providers() {
   const { themeController, providersController, languageController } =
@@ -14,6 +16,8 @@ export default function Providers() {
   const [searchValue, setSearchValue] = useState('');
   const { isLandscape, height } = useWindowInfo();
   const isRTL = languageController.isRTL;
+  const [newJobModalVisible, setNewJobModalVisible] = useState(false);
+  const [chosenUserId, setChosenUserId] = useState(null);
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
@@ -28,7 +32,7 @@ export default function Providers() {
       (user?.name?.toLowerCase().includes(searchValue.toLowerCase()) ||
         user?.surname?.toLowerCase().includes(searchValue.toLowerCase()))
   );
-
+  
   return (
     <View
       style={[
@@ -69,9 +73,27 @@ export default function Providers() {
           }}
         >
           {filteredProviders?.map((user, index) => (
-            <ProviderSummaryBlock key={index} user={user} />
+            <ProviderSummaryBlock key={index} user={user} chooseUser={() => {
+              setChosenUserId(user?.id);
+              setNewJobModalVisible(true);
+            }} />
           ))}
         </ScrollView>
+      )}
+      {isWebLandscape ? (
+        <JobModalWrapper visible={newJobModalVisible} main={true}>
+          <NewJobModal
+            closeModal={() => setNewJobModalVisible(false)}
+            executorId={chosenUserId}
+          />
+        </JobModalWrapper>
+      ) : (
+        <Modal visible={newJobModalVisible} animationType='slide' transparent>
+          <NewJobModal
+            closeModal={() => setNewJobModalVisible(false)}
+            executorId={chosenUserId}
+          />
+        </Modal>
       )}
     </View>
   );

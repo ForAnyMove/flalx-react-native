@@ -281,7 +281,7 @@ export default function AuthScreen() {
               <Animated.View
                 style={[
                   styles.otpRow,
-                  { transform: [{ translateX: shakeAnim }], flexDirection: isRTL ? "row-reverse" : "row" },
+                  { transform: [{ translateX: shakeAnim }], flexDirection: "row" },
                 ]}
               >
                 {Array.from({ length: OTP_LENGTH }).map((_, i) => (

@@ -19,8 +19,11 @@ import NewScreen from './jobsTabs/New';
 import WaitingScreen from './jobsTabs/Waiting';
 import InProgressScreen from './jobsTabs/InProgress';
 import DoneScreen from './jobsTabs/Done';
+import ShowJobModal from '../../components/ShowJobModal';
+import JobModalWrapper from '../../components/JobModalWrapper';
 
 const TAB_TITLES = ['new', 'waiting', 'in-progress', 'done'];
+const TAB_TITLES_RTL = ['done', 'in-progress', 'waiting', 'new'];
 
 const badgeCounts = {
   new: 0,
@@ -29,24 +32,31 @@ const badgeCounts = {
   done: 5,
 };
 
-export default function Jobs({ sidebarWidth }) {
+export default function Jobs() {
   const { themeController, appTabController, languageController } =
     useComponentContext();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
+  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
+  const isWebLandscape = isLandscape && Platform.OS === 'web';
 
-  const { width, height, isLandscape } = useWindowInfo();
+  const orderedTabs = isRTL ? TAB_TITLES_RTL : TAB_TITLES;
+  const orderedScreens = isRTL
+    ? [DoneScreen, InProgressScreen, WaitingScreen, NewScreen]
+    : [NewScreen, WaitingScreen, InProgressScreen, DoneScreen];
 
-  const SCREEN_WIDTH =
-    Platform.OS === 'web' && isLandscape ? width - sidebarWidth : width;
+  const SCREEN_WIDTH = isWebLandscape ? width - sidebarWidth : width;
 
   const screenWidthRef = useRef(SCREEN_WIDTH);
   const [screenWidth, setScreenWidth] = useState(SCREEN_WIDTH);
-  const [newJobModalVisible, setNewJobModalVisible] = useState(false);
+  // Стейты для модальных окон
+  const [showJobModalVisible, setShowJobModalVisible] = useState(false);
+  const [currentJobId, setCurrentJobId] = useState(null);
+  const [jobModalStatus, setJobModalStatus] = useState(null);
 
   const storeActiveTab = useRef(
-    TAB_TITLES.indexOf(appTabController.activeSubTab) >= 0
-      ? TAB_TITLES.indexOf(appTabController.activeSubTab)
+    orderedTabs.indexOf(appTabController.activeSubTab) >= 0
+      ? orderedTabs.indexOf(appTabController.activeSubTab)
       : 0
   );
 
@@ -62,19 +72,19 @@ export default function Jobs({ sidebarWidth }) {
     new Animated.Value(-storeActiveTab.current * screenWidthRef.current)
   ).current;
 
-  const tabWidth = screenWidthRef.current / TAB_TITLES.length;
+  const tabWidth = screenWidthRef.current / orderedTabs.length;
   const positiveScrollX = Animated.multiply(scrollX, -1);
 
   const isSwipeRight = useRef(null);
 
   const underlineAnimatedWidth = useMemo(() => {
     return positiveScrollX.interpolate({
-      inputRange: TAB_TITLES.flatMap((_, i) => [
+      inputRange: orderedTabs.flatMap((_, i) => [
         (i - 0.5) * screenWidth,
         i * screenWidth,
         (i + 0.5) * screenWidth,
       ]),
-      outputRange: TAB_TITLES.flatMap(() => [
+      outputRange: orderedTabs.flatMap(() => [
         tabWidth * 1,
         tabWidth * 0.7,
         tabWidth * 1,
@@ -85,8 +95,8 @@ export default function Jobs({ sidebarWidth }) {
 
   const underlineTranslateX = useMemo(() => {
     return positiveScrollX.interpolate({
-      inputRange: TAB_TITLES.map((_, i) => i * screenWidth),
-      outputRange: TAB_TITLES.map(
+      inputRange: orderedTabs.map((_, i) => i * screenWidth),
+      outputRange: orderedTabs.map(
         (_, i) => i * tabWidth + (tabWidth - tabWidth * 0.7) / 2
       ),
       extrapolate: 'clamp',
@@ -94,7 +104,7 @@ export default function Jobs({ sidebarWidth }) {
   }, [screenWidth, tabWidth, positiveScrollX]);
 
   const interpolatedColorValues = useMemo(() => {
-    return TAB_TITLES.map((_, i) =>
+    return orderedTabs.map((_, i) =>
       positiveScrollX.interpolate({
         inputRange: [
           (i - 1) * screenWidth,
@@ -112,7 +122,7 @@ export default function Jobs({ sidebarWidth }) {
   }, [screenWidth, themeController.current, positiveScrollX]);
 
   const interpolatedOpacityValues = useMemo(() => {
-    return TAB_TITLES.map((_, i) =>
+    return orderedTabs.map((_, i) =>
       positiveScrollX.interpolate({
         inputRange: [
           (i - 1) * screenWidth,
@@ -140,7 +150,7 @@ export default function Jobs({ sidebarWidth }) {
         }
         if (
           (storeActiveTab.current === 0 && isSwipeRight.current) ||
-          (storeActiveTab.current === TAB_TITLES.length - 1 &&
+          (storeActiveTab.current === orderedTabs.length - 1 &&
             !isSwipeRight.current)
         )
           return;
@@ -154,7 +164,7 @@ export default function Jobs({ sidebarWidth }) {
         let newTab = storeActiveTab.current;
         if (
           dx < swipeThreshold * -1 &&
-          storeActiveTab.current < TAB_TITLES.length - 1
+          storeActiveTab.current < orderedTabs.length - 1
         ) {
           newTab = storeActiveTab.current + 1;
         } else if (dx > swipeThreshold && storeActiveTab.current > 0) {
@@ -167,7 +177,7 @@ export default function Jobs({ sidebarWidth }) {
           useNativeDriver: false,
         }).start(() => {
           storeActiveTab.current = newTab;
-          appTabController.goToSub(TAB_TITLES[newTab]);
+          appTabController.goToSub(orderedTabs[newTab]);
         });
       },
     })
@@ -180,13 +190,13 @@ export default function Jobs({ sidebarWidth }) {
       useNativeDriver: false,
     }).start(() => {
       storeActiveTab.current = index;
-      appTabController.goToSub(TAB_TITLES[index]);
+      appTabController.goToSub(orderedTabs[index]);
     });
   };
 
   useEffect(() => {
     if (appTabController.activeSubTab) {
-      const newIndex = TAB_TITLES.indexOf(appTabController.activeSubTab);
+      const newIndex = orderedTabs.indexOf(appTabController.activeSubTab);
       if (newIndex >= 0 && newIndex !== storeActiveTab.current) {
         Animated.timing(scrollX, {
           toValue: -newIndex * screenWidthRef.current,
@@ -203,8 +213,17 @@ export default function Jobs({ sidebarWidth }) {
   const panelHeight =
     Platform.OS === 'web' && isLandscape ? height * 0.08 : RFPercentage(10);
 
+  // следим за сменой isRTL и синхронизируем активный таб
+  useEffect(() => {
+    const newIndex = orderedTabs.indexOf(appTabController.activeSubTab);
+    if (newIndex >= 0) {
+      storeActiveTab.current = newIndex;
+      scrollX.setValue(-newIndex * screenWidthRef.current);
+    }
+  }, [isRTL, orderedTabs]);
+
   return (
-    <View style={{ flex: 1, userSelect: 'none' }}>
+    <View style={{ flex: 1, userSelect: 'none'}}>
       {/* Заголовки вкладок */}
       <View
         style={{
@@ -214,7 +233,7 @@ export default function Jobs({ sidebarWidth }) {
           overflow: 'hidden',
         }}
       >
-        {TAB_TITLES.map((title, idx) => {
+        {orderedTabs.map((title, idx) => {
           const iconSize = panelHeight * 0.35;
           const fontSize = panelHeight * 0.2;
           const badgeSize = panelHeight * 0.25;
@@ -232,11 +251,13 @@ export default function Jobs({ sidebarWidth }) {
             >
               {/* Иконка */}
               <View style={{ position: 'relative' }}>
-                <Animated.View style={{ opacity: interpolatedOpacityValues[idx] }}>
+                <Animated.View
+                  style={{ opacity: interpolatedOpacityValues[idx] }}
+                >
                   <Image
                     source={icons[`${title}-dark`]}
                     style={{ width: iconSize, height: iconSize }}
-                    resizeMode="contain"
+                    resizeMode='contain'
                   />
                 </Animated.View>
                 {badgeCounts[title] > 0 && (
@@ -248,7 +269,8 @@ export default function Jobs({ sidebarWidth }) {
                       minWidth: badgeSize,
                       height: badgeSize,
                       borderRadius: badgeSize / 2,
-                      backgroundColor: themeController.current?.mainBadgeBackground,
+                      backgroundColor:
+                        themeController.current?.mainBadgeBackground,
                       justifyContent: 'center',
                       alignItems: 'center',
                       paddingHorizontal: badgeSize * 0.3,
@@ -283,7 +305,7 @@ export default function Jobs({ sidebarWidth }) {
                     fontSize,
                   }}
                   numberOfLines={2}
-                  ellipsizeMode="tail"
+                  ellipsizeMode='tail'
                 >
                   {t(`tabs.${title}`)}
                 </Animated.Text>
@@ -311,30 +333,46 @@ export default function Jobs({ sidebarWidth }) {
         <Animated.View
           style={{
             flexDirection: 'row',
-            width: screenWidthRef.current * TAB_TITLES.length,
+            width: screenWidthRef.current * orderedTabs.length,
             flex: 1,
             transform: [{ translateX: scrollX }],
           }}
         >
-          {[NewScreen, WaitingScreen, InProgressScreen, DoneScreen].map(
-            (Component, index) => (
-              <View
-                key={index}
-                style={{
-                  width: screenWidthRef.current,
-                  flex: 1,
-                }}
-              >
-                <Component />
-              </View>
-            )
-          )}
+          {orderedScreens.map((Component, index) => (
+            <View
+              key={index}
+              style={{
+                width: screenWidthRef.current,
+                flex: 1,
+              }}
+            >
+              <Component
+                setShowJobModalVisible={setShowJobModalVisible}
+                setCurrentJobId={setCurrentJobId}
+                setJobModalStatus={setJobModalStatus}
+               />
+            </View>
+          ))}
         </Animated.View>
       </View>
 
-      <Modal visible={newJobModalVisible} animationType="slide">
-        <NewJobModal closeModal={() => setNewJobModalVisible(false)} />
-      </Modal>
+      {isWebLandscape ? (
+        <JobModalWrapper visible={showJobModalVisible} main={true}>
+          <ShowJobModal
+            closeModal={() => setShowJobModalVisible(false)}
+            status={jobModalStatus}
+            currentJobId={currentJobId}
+          />
+        </JobModalWrapper>
+      ) : (
+        <Modal visible={showJobModalVisible} animationType='slide'>
+          <ShowJobModal
+            closeModal={() => setShowJobModalVisible(false)}
+            status={jobModalStatus}
+            currentJobId={currentJobId}
+          />
+        </Modal>
+      )}
     </View>
   );
 }

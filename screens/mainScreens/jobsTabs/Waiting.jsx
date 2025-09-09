@@ -3,6 +3,7 @@ import { useState } from 'react';
 import {
   Image,
   Modal,
+  Platform,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -11,24 +12,52 @@ import {
 // import JobTypeSelector from '../../../components/JobTypeSelector';
 import { RFValue } from 'react-native-responsive-fontsize';
 import SearchPanel from '../../../components/SearchPanel';
-import ShowJobModal from '../../../components/ShowJobModal';
-import { JOB_TYPES } from '../../../constants/jobTypes';
 import { useComponentContext } from '../../../context/globalAppContext';
+import { useWindowInfo } from '../../../context/windowContext';
+import { useTranslation } from 'react-i18next';
 
-export default function WaitingScreen() {
-  const { themeController, jobsController } = useComponentContext();
+export default function WaitingScreen({
+  setShowJobModalVisible,
+  setCurrentJobId,
+  setJobModalStatus,
+}) {
+  const { themeController, jobsController, languageController } =
+    useComponentContext();
+  const { height, isLandscape } = useWindowInfo();
+  const { t } = useTranslation();
+  const isRTL = languageController.isRTL;
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');
-  // const router = useRouter();
-  const [showJobModalVisible, setShowJobModalVisible] = useState(false);
 
-  const [currentJobId, setCurrentJobId] = useState(null);
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
+  // размеры для web-landscape
+  const sizes = {
+    cardRadius: isWebLandscape ? height * 0.007 : RFValue(5),
+    cardShadow: isWebLandscape ? height * 0.001 : RFValue(3),
+    imageSize: isWebLandscape ? height * 0.09 : RFValue(55),
+    fontTitle: isWebLandscape ? height * 0.018 : RFValue(12),
+    fontDescription: isWebLandscape ? height * 0.015 : RFValue(10),
+    badgeSize: isWebLandscape ? height * 0.025 : RFValue(16),
+    badgeFont: isWebLandscape ? height * 0.014 : RFValue(10),
+    scrollContainerWidth: isWebLandscape ? '60%' : '100%',
+    badgePosition: isWebLandscape ? height * 0.005 : RFValue(5),
+    personalMarkerBorderWidth: isWebLandscape ? height * 0.003 : RFValue(2),
+    personalMarkerVP: isWebLandscape ? height * 0.003 : RFValue(2),
+    personalMarkerHP: isWebLandscape ? height * 0.012 : RFValue(6),
+    personalMarkerBottomAngleRadius: isWebLandscape
+      ? height * 0.01
+      : RFValue(8),
+    personalMarkerFontSize: isWebLandscape ? height * 0.015 : RFValue(10),
+  };
   return (
     <View
       style={[
         styles.container,
-        { backgroundColor: themeController.current?.backgroundColor },
+        {
+          backgroundColor: themeController.current?.backgroundColor,
+          direction: isRTL ? 'rtl' : 'ltr',
+        },
       ]}
     >
       <View>
@@ -45,7 +74,12 @@ export default function WaitingScreen() {
       ) : jobsController.error ? (
         <Text>{jobsController.error}</Text>
       ) : (
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContainer,
+            { width: sizes.scrollContainerWidth },
+          ]}
+        >
           {jobsController.executor.waiting.map((job, index) => {
             const hasImage = job.images && job.images.length > 0;
             return (
@@ -54,8 +88,8 @@ export default function WaitingScreen() {
                 style={styles.cardContainer}
                 onPress={() => {
                   setCurrentJobId(job.id);
-                  // router.push(`/show-job-modal`);
                   setShowJobModalVisible(true);
+                  setJobModalStatus('jobs-waiting');
                 }}
               >
                 <View
@@ -64,6 +98,12 @@ export default function WaitingScreen() {
                     {
                       backgroundColor:
                         themeController.current?.defaultBlocksBackground,
+                      borderRadius: sizes.cardRadius,
+                      shadowRadius: sizes.cardShadow,
+                    },
+                    job?.myProviderSource === 'personal' && {
+                      borderWidth: sizes.personalMarkerBorderWidth,
+                      borderColor: themeController.current?.personalMarkerColor,
                     },
                   ]}
                 >
@@ -71,8 +111,28 @@ export default function WaitingScreen() {
                     style={[
                       styles.imageContainer,
                       {
+                        width: sizes.imageSize,
+                        height: sizes.imageSize,
                         backgroundColor:
                           themeController.current?.defaultBlocksMockBackground,
+                        ...(isRTL
+                          ? {
+                              marginLeft: RFValue(10),
+                              marginRight: 0,
+                            }
+                          : {
+                              marginRight: RFValue(10),
+                              marginLeft: 0,
+                            }),
+                        ...(isRTL && Platform.OS === 'web'
+                          ? {
+                              borderTopRightRadius: sizes.cardRadius,
+                              borderBottomRightRadius: sizes.cardRadius,
+                            }
+                          : {
+                              borderTopLeftRadius: sizes.cardRadius,
+                              borderBottomLeftRadius: sizes.cardRadius,
+                            }),
                       },
                     ]}
                   >
@@ -86,7 +146,7 @@ export default function WaitingScreen() {
                       <View style={styles.placeholderImage}>
                         <FontAwesome6
                           name='image'
-                          size={20}
+                          size={sizes.fontTitle}
                           color={
                             themeController.current?.defaultBlocksMockColor
                           }
@@ -98,39 +158,67 @@ export default function WaitingScreen() {
                     <Text
                       style={[
                         styles.title,
-                        { color: themeController.current?.textColor },
+                        {
+                          color: themeController.current?.textColor,
+                          fontSize: sizes.fontTitle,
+                        },
                       ]}
                     >
-                      {JOB_TYPES[job.type]}
+                      {t(`jobTypes.${job.type}`)}
                     </Text>
                     {job.description ? (
                       <Text
                         style={[
                           styles.description,
-                          { color: themeController.current?.textColor },
+                          {
+                            color: themeController.current?.textColor,
+                            textAlign:
+                              isRTL && Platform.OS === 'web' ? 'right' : 'left',
+                            fontSize: sizes.fontDescription,
+                          },
                         ]}
                       >
                         {job.description}
                       </Text>
                     ) : null}
                   </View>
-                  {job.providers?.length > 0 && (
+                  {job?.myProviderSource === 'personal' && (
                     <View
                       style={[
-                        styles.badge,
+                        styles.specialMarkerContainer,
                         {
                           backgroundColor:
-                            themeController.current?.secondaryBadgeBackground,
+                            themeController.current?.personalMarkerColor,
+                          paddingVertical: sizes.personalMarkerVP,
+                          paddingHorizontal: sizes.personalMarkerHP,
                         },
+                        isRTL
+                          ? {
+                              left: 0,
+                              borderBottomRightRadius: isWebLandscape
+                                ? sizes.personalMarkerBottomAngleRadius
+                                : 0,
+                              borderBottomLeftRadius: isWebLandscape
+                                ? 0
+                                : sizes.personalMarkerBottomAngleRadius,
+                            }
+                          : {
+                              right: 0,
+                              borderBottomLeftRadius:
+                                sizes.personalMarkerBottomAngleRadius,
+                            },
                       ]}
                     >
                       <Text
                         style={[
-                          styles.badgeText,
-                          { color: themeController.current?.badgeTextColor },
+                          {
+                            color: '#fff',
+                            fontWeight: 'bold',
+                            fontSize: sizes.personalMarkerFontSize,
+                          },
                         ]}
                       >
-                        {job.providers.length}
+                        {'For you'}
                       </Text>
                     </View>
                   )}
@@ -140,13 +228,6 @@ export default function WaitingScreen() {
           })}
         </ScrollView>
       )}
-      <Modal visible={showJobModalVisible} animationType='slide'>
-        <ShowJobModal
-          closeModal={() => setShowJobModalVisible(false)}
-          status='jobs-waiting'
-          currentJobId={currentJobId}
-        />
-      </Modal>
     </View>
   );
 }
@@ -222,5 +303,9 @@ const styles = {
   badgeText: {
     fontWeight: 'bold',
     fontSize: RFValue(10),
+  },
+  specialMarkerContainer: {
+    position: 'absolute',
+    top: 0,
   },
 };

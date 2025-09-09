@@ -120,7 +120,7 @@ export default function sessionManager() {
       console.log('Профиль пользователя:', profile);
       setUser(profile);
     } catch (err) {
-      console.error('Ошибка при запросе профиля:', err.message);
+      // console.error('Ошибка при запросе профиля:', err.message);
     }
   }
 

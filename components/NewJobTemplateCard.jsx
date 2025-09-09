@@ -1,28 +1,41 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Dimensions, Image, StyleSheet, Text, View } from 'react-native';
-import { useComponentContext } from '../context/globalAppContext';
-
+import { Image, StyleSheet, Text, View, Platform } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
+import { useComponentContext } from '../context/globalAppContext';
+import { useWindowInfo } from '../context/windowContext';
+import { useTranslation } from 'react-i18next';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const SCREEN_HEIGHT = Dimensions.get('window').height;
-const ASPECT_RATIO = SCREEN_WIDTH / SCREEN_HEIGHT;
-
-let numColumns = 2;
-if (ASPECT_RATIO > 3 / 4) numColumns = 3;
-if (ASPECT_RATIO > 4 / 3) numColumns = 4;
-
-const CONTAINER_HORIZONTAL_PADDING = 32; // 16 * 2 из твоего контейнера
 const CARD_MARGIN = 8;
-
-const totalSpacing = CARD_MARGIN * 2 * numColumns + CONTAINER_HORIZONTAL_PADDING;
-const CARD_WIDTH = ((SCREEN_WIDTH - totalSpacing) / numColumns) * 0.9; // Уменьшаем ширину карточки на 5% для отступов
 
 export default function NewJobTemplateCard({ templateTitle, imageSource }) {
   const { themeController } = useComponentContext();
+  const { height, isLandscape } = useWindowInfo();
+  const { t } = useTranslation();
+
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  // размеры карточки для web-landscape считаем от height
+  const sizes = {
+    cardWidth: isWebLandscape ? height * 0.22 : RFValue(120),
+    cardRadius: isWebLandscape ? height * 0.007 : RFValue(4),
+    shadowRadius: isWebLandscape ? height * 0.001 : RFValue(2),
+    font: isWebLandscape ? height * 0.018 : RFValue(9),
+    icon: isWebLandscape ? height * 0.04 : RFValue(26),
+    padding: isWebLandscape ? height * 0.008 : RFValue(6),
+  };
 
   return (
-    <View style={[styles.card, { width: CARD_WIDTH, backgroundColor: themeController.current?.defaultBlocksBackground }]}>
+    <View
+      style={[
+        styles.card,
+        {
+          width: sizes.cardWidth,
+          borderRadius: sizes.cardRadius,
+          shadowRadius: sizes.shadowRadius,
+          backgroundColor: themeController.current?.defaultBlocksBackground,
+        },
+      ]}
+    >
       {imageSource ? (
         <Image
           source={{ uri: imageSource }}
@@ -30,11 +43,35 @@ export default function NewJobTemplateCard({ templateTitle, imageSource }) {
           resizeMode="cover"
         />
       ) : (
-        <View style={[styles.placeholder, { backgroundColor: themeController.current?.defaultBlocksMockBackground }]}>
-          <Ionicons name="image-outline" size={RFValue(26)} color={themeController.current?.defaultBlocksMockColor} />
+        <View
+          style={[
+            styles.placeholder,
+            {
+              backgroundColor:
+                themeController.current?.defaultBlocksMockBackground,
+            },
+          ]}
+        >
+          <Ionicons
+            name="image-outline"
+            size={sizes.icon}
+            color={themeController.current?.defaultBlocksMockColor}
+          />
         </View>
       )}
-      <Text style={styles.title}>{templateTitle}</Text>
+      <Text
+        style={[
+          styles.title,
+          {
+            fontSize: sizes.font,
+            color: themeController.current?.textColor,
+            paddingHorizontal: sizes.padding,
+            paddingVertical: sizes.padding,
+          },
+        ]}
+      >
+        {t(`jobTypes.${templateTitle}`)}
+      </Text>
     </View>
   );
 }
@@ -42,11 +79,9 @@ export default function NewJobTemplateCard({ templateTitle, imageSource }) {
 const styles = StyleSheet.create({
   card: {
     margin: CARD_MARGIN,
-    borderRadius: RFValue(4),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
-    shadowRadius: RFValue(2),
     elevation: 3,
     overflow: 'hidden',
   },
@@ -61,8 +96,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    paddingHorizontal: RFValue(6),
-    paddingVertical: RFValue(6),
-    fontSize: RFValue(9),
+    fontWeight: '500',
   },
 });
