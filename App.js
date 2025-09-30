@@ -47,6 +47,7 @@ function App() {
   }
 
   let content;
+// console.log('!isOnboardingShowed - ', !isOnboardingShowed, '!session.status - ', !session.status, 'user?.current?.firstauth - ', user?.current?.firstauth);
 
   // 1. Онбординг
   if (!isOnboardingShowed) {

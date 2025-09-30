@@ -40,8 +40,8 @@ export default function RegisterScreen() {
   const [form, setForm] = useState({
     name: '',
     surname: '',
-    profession: '',
-    description: '',
+    // profession: '',
+    // description: '',
   });
   const [loading, setLoading] = useState(false);
   const [finished, setFinished] = useState(false);

@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './../utils/supabase/supabase';
+import { API_BASE_URL } from '../utils/config';
 
 // ⚠️ Замени этот IP на свой (или 10.0.2.2 для Android эмулятора)
-const SERVER_URL =
-  Platform.OS === 'web' ? 'http://localhost:3000' : 'http://10.0.2.2:3000';
+// const SERVER_URL =
+//   Platform.OS === 'web' ? 'http://localhost:3000' : 'http://10.0.2.2:3000';
 
 export default function sessionManager() {
   const [session, setSession] = useState(null);
@@ -33,7 +34,7 @@ export default function sessionManager() {
         const { data, error } = await supabase.auth.setSession(parsed);
 
         if (error) {
-          console.error('Ошибка восстановления сессии:', error.message);
+          // console.error('Ошибка восстановления сессии:', error.message);
           return;
         }
 
@@ -106,7 +107,7 @@ export default function sessionManager() {
   // Запрашиваем профиль с сервера
   async function fetchUserProfile(token) {
     try {
-      const res = await fetch(`${SERVER_URL}/users/auth/login`, {
+      const res = await fetch(`${API_BASE_URL}/users/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
@@ -120,7 +121,7 @@ export default function sessionManager() {
       console.log('Профиль пользователя:', profile);
       setUser(profile);
     } catch (err) {
-      // console.error('Ошибка при запросе профиля:', err.message);
+      // console.error('Ошибка запроса профиля:', err.message);
     }
   }
 
@@ -138,7 +139,7 @@ export default function sessionManager() {
   // Обновить данные пользователя
   async function updateUser(updates) {
     try {
-      const res = await fetch(`${SERVER_URL}/users/me`, {
+      const res = await fetch(`${API_BASE_URL}/users/me`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -162,7 +163,7 @@ export default function sessionManager() {
   // Удалить пользователя
   async function deleteUser() {
     try {
-      const res = await fetch(`${SERVER_URL}/users/me`, {
+      const res = await fetch(`${API_BASE_URL}/users/me`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${session?.access_token}`,
@@ -196,7 +197,7 @@ export default function sessionManager() {
 
     return () => subscription.subscription.unsubscribe();
   }, []);
-
+  
   return {
     session: {
       status: !!session && !!user,
@@ -204,7 +205,7 @@ export default function sessionManager() {
       sendCode: (email) => signInWithEmail(email),
       checkCode: (code) => verifyOtp(code),
       signOut,
-      serverURL: SERVER_URL,
+      serverURL: API_BASE_URL,
     },
     user: {
       current: user,
