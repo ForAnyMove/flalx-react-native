@@ -28,7 +28,8 @@ const getResponsiveSize = (mobileSize, webSize) => {
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
-  const { user, themeController, session, languageController } = useComponentContext();
+  const { user, themeController, session, languageController } =
+    useComponentContext();
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
 
@@ -40,8 +41,6 @@ export default function RegisterScreen() {
   const [form, setForm] = useState({
     name: '',
     surname: '',
-    // profession: '',
-    // description: '',
   });
   const [loading, setLoading] = useState(false);
   const [finished, setFinished] = useState(false);
@@ -64,7 +63,14 @@ export default function RegisterScreen() {
   async function handleSubmit() {
     try {
       setLoading(true);
-      await user.update({ ...form });
+      const updatedUser = {};
+      if (form.name) updatedUser.name = form.name;
+      if (form.surname) updatedUser.surname = form.surname;
+      // if (form.profession) updatedUser.professions = [...form.profession];
+      if (form.description) updatedUser.about = form.description;
+      if (avatarUrl) updatedUser.avatar = avatarUrl;
+
+      await user.update({ ...updatedUser });
       setFinished(true);
       setTimeout(() => {
         // navigation.replace("MainApp");
@@ -77,7 +83,8 @@ export default function RegisterScreen() {
   }
 
   // === Прогресс (точки) ===
-  const totalSteps = 4;
+  // const totalSteps = 4;
+  const totalSteps = 3;
   const ProgressDots = () => (
     <View style={styles.progressContainer}>
       {Array.from({ length: totalSteps }).map((_, i) => {
@@ -173,7 +180,7 @@ export default function RegisterScreen() {
   // ограничитель ширины контента на web/landscape — не шире половины высоты окна
   const contentWidthStyle =
     Platform.OS === 'web' && isLandscape
-      ? { width: Math.min(height * 0.5, 560) }
+      ? { width: step === 1 ? height * 0.7 : height * 0.4 }
       : { width: '100%' };
 
   return (
@@ -186,13 +193,27 @@ export default function RegisterScreen() {
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollContent,
+          { height: '100%' },
           Platform.OS === 'web' && isLandscape
-            ? { alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }
+            ? {
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '80vh',
+                boxSizing: 'border-box',
+                marginTop: '10vh',
+              }
             : null,
         ]}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps='handled'
+        scrollEnabled={Platform.OS === 'web'} // на web скроллим, на мобиле контент влезает
       >
-        <View style={[styles.contentBlock, contentWidthStyle]}>
+        <View
+          style={[
+            styles.contentBlock,
+            contentWidthStyle,
+            { height: '100%', justifyContent: 'space-between' },
+          ]}
+        >
           {step === 1 && (
             <>
               <Text style={[styles.title, { color: theme.primaryColor }]}>
@@ -203,7 +224,7 @@ export default function RegisterScreen() {
                 style={[
                   styles.termsBox,
                   Platform.OS === 'web' && isLandscape
-                    ? { height: '40vh' } // компактнее на web-экранах
+                    ? { height: '40vh', maxHeight: '40vh' } // компактнее на web-экранах
                     : null,
                 ]}
               >
@@ -317,7 +338,20 @@ export default function RegisterScreen() {
                         backgroundColor: theme.defaultBlocksBackground,
                         borderColor: theme.borderColor,
                         borderWidth: 1,
+                        // прозрачный инпут внутри окрашенного fieldBlock
+                        backgroundColor: 'transparent',
+                        borderWidth: 0,
+                        marginBottom: getResponsiveSize(4, 3),
                       },
+                      Platform.OS === 'web' && isLandscape
+                        ? {
+                            // убираем чёрную обводку (RN Web)
+                            outlineStyle: 'none',
+                            outlineWidth: 0,
+                            outlineColor: 'transparent',
+                            boxShadow: 'none',
+                          }
+                        : null,
                     ]}
                     placeholderTextColor={theme.formInputPlaceholderColor}
                   />
@@ -352,7 +386,20 @@ export default function RegisterScreen() {
                         backgroundColor: theme.defaultBlocksBackground,
                         borderColor: theme.borderColor,
                         borderWidth: 1,
+                        // прозрачный инпут внутри окрашенного fieldBlock
+                        backgroundColor: 'transparent',
+                        borderWidth: 0,
+                        marginBottom: getResponsiveSize(4, 3),
                       },
+                      Platform.OS === 'web' && isLandscape
+                        ? {
+                            // убираем чёрную обводку (RN Web)
+                            outlineStyle: 'none',
+                            outlineWidth: 0,
+                            outlineColor: 'transparent',
+                            boxShadow: 'none',
+                          }
+                        : null,
                     ]}
                     placeholderTextColor={theme.formInputPlaceholderColor}
                   />
@@ -391,7 +438,7 @@ export default function RegisterScreen() {
             </>
           )}
 
-          {step === 3 && (
+          {/* {step === 3 && (
             <>
               <Text style={[styles.title, { color: theme.textColor }]}>
                 {t('register.profile_profession')}
@@ -444,10 +491,12 @@ export default function RegisterScreen() {
                 />
               </View>
             </>
-          )}
+          )} */}
 
-          {step === 4 && (
+          {step === 3 && (
             <>
+            <View style={{flex: 1, justifyContent: 'space-between'}}>
+              <View>
               <Text style={[styles.title, { color: theme.textColor }]}>
                 {t('register.profile_description')}
               </Text>
@@ -483,25 +532,43 @@ export default function RegisterScreen() {
                       backgroundColor: theme.defaultBlocksBackground,
                       borderColor: theme.borderColor,
                       borderWidth: 1,
+                      // прозрачный инпут внутри окрашенного fieldBlock
+                      backgroundColor: 'transparent',
+                      borderWidth: 0,
+                      marginBottom: getResponsiveSize(25, 10),
                     },
+                    Platform.OS === 'web' && isLandscape
+                      ? {
+                          // убираем чёрную обводку (RN Web)
+                          outlineStyle: 'none',
+                          outlineWidth: 0,
+                          outlineColor: 'transparent',
+                          boxShadow: 'none',
+                        }
+                      : null,
                   ]}
                   placeholderTextColor={theme.formInputPlaceholderColor}
                 />
               </View>
+              </View>
+                <View>
+                  <ProgressDots />
 
-              <ProgressDots />
-
-              <PrimaryButton
-                title={
-                  loading ? (
-                    <ActivityIndicator color={theme.buttonTextColorPrimary} />
-                  ) : (
-                    t('register.finish')
-                  )
-                }
-                onPress={handleSubmit}
-                disabled={loading}
-              />
+                  <PrimaryButton
+                    title={
+                      loading ? (
+                        <ActivityIndicator
+                          color={theme.buttonTextColorPrimary}
+                        />
+                      ) : (
+                        t('register.finish')
+                      )
+                    }
+                    onPress={handleSubmit}
+                    disabled={loading}
+                  />
+                </View>
+            </View>
             </>
           )}
         </View>
@@ -523,7 +590,7 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: getResponsiveSize(20, 18),
-    marginBottom: getResponsiveSize(20, 14),
+    marginBottom: getResponsiveSize(20, '4vh'),
     textAlign: 'center',
     fontWeight: 'bold',
   },
@@ -585,15 +652,15 @@ const styles = StyleSheet.create({
 
   avatarContainer: {
     alignItems: 'center',
-    marginBottom: getResponsiveSize(10, 8),
-    height: RFPercentage(25),
+    marginBottom: getResponsiveSize(10, '5vh'),
+    height: getResponsiveSize(150, 120),
   },
   avatarWrapper: {
     height: '60%',
     aspectRatio: 1,
     borderRadius: getResponsiveSize(60, 50),
     position: 'relative',
-    overflow: 'hidden',
+    // overflow: 'hidden',
   },
   avatarImage: {
     width: '100%',
@@ -606,8 +673,8 @@ const styles = StyleSheet.create({
     bottom: '-2%',
     right: '-2%',
     borderRadius: getResponsiveSize(70, 60),
-    width: getResponsiveSize(30, 26),
-    height: getResponsiveSize(30, 26),
+    width: getResponsiveSize(26, 26),
+    height: getResponsiveSize(26, 26),
     overflow: 'hidden',
   },
   cameraIcon: { width: '100%', height: '100%' },
@@ -620,12 +687,12 @@ const styles = StyleSheet.create({
   },
 
   inputsContainer: {
-    height: RFPercentage(43),
+    flexGrow: 1,
   },
   inputBlock: {
     marginBottom: getResponsiveSize(20, 14),
     borderRadius: getResponsiveSize(10, 8),
-    paddingVertical: getResponsiveSize(5, 4),
+    paddingVertical: getResponsiveSize(5, '2vh'),
     ...Platform.select({
       web: { zIndex: 1 },
     }),
@@ -633,7 +700,7 @@ const styles = StyleSheet.create({
   label: {
     fontWeight: 'bold',
     opacity: 0.7,
-    paddingHorizontal: getResponsiveSize(10, 8),
+    paddingHorizontal: getResponsiveSize(10, 10),
     paddingTop: getResponsiveSize(6, 4),
     fontSize: getResponsiveSize(12, 11),
   },
