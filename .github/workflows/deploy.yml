@@ -30,6 +30,7 @@ jobs:
       - name: Install deps
         run: npm ci
 
+
       - name: Build web (Expo export)
         # Для project pages: base-url = /<repo>/
         # Для user/org pages (<user>.github.io): замените на "/"
