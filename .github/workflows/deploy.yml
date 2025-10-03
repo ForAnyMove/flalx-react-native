@@ -24,6 +24,12 @@ jobs:
       - name: Install deps
         run: npm ci
 
+      - name: Verify assets path
+        run: |
+          ls -la assets || true
+          ls -la assets/icon || true
+          git ls-files | grep -i "assets/.*/email"
+          
       - name: Build web (Expo export)
         # Для project pages: PUBLIC_URL="/<repo>/"
         # Для <user>.github.io замените на "/"
