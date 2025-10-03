@@ -2,7 +2,7 @@ name: Build web and publish to gh-pages
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master ]   # оставил как у вас
   workflow_dispatch:
 
 permissions:
@@ -25,10 +25,11 @@ jobs:
         run: npm ci
 
       - name: Build web (Expo export)
-        # Для project pages (обычный репозиторий):
-        # base-url должен быть /<repo>/ — оставляем динамически
-        # Если репозиторий <user>.github.io — замените на: --base-url "/"
-        run: npx expo export -p web --output-dir dist --base-url "/${{ github.event.repository.name }}/"
+        # Для project pages: PUBLIC_URL="/<repo>/"
+        # Для <user>.github.io замените на "/"
+        run: |
+          echo "PUBLIC_URL=/${{ github.event.repository.name }}/"
+          PUBLIC_URL="/${{ github.event.repository.name }}/" npx expo export --platform web --output-dir dist
 
       - name: SPA fallback
         run: cp dist/index.html dist/404.html
