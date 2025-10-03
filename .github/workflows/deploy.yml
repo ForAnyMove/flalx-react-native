@@ -2,11 +2,17 @@ name: Build web and publish to gh-pages
 
 on:
   push:
-    branches: [ master ]   # оставил как у вас
+    branches: [ master ]
   workflow_dispatch:
 
 permissions:
   contents: write
+
+# ВАЖНО: если package.json лежит в папке FlalxRN, оставьте так.
+# Если он в корне репозитория — удалите этот блок defaults.
+defaults:
+  run:
+    working-directory: .
 
 jobs:
   build-deploy:
@@ -24,18 +30,33 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      - name: Verify assets path
+      - name: Verify exact assets and paths
         run: |
-          ls -la assets || true
-          ls -la assets/icon || true
-          git ls-files | grep -i "assets/.*/email"
-          
+          echo "PWD:" && pwd
+          echo "--- constants/icons.js ---"
+          sed -n '1,200p' constants/icons.js || true
+          echo "--- ls assets/icon ---"
+          ls -la assets/icon || echo "no assets/icon"
+          echo "--- exact file checks ---"
+          for f in \
+            assets/icon/email.png \
+            assets/icon/photo-camera.png \
+            assets/icon/phone.png \
+            assets/icon/delete.png \
+            assets/icon/arrow-down.png \
+            assets/register/UserImages/avatar-inverse.png
+          do
+            [ -f "$f" ] && echo "OK: $f" || echo "MISSING: $f"
+          done
+          echo "--- git tracked files (case sensitive) ---"
+          git ls-files --stage | grep -E "(assets/icon|assets/register/UserImages)" || true
+
       - name: Build web (Expo export)
-        # Для project pages: PUBLIC_URL="/<repo>/"
-        # Для <user>.github.io замените на "/"
+        env:
+          PUBLIC_URL: "/${{ github.event.repository.name }}/"
         run: |
-          echo "PUBLIC_URL=/${{ github.event.repository.name }}/"
-          PUBLIC_URL="/${{ github.event.repository.name }}/" npx expo export --platform web --output-dir dist
+          rm -rf node_modules/.cache .expo .parcel-cache || true
+          npx expo export --clear --platform web --output-dir dist
 
       - name: SPA fallback
         run: cp dist/index.html dist/404.html
