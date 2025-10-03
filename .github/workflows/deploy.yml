@@ -1,0 +1,70 @@
+name: Build web and publish to gh-pages
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# ВАЖНО: если package.json лежит в папке FlalxRN, оставьте так.
+# Если он в корне репозитория — удалите этот блок defaults.
+defaults:
+  run:
+    working-directory: .
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Verify exact assets and paths
+        run: |
+          echo "PWD:" && pwd
+          echo "--- constants/icons.js ---"
+          sed -n '1,200p' constants/icons.js || true
+          echo "--- ls assets/icon ---"
+          ls -la assets/icon || echo "no assets/icon"
+          echo "--- exact file checks ---"
+          for f in \
+            assets/icon/email.png \
+            assets/icon/photo-camera.png \
+            assets/icon/phone.png \
+            assets/icon/delete.png \
+            assets/icon/arrow-down.png \
+            assets/register/UserImages/avatar-inverse.png
+          do
+            [ -f "$f" ] && echo "OK: $f" || echo "MISSING: $f"
+          done
+          echo "--- git tracked files (case sensitive) ---"
+          git ls-files --stage | grep -E "(assets/icon|assets/register/UserImages)" || true
+
+      - name: Build web (Expo export)
+        env:
+          PUBLIC_URL: "/${{ github.event.repository.name }}/"
+        run: |
+          rm -rf node_modules/.cache .expo .parcel-cache || true
+          npx expo export --clear --platform web --output-dir dist
+
+      - name: SPA fallback
+        run: cp dist/index.html dist/404.html
+
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dist
+          publish_branch: gh-pages
+          commit_message: "ci: publish web"
