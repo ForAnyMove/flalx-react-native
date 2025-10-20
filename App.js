@@ -1,15 +1,18 @@
-import { StatusBar } from "expo-status-bar";
-import { StyleSheet, ActivityIndicator, View, Text } from "react-native";
-import { useState } from "react";
-import { ComponentProvider, useComponentContext } from "./context/globalAppContext";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from 'expo-status-bar';
+import { StyleSheet, ActivityIndicator, View, Text } from 'react-native';
+import { useState } from 'react';
+import {
+  ComponentProvider,
+  useComponentContext,
+} from './context/globalAppContext';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 // Экраны
-import AuthScreen from "./screens/AuthScreen";
-import OnboardingScreen from "./screens/OnboardingScreen";
-import RegisterScreen from "./screens/RegisterScreen";
-import AppScreen from "./screens/AppScreen";
-import { WindowProvider } from "./context/windowContext";
+import AuthScreen from './screens/AuthScreen';
+import OnboardingScreen from './screens/OnboardingScreen';
+import RegisterScreen from './screens/RegisterScreen';
+import AppScreen from './screens/AppScreen';
+import { WindowProvider } from './context/windowContext';
 import { useFonts } from 'expo-font';
 
 // --- Глобальное применение шрифта ---
@@ -37,7 +40,8 @@ export default function AppWrapper() {
 }
 
 function App() {
-  const { session, user, themeController, languageController } = useComponentContext();
+  const { session, user, themeController, languageController } =
+    useComponentContext();
   const [isOnboardingShowed, setOnboardingShowed] = useState(false);
 
   const [fontsLoaded, fontError] = useFonts({
@@ -60,8 +64,8 @@ function App() {
         <SafeAreaView style={styles.container}>
           <View style={styles.loader}>
             <ActivityIndicator
-              size="large"
-              color={themeController?.current?.primaryColor || "blue"}
+              size='large'
+              color={themeController?.current?.primaryColor || 'blue'}
             />
           </View>
         </SafeAreaView>
@@ -70,32 +74,30 @@ function App() {
   }
 
   let content;
-// console.log('!isOnboardingShowed - ', !isOnboardingShowed, '!session.status - ', !session.status, 'user?.current?.firstauth - ', user?.current?.firstauth);
+  // console.log('!isOnboardingShowed - ', !isOnboardingShowed, '!session.status - ', !session.status, 'user?.current?.firstauth - ', user?.current?.firstauth);
 
   // 1. Онбординг
-  // if (!isOnboardingShowed) {
-  //   content = <OnboardingScreen onFinish={() => setOnboardingShowed(true)} />;
-  // }
+  if (!isOnboardingShowed) {
+    content = <OnboardingScreen onFinish={() => setOnboardingShowed(true)} />;
+  }
   // // 2. Авторизация
-  // else
-  //    if (!session.status) {
-  //   content = <AuthScreen />;
-  // }
+  else if (!session.status) {
+    content = <AuthScreen />;
+  }
   // // 3. Регистрация первого входа
-  // else 
-  //   if (user?.current?.firstauth) {
-  //   content = <RegisterScreen />;
-  // }
+  else if (user?.current?.firstauth) {
+    content = <RegisterScreen />;
+  }
   // 4. Основное приложение
-  // else {
+  else {
     content = <AppScreen />;
-  // }
+  }
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
         {content}
-        <StatusBar style="auto" />
+        <StatusBar style='auto' />
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -103,5 +105,5 @@ function App() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  loader: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });

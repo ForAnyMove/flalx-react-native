@@ -68,7 +68,10 @@ export default function RegisterScreen() {
       backArrow: {
         top: getResponsiveSize(20, scaleByHeight(72, height)),
         height: getResponsiveSize(30, scaleByHeight(24, height)),
-        [isRTL ? 'right' : 'left']: getResponsiveSize(10, scaleByHeight(height * 1.4 * 0.1, height)),
+        [isRTL ? 'right' : 'left']: getResponsiveSize(
+          10,
+          scaleByHeight(height * 1.4 * 0.1, height)
+        ),
       },
       finishedText: {
         fontSize: getResponsiveSize(20, scaleByHeight(18, height)),
@@ -125,7 +128,7 @@ export default function RegisterScreen() {
       },
       inputsContainer: {
         paddingHorizontal: getResponsiveSize(10, scaleByHeight(10, height)),
-      }
+      },
     };
   }, [height, isRTL]);
 
@@ -179,7 +182,7 @@ export default function RegisterScreen() {
   // const totalSteps = 4;
   const totalSteps = 3;
   const ProgressDots = () => (
-    <View style={[  styles.progressContainer, dynamicStyles.progressContainer ]}>
+    <View style={[styles.progressContainer, dynamicStyles.progressContainer]}>
       {Array.from({ length: totalSteps }).map((_, i) => {
         const active = step === i + 1;
         const distance = Math.abs(step - (i + 1));
@@ -282,7 +285,13 @@ export default function RegisterScreen() {
 
   return (
     <View
-      style={[styles.container, { backgroundColor: theme.backgroundColor }, Platform.OS === 'web' && isLandscape ? { justifyContent: 'center', alignItems: 'center', height: '100vh' } : null]}
+      style={[
+        styles.container,
+        { backgroundColor: theme.backgroundColor },
+        Platform.OS === 'web' && isLandscape
+          ? { justifyContent: 'center', alignItems: 'center', height: '100vh' }
+          : null,
+      ]}
     >
       <BackArrow />
 
@@ -290,7 +299,7 @@ export default function RegisterScreen() {
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollContent,
-          !(Platform.OS === 'web' && isLandscape) &&{ height: '100%' },
+          !(Platform.OS === 'web' && isLandscape) && { height: '100%' },
           Platform.OS === 'web' && isLandscape
             ? {
                 alignItems: 'center',
@@ -309,15 +318,23 @@ export default function RegisterScreen() {
             styles.contentBlock,
             contentWidthStyle,
             { height: '100%', justifyContent: 'space-between' },
-            Platform.OS === 'web' && isLandscape && (step === 2 || step === 3) && {
-              height: scaleByHeight(741, height),
-              width: scaleByHeight(354, height),
-            }
+            Platform.OS === 'web' &&
+              isLandscape &&
+              (step === 2 || step === 3) && {
+                height: scaleByHeight(741, height),
+                width: scaleByHeight(354, height),
+              },
           ]}
         >
           {step === 1 && (
             <>
-              <Text style={[styles.title, dynamicStyles.title, { color: theme.primaryColor }]}>
+              <Text
+                style={[
+                  styles.title,
+                  dynamicStyles.title,
+                  { color: theme.primaryColor },
+                ]}
+              >
                 {t('register.terms_title')}
               </Text>
 
@@ -330,7 +347,13 @@ export default function RegisterScreen() {
                     : null,
                 ]}
               >
-                <Text style={[styles.termsBoxText, dynamicStyles.termsBoxText, { color: theme.formInputLabelColor }]}>
+                <Text
+                  style={[
+                    styles.termsBoxText,
+                    dynamicStyles.termsBoxText,
+                    { color: theme.formInputLabelColor },
+                  ]}
+                >
                   {t('register.terms_text')}
                 </Text>
               </ScrollView>
@@ -350,14 +373,19 @@ export default function RegisterScreen() {
                   },
                 ]}
                 textContainerStyle={{
-                    [isRTL ? 'marginRight' : 'marginLeft']: getResponsiveSize(8, scaleByHeight(10, height)),
+                  [isRTL ? 'marginRight' : 'marginLeft']: getResponsiveSize(
+                    8,
+                    scaleByHeight(10, height)
+                  ),
                 }}
                 fillColor={theme.primaryColor}
                 innerIconStyle={{
                   borderWidth: getResponsiveSize(2, scaleByHeight(2, height)),
                   borderRadius: getResponsiveSize(3, scaleByHeight(3, height)),
                 }}
-                iconStyle={{ borderRadius: getResponsiveSize(3, scaleByHeight(3, height)) }}
+                iconStyle={{
+                  borderRadius: getResponsiveSize(3, scaleByHeight(3, height)),
+                }}
               />
 
               <ProgressDots />
@@ -372,13 +400,24 @@ export default function RegisterScreen() {
 
           {step === 2 && (
             <>
-              <Text style={[styles.title, dynamicStyles.title, dynamicStyles.step2Title, { color: theme.textColor }]}>
+              <Text
+                style={[
+                  styles.title,
+                  dynamicStyles.title,
+                  dynamicStyles.step2Title,
+                  { color: theme.textColor },
+                ]}
+              >
                 {t('register.profile_create')}
               </Text>
 
               {/* --- Аватар --- */}
-              <View style={[styles.avatarContainer, dynamicStyles.avatarContainer]}>
-                <View style={[styles.avatarWrapper, dynamicStyles.avatarWrapper]}>
+              <View
+                style={[styles.avatarContainer, dynamicStyles.avatarContainer]}
+              >
+                <View
+                  style={[styles.avatarWrapper, dynamicStyles.avatarWrapper]}
+                >
                   <Image
                     source={
                       avatarUrl ? { uri: avatarUrl } : icons.defaultAvatar
@@ -415,7 +454,9 @@ export default function RegisterScreen() {
               />
 
               {/* --- Имя и Фамилия --- */}
-              <View style={[styles.inputsContainer, dynamicStyles.inputsContainer]}>
+              <View
+                style={[styles.inputsContainer, dynamicStyles.inputsContainer]}
+              >
                 <View
                   style={[
                     styles.inputBlock,
@@ -526,7 +567,10 @@ export default function RegisterScreen() {
                   flexDirection: isRTL ? 'row-reverse' : 'row',
                   justifyContent: 'space-between',
                   gap: getResponsiveSize(10, scaleByHeight(25, height)),
-                  paddingHorizontal: getResponsiveSize(10, scaleByHeight(10, height)),
+                  paddingHorizontal: getResponsiveSize(
+                    10,
+                    scaleByHeight(10, height)
+                  ),
                 }}
               >
                 <PrimaryButton
@@ -609,66 +653,75 @@ export default function RegisterScreen() {
 
           {step === 3 && (
             <>
-            <View style={{flex: 1, justifyContent: 'space-between'}}>
-              <View>
-              <Text style={[styles.title, dynamicStyles.title, dynamicStyles.step2Title, { color: theme.textColor }]}>
-                {t('register.profile_description')}
-              </Text>
+              <View style={{ flex: 1, justifyContent: 'space-between' }}>
+                <View>
+                  <Text
+                    style={[
+                      styles.title,
+                      dynamicStyles.title,
+                      dynamicStyles.step2Title,
+                      { color: theme.textColor },
+                    ]}
+                  >
+                    {t('register.profile_description')}
+                  </Text>
 
-              <View
-                style={[
-                  styles.inputBlock,
-                  dynamicStyles.inputBlock,
-                  { backgroundColor: theme.formInputBackground },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.label,
-                    dynamicStyles.label,
-                    {
-                      textAlign: isRTL ? 'right' : 'left',
-                      color: theme.textColor,
-                    },
-                  ]}
-                >
-                  {t('register.profile_description')}
-                </Text>
-                <TextInput
-                  placeholder={t('register.description_placeholder')}
-                  value={form.description}
-                  onChangeText={(txt) => setForm({ ...form, description: txt })}
-                  multiline
-                  style={[
-                    styles.input,
-                    dynamicStyles.input,
-                    dynamicStyles.multilineInput,
-                    {
-                      height: getResponsiveSize(120, 100),
-                      textAlign: isRTL ? 'right' : 'left',
-                      color: theme.textColor,
-                      backgroundColor: theme.defaultBlocksBackground,
-                      borderColor: theme.borderColor,
-                      borderWidth: 1,
-                      // прозрачный инпут внутри окрашенного fieldBlock
-                      backgroundColor: 'transparent',
-                      borderWidth: 0,
-                      marginBottom: getResponsiveSize(25, 10),
-                    },
-                    Platform.OS === 'web' && isLandscape
-                      ? {
-                          // убираем чёрную обводку (RN Web)
-                          outlineStyle: 'none',
-                          outlineWidth: 0,
-                          outlineColor: 'transparent',
-                          boxShadow: 'none',
-                        }
-                      : null,
-                  ]}
-                  placeholderTextColor={theme.formInputPlaceholderColor}
-                />
-              </View>
-              </View>
+                  <View
+                    style={[
+                      styles.inputBlock,
+                      dynamicStyles.inputBlock,
+                      { backgroundColor: theme.formInputBackground },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.label,
+                        dynamicStyles.label,
+                        {
+                          textAlign: isRTL ? 'right' : 'left',
+                          color: theme.textColor,
+                        },
+                      ]}
+                    >
+                      {t('register.profile_description')}
+                    </Text>
+                    <TextInput
+                      placeholder={t('register.description_placeholder')}
+                      value={form.description}
+                      onChangeText={(txt) =>
+                        setForm({ ...form, description: txt })
+                      }
+                      multiline
+                      style={[
+                        styles.input,
+                        dynamicStyles.input,
+                        dynamicStyles.multilineInput,
+                        {
+                          height: getResponsiveSize(120, 100),
+                          textAlign: isRTL ? 'right' : 'left',
+                          color: theme.textColor,
+                          backgroundColor: theme.defaultBlocksBackground,
+                          borderColor: theme.borderColor,
+                          borderWidth: 1,
+                          // прозрачный инпут внутри окрашенного fieldBlock
+                          backgroundColor: 'transparent',
+                          borderWidth: 0,
+                          marginBottom: getResponsiveSize(25, 10),
+                        },
+                        Platform.OS === 'web' && isLandscape
+                          ? {
+                              // убираем чёрную обводку (RN Web)
+                              outlineStyle: 'none',
+                              outlineWidth: 0,
+                              outlineColor: 'transparent',
+                              boxShadow: 'none',
+                            }
+                          : null,
+                      ]}
+                      placeholderTextColor={theme.formInputPlaceholderColor}
+                    />
+                  </View>
+                </View>
                 <View>
                   <ProgressDots />
 
@@ -686,7 +739,7 @@ export default function RegisterScreen() {
                     disabled={loading}
                   />
                 </View>
-            </View>
+              </View>
             </>
           )}
         </View>
@@ -732,8 +785,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     // marginVertical: getResponsiveSize(20, 14),
   },
-  dot: { 
-    // marginHorizontal: getResponsiveSize(4, 4) 
+  dot: {
+    // marginHorizontal: getResponsiveSize(4, 4)
   },
 
   backArrow: {

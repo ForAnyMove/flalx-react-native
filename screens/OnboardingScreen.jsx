@@ -14,6 +14,7 @@ import { RFValue } from 'react-native-responsive-fontsize';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { useWindowInfo } from '../context/windowContext'; // ✅ заменили useWindowDimensions
+import { scaleByHeight } from '../utils/resizeFuncs';
 
 // универсальная функция адаптации размеров
 const getResponsiveSize = (mobileSize, webSize) => {
@@ -94,16 +95,18 @@ export default function OnboardingScreen({ onFinish }) {
         style={[
           styles.skipButton,
           skipBtnStyle,
-          Platform.OS === 'web' &&
-            isLandscape && {
-              top: getResponsiveSize(30, 30),
-            },
+          {
+            top: getResponsiveSize(10, scaleByHeight(103, height)),
+          },
         ]}
       >
         <Text
           style={[
             styles.skipText,
-            { color: themeController.current.textColor },
+            {
+              color: themeController.current.textColor,
+              fontSize: getResponsiveSize(14, scaleByHeight(18, height)),
+            },
           ]}
         >
           {t('onboarding.skip')}
@@ -132,7 +135,7 @@ export default function OnboardingScreen({ onFinish }) {
           <Image
             source={slides[step].image}
             style={styles.image}
-            resizeMode="contain"
+            resizeMode='contain'
           />
         </View>
 
@@ -148,7 +151,14 @@ export default function OnboardingScreen({ onFinish }) {
             <Text
               style={[
                 styles.title,
-                { color: themeController.current.primaryColor },
+                {
+                  color: themeController.current.primaryColor,
+                  fontSize: getResponsiveSize(20, scaleByHeight(18, height)),
+                  marginBottom: getResponsiveSize(
+                    12,
+                    scaleByHeight(13, height)
+                  ),
+                },
               ]}
             >
               {slides[step].title}
@@ -156,10 +166,16 @@ export default function OnboardingScreen({ onFinish }) {
             <Text
               style={[
                 styles.description,
-                { color: themeController.current.unactiveTextColor },
+                {
+                  color: themeController.current.unactiveTextColor,
+                  fontSize: getResponsiveSize(14, scaleByHeight(16, height)),
+                },
                 Platform.OS === 'web' &&
                   isLandscape && {
-                    marginBottom: getResponsiveSize(30, 20),
+                    marginBottom: getResponsiveSize(
+                      30,
+                      scaleByHeight(48, height)
+                    ),
                     width: '90%',
                   },
               ]}
@@ -192,17 +208,28 @@ export default function OnboardingScreen({ onFinish }) {
               onPress={handleNext}
               style={[
                 styles.button,
+                Platform.OS === 'web' &&
+                  isLandscape && {
+                    height: scaleByHeight(62, height),
+                  },
                 {
-                  backgroundColor:
-                    themeController.current.backgroundColor,
-                  borderColor: themeController.current.buttonColorPrimaryDefault,
+                  backgroundColor: themeController.current.backgroundColor,
+                  borderColor:
+                    themeController.current.buttonColorPrimaryDefault,
+                  width:
+                    Platform.OS === 'web' && isLandscape
+                      ? scaleByHeight(331, height)
+                      : '100%',
                 },
               ]}
             >
               <Text
                 style={[
                   styles.buttonText,
-                  { color: themeController.current.buttonColorPrimaryDefault },
+                  {
+                    color: themeController.current.buttonColorPrimaryDefault,
+                    fontSize: getResponsiveSize(16, scaleByHeight(20, height)),
+                  },
                 ]}
               >
                 {slides[step].button}
@@ -219,11 +246,9 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   skipButton: {
     position: 'absolute',
-    top: RFValue(20),
     zIndex: 10,
   },
   skipText: {
-    fontSize: getResponsiveSize(14, 12),
     fontWeight: '500',
   },
   content: { flex: 1 },
@@ -255,13 +280,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: getResponsiveSize(20, 18),
     fontWeight: '700',
     textAlign: 'center',
-    marginBottom: getResponsiveSize(12, 8),
   },
   description: {
-    fontSize: getResponsiveSize(14, 13),
     textAlign: 'center',
     fontWeight: '600',
     lineHeight: getResponsiveSize(20, 18),
@@ -278,16 +300,15 @@ const styles = StyleSheet.create({
     borderRadius: getResponsiveSize(3, 2),
   },
   button: {
-    width: Platform.OS === 'web' ? '70%' : '100%',
     paddingVertical: getResponsiveSize(12, 10),
     borderRadius: getResponsiveSize(8, 6),
     alignItems: 'center',
     alignSelf: 'center',
     borderWidth: 1.5,
+    justifyContent: 'center',
   },
   buttonText: {
-    fontSize: getResponsiveSize(16, 14),
     fontWeight: '700',
-    textTransform: 'uppercase'
+    textTransform: 'uppercase',
   },
 });

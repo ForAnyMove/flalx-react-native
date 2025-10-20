@@ -145,7 +145,7 @@ export default function Settings() {
                 },
               ]}
               dropdownIconColor={themeController.current?.primaryColor}
-              itemStyle={{marginTop: RFValue(10)}}
+              itemStyle={{ marginTop: RFValue(10) }}
             >
               <Picker.Item
                 label={t('settings.lang_en', 'English')}
@@ -527,9 +527,10 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   picker: { backgroundColor: 'transparent', borderWidth: 0 },
-  label: { 
+  label: {
     // position: 'absolute',
-     top: RFValue(5) },
+    top: RFValue(5),
+  },
   switchName: { fontWeight: 'bold' },
   breakLine: { height: 1, marginVertical: RFValue(8) },
   switchRow: {
