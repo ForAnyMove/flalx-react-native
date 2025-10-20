@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import { useComponentContext } from '../context/globalAppContext';
 import ImagePickerModal from '../components/ui/ImagePickerModal';
 import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
 import { icons } from '../constants/icons';
+import { scaleByHeight } from '../utils/resizeFuncs';
 
 // универсальная адаптация размеров: на мобиле RFValue, на web — уменьшенный фикс
 const getResponsiveSize = (mobileSize, webSize) => {
@@ -35,6 +36,98 @@ export default function RegisterScreen() {
 
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
+
+  const dynamicStyles = useMemo(() => {
+    return {
+      title: {
+        fontSize: getResponsiveSize(20, scaleByHeight(24, height)),
+        // marginBottom: getResponsiveSize(20, scaleByHeight(20, height)),
+      },
+      step2Title: {
+        marginBottom: getResponsiveSize(30, scaleByHeight(36, height)),
+      },
+      button: {
+        paddingVertical: getResponsiveSize(14, scaleByHeight(12, height)),
+        borderRadius: getResponsiveSize(10, scaleByHeight(8, height)),
+        ...Platform.select({
+          web: {
+            width: scaleByHeight(330, height),
+            height: scaleByHeight(62, height),
+          },
+        }),
+      },
+      buttonText: {
+        fontSize: getResponsiveSize(16, scaleByHeight(20, height)),
+      },
+      progressContainer: {
+        marginVertical: getResponsiveSize(20, scaleByHeight(14, height)),
+      },
+      dot: {
+        marginHorizontal: getResponsiveSize(10, scaleByHeight(14, height)),
+      },
+      backArrow: {
+        top: getResponsiveSize(20, scaleByHeight(72, height)),
+        height: getResponsiveSize(30, scaleByHeight(24, height)),
+        [isRTL ? 'right' : 'left']: getResponsiveSize(10, scaleByHeight(height * 1.4 * 0.1, height)),
+      },
+      finishedText: {
+        fontSize: getResponsiveSize(20, scaleByHeight(18, height)),
+      },
+      termsBox: {
+        paddingVertical: getResponsiveSize(10, scaleByHeight(5, height)),
+        marginBottom: getResponsiveSize(15, scaleByHeight(12, height)),
+      },
+      termsBoxText: {
+        fontSize: getResponsiveSize(14, scaleByHeight(16, height)),
+        lineHeight: getResponsiveSize(16, scaleByHeight(18, height)),
+      },
+      termsCheckboxText: {
+        fontSize: getResponsiveSize(14, scaleByHeight(13, height)),
+      },
+      avatarContainer: {
+        marginBottom: getResponsiveSize(10, scaleByHeight(40, height)),
+        height: getResponsiveSize(150, scaleByHeight(158, height)),
+      },
+      avatarWrapper: {
+        borderRadius: getResponsiveSize(60, scaleByHeight(50, height)),
+      },
+      avatarImage: {
+        borderRadius: getResponsiveSize(60, scaleByHeight(50, height)),
+      },
+      cameraButton: {
+        width: getResponsiveSize(26, scaleByHeight(26, height)),
+        height: getResponsiveSize(26, scaleByHeight(26, height)),
+        borderRadius: getResponsiveSize(70, scaleByHeight(60, height)),
+      },
+      avatarRecommendsText: {
+        marginTop: getResponsiveSize(10, scaleByHeight(8, height)),
+        fontSize: getResponsiveSize(12, scaleByHeight(14, height)),
+        paddingHorizontal: getResponsiveSize(20, scaleByHeight(0, height)),
+      },
+      inputBlock: {
+        marginBottom: getResponsiveSize(20, scaleByHeight(32, height)),
+        borderRadius: getResponsiveSize(10, scaleByHeight(8, height)),
+        paddingVertical: getResponsiveSize(5, scaleByHeight(8, height)),
+      },
+      label: {
+        paddingHorizontal: getResponsiveSize(10, scaleByHeight(16, height)),
+        paddingTop: getResponsiveSize(6, scaleByHeight(4, height)),
+        fontSize: getResponsiveSize(12, scaleByHeight(12, height)),
+      },
+      input: {
+        paddingHorizontal: getResponsiveSize(10, scaleByHeight(16, height)),
+        borderRadius: getResponsiveSize(8, scaleByHeight(8, height)),
+        fontSize: getResponsiveSize(14, scaleByHeight(16, height)),
+      },
+      multilineInput: {
+        height: getResponsiveSize(120, scaleByHeight(100, height)),
+        marginBottom: getResponsiveSize(25, scaleByHeight(10, height)),
+      },
+      inputsContainer: {
+        paddingHorizontal: getResponsiveSize(10, scaleByHeight(10, height)),
+      }
+    };
+  }, [height, isRTL]);
 
   const [step, setStep] = useState(1);
   const [accepted, setAccepted] = useState(false);
@@ -86,27 +179,28 @@ export default function RegisterScreen() {
   // const totalSteps = 4;
   const totalSteps = 3;
   const ProgressDots = () => (
-    <View style={styles.progressContainer}>
+    <View style={[  styles.progressContainer, dynamicStyles.progressContainer ]}>
       {Array.from({ length: totalSteps }).map((_, i) => {
         const active = step === i + 1;
         const distance = Math.abs(step - (i + 1));
         const size = active
-          ? getResponsiveSize(10, 8)
+          ? getResponsiveSize(10, scaleByHeight(12, height))
           : distance === 1
-          ? getResponsiveSize(8, 7)
-          : getResponsiveSize(6, 6);
+          ? getResponsiveSize(8, scaleByHeight(8, height))
+          : getResponsiveSize(4, scaleByHeight(4, height));
         return (
           <View
             key={i}
             style={[
               styles.dot,
+              dynamicStyles.dot,
               {
                 width: size,
                 height: size,
                 borderRadius: size / 2,
                 backgroundColor: active
                   ? theme.primaryColor
-                  : theme.unactiveTextColor,
+                  : theme.buttonColorPrimaryDisabled,
               },
             ]}
           />
@@ -122,6 +216,7 @@ export default function RegisterScreen() {
       disabled={disabled}
       style={[
         styles.button,
+        dynamicStyles.button,
         {
           backgroundColor: disabled
             ? theme.buttonColorPrimaryDisabled
@@ -134,6 +229,7 @@ export default function RegisterScreen() {
         <Text
           style={[
             styles.buttonText,
+            dynamicStyles.buttonText,
             { color: theme.buttonTextColorPrimary },
             customStyle?.btnText,
           ]}
@@ -152,6 +248,7 @@ export default function RegisterScreen() {
       onPress={() => (step > 1 ? setStep(step - 1) : session.signOut())}
       style={[
         styles.backArrow,
+        dynamicStyles.backArrow,
         { [isRTL ? 'right' : 'left']: getResponsiveSize(10, 12) },
       ]}
     >
@@ -185,7 +282,7 @@ export default function RegisterScreen() {
 
   return (
     <View
-      style={[styles.container, { backgroundColor: theme.backgroundColor }]}
+      style={[styles.container, { backgroundColor: theme.backgroundColor }, Platform.OS === 'web' && isLandscape ? { justifyContent: 'center', alignItems: 'center', height: '100vh' } : null]}
     >
       <BackArrow />
 
@@ -193,14 +290,14 @@ export default function RegisterScreen() {
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollContent,
-          { height: '100%' },
+          !(Platform.OS === 'web' && isLandscape) &&{ height: '100%' },
           Platform.OS === 'web' && isLandscape
             ? {
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: '80vh',
+                height: scaleByHeight(688, height),
                 boxSizing: 'border-box',
-                marginTop: '10vh',
+                marginTop: scaleByHeight(180, height),
               }
             : null,
         ]}
@@ -212,46 +309,55 @@ export default function RegisterScreen() {
             styles.contentBlock,
             contentWidthStyle,
             { height: '100%', justifyContent: 'space-between' },
+            Platform.OS === 'web' && isLandscape && (step === 2 || step === 3) && {
+              height: scaleByHeight(741, height),
+              width: scaleByHeight(354, height),
+            }
           ]}
         >
           {step === 1 && (
             <>
-              <Text style={[styles.title, { color: theme.primaryColor }]}>
+              <Text style={[styles.title, dynamicStyles.title, { color: theme.primaryColor }]}>
                 {t('register.terms_title')}
               </Text>
 
               <ScrollView
                 style={[
                   styles.termsBox,
+                  dynamicStyles.termsBox,
                   Platform.OS === 'web' && isLandscape
                     ? { height: '40vh', maxHeight: '40vh' } // компактнее на web-экранах
                     : null,
                 ]}
               >
-                <Text style={[styles.termsBoxText, { color: theme.textColor }]}>
+                <Text style={[styles.termsBoxText, dynamicStyles.termsBoxText, { color: theme.formInputLabelColor }]}>
                   {t('register.terms_text')}
                 </Text>
               </ScrollView>
 
               <BouncyCheckbox
-                size={getResponsiveSize(18, 16)}
+                size={getResponsiveSize(18, scaleByHeight(18, height))}
                 isChecked={accepted}
                 onPress={setAccepted}
                 text={t('register.terms_accept')}
                 textStyle={[
                   styles.termsCheckboxText,
+                  dynamicStyles.termsCheckboxText,
                   {
                     textAlign: isRTL ? 'right' : 'left',
-                    color: theme.textColor,
+                    color: theme.unactiveTextColor,
                     textDecorationLine: 'none',
                   },
                 ]}
+                textContainerStyle={{
+                    [isRTL ? 'marginRight' : 'marginLeft']: getResponsiveSize(8, scaleByHeight(10, height)),
+                }}
                 fillColor={theme.primaryColor}
                 innerIconStyle={{
-                  borderWidth: getResponsiveSize(2, 2),
-                  borderRadius: getResponsiveSize(3, 3),
+                  borderWidth: getResponsiveSize(2, scaleByHeight(2, height)),
+                  borderRadius: getResponsiveSize(3, scaleByHeight(3, height)),
                 }}
-                iconStyle={{ borderRadius: getResponsiveSize(3, 3) }}
+                iconStyle={{ borderRadius: getResponsiveSize(3, scaleByHeight(3, height)) }}
               />
 
               <ProgressDots />
@@ -266,21 +372,21 @@ export default function RegisterScreen() {
 
           {step === 2 && (
             <>
-              <Text style={[styles.title, { color: theme.textColor }]}>
+              <Text style={[styles.title, dynamicStyles.title, dynamicStyles.step2Title, { color: theme.textColor }]}>
                 {t('register.profile_create')}
               </Text>
 
               {/* --- Аватар --- */}
-              <View style={styles.avatarContainer}>
-                <View style={styles.avatarWrapper}>
+              <View style={[styles.avatarContainer, dynamicStyles.avatarContainer]}>
+                <View style={[styles.avatarWrapper, dynamicStyles.avatarWrapper]}>
                   <Image
                     source={
                       avatarUrl ? { uri: avatarUrl } : icons.defaultAvatar
                     }
-                    style={styles.avatarImage}
+                    style={[styles.avatarImage, dynamicStyles.avatarImage]}
                   />
                   <TouchableOpacity
-                    style={styles.cameraButton}
+                    style={[styles.cameraButton, dynamicStyles.cameraButton]}
                     onPress={() => setPickerVisible(true)}
                   >
                     <Image source={icons.camera} style={styles.cameraIcon} />
@@ -289,6 +395,7 @@ export default function RegisterScreen() {
                 <Text
                   style={[
                     styles.avatarRecommendsText,
+                    dynamicStyles.avatarRecommendsText,
                     { color: theme.textColor },
                   ]}
                 >
@@ -308,16 +415,18 @@ export default function RegisterScreen() {
               />
 
               {/* --- Имя и Фамилия --- */}
-              <View style={styles.inputsContainer}>
+              <View style={[styles.inputsContainer, dynamicStyles.inputsContainer]}>
                 <View
                   style={[
                     styles.inputBlock,
+                    dynamicStyles.inputBlock,
                     { backgroundColor: theme.formInputBackground },
                   ]}
                 >
                   <Text
                     style={[
                       styles.label,
+                      dynamicStyles.label,
                       {
                         textAlign: isRTL ? 'right' : 'left',
                         color: theme.textColor,
@@ -332,6 +441,7 @@ export default function RegisterScreen() {
                     onChangeText={(txt) => setForm({ ...form, name: txt })}
                     style={[
                       styles.input,
+                      dynamicStyles.input,
                       {
                         textAlign: isRTL ? 'right' : 'left',
                         color: theme.textColor,
@@ -360,12 +470,14 @@ export default function RegisterScreen() {
                 <View
                   style={[
                     styles.inputBlock,
+                    dynamicStyles.inputBlock,
                     { backgroundColor: theme.formInputBackground },
                   ]}
                 >
                   <Text
                     style={[
                       styles.label,
+                      dynamicStyles.label,
                       {
                         textAlign: isRTL ? 'right' : 'left',
                         color: theme.textColor,
@@ -380,6 +492,7 @@ export default function RegisterScreen() {
                     onChangeText={(txt) => setForm({ ...form, surname: txt })}
                     style={[
                       styles.input,
+                      dynamicStyles.input,
                       {
                         textAlign: isRTL ? 'right' : 'left',
                         color: theme.textColor,
@@ -412,7 +525,8 @@ export default function RegisterScreen() {
                 style={{
                   flexDirection: isRTL ? 'row-reverse' : 'row',
                   justifyContent: 'space-between',
-                  gap: getResponsiveSize(10, 8),
+                  gap: getResponsiveSize(10, scaleByHeight(25, height)),
+                  paddingHorizontal: getResponsiveSize(10, scaleByHeight(10, height)),
                 }}
               >
                 <PrimaryButton
@@ -497,19 +611,21 @@ export default function RegisterScreen() {
             <>
             <View style={{flex: 1, justifyContent: 'space-between'}}>
               <View>
-              <Text style={[styles.title, { color: theme.textColor }]}>
+              <Text style={[styles.title, dynamicStyles.title, dynamicStyles.step2Title, { color: theme.textColor }]}>
                 {t('register.profile_description')}
               </Text>
 
               <View
                 style={[
                   styles.inputBlock,
+                  dynamicStyles.inputBlock,
                   { backgroundColor: theme.formInputBackground },
                 ]}
               >
                 <Text
                   style={[
                     styles.label,
+                    dynamicStyles.label,
                     {
                       textAlign: isRTL ? 'right' : 'left',
                       color: theme.textColor,
@@ -525,6 +641,8 @@ export default function RegisterScreen() {
                   multiline
                   style={[
                     styles.input,
+                    dynamicStyles.input,
+                    dynamicStyles.multilineInput,
                     {
                       height: getResponsiveSize(120, 100),
                       textAlign: isRTL ? 'right' : 'left',
@@ -589,21 +707,22 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: getResponsiveSize(20, 18),
-    marginBottom: getResponsiveSize(20, '4vh'),
+    // fontSize: getResponsiveSize(20, 18),
+    // marginBottom: getResponsiveSize(20, '4vh'),
     textAlign: 'center',
     fontWeight: 'bold',
   },
 
   button: {
-    paddingVertical: getResponsiveSize(14, 12),
-    borderRadius: getResponsiveSize(10, 8),
+    // paddingVertical: getResponsiveSize(14, 12),
+    // borderRadius: getResponsiveSize(10, 8),
     alignItems: 'center',
     alignSelf: 'center',
+    justifyContent: 'center',
     width: '100%', // ширина контролируется контейнером contentBlock
   },
   buttonText: {
-    fontSize: getResponsiveSize(16, 14),
+    // fontSize: getResponsiveSize(16, 14),
     fontWeight: '600',
   },
 
@@ -611,15 +730,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: getResponsiveSize(20, 14),
+    // marginVertical: getResponsiveSize(20, 14),
   },
-  dot: { marginHorizontal: getResponsiveSize(4, 4) },
+  dot: { 
+    // marginHorizontal: getResponsiveSize(4, 4) 
+  },
 
   backArrow: {
     position: 'absolute',
-    top: getResponsiveSize(20, 16),
+    // top: getResponsiveSize(20, 16),
     zIndex: 10,
-    height: getResponsiveSize(30, 26),
+    // height: getResponsiveSize(30, 26),
   },
   backArrowImage: { height: '100%', resizeMode: 'contain' },
 
@@ -629,70 +750,70 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   finishedText: {
-    fontSize: getResponsiveSize(20, 18),
+    // fontSize: getResponsiveSize(20, 18),
   },
 
   termsBox: {
     flex: 1,
-    height: RFPercentage(65),
-    padding: getResponsiveSize(10, 8),
-    marginBottom: getResponsiveSize(15, 12),
+    // height: RFPercentage(65),
+    // padding: getResponsiveSize(10, 8),
+    // marginBottom: getResponsiveSize(15, 12),
     backgroundColor: 'transparent',
   },
   termsBoxText: {
-    fontSize: getResponsiveSize(14, 13),
-    lineHeight: getResponsiveSize(20, 18),
+    // fontSize: getResponsiveSize(14, 13),
+    // lineHeight: getResponsiveSize(20, 18),
     opacity: 0.6,
   },
   termsCheckboxText: {
-    fontSize: getResponsiveSize(14, 13),
+    // fontSize: getResponsiveSize(14, 13),
     opacity: 0.8,
     fontWeight: 'bold',
   },
 
   avatarContainer: {
     alignItems: 'center',
-    marginBottom: getResponsiveSize(10, '5vh'),
-    height: getResponsiveSize(150, 120),
+    // marginBottom: getResponsiveSize(10, '5vh'),
+    // height: getResponsiveSize(150, 120),
   },
   avatarWrapper: {
     height: '60%',
     aspectRatio: 1,
-    borderRadius: getResponsiveSize(60, 50),
+    // borderRadius: getResponsiveSize(60, 50),
     position: 'relative',
     // overflow: 'hidden',
   },
   avatarImage: {
     width: '100%',
     height: '100%',
-    borderRadius: getResponsiveSize(60, 50),
+    // borderRadius: getResponsiveSize(60, 50),
     resizeMode: 'cover',
   },
   cameraButton: {
     position: 'absolute',
     bottom: '-2%',
     right: '-2%',
-    borderRadius: getResponsiveSize(70, 60),
-    width: getResponsiveSize(26, 26),
-    height: getResponsiveSize(26, 26),
+    // borderRadius: getResponsiveSize(70, 60),
+    // width: getResponsiveSize(26, 26),
+    // height: getResponsiveSize(26, 26),
     overflow: 'hidden',
   },
   cameraIcon: { width: '100%', height: '100%' },
   avatarRecommendsText: {
-    marginTop: getResponsiveSize(10, 8),
-    fontSize: getResponsiveSize(12, 11),
+    // marginTop: getResponsiveSize(10, 8),
+    // fontSize: getResponsiveSize(12, 11),
     textAlign: 'center',
     opacity: 0.7,
-    paddingHorizontal: getResponsiveSize(20, 16),
+    // paddingHorizontal: getResponsiveSize(20, 16),
   },
 
   inputsContainer: {
     flexGrow: 1,
   },
   inputBlock: {
-    marginBottom: getResponsiveSize(20, 14),
-    borderRadius: getResponsiveSize(10, 8),
-    paddingVertical: getResponsiveSize(5, '2vh'),
+    // marginBottom: getResponsiveSize(20, 14),
+    // borderRadius: getResponsiveSize(10, 8),
+    // paddingVertical: getResponsiveSize(5, '2vh'),
     ...Platform.select({
       web: { zIndex: 1 },
     }),
@@ -700,13 +821,13 @@ const styles = StyleSheet.create({
   label: {
     fontWeight: 'bold',
     opacity: 0.7,
-    paddingHorizontal: getResponsiveSize(10, 10),
-    paddingTop: getResponsiveSize(6, 4),
-    fontSize: getResponsiveSize(12, 11),
+    // paddingHorizontal: getResponsiveSize(10, 10),
+    // paddingTop: getResponsiveSize(6, 4),
+    // fontSize: getResponsiveSize(12, 11),
   },
   input: {
-    paddingHorizontal: getResponsiveSize(10, 10),
-    borderRadius: getResponsiveSize(8, 8),
-    fontSize: getResponsiveSize(14, 13),
+    // paddingHorizontal: getResponsiveSize(10, 10),
+    // borderRadius: getResponsiveSize(8, 8),
+    // fontSize: getResponsiveSize(14, 13),
   },
 });

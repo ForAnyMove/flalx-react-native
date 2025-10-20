@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -72,9 +72,13 @@ export default function OnboardingScreen({ onFinish }) {
     }
   };
 
-  const skipBtnStyle = isRTL
-    ? { left: getResponsiveSize(16, 20) }
-    : { right: getResponsiveSize(10, 20) };
+  const skipBtnStyle = useMemo(
+    () =>
+      isRTL
+        ? { left: getResponsiveSize(16, height * 1.4 * 0.1) }
+        : { right: getResponsiveSize(10, height * 1.4 * 0.1) },
+    [isRTL, height]
+  );
 
   return (
     <View
@@ -92,7 +96,7 @@ export default function OnboardingScreen({ onFinish }) {
           skipBtnStyle,
           Platform.OS === 'web' &&
             isLandscape && {
-              top: getResponsiveSize(30, 24),
+              top: getResponsiveSize(30, 30),
             },
         ]}
       >
@@ -190,14 +194,15 @@ export default function OnboardingScreen({ onFinish }) {
                 styles.button,
                 {
                   backgroundColor:
-                    themeController.current.buttonColorPrimaryDefault,
+                    themeController.current.backgroundColor,
+                  borderColor: themeController.current.buttonColorPrimaryDefault,
                 },
               ]}
             >
               <Text
                 style={[
                   styles.buttonText,
-                  { color: themeController.current.buttonTextColorPrimary },
+                  { color: themeController.current.buttonColorPrimaryDefault },
                 ]}
               >
                 {slides[step].button}
@@ -258,6 +263,7 @@ const styles = StyleSheet.create({
   description: {
     fontSize: getResponsiveSize(14, 13),
     textAlign: 'center',
+    fontWeight: '600',
     lineHeight: getResponsiveSize(20, 18),
     marginBottom: getResponsiveSize(24, 16),
   },
@@ -277,9 +283,11 @@ const styles = StyleSheet.create({
     borderRadius: getResponsiveSize(8, 6),
     alignItems: 'center',
     alignSelf: 'center',
+    borderWidth: 1.5,
   },
   buttonText: {
     fontSize: getResponsiveSize(16, 14),
-    fontWeight: '600',
+    fontWeight: '700',
+    textTransform: 'uppercase'
   },
 });

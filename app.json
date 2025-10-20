@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "FlalxRN",
-    "slug": "flalx-app",
+    "slug": "flalx",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo/flalx-logo-large.png",
@@ -32,7 +32,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "1ee54fd1-9a7c-4b7c-9e82-8e5739c78ae6"
+        "projectId": "3b752486-12ec-41fc-93e6-c32197197fd4"
       }
     },
     "owner": "alexfam",

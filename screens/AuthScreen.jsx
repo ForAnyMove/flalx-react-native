@@ -13,10 +13,13 @@ import {
   useWindowDimensions,
   Animated,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
+import { scaleByHeight } from '../utils/resizeFuncs';
+import { icons } from '../constants/icons';
 
 const OTP_LENGTH = 6;
 
@@ -46,10 +49,101 @@ export default function AuthScreen() {
   const [showResentModal, setShowResentModal] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [otpError, setOtpError] = useState(null);
+  const [focusedOtpIndex, setFocusedOtpIndex] = useState(null);
 
   // Анимации
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
+  const dynamicStyles = useMemo(() => {
+    return {
+      brand: {
+        fontSize: getResponsiveSize(45, scaleByHeight(57, height)),
+        letterSpacing: getResponsiveSize(3, scaleByHeight(5, height)),
+        marginBottom: getResponsiveSize(18, scaleByHeight(35, height)),
+      },
+      title: {
+        fontSize: getResponsiveSize(18, scaleByHeight(18, height)),
+      },
+      subtitle: {
+        fontSize: getResponsiveSize(13, scaleByHeight(18, height)),
+        marginBottom: getResponsiveSize(18, scaleByHeight(25, height)),
+      },
+      fieldBlock: {
+        marginBottom: getResponsiveSize(16, scaleByHeight(14, height)),
+      },
+      label: {
+        fontSize: getResponsiveSize(12, scaleByHeight(14, height)),
+        marginBottom: getResponsiveSize(6, scaleByHeight(4, height)),
+      },
+      input: {
+        paddingHorizontal: getResponsiveSize(12, scaleByHeight(14, height)),
+        fontSize: getResponsiveSize(14, scaleByHeight(18, height)),
+        marginBottom: getResponsiveSize(8, scaleByHeight(2, height)),
+      },
+      outlineBtnText: {
+        fontSize: getResponsiveSize(15, scaleByHeight(20, height)),
+        lineHeight: getResponsiveSize(17, scaleByHeight(20, height)),
+        borderRadius: getResponsiveSize(12, scaleByHeight(8, height)),
+      },
+      otpRow: {
+        marginTop: getResponsiveSize(6, scaleByHeight(4, height)),
+        marginBottom: getResponsiveSize(12, scaleByHeight(8, height)),
+        width: getResponsiveSize( '100%', scaleByHeight(314, height)),
+        height: getResponsiveSize(52, scaleByHeight(74, height)),
+      },
+      otpCell: {
+        height: getResponsiveSize(52, scaleByHeight(74, height)),
+        fontSize: getResponsiveSize(18, scaleByHeight(20, height)),
+        lineHeight: getResponsiveSize(19, scaleByHeight(18, height)),
+        borderRadius: getResponsiveSize(10, scaleByHeight(8, height)),
+      },
+      linksRow: {
+        marginBottom: getResponsiveSize(10, scaleByHeight(8, height)),
+        width: getResponsiveSize( '100%', scaleByHeight(314, height)),
+      },
+      linkIcon: {
+        width: getResponsiveSize(22, scaleByHeight(24, height)),
+        height: getResponsiveSize(22, scaleByHeight(24, height)),
+      },
+      link: {
+        fontSize: getResponsiveSize(13, scaleByHeight(14, height)),
+      },
+      error: {
+        fontSize: getResponsiveSize(13, scaleByHeight(12, height)),
+      },
+      modalCard: {
+        padding: getResponsiveSize(18, scaleByHeight(12, height)),
+        borderRadius: getResponsiveSize(14, scaleByHeight(10, height)),
+      },
+      modalText: {
+        fontSize: getResponsiveSize(14, scaleByHeight(12, height)),
+        marginBottom: getResponsiveSize(10, scaleByHeight(8, height)),
+      },
+      emailDescription: {
+        fontSize: getResponsiveSize(12, scaleByHeight(14, height)),
+        lineHeight: getResponsiveSize(16, scaleByHeight(18, height)),
+      },
+      // Динамические стили для web-landscape
+      webLandscapeFieldBlock: {
+        borderRadius: getResponsiveSize(12, scaleByHeight(8, height)),
+        paddingTop: getResponsiveSize(10, scaleByHeight(8, height)),
+        width: scaleByHeight(330, height),
+        height: scaleByHeight(76, height),
+      },
+      webLandscapeLabel: {
+        paddingLeft: isRTL
+          ? 0
+          : getResponsiveSize(12, scaleByHeight(14, height)),
+        paddingRight: isRTL
+          ? getResponsiveSize(12, scaleByHeight(14, height))
+          : 0,
+        marginBottom: getResponsiveSize(4, scaleByHeight(7, height)),
+      },
+      webLandscapeInput: {
+        marginBottom: getResponsiveSize(4, scaleByHeight(3, height)),
+      },
+    };
+  }, [height, isRTL]);
 
   // Автофокус
   const emailInputRef = useRef(null);
@@ -221,7 +315,13 @@ export default function AuthScreen() {
           ]}
         >
           {/* Бренд */}
-          <Text style={[styles.brand, { color: theme.primaryColor }]}>
+          <Text
+            style={[
+              styles.brand,
+              dynamicStyles.brand,
+              { color: theme.primaryColor },
+            ]}
+          >
             {t('auth.app_name')}
           </Text>
 
@@ -231,7 +331,8 @@ export default function AuthScreen() {
               <Text
                 style={[
                   styles.title,
-                  { color: theme.textColor, textAlign: 'center' },
+                  dynamicStyles.title,
+                  { color: theme.unactiveTextColor, textAlign: 'center' },
                 ]}
               >
                 {t('auth.email_title')}
@@ -239,6 +340,7 @@ export default function AuthScreen() {
               <Text
                 style={[
                   styles.subtitle,
+                  dynamicStyles.subtitle,
                   { color: theme.unactiveTextColor, textAlign: 'center' },
                 ]}
               >
@@ -248,12 +350,21 @@ export default function AuthScreen() {
               <View
                 style={[
                   styles.fieldBlock,
+                  dynamicStyles.fieldBlock,
                   Platform.OS === 'web' && isLandscape
                     ? {
                         backgroundColor: theme.formInputBackground,
-                        borderRadius: getResponsiveSize(12, 8),
+                        borderRadius: getResponsiveSize(
+                          12,
+                          scaleByHeight(8, height)
+                        ),
                         paddingHorizontal: getResponsiveSize(12, 0),
-                        paddingTop: getResponsiveSize(10, 8),
+                        paddingTop: getResponsiveSize(
+                          10,
+                          scaleByHeight(8, height)
+                        ),
+                        width: scaleByHeight(330, height),
+                        height: scaleByHeight(76, height),
                       }
                     : null,
                 ]}
@@ -261,15 +372,23 @@ export default function AuthScreen() {
                 <Text
                   style={[
                     styles.label,
+                    dynamicStyles.label,
                     {
                       color: theme.formInputLabelColor,
                       textAlign: isRTL ? 'right' : 'left',
                     },
                     Platform.OS === 'web' && isLandscape
                       ? {
-                          paddingLeft: isRTL ? 0 : getResponsiveSize(12, 10),
-                          paddingRight: isRTL ? getResponsiveSize(12, 10) : 0,
-                          marginBottom: getResponsiveSize(4, 3),
+                          paddingLeft: isRTL
+                            ? 0
+                            : getResponsiveSize(12, scaleByHeight(14, height)),
+                          paddingRight: isRTL
+                            ? getResponsiveSize(12, scaleByHeight(14, height))
+                            : 0,
+                          marginBottom: getResponsiveSize(
+                            4,
+                            scaleByHeight(7, height)
+                          ),
                         }
                       : null,
                   ]}
@@ -280,6 +399,7 @@ export default function AuthScreen() {
                   ref={emailInputRef}
                   style={[
                     styles.input,
+                    dynamicStyles.input,
                     {
                       backgroundColor: theme.defaultBlocksBackground,
                       borderColor: theme.borderColor,
@@ -288,7 +408,10 @@ export default function AuthScreen() {
                       // прозрачный инпут внутри окрашенного fieldBlock
                       backgroundColor: 'transparent',
                       borderWidth: 0,
-                      marginBottom: getResponsiveSize(4, 3),
+                      marginBottom: getResponsiveSize(
+                        4,
+                        scaleByHeight(3, height)
+                      ),
                     },
                     Platform.OS === 'web' && isLandscape
                       ? {
@@ -314,17 +437,26 @@ export default function AuthScreen() {
               <Text
                 style={[
                   styles.emailDescription,
-                  { color: theme.formInputPlaceholderColor },
+                  dynamicStyles.emailDescription,
+                  { color: theme.unactiveTextColor },
                 ]}
               >
                 {t('auth.email_description')}
               </Text>
               {!!emailError && (
-                <Text style={[styles.error, { color: '#D32F2F' }]}>
+                <Text
+                  style={[
+                    styles.error,
+                    dynamicStyles.error,
+                    { color: '#D32F2F' },
+                  ]}
+                >
                   {emailError}
                 </Text>
               )}
               <PrimaryOutlineButton
+                isLandscape={isLandscape}
+                height={height}
                 theme={theme}
                 title={
                   sending ? (
@@ -343,7 +475,8 @@ export default function AuthScreen() {
               <Text
                 style={[
                   styles.title,
-                  { color: theme.textColor, textAlign: 'center' },
+                  dynamicStyles.title,
+                  { color: theme.unactiveTextColor, textAlign: 'center' },
                 ]}
               >
                 {t('auth.otp_title')} {email}
@@ -351,6 +484,7 @@ export default function AuthScreen() {
               <Text
                 style={[
                   styles.subtitle,
+                  dynamicStyles.subtitle,
                   { color: theme.unactiveTextColor, textAlign: 'center' },
                 ]}
               >
@@ -360,10 +494,11 @@ export default function AuthScreen() {
               <Text
                 style={[
                   styles.label,
+                  dynamicStyles.label,
                   {
-                    color: theme.formInputLabelColor,
-                    textAlign: isRTL ? 'right' : 'left',
-                    alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                    color: theme.unactiveTextColor,
+                    textAlign: 'center',
+                    // alignSelf: isRTL ? 'flex-end' : 'flex-start',
                   },
                 ]}
               >
@@ -373,6 +508,7 @@ export default function AuthScreen() {
               <Animated.View
                 style={[
                   styles.otpRow,
+                  dynamicStyles.otpRow,
                   {
                     transform: [{ translateX: shakeAnim }],
                     flexDirection: 'row',
@@ -385,15 +521,21 @@ export default function AuthScreen() {
                     ref={(el) => (inputsRef.current[i] = el)}
                     style={[
                       styles.otpCell,
+                      dynamicStyles.otpCell,
                       {
-                        backgroundColor: theme.defaultBlocksBackground,
-                        borderColor: theme.borderColor,
+                        backgroundColor: theme.formInputBackground,
+                        borderColor: 
+                          focusedOtpIndex === i
+                            ? theme.primaryColor
+                            : theme.formInputBackground,
                         color: theme.textColor,
                       },
                     ]}
                     value={otp[i]}
                     onChangeText={(txt) => onChangeOtpCell(txt, i)}
                     onKeyPress={(e) => onKeyPressOtp(e, i)}
+                    onFocus={() => setFocusedOtpIndex(i)}
+                    onBlur={() => setFocusedOtpIndex(null)}
                     keyboardType={
                       Platform.OS === 'web' ? 'default' : 'number-pad'
                     }
@@ -407,6 +549,7 @@ export default function AuthScreen() {
                 <Text
                   style={[
                     styles.error,
+                    dynamicStyles.error,
                     { color: '#D32F2F', textAlign: 'center' },
                   ]}
                 >
@@ -418,21 +561,23 @@ export default function AuthScreen() {
               <View
                 style={[
                   styles.linksRow,
+                  dynamicStyles.linksRow,
                   { flexDirection: 'row' },
                   // { flexDirection: isRTL ? 'row' : 'row-reverse' },
                 ]}
               >
-                <TouchableOpacity onPress={backToEmail}>
+                <TouchableOpacity onPress={backToEmail} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Image source={icons.arrowLeft} style={dynamicStyles.linkIcon} />
                   <Text
                     style={[
                       styles.link,
+                      dynamicStyles.link,
                       {
                         color: theme.unactiveTextColor,
                         textDecorationLine: 'none',
                       },
                     ]}
                   >
-                    {'< '}
                     {t('auth.back_to_email')}
                   </Text>
                 </TouchableOpacity>
@@ -441,6 +586,7 @@ export default function AuthScreen() {
                   <Text
                     style={[
                       styles.link,
+                      dynamicStyles.link,
                       {
                         color: theme.unactiveTextColor,
                         textDecorationLine: 'none',
@@ -455,12 +601,16 @@ export default function AuthScreen() {
               {/* Кнопка подтверждения/очистки */}
               {otpError ? (
                 <PrimaryOutlineButton
+                  isLandscape={isLandscape}
+                  height={height}
                   theme={theme}
                   title={t('auth.clear_code')}
                   onPress={clearOtp}
                 />
               ) : (
                 <PrimaryOutlineButton
+                  isLandscape={isLandscape}
+                  height={height}
                   theme={theme}
                   title={
                     verifying ? (
@@ -484,13 +634,22 @@ export default function AuthScreen() {
           <View
             style={[
               styles.modalCard,
+              dynamicStyles.modalCard,
               { backgroundColor: theme.defaultBlocksBackground },
             ]}
           >
-            <Text style={[styles.modalText, { color: theme.textColor }]}>
+            <Text
+              style={[
+                styles.modalText,
+                dynamicStyles.modalText,
+                { color: theme.textColor },
+              ]}
+            >
               {t('auth.resend_modal_text')}
             </Text>
             <PrimaryOutlineButton
+              isLandscape={isLandscape}
+              height={height}
               theme={theme}
               title={t('auth.ok')}
               onPress={() => setShowResentModal(false)}
@@ -502,18 +661,46 @@ export default function AuthScreen() {
   );
 }
 
-function PrimaryOutlineButton({ title, onPress, disabled, theme }) {
+function PrimaryOutlineButton({
+  title,
+  onPress,
+  disabled,
+  theme,
+  isLandscape,
+  height,
+}) {  
+  const buttonDynamicStyles = useMemo(() => ({
+      outlineBtn: {
+        height: getResponsiveSize(48, scaleByHeight(40, height)),
+        marginTop: getResponsiveSize(12, scaleByHeight(38, height)),
+        borderRadius: getResponsiveSize(12, scaleByHeight(8, height)),
+      },
+      outlineBtnText: {
+        fontSize: getResponsiveSize(15, scaleByHeight(20, height)),
+        lineHeight: getResponsiveSize(17, scaleByHeight(20, height)),
+      },
+      webLandscapeButton: {
+        width: scaleByHeight(330, height),
+        height: scaleByHeight(62, height),
+      }
+  }), [height]);
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled}
       style={[
         styles.outlineBtn,
+        buttonDynamicStyles.outlineBtn,
         { borderColor: theme.primaryColor, opacity: disabled ? 0.6 : 1 },
+        isLandscape &&
+          Platform.OS === 'web' && {
+            width: scaleByHeight(330, height),
+            height: scaleByHeight(62, height),
+          },
       ]}
     >
       {typeof title === 'string' ? (
-        <Text style={[styles.outlineBtnText, { color: theme.primaryColor }]}>
+        <Text style={[styles.outlineBtnText, buttonDynamicStyles.outlineBtnText, { color: theme.primaryColor }]}>
           {title}
         </Text>
       ) : (
@@ -531,80 +718,93 @@ const styles = StyleSheet.create({
   },
   contentBlock: {
     alignSelf: 'center',
+    alignItems: 'center',
   },
   brand: {
-    fontSize: getResponsiveSize(45, 45),
-    fontWeight: '700',
-    letterSpacing: getResponsiveSize(3, 2),
+    // fontSize: getResponsiveSize(45, scaleByHeight(57)),
+    fontWeight: 'bold',
+    // letterSpacing: getResponsiveSize(3, scaleByHeight(5)),
     textAlign: 'center',
-    marginBottom: getResponsiveSize(18, 12),
+    // marginBottom: getResponsiveSize(18, scaleByHeight(35)),
+    fontFamily: 'Rubik-Bold',
   },
   title: {
-    fontSize: getResponsiveSize(18, 16),
-    fontWeight: '700',
+    // fontSize: getResponsiveSize(18, scaleByHeight(18)),
+    fontWeight: '600',
     textAlign: 'center',
-    marginBottom: getResponsiveSize(6, 4),
+    fontFamily: 'Rubik-SemiBold',
   },
   subtitle: {
-    fontSize: getResponsiveSize(13, 12),
+    // fontSize: getResponsiveSize(13, scaleByHeight(18)),
     textAlign: 'center',
-    marginBottom: getResponsiveSize(18, 12),
+    fontWeight: '600',
+    // marginBottom: getResponsiveSize(18, scaleByHeight(25)),
+    fontFamily: 'Rubik-SemiBold',
   },
   fieldBlock: {
-    marginBottom: getResponsiveSize(16, 10),
+    // marginBottom: getResponsiveSize(16, scaleByHeight(14)),
   },
   label: {
-    fontSize: getResponsiveSize(12, 11),
-    marginBottom: getResponsiveSize(6, 4),
+    // fontSize: getResponsiveSize(12, scaleByHeight(14)),
+    // marginBottom: getResponsiveSize(6, scaleByHeight(4)),
+    fontWeight: '500',
   },
   input: {
-    height: getResponsiveSize(48, 40),
     borderWidth: 1,
     borderRadius: getResponsiveSize(10, 8),
-    paddingHorizontal: getResponsiveSize(12, 10),
-    fontSize: getResponsiveSize(14, 13),
-    marginBottom: getResponsiveSize(8, 2),
+    // paddingHorizontal: getResponsiveSize(12, scaleByHeight(14)),
+    // fontSize: getResponsiveSize(14, scaleByHeight(18)),
+    // marginBottom: getResponsiveSize(8, scaleByHeight(2)),
+    // lineHeight: getResponsiveSize(20, scaleByHeight(22)),
+    fontWeight: '500',
   },
   outlineBtn: {
-    height: getResponsiveSize(48, 40),
+    // height: getResponsiveSize(48, scaleByHeight(40)),
     borderWidth: 1.5,
-    borderRadius: getResponsiveSize(12, 8),
+    // borderRadius: getResponsiveSize(12, 8),
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: getResponsiveSize(12, 8),
+    // marginTop: getResponsiveSize(12, scaleByHeight(38)),
     backgroundColor: 'transparent',
   },
   outlineBtnText: {
-    fontSize: getResponsiveSize(15, 13),
-    fontWeight: '700',
+    // fontSize: getResponsiveSize(15, scaleByHeight(20)),
+    // lineHeight: getResponsiveSize(17, scaleByHeight(20)),
+    fontFamily: 'Rubik-Medium',
   },
   otpRow: {
     width: '100%',
     justifyContent: 'space-between',
-    marginTop: getResponsiveSize(6, 4),
-    marginBottom: getResponsiveSize(12, 8),
+    // marginTop: getResponsiveSize(6, scaleByHeight(4)),
+    // marginBottom: getResponsiveSize(12, scaleByHeight(8)),
   },
   otpCell: {
     width: `${100 / OTP_LENGTH - 2}%`,
-    height: getResponsiveSize(52, 42),
+    // height: getResponsiveSize(52, scaleByHeight(42)),
     borderWidth: 1,
-    borderRadius: getResponsiveSize(10, 8),
+    // borderRadius: getResponsiveSize(10, 8),
     textAlign: 'center',
-    fontSize: getResponsiveSize(18, 16),
+    // fontSize: getResponsiveSize(18, scaleByHeight(16)),
     fontWeight: '700',
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+      },
+        }),
   },
   linksRow: {
     width: '100%',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: getResponsiveSize(10, 8),
+    fontFamily: 'Rubik-Medium',
+    // marginBottom: getResponsiveSize(10, scaleByHeight(8)),
   },
   link: {
-    fontSize: getResponsiveSize(13, 12),
+    // fontSize: getResponsiveSize(13, scaleByHeight(12)),
     textDecorationLine: 'underline',
   },
   error: {
-    fontSize: getResponsiveSize(13, 12),
+    // fontSize: getResponsiveSize(13, scaleByHeight(12)),
     marginTop: 4,
   },
   modalBackdrop: {
@@ -616,16 +816,19 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     width: '100%',
-    borderRadius: getResponsiveSize(14, 10),
-    padding: getResponsiveSize(18, 12),
+    // borderRadius: getResponsiveSize(14, 10),
+    // padding: getResponsiveSize(18, scaleByHeight(12)),
   },
   modalText: {
-    fontSize: getResponsiveSize(14, 12),
+    // fontSize: getResponsiveSize(14, scaleByHeight(12)),
     textAlign: 'center',
-    marginBottom: getResponsiveSize(10, 8),
+    // marginBottom: getResponsiveSize(10, scaleByHeight(8)),
   },
   emailDescription: {
-    fontSize: getResponsiveSize(12, 14),
+    // fontSize: getResponsiveSize(12, scaleByHeight(14)),
+    // lineHeight: getResponsiveSize(16, scaleByHeight(18)),
     textAlign: 'center',
+    fontWeight: '500',
+    fontFamily: 'Rubik-Medium',
   },
 });

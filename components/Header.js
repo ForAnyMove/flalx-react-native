@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Image, StyleSheet, Text, TouchableOpacity, View, Platform } from 'react-native';
 import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
 import { useComponentContext } from '../context/globalAppContext';

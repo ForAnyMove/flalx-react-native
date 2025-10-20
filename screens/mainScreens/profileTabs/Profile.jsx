@@ -16,11 +16,15 @@ import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
 import { icons } from '../../../constants/icons';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
+import ImagePickerModal from '../../../components/ui/ImagePickerModal';
+import { uploadImageToSupabase } from '../../../utils/supabase/uploadImageToSupabase';
+import { scaleByHeight } from '../../../utils/resizeFuncs';
 
 export default function Profile() {
   const { user, themeController, languageController, session } = useComponentContext();
   const [userState, setUserState] = useState(user.current || {});
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [pickerVisible, setPickerVisible] = useState(false);
   const { height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
@@ -43,10 +47,11 @@ export default function Profile() {
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const sizes = {
     baseFont: isWebLandscape ? height * 0.016 : baseFont,
-    avatarSize: isWebLandscape ? height * 0.13 : avatarSize,
+    avatarSize: isWebLandscape ? scaleByHeight(114, height) : avatarSize,
     btnPadding: isWebLandscape ? height * 0.0144 : btnPadding,
     btnMargin: isWebLandscape ? height * 0 : RFValue(12),
     btnFont: isWebLandscape ? height * 0.017 : btnFont,
+    bthHeight: isWebLandscape ? scaleByHeight(64, height) : RFValue(64),
     btnWidth: isWebLandscape ? '32%' : btnWidth,
     fieldFont: isWebLandscape ? height * 0.0145 : fieldFont,
     fieldPadding: isWebLandscape ? height * 0.009 : fieldPadding,
@@ -57,6 +62,22 @@ export default function Profile() {
     iconSize: isWebLandscape ? RFValue(8) : iconSize,
     paddingVertical: isWebLandscape ? height * 0.005 : RFPercentage(2),
   };
+
+  // Функция загрузки и обновления аватара
+  async function uploadAvatar(uri) {
+    try {
+      const res = await uploadImageToSupabase(uri, user?.current?.id, {
+        bucket: 'avatars',
+        isAvatar: true,
+      });
+      if (res.publicUrl) {
+        const updated = await user.update({ avatar: res.publicUrl });
+        setUserState(updated); // Обновляем локальное состояние
+      }
+    } catch (err) {
+      console.error('Ошибка загрузки аватара:', err.message);
+    }
+  }
 
   return (
     <ScrollView
@@ -88,19 +109,28 @@ export default function Profile() {
             },
           ]}
         >
-          <Image
-            source={
-              userState.avatar
-                ? { uri: userState.avatar }
-                : icons.defaultAvatarInverse
-            }
-            style={{
-              width: sizes.avatarSize,
-              height: sizes.avatarSize,
-              borderRadius: sizes.avatarSize / 2,
-              backgroundColor: '#ccc',
-            }}
-          />
+          <View style={{ position: 'relative' }}>
+            <Image
+              source={
+                userState.avatar
+                  ? { uri: userState.avatar }
+                  : icons.defaultAvatarInverse
+              }
+              style={{
+                width: sizes.avatarSize,
+                height: sizes.avatarSize,
+                borderRadius: sizes.avatarSize / 2,
+                backgroundColor: '#ccc',
+              }}
+            />
+            {/* Кнопка редактирования аватара */}
+            <TouchableOpacity
+              style={[styles.cameraButton, { width: sizes.avatarSize * 0.3, height: sizes.avatarSize * 0.3 }]}
+              onPress={() => setPickerVisible(true)}
+            >
+              <Image source={icons.camera} style={styles.cameraIcon} />
+            </TouchableOpacity>
+          </View>
         </ImageBackground>
 
         {/* Инфо-поля */}
@@ -136,6 +166,7 @@ export default function Profile() {
               }}
               baseFont={sizes.fieldFont}
               fieldPadding={sizes.fieldPadding}
+              bthHeight={sizes.bthHeight}
               fieldMargin={sizes.fieldMargin}
               iconSize={sizes.iconSize}
               isLandscape={isLandscape}
@@ -168,7 +199,7 @@ export default function Profile() {
                 styles.primaryBtn,
                 {
                   backgroundColor: themeController.current?.buttonColorPrimaryDefault,
-                  padding: sizes.btnPadding,
+                  [isWebLandscape ? 'height' : 'padding']: isWebLandscape ? sizes.bthHeight : sizes.btnPadding,
                   marginBottom: sizes.btnMargin,
                   width: sizes.btnWidth,
                   borderRadius: isWebLandscape ? RFValue(3) : RFValue(5),
@@ -245,7 +276,7 @@ export default function Profile() {
                 {
                   backgroundColor: btn.bg,
                   borderColor: btn.border,
-                  padding: sizes.btnPadding,
+                  [isWebLandscape ? 'height' : 'padding']: isWebLandscape ? sizes.bthHeight : sizes.btnPadding,
                   marginBottom: sizes.btnMargin,
                   width: sizes.btnWidth,
                   borderRadius: isWebLandscape ? RFValue(3) : RFValue(5),
@@ -280,7 +311,7 @@ export default function Profile() {
               {
                 backgroundColor: themeController.current?.buttonColorSecondaryDefault,
                 borderColor: themeController.current?.buttonColorSecondaryDefault,
-                padding: sizes.btnPadding,
+                  [isWebLandscape ? 'height' : 'padding']: isWebLandscape ? sizes.bthHeight : sizes.btnPadding,
                 marginBottom: sizes.btnMargin,
                 width: sizes.btnWidth,
                 borderRadius: isWebLandscape ? RFValue(3) : RFValue(5),
@@ -333,11 +364,22 @@ export default function Profile() {
           </View>
         </View>
       </Modal>
+      
+      {/* Modal выбора изображения */}
+      <ImagePickerModal
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        onAdd={async (uris) => {
+          if (uris?.length > 0) {
+            await uploadAvatar(uris[0]);
+          }
+        }}
+      />
     </ScrollView>
   );
 }
 
-function InfoField({ label, value, changeInfo, multiline = false, baseFont, fieldPadding, fieldMargin, iconSize, isLandscape }) {
+function InfoField({ label, value, changeInfo, multiline = false, baseFont, fieldPadding, fieldMargin, iconSize, isLandscape, bthHeight }) {
   const { themeController } = useComponentContext();
   const [editMode, setEditMode] = useState(false);
   const [textValue, setTextValue] = useState(value);
@@ -348,7 +390,7 @@ function InfoField({ label, value, changeInfo, multiline = false, baseFont, fiel
         styles.profileInfoString,
         {
           width: Platform.OS === 'web' && isLandscape ? '32%' : '100%',
-          paddingVertical: fieldPadding,
+          [Platform.OS === 'web' && isLandscape ? 'height' : 'paddingVertical']: Platform.OS === 'web' && isLandscape ? bthHeight : fieldPadding,
           marginBottom: fieldMargin,
           backgroundColor: editMode
             ? themeController.current?.formInputBackgroundEditMode
@@ -358,7 +400,7 @@ function InfoField({ label, value, changeInfo, multiline = false, baseFont, fiel
         },
       ]}
     >
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, }}>
         <Text
           style={[
             styles.profileInfoLabel,
@@ -390,6 +432,7 @@ function InfoField({ label, value, changeInfo, multiline = false, baseFont, fiel
               {
                 fontSize: baseFont,
                 color: themeController.current?.formInputTextColor,
+                 minHeight: baseFont * 0.9,
               },
             ]}
           >
@@ -428,6 +471,19 @@ function InfoField({ label, value, changeInfo, multiline = false, baseFont, fiel
 const styles = StyleSheet.create({
   userProfile: { flex: 1, paddingVertical: RFPercentage(2) },
   profileBack: { width: '100%', alignItems: 'center', justifyContent: 'center', borderRadius: RFValue(10), overflow: 'hidden', marginBottom: RFValue(12) },
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cameraIcon: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
   profileInfoString: { borderRadius: 8, paddingHorizontal: RFValue(14), flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   breakLine: { width: '100%', height: 1, marginVertical: RFValue(12) },
   primaryBtn: { borderRadius: RFValue(5), alignItems: 'center', justifyContent: 'center', marginBottom: RFValue(12) },

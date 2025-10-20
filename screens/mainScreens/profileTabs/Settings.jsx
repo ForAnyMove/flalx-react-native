@@ -16,6 +16,7 @@ import { icons } from '../../../constants/icons';
 import { useState } from 'react';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
+import { scaleByHeight } from '../../../utils/resizeFuncs';
 
 const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
   if (Platform.OS === 'web') {
@@ -41,7 +42,7 @@ export default function Settings() {
 
   // размеры/отступы
   const sizes = {
-    baseFont: isWebLandscape ? height * 0.016 : RFValue(12),
+    baseFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(12),
     iconSize: isWebLandscape ? RFValue(16) : RFValue(22),
     containerPadding: isWebLandscape ? height * 0.02 : RFValue(10),
     pickerHeight: isWebLandscape ? height * 0.06 : RFValue(50),
@@ -49,7 +50,7 @@ export default function Settings() {
     colGap: isWebLandscape ? height * 0.02 : 0,
     switchMargin: isWebLandscape ? height * 0.02 : RFValue(16),
     btnPadding: isWebLandscape ? height * 0.015 : RFValue(12),
-    btnFont: isWebLandscape ? height * 0.017 : RFValue(12),
+    btnFont: isWebLandscape ? scaleByHeight(20, height) : RFValue(12),
     rowsWidth: isWebLandscape ? '65%' : '100%',
     rowsAlign: isWebLandscape ? (isRTL ? 'flex-end' : 'flex-start') : 'stretch',
     bottomInset: isWebLandscape ? height * 0.02 : 0,
@@ -80,8 +81,20 @@ export default function Settings() {
           paddingBottom: isWebLandscape ? height * 0.18 : RFValue(40),
         }}
       >
+        {/* Break Line */}
+        <View
+          style={[
+            styles.breakLine,
+            { backgroundColor: themeController.current?.breakLineColor },
+          ]}
+        />
         {/* Language + Theme */}
-        <View style={rowStyle}>
+        <View
+          style={[
+            rowStyle,
+            isWebLandscape && { height: scaleByHeight(64, height) },
+          ]}
+        >
           {/* Language */}
           <View
             style={[
@@ -90,9 +103,36 @@ export default function Settings() {
                 backgroundColor: themeController.current?.formInputBackground,
                 height: sizes.pickerHeight,
                 flex: isWebLandscape ? 1 : undefined,
+                paddingHorizontal: isWebLandscape
+                  ? scaleByHeight(15, height)
+                  : RFValue(8),
               },
             ]}
           >
+            <Text
+              style={[
+                styles.label,
+                {
+                  color: themeController.current?.unactiveTextColor,
+                  fontSize: sizes.baseFont * 0.75,
+                  // зеркалка подписи
+                  // top: isWebLandscape ? '20%' : RFValue(5),
+                  // left: isRTL
+                  //   ? undefined
+                  //   : isWebLandscape
+                  //   ? scaleByHeight(15, height)
+                  //   : RFValue(8),
+                  // right: isRTL
+                  //   ? isWebLandscape
+                  //     ? scaleByHeight(15, height)
+                  //     : RFValue(8)
+                  //   : undefined,
+                  textAlign: isRTL ? 'right' : 'left',
+                },
+              ]}
+            >
+              {t('settings.language')}
+            </Text>
             <Picker
               selectedValue={languageController.current}
               onValueChange={(itemValue) =>
@@ -100,9 +140,12 @@ export default function Settings() {
               }
               style={[
                 styles.picker,
-                { color: themeController.current?.textColor },
+                {
+                  color: themeController.current?.textColor,
+                },
               ]}
-              dropdownIconColor={themeController.current?.textColor}
+              dropdownIconColor={themeController.current?.primaryColor}
+              itemStyle={{marginTop: RFValue(10)}}
             >
               <Picker.Item
                 label={t('settings.lang_en', 'English')}
@@ -110,21 +153,6 @@ export default function Settings() {
               />
               <Picker.Item label={t('settings.lang_he', 'עברית')} value='he' />
             </Picker>
-            <Text
-              style={[
-                styles.label,
-                {
-                  color: themeController.current?.unactiveTextColor,
-                  fontSize: sizes.baseFont * 0.8,
-                  // зеркалка подписи
-                  right: isRTL ? undefined : RFValue(10),
-                  left: isRTL ? RFValue(10) : undefined,
-                  textAlign: isRTL ? 'left' : 'right',
-                },
-              ]}
-            >
-              {t('settings.language')}
-            </Text>
           </View>
 
           {/* Theme */}
@@ -135,9 +163,26 @@ export default function Settings() {
                 backgroundColor: themeController.current?.formInputBackground,
                 height: sizes.pickerHeight,
                 flex: isWebLandscape ? 1 : undefined,
+                paddingHorizontal: isWebLandscape
+                  ? scaleByHeight(15, height)
+                  : RFValue(8),
               },
             ]}
           >
+            <Text
+              style={[
+                styles.label,
+                {
+                  color: themeController.current?.unactiveTextColor,
+                  fontSize: sizes.baseFont * 0.75,
+                  // left: isRTL ? undefined : RFValue(10),
+                  // right: isRTL ? RFValue(10) : undefined,
+                  textAlign: isRTL ? 'right' : 'left',
+                },
+              ]}
+            >
+              {t('settings.theme')}
+            </Text>
             <Picker
               selectedValue={themeController.isTheme}
               onValueChange={(itemValue) => themeController.setTheme(itemValue)}
@@ -145,7 +190,7 @@ export default function Settings() {
                 styles.picker,
                 { color: themeController.current?.textColor },
               ]}
-              dropdownIconColor={themeController.current?.textColor}
+              dropdownIconColor={themeController.current?.primaryColor}
             >
               <Picker.Item
                 label={t('settings.theme_light', 'Light')}
@@ -156,20 +201,6 @@ export default function Settings() {
                 value='dark'
               />
             </Picker>
-            <Text
-              style={[
-                styles.label,
-                {
-                  color: themeController.current?.unactiveTextColor,
-                  fontSize: sizes.baseFont * 0.8,
-                  right: isRTL ? undefined : RFValue(10),
-                  left: isRTL ? RFValue(10) : undefined,
-                  textAlign: isRTL ? 'left' : 'right',
-                },
-              ]}
-            >
-              {t('settings.theme')}
-            </Text>
           </View>
         </View>
 
@@ -186,9 +217,23 @@ export default function Settings() {
           <View
             style={[
               styles.switchRow,
-              { width: isWebLandscape ? '47%' : '100%' },
+              {
+                width: isWebLandscape ? '47%' : '100%',
+                flexDirection: isRTL ? 'row-reverse' : 'row',
+              },
             ]}
           >
+            <Text
+              style={[
+                styles.switchName,
+                {
+                  color: themeController.current?.unactiveTextColor,
+                  fontSize: sizes.baseFont,
+                },
+              ]}
+            >
+              {t('settings.location')}
+            </Text>
             <Switch
               value={locationEnabled}
               onValueChange={setLocationEnabled}
@@ -200,25 +245,28 @@ export default function Settings() {
                 true ? themeController.current?.switchThumbColor : '#000'
               }
             />
-            <Text
-              style={[
-                styles.switchName,
-                {
-                  color: themeController.current?.buttonColorPrimaryDefault,
-                  fontSize: sizes.baseFont,
-                },
-              ]}
-            >
-              {t('settings.location')}
-            </Text>
           </View>
 
           <View
             style={[
               styles.switchRow,
-              { width: isWebLandscape ? '47%' : '100%' },
+              {
+                width: isWebLandscape ? '47%' : '100%',
+                flexDirection: isRTL ? 'row-reverse' : 'row',
+              },
             ]}
           >
+            <Text
+              style={[
+                styles.switchName,
+                {
+                  color: themeController.current?.unactiveTextColor,
+                  fontSize: sizes.baseFont,
+                },
+              ]}
+            >
+              {t('settings.notifications')}
+            </Text>
             <Switch
               value={notificationsEnabled}
               onValueChange={setNotificationsEnabled}
@@ -230,17 +278,6 @@ export default function Settings() {
                 true ? themeController.current?.switchThumbColor : '#000'
               }
             />
-            <Text
-              style={[
-                styles.switchName,
-                {
-                  color: themeController.current?.buttonColorPrimaryDefault,
-                  fontSize: sizes.baseFont,
-                },
-              ]}
-            >
-              {t('settings.notifications')}
-            </Text>
           </View>
         </View>
 
@@ -262,6 +299,11 @@ export default function Settings() {
                   themeController.current?.buttonColorPrimaryDefault,
                 padding: sizes.btnPadding,
                 flex: isWebLandscape ? 1 : undefined,
+              },
+              isWebLandscape && {
+                height: scaleByHeight(62, height),
+                alignItems: 'center',
+                justifyContent: 'center',
               },
             ]}
             onPress={() => setAboutVisible(true)}
@@ -287,6 +329,11 @@ export default function Settings() {
                   themeController.current?.buttonColorPrimaryDefault,
                 padding: sizes.btnPadding,
                 flex: isWebLandscape ? 1 : undefined,
+              },
+              isWebLandscape && {
+                height: scaleByHeight(62, height),
+                alignItems: 'center',
+                justifyContent: 'center',
               },
             ]}
             onPress={() => setRegulationsVisible(true)}
@@ -475,13 +522,14 @@ const styles = StyleSheet.create({
   pickerContainer: {
     marginBottom: RFValue(8),
     borderRadius: RFValue(6),
-    paddingHorizontal: RFValue(12),
-    paddingVertical: RFValue(6),
-    justifyContent: 'center',
+    paddingBottom: RFValue(6),
+    justifyContent: 'space-between',
     position: 'relative',
   },
-  picker: { width: '80%', backgroundColor: 'transparent', borderWidth: 0 },
-  label: { position: 'absolute', top: RFValue(5) },
+  picker: { backgroundColor: 'transparent', borderWidth: 0 },
+  label: { 
+    // position: 'absolute',
+     top: RFValue(5) },
   switchName: { fontWeight: 'bold' },
   breakLine: { height: 1, marginVertical: RFValue(8) },
   switchRow: {
