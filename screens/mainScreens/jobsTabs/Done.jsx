@@ -15,6 +15,7 @@ import { RFValue } from 'react-native-responsive-fontsize';
 import SearchPanel from '../../../components/SearchPanel';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
+import { scaleByHeight } from '../../../utils/resizeFuncs';
 
 export default function DoneScreen({
   setShowJobModalVisible,
@@ -34,12 +35,12 @@ export default function DoneScreen({
   // размеры для web-landscape
   const sizes = {
     cardRadius: isWebLandscape ? height * 0.007 : RFValue(5),
-    cardShadow: isWebLandscape ? height * 0.001 : RFValue(3),
-    imageSize: isWebLandscape ? height * 0.09 : RFValue(55),
-    fontTitle: isWebLandscape ? height * 0.018 : RFValue(12),
-    fontDescription: isWebLandscape ? height * 0.015 : RFValue(10),
-    badgeSize: isWebLandscape ? height * 0.025 : RFValue(16),
-    badgeFont: isWebLandscape ? height * 0.014 : RFValue(10),
+    imageHeight: isWebLandscape ? scaleByHeight(120, height) : RFValue(45),
+    imageWidth: isWebLandscape ? scaleByHeight(153, height) : RFValue(55),
+    fontTitle: isWebLandscape ? scaleByHeight(18, height) : RFValue(12),
+    fontDescription: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
+    badgeSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(16),
+    badgeFont: isWebLandscape ? scaleByHeight(12, height) : RFValue(10),
     scrollContainerWidth: isWebLandscape ? '60%' : '100%',
     badgePosition: isWebLandscape ? height * 0.005 : RFValue(5),
   };
@@ -90,9 +91,8 @@ export default function DoneScreen({
                     styles.cardContent,
                     {
                       backgroundColor:
-                        themeController.current?.defaultBlocksBackground,
+                        themeController.current?.formInputBackground,
                       borderRadius: sizes.cardRadius,
-                      shadowRadius: sizes.cardShadow,
                     },
                   ]}
                 >
@@ -100,8 +100,8 @@ export default function DoneScreen({
                     style={[
                       styles.imageContainer,
                       {
-                        width: sizes.imageSize,
-                        height: sizes.imageSize,
+                        width: sizes.imageWidth,
+                        height: sizes.imageHeight,
                         backgroundColor:
                           themeController.current?.defaultBlocksMockBackground,
                         ...(isRTL
@@ -148,7 +148,7 @@ export default function DoneScreen({
                       style={[
                         styles.title,
                         {
-                          color: themeController.current?.textColor,
+                          color: themeController.current?.primaryColor,
                           fontSize: sizes.fontTitle,
                         },
                       ]}
@@ -160,7 +160,7 @@ export default function DoneScreen({
                         style={[
                           styles.description,
                           {
-                            color: themeController.current?.textColor,
+                            color: themeController.current?.unactiveTextColor,
                             textAlign:
                               isRTL && Platform.OS === 'web' ? 'right' : 'left',
                             fontSize: sizes.fontDescription,
@@ -199,11 +199,6 @@ const styles = {
     borderRadius: RFValue(5),
     alignItems: 'center',
     position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: RFValue(3),
-    elevation: RFValue(2),
   },
   imageContainer: {
     width: RFValue(55),
@@ -228,6 +223,7 @@ const styles = {
   textContent: {
     flex: 1,
     height: '80%',
+    justifyContent: 'center',
   },
   title: {
     fontSize: RFValue(12),

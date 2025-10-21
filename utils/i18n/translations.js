@@ -114,6 +114,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         no: 'No',
         save: 'Save',
         create: 'Create',
+        readMore: 'Read more',
       },
       profile: {
         professions: 'Professions',
@@ -320,6 +321,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         no: 'לא',
         save: 'שמור',
         create: 'צור',
+        readMore: 'קרא עוד',
       },
       profile: {
         professions: 'מקצועות',

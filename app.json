@@ -19,7 +19,7 @@
       }
     },
     "android": {
-      "usesCleartextTraffic": true,
+      // "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo/flalx-logo-large.png",
         "backgroundColor": "#ffffff"
@@ -35,7 +35,7 @@
         "projectId": "3b752486-12ec-41fc-93e6-c32197197fd4"
       }
     },
-    "owner": "alexfam",
+    "owner": "yulab",
     "plugins": [
       "expo-router",
       "expo-localization"

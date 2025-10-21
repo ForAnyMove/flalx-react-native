@@ -80,11 +80,11 @@ function App() {
   if (!isOnboardingShowed) {
     content = <OnboardingScreen onFinish={() => setOnboardingShowed(true)} />;
   }
-  // // 2. Авторизация
+  // 2. Авторизация
   else if (!session.status) {
     content = <AuthScreen />;
   }
-  // // 3. Регистрация первого входа
+  // 3. Регистрация первого входа
   else if (user?.current?.firstauth) {
     content = <RegisterScreen />;
   }

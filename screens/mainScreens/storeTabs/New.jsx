@@ -16,7 +16,11 @@ import { useComponentContext } from '../../../context/globalAppContext';
 import { useWindowInfo } from '../../../context/windowContext';
 // import JobModalWrapper from '../../../components/JobModalWrapper';
 
-export default function NewScreen({ newJobModalVisible, setNewJobModalVisible, setActiveKey }) {
+export default function NewScreen({
+  newJobModalVisible,
+  setNewJobModalVisible,
+  setActiveKey,
+}) {
   const { themeController, languageController } = useComponentContext();
   const isRTL = languageController.isRTL;
   const { isLandscape } = useWindowInfo();
@@ -27,6 +31,7 @@ export default function NewScreen({ newJobModalVisible, setNewJobModalVisible, s
   // const [newJobModalVisible, setNewJobModalVisible] = useState(false);
   // const [activeKey, setActiveKey] = useState(null);
 
+  const [likes, setLikes] = useState([]);
   return (
     <>
       <View
@@ -44,47 +49,41 @@ export default function NewScreen({ newJobModalVisible, setNewJobModalVisible, s
             setSearchValue={setSearchValue}
           />
         </View>
-        {/* <View>
-        <JobTypeSelector selectedTypes={filteredJobs} setSelectedTypes={setFilteredJobs} />
-      </View> */}
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.cardsWrapper}>
             {Object.entries(JOB_TYPES)
               .filter(([key, value]) =>
                 value.toLowerCase().includes(searchValue.toLowerCase())
               )
+              .sort(([keyA], [keyB]) => {
+                const aIsLiked = likes.includes(keyA);
+                const bIsLiked = likes.includes(keyB);
+                return bIsLiked - aIsLiked;
+              })
               .map(([key, label]) => (
                 <TouchableOpacity
                   key={key}
-                  // onPress={() => router.push(`/new-job-modal?key=${key}`)}
                   onPress={() => {
                     setNewJobModalVisible(true);
                     setActiveKey(key);
                   }}
                 >
                   <NewJobTemplateCard
+                    likeStatus={likes.includes(key)}
+                    switchLikeStatus={() => {
+                      if (likes.includes(key)) {
+                        setLikes(likes.filter((item) => item !== key));
+                      } else {
+                        setLikes([...likes, key]);
+                      }
+                    }}
                     templateTitle={key}
-                    imageSource={null} // сюда можешь передавать uri картинки
+                    imageSource={null}
                   />
                 </TouchableOpacity>
               ))}
           </View>
         </ScrollView>
-        {/* {isWebLandscape ? (
-          <JobModalWrapper visible={newJobModalVisible}>
-            <NewJobModal
-              activeKey={activeKey}
-              closeModal={() => setNewJobModalVisible(false)}
-            />
-          </JobModalWrapper>
-        ) : (
-          <Modal visible={newJobModalVisible} animationType='slide'>
-            <NewJobModal
-              activeKey={activeKey}
-              closeModal={() => setNewJobModalVisible(false)}
-            />
-          </Modal>
-        )} */}
       </View>
     </>
   );

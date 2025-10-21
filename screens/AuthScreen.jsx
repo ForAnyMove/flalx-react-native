@@ -116,7 +116,7 @@ export default function AuthScreen() {
         borderRadius: getResponsiveSize(14, scaleByHeight(10, height)),
       },
       modalText: {
-        fontSize: getResponsiveSize(14, scaleByHeight(12, height)),
+        fontSize: getResponsiveSize(13, scaleByHeight(18, height)),
         marginBottom: getResponsiveSize(10, scaleByHeight(8, height)),
       },
       emailDescription: {
@@ -642,7 +642,9 @@ export default function AuthScreen() {
               style={[
                 styles.modalText,
                 dynamicStyles.modalText,
-                { color: theme.textColor },
+                {
+                  color: theme.textColor,
+                },
               ]}
             >
               {t('auth.resend_modal_text')}
@@ -818,6 +820,7 @@ const styles = StyleSheet.create({
     width: '100%',
     // borderRadius: getResponsiveSize(14, 10),
     // padding: getResponsiveSize(18, scaleByHeight(12)),
+    alignItems: 'center',
   },
   modalText: {
     // fontSize: getResponsiveSize(14, scaleByHeight(12)),

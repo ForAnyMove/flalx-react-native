@@ -35,4 +35,6 @@ export const icons = {
   history: require('../assets/icon/history.png'),
   fullScreen: require('../assets/icon/full-screen.png'),
   smallScreen: require('../assets/icon/full-screen.png'),
+  likeOff: require('../assets/icon/Favorite/off.png'),
+  likeOn: require('../assets/icon/Favorite/on.png'),
 };

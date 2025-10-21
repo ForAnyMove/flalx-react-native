@@ -41,7 +41,7 @@ export const ComponentProvider = ({ children }) => {
   
   const jobsController = jobsManager({ session, user });
   const providersController = providersManager({ session });
-
+  
   return (
     <ComponentContext.Provider
       value={{
