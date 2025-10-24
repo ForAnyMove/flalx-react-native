@@ -1,46 +1,88 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View, Platform } from 'react-native';
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Platform,
+} from 'react-native';
 import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
 import { useComponentContext } from '../context/globalAppContext';
 import { useWindowInfo } from '../context/windowContext';
 import { icons } from '../constants/icons';
+import { scaleByHeight } from '../utils/resizeFuncs';
 
 // адаптивный размер
 const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
   if (Platform.OS === 'web') {
-    return isLandscape ? webSize*1.6 : RFValue(mobileSize);
+    return isLandscape ? webSize : RFValue(mobileSize);
   }
   return RFValue(mobileSize);
 };
 
 export default function Header({ switchToProfile }) {
-  const { themeController, user } = useComponentContext();
+  const { themeController, user, languageController } = useComponentContext();
   const { isLandscape, height } = useWindowInfo();
   const userAvatar = user.current?.avatar;
-
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const isRTL = languageController.isRTL;
+  const sizes = {
+    headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
+    headerPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(31, height)
+      : RFValue(3),
+    headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
+  };
   return (
     <View
       style={[
         styles.container,
-        { backgroundColor: themeController.current?.backgroundColor, height: Platform.OS === 'web' && isLandscape ? height*0.07 : RFPercentage(7)},
+        {
+          backgroundColor: themeController.current?.backgroundColor,
+          borderBottomColor: themeController.current?.profileDefaultBackground,
+          height: sizes.headerHeight,
+          paddingHorizontal: sizes.headerPaddingHorizontal,
+          marginTop: sizes.headerMargin,
+        },
+        isRTL && { flexDirection: 'row-reverse' },
       ]}
     >
       <Text
         style={[
           styles.logoText,
-          { fontSize: getResponsiveSize(18, height*0.02, isLandscape) },
+          {
+            color: themeController.current?.primaryColor,
+            fontSize: getResponsiveSize(
+              18,
+              scaleByHeight(24, height),
+              isLandscape
+            ),
+          },
         ]}
       >
         Flalx
       </Text>
       <TouchableOpacity onPress={() => switchToProfile()}>
-          <Image
-            source={userAvatar ? { uri: userAvatar } : icons.defaultAvatarInverse }
-            style={{
-              width: getResponsiveSize(30, height*0.03, isLandscape),
-              height: getResponsiveSize(30, height*0.03, isLandscape),
-              borderRadius: getResponsiveSize(30, height*0.03, isLandscape),
-            }}
-          />
+        <Image
+          source={userAvatar ? { uri: userAvatar } : icons.defaultAvatarInverse}
+          style={{
+            width: getResponsiveSize(
+              30,
+              scaleByHeight(32, height),
+              isLandscape
+            ),
+            height: getResponsiveSize(
+              30,
+              scaleByHeight(32, height),
+              isLandscape
+            ),
+            borderRadius: getResponsiveSize(
+              30,
+              scaleByHeight(16, height),
+              isLandscape
+            ),
+          }}
+        />
       </TouchableOpacity>
     </View>
   );

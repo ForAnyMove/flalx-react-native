@@ -15,10 +15,11 @@ import Profile from './mainScreens/profileTabs/Profile';
 import Profession from './mainScreens/profileTabs/Profession';
 import Settings from './mainScreens/profileTabs/Settings';
 import { useWindowInfo } from '../context/windowContext';
+import { scaleByHeight } from '../utils/resizeFuncs';
 
 const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
   if (Platform.OS === 'web') {
-    return isLandscape ? webSize*1.6 : RFValue(mobileSize);
+    return isLandscape ? webSize : RFValue(mobileSize);
   }
   return RFValue(mobileSize);
 };
@@ -28,6 +29,16 @@ export default function AppProfileScreen({ switchToApp }) {
     useComponentContext();
   const { isLandscape, height } = useWindowInfo();
   const isRTL = languageController?.isRTL;
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  const sizes = {
+    headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
+    headerPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(7, height)
+      : RFValue(3),
+    headerMarginHorizontal: isWebLandscape ? scaleByHeight(24, height) : RFValue(5),
+    headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
+  };
 
   function renderScreen() {
     switch (profileTabController.active) {
@@ -48,10 +59,13 @@ export default function AppProfileScreen({ switchToApp }) {
           styles.profileHeader,
           {
             backgroundColor: themeController.current?.backgroundColor,
-            borderBottomColor: themeController.current?.formInputBackground,
-            height: Platform.OS === 'web' && isLandscape ? height*0.07 : RFPercentage(7),
-            flexDirection: isRTL ? 'row-reverse' : 'row'
+            borderBottomColor: themeController.current?.profileDefaultBackground,
+            height: sizes.headerHeight,
+            paddingHorizontal: sizes.headerPaddingHorizontal,
+            marginHorizontal: sizes.headerMarginHorizontal,
+            marginTop: sizes.headerMargin,
           },
+          isRTL && { flexDirection: 'row-reverse' },
         ]}
       >
         {/* Back button to /store */}
@@ -59,13 +73,35 @@ export default function AppProfileScreen({ switchToApp }) {
           <Image
             source={isRTL ? icons.forward : icons.back}
             style={{
-              width: getResponsiveSize(20, height*0.02, isLandscape),
-              height: getResponsiveSize(20, height*0.02, isLandscape),
-              margin: RFValue(10),
+              width: getResponsiveSize(
+                30,
+                scaleByHeight(24, height),
+                isLandscape
+              ),
+              height: getResponsiveSize(
+                30,
+                scaleByHeight(24, height),
+                isLandscape
+              ),
+              // margin: RFValue(10),
             }}
           />
         </TouchableOpacity>
-        <Text style={[styles.logoText, { fontSize: getResponsiveSize(18, height*0.02, isLandscape) }]}>Flalx</Text>
+        <Text
+          style={[
+            styles.logoText,
+            {
+              color: themeController.current?.primaryColor,
+              fontSize: getResponsiveSize(
+                18,
+                scaleByHeight(24, height),
+                isLandscape
+              ),
+            },
+          ]}
+        >
+          Flalx
+        </Text>
       </View>
       {renderScreen()}
     </>
@@ -74,12 +110,13 @@ export default function AppProfileScreen({ switchToApp }) {
 
 const styles = StyleSheet.create({
   profileHeader: {
-    width: '100%',
+    
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: RFValue(5),
-    borderBottomWidth: 1,
+    borderBottomWidth: 2,
+    boxSizing: 'border-box',
   },
   logoText: {
     fontSize: RFValue(20),

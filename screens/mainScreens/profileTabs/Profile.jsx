@@ -59,7 +59,7 @@ export default function Profile() {
     fieldMargin: isWebLandscape ? height * 0 : fieldMargin,
     containerPaddingH: isWebLandscape ? height * 0.02 : containerPaddingH,
     containerPaddingV: isWebLandscape ? height * 0.01 : containerPaddingV,
-    containerWidth: isWebLandscape ? '98%' : containerWidth,
+    containerWidth: isWebLandscape ? '100%' : containerWidth,
     iconSize: isWebLandscape ? RFValue(8) : iconSize,
     paddingVertical: isWebLandscape ? height * 0.005 : RFPercentage(2),
   };
