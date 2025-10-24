@@ -18,8 +18,9 @@ import { icons } from '../constants/icons';
 
 export default function CommentsSection({ userId, allowAdd=false }) {
   const { height, isLandscape } = useWindowInfo();
-  const { themeController, providersController } = useComponentContext();
+  const { themeController, providersController, languageController } = useComponentContext();
   const { t } = useTranslation();
+  const isRTL = languageController.isRTL;
 
   const [comments, setComments] = useState([]);
   const [activeTab, setActiveTab] = useState('all'); // all | positive | negative
@@ -69,7 +70,7 @@ export default function CommentsSection({ userId, allowAdd=false }) {
   };
 
   return (
-    <View style={{ marginTop: RFValue(12) }}>
+    <View style={[{ marginTop: RFValue(12) }, isWebLandscape && { width: '50%', alignSelf: isRTL ? 'flex-end' : 'flex-start' }]}>
       {/* Заголовок */}
       <View
         style={[

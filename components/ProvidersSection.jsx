@@ -18,6 +18,7 @@ import UserSummaryBlock from './UserSummaryBlock';
 import { useWindowInfo } from '../context/windowContext'; // ориентация/размеры
 import { useTranslation } from 'react-i18next'; // ⬅️ переводы
 import { icons } from '../constants/icons';
+import { scaleByHeight } from '../utils/resizeFuncs';
 
 function showTitleByStatus(status, t) {
   switch (status) {
@@ -99,15 +100,26 @@ export default function ProvidersSection({
 
   // размеры (в веб-альбомной — компактнее и от высоты)
   const sizes = {
-    font: isWebLandscape ? height * 0.016 : RFValue(12),
+    font: isWebLandscape ? scaleByHeight(18, height) : RFValue(12),
     inputFont: isWebLandscape ? height * 0.014 : RFValue(10),
     padding: isWebLandscape ? height * 0.01 : RFValue(8),
     margin: isWebLandscape ? height * 0.012 : RFValue(10),
     borderRadius: isWebLandscape ? height * 0.006 : RFValue(5),
     thumb: isWebLandscape ? height * 0.12 : RFValue(80),
     headerHeight: isWebLandscape ? height * 0.07 : RFPercentage(7),
-    icon: isWebLandscape ? height * 0.035 : RFValue(16),
+    icon: isWebLandscape ? scaleByHeight(24, height) : RFValue(16),
     horizontalGap: isWebLandscape ? width * 0.01 : 0,
+    containerPaddingVertical: isWebLandscape
+      ? scaleByHeight(12, height)
+      : RFValue(12),
+    containerPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(15, height)
+      : RFValue(10),
+    badgeSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(14),
+    badgeFontSize: isWebLandscape ? scaleByHeight(12, height) : RFValue(8),
+    sectionMarginBottom: isWebLandscape
+      ? scaleByHeight(30, height)
+      : RFValue(15),
   };
 
   // сетка 3×N для веб-альбомной
@@ -185,12 +197,16 @@ export default function ProvidersSection({
     <>
       <View
         style={[
-          styles.inputBlock,
           {
             backgroundColor: themeController.current?.formInputBackground,
             maxHeight: isWebLandscape ? height * 0.25 : RFValue(200),
             overflow: 'hidden',
+            paddingHorizontal: sizes.containerPaddingHorizontal,
+            paddingVertical: sizes.containerPaddingVertical,
+            borderRadius: sizes.borderRadius,
+            marginBottom: sizes.sectionMarginBottom,
           },
+          isWebLandscape && { width: scaleByHeight(1040, height) },
         ]}
         key='providers'
       >
@@ -200,10 +216,13 @@ export default function ProvidersSection({
           >
             <View
               style={[
-                { flexDirection: 'row', alignItems: 'center', gap: isWebLandscape
-                      ? sizes.margin / 2
-                      : RFValue(8) },
+                {
+                  flexDirection: isRTL ? 'row' : 'row-reverse',
+                  alignItems: 'center',
+                  gap: isWebLandscape ? sizes.margin / 2 : RFValue(8),
+                },
                 // isRTL && { flexDirection: 'row-reverse' },
+                isWebLandscape && { height: scaleByHeight(32, height) },
               ]}
             >
               {status === 'store-waiting' && providerList?.length > 0 && (
@@ -213,13 +232,22 @@ export default function ProvidersSection({
                     {
                       backgroundColor:
                         themeController.current?.secondaryBadgeBackground,
+                      alignSelf: 'flex-start',
+                    },
+                    isWebLandscape && {
+                      height: sizes.badgeSize,
+                      minWidth: sizes.badgeSize,
+                      borderRadius: sizes.badgeSize / 2,
                     },
                   ]}
                 >
                   <Text
                     style={[
                       styles.badgeText,
-                      { color: themeController.current?.badgeTextColor },
+                      {
+                        color: themeController.current?.badgeTextColor,
+                        fontSize: sizes.badgeFontSize,
+                      },
                     ]}
                   >
                     {providerList.length}
@@ -232,7 +260,9 @@ export default function ProvidersSection({
                   {
                     marginBottom: 0,
                     fontSize: sizes.font,
+                    color: themeController.current?.textColor,
                     textAlign: isRTL ? 'right' : 'left',
+                    alignSelf: 'flex-end',
                   },
                 ]}
               >

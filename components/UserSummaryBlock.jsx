@@ -18,6 +18,7 @@ import { useComponentContext } from '../context/globalAppContext';
 import { useWindowInfo } from '../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import { icons } from '../constants/icons';
+import { scaleByHeight } from '../utils/resizeFuncs';
 
 const UserSummaryBlock = ({
   user,
@@ -42,16 +43,24 @@ const UserSummaryBlock = ({
 
   // компактные размеры для веб-альбомной (меньше, чем на мобильном)
   const sizes = {
-    font: isWebLandscape ? height * 0.015 : RFValue(12),
+      font: isWebLandscape ? scaleByHeight(16, height) : RFValue(12),
+    smallFont: isWebLandscape ? scaleByHeight(14, height) : RFValue(10),
     inputFont: isWebLandscape ? height * 0.013 : RFValue(10),
     padding: isWebLandscape ? height * 0.009 : RFValue(8),
+    paddingHorizontal: isWebLandscape ? scaleByHeight(17, height) : RFValue(12),
     margin: isWebLandscape ? height * 0.01 : RFValue(10),
-    borderRadius: isWebLandscape ? height * 0.005 : RFValue(5),
+    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
     thumb: isWebLandscape ? height * 0.11 : RFValue(80),
     headerHeight: isWebLandscape ? height * 0.065 : RFPercentage(7),
+    avatar: isWebLandscape ? scaleByHeight(48, height) : RFValue(33),
     icon: isWebLandscape ? height * 0.03 : RFValue(24),
     iconSmall: isWebLandscape ? height * 0.025 : RFValue(20),
     panelWidth: isWebLandscape ? Math.min(width * 0.55, 720) : undefined, // ширина панели модалки на вебе
+    cardWidth: isWebLandscape ? '32%' : '100%', // 👈 3 в ряд для web-landscape
+    containerHeight: isWebLandscape ? scaleByHeight(80, height) : RFValue(70),
+    pagePaddingHorizontal: isWebLandscape
+      ? scaleByHeight(24, height)
+      : RFValue(15),
   };
 
   const userId = user.id || user?._j?.id;
@@ -75,13 +84,19 @@ const UserSummaryBlock = ({
         style={[
           styles.summaryContainer,
           // isRTL && { flexDirection: 'row-reverse' },
-          { padding: sizes.padding },
+          { 
+            height: sizes.containerHeight,
+            width: sizes.cardWidth,
+              flexDirection: isRTL ? 'row-reverse' : 'row',
+              backgroundColor: themeController.current?.formInputBackground,
+              borderRadius: sizes.borderRadius,
+           },
         ]}
       >
         <View
           style={[
             styles.avatarNameContainer,
-            // isRTL && { flexDirection: 'row-reverse' },
+              { flexDirection: isRTL ? 'row-reverse' : 'row' },
           ]}
         >
           {avatar ? (
@@ -90,11 +105,9 @@ const UserSummaryBlock = ({
               style={[
                 styles.avatar,
                 {
-                  width: isWebLandscape ? height * 0.045 : RFValue(30),
-                  height: isWebLandscape ? height * 0.045 : RFValue(30),
-                  borderRadius: isWebLandscape ? height * 0.031 : RFValue(21),
-                  marginRight: isRTL ? 0 : RFValue(10),
-                  marginLeft: isRTL ? RFValue(10) : 0,
+                  width: sizes.avatar,
+                  height: sizes.avatar,
+                  borderRadius: sizes.avatar / 2,
                 },
               ]}
             />
@@ -103,46 +116,46 @@ const UserSummaryBlock = ({
               style={[
                 styles.avatarPlaceholder,
                 {
-                  width: isWebLandscape ? height * 0.045 : RFValue(30),
-                  height: isWebLandscape ? height * 0.045 : RFValue(30),
-                  borderRadius: isWebLandscape ? height * 0.031 : RFValue(21),
-                  marginRight: isRTL ? 0 : RFValue(10),
-                  marginLeft: isRTL ? RFValue(10) : 0,
+                    width: sizes.avatar,
+                    height: sizes.avatar,
+                    borderRadius: sizes.avatar / 2,
                 },
               ]}
             >
               <Image
                 source={icons.defaultAvatar}
-                style={{
-                  width: isWebLandscape ? height * 0.045 : RFValue(30),
-                  height: isWebLandscape ? height * 0.045 : RFValue(30),
-                }}
+                  style={{ width: '100%', height: '100%' }}
               />
             </View>
           )}
-          <Text
-            style={[
-              styles.nameText,
-              { color: themeController.current?.textColor },
-              {
-                fontSize: sizes.font,
-                textAlign: isRTL ? 'right' : 'left',
-              },
-            ]}
-          >
-            {name} {surname}
-          </Text>
+            <View>
+              <Text
+                style={{
+                  fontSize: sizes.font,
+                  fontWeight: '600', // 👈 вернул жирность
+                  color: themeController.current?.textColor,
+                  marginHorizontal: RFValue(8),
+                }}
+              >
+                {name} {surname}
+              </Text>
+              <Text
+                style={{
+                  fontSize: sizes.smallFont,
+                  fontWeight: '600', // 👈 вернул жирность
+                  color: themeController.current?.unactiveTextColor,
+                  marginHorizontal: RFValue(8),
+                }}
+              >
+                {LICENSES[professions?.[0]]}
+              </Text>
+            </View>
         </View>
         <TouchableOpacity
           onPress={() => setModalVisible(true)}
           style={[
-            styles.visitButton,
             {
-              backgroundColor:
-                themeController.current?.buttonColorPrimaryDefault,
-              paddingHorizontal: sizes.padding * 1.5,
-              paddingVertical: sizes.padding * 0.6,
-              borderRadius: sizes.borderRadius,
+              // borderRadius: sizes.borderRadius,
             },
           ]}
         >
@@ -150,7 +163,7 @@ const UserSummaryBlock = ({
             style={[
               styles.visitButtonText,
               {
-                color: themeController.current?.buttonTextColorPrimary,
+                color: themeController.current?.primaryColor,
                 fontSize: sizes.font,
               },
             ]}
@@ -649,7 +662,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: RFValue(8),
   },
   avatarNameContainer: {
     flexDirection: 'row',
@@ -680,7 +692,7 @@ const styles = StyleSheet.create({
     borderRadius: RFValue(5),
   },
   visitButtonText: {
-    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   modalContent: {
     padding: RFValue(12),

@@ -1,7 +1,4 @@
-import {
-  MaterialCommunityIcons,
-  MaterialIcons,
-} from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
@@ -30,10 +27,11 @@ import DateTimeInputDouble from './ui/DateTimeInputDouble';
 import { useTranslation } from 'react-i18next';
 import { useWindowInfo } from '../context/windowContext';
 import { icons } from '../constants/icons';
+import { scaleByHeight } from '../utils/resizeFuncs';
 
 const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
   if (Platform.OS === 'web') {
-    return isLandscape ? webSize * 1.6 : RFValue(mobileSize);
+    return isLandscape ? webSize : RFValue(mobileSize);
   }
   return RFValue(mobileSize);
 };
@@ -49,15 +47,36 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
 
   // размеры (только для веб-альбомной — иначе RFValue как было)
   const sizes = {
-    font: isWebLandscape ? height * 0.016 : RFValue(12),
-    inputFont: isWebLandscape ? height * 0.014 : RFValue(10),
-    padding: isWebLandscape ? height * 0.01 : RFValue(8),
-    margin: isWebLandscape ? height * 0.012 : RFValue(10),
-    borderRadius: isWebLandscape ? height * 0.006 : RFValue(5),
-    thumb: isWebLandscape ? height * 0.12 : RFValue(80),
-    headerHeight: isWebLandscape ? height * 0.07 : RFPercentage(7),
+    font: isWebLandscape ? scaleByHeight(12, height) : RFValue(12),
+    inputFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
+    padding: isWebLandscape ? scaleByHeight(4, height) : RFValue(8),
+    inputContainerPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(16, height)
+      : RFValue(8),
+    inputContainerPaddingVertical: isWebLandscape
+      ? scaleByHeight(10, height)
+      : RFValue(6),
+    margin: isWebLandscape ? scaleByHeight(18, height) : RFValue(10),
+    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
+    thumb: isWebLandscape ? scaleByHeight(128, height) : RFValue(80),
+    headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
+    headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
     icon: isWebLandscape ? height * 0.035 : RFValue(16),
-    horizontalGap: isWebLandscape ? width*0.01 : 0,
+    horizontalGap: isWebLandscape ? width * 0.01 : 0,
+    headerPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(7, height)
+      : RFValue(3),
+    containerPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(20, height)
+      : RFValue(14),
+    inputHeight: isWebLandscape ? scaleByHeight(64, height) : RFValue(40),
+    photosLabelSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(12),
+    photosLabelMarginBottom: isWebLandscape
+      ? scaleByHeight(14, height)
+      : RFValue(6),
+    saveBtnWidth: isWebLandscape ? scaleByHeight(380, height) : RFValue(120),
+    saveBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(40),
+    saveBtnFont: isWebLandscape ? scaleByHeight(20, height) : RFValue(14),
   };
 
   const [newJobModalVisible, setNewJobModalVisible] = useState(false);
@@ -135,11 +154,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   backgroundColor:
                     themeController.current?.buttonColorPrimaryDefault,
                   ...(isWebLandscape && {
-                    paddingVertical: sizes.padding * 1.2,
                     borderRadius: sizes.borderRadius,
-                    width: '30%',
                   }),
                 },
+                isWebLandscape && { width: sizes.saveBtnWidth, height: sizes.saveBtnHeight}
               ]}
               onPress={() => setNewJobModalVisible(true)}
             >
@@ -147,8 +165,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 style={{
                   color: 'white',
                   textAlign: 'center',
-                  fontWeight: 'bold',
-                  ...(isWebLandscape && { fontSize: sizes.font }),
+                  ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
                 }}
               >
                 {t('showJob.buttons.update', { defaultValue: 'Update' })}
@@ -162,11 +179,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   backgroundColor:
                     themeController.current?.buttonColorSecondaryDefault,
                   ...(isWebLandscape && {
-                    paddingVertical: sizes.padding * 1.2,
-                    borderRadius: sizes.borderRadius, 
-                    width: '30%',
+                    borderRadius: sizes.borderRadius,
                   }),
                 },
+                isWebLandscape && { width: sizes.saveBtnWidth, height: sizes.saveBtnHeight }
               ]}
               onPress={() => {
                 jobsController.actions
@@ -178,8 +194,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 style={{
                   color: 'white',
                   textAlign: 'center',
-                  fontWeight: 'bold',
-                  ...(isWebLandscape && { fontSize: sizes.font }),
+                  ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
                 }}
               >
                 {t('showJob.buttons.close', { defaultValue: 'Close' })}
@@ -726,9 +741,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: themeController.current?.backgroundColor,
+          paddingHorizontal: sizes.containerPaddingHorizontal,
           }}
         >
-          <Text style={{ color: themeController.current?.textColor }}>
+          <Text style={{ color: themeController.current?.unactiveTextColor }}>
             {t('showJob.messages.loading', { defaultValue: 'Loading...' })}
           </Text>
         </View>
@@ -737,17 +753,21 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
           style={{
             flex: 1,
             backgroundColor: themeController.current?.backgroundColor,
+          paddingHorizontal: sizes.containerPaddingHorizontal,
           }}
         >
           <View
             style={[
               styles.header,
               {
-                height: sizes.headerHeight,
-                padding: sizes.padding,
-                backgroundColor: themeController.current?.backgroundColor,
+              backgroundColor: themeController.current?.backgroundColor,
+              borderBottomColor:
+                themeController.current?.profileDefaultBackground,
+              height: sizes.headerHeight,
+              paddingHorizontal: sizes.headerPaddingHorizontal,
+              marginVertical: sizes.headerMargin,
               },
-              isRTL && {flexDirection: 'row-reverse'}
+              isRTL && { flexDirection: 'row-reverse' },
             ]}
           >
             <TouchableOpacity
@@ -759,11 +779,19 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               <Image
                 source={icons.cross}
                 style={{
-                  opacity: 0.8,
-                  width: sizes.icon,
-                  height: sizes.icon,
-                  tintColor: themeController.current?.textColor || 'black',
+                                  width: getResponsiveSize(
+                                    20,
+                                    scaleByHeight(24, height),
+                                    isLandscape
+                                  ),
+                                  height: getResponsiveSize(
+                                    20,
+                                    scaleByHeight(24, height),
+                                    isLandscape
+                                  ),
+                tintColor: themeController.current?.formInputLabelColor,
                 }}
+              resizeMode='contain'
               />
             </TouchableOpacity>
             <Text
@@ -771,7 +799,11 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 styles.logo,
                 {
                   color: themeController.current?.primaryColor,
-                  fontSize: getResponsiveSize(20, height * 0.02, isLandscape),
+                                  fontSize: getResponsiveSize(
+                                    18,
+                                    scaleByHeight(24, height),
+                                    isLandscape
+                                  ),
                 },
               ]}
             >
@@ -786,10 +818,17 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               <Image
                 source={icons.history}
                 style={{
-                  opacity: 0.8,
-                  width: sizes.icon,
-                  height: sizes.icon,
-                  tintColor: themeController.current?.textColor || 'black',
+                width: getResponsiveSize(
+                  20,
+                  scaleByHeight(24, height),
+                  isLandscape
+                ),
+                height: getResponsiveSize(
+                  20,
+                  scaleByHeight(24, height),
+                  isLandscape
+                ),
+                tintColor: themeController.current?.formInputLabelColor,
                 }}
               />
             </TouchableOpacity>
@@ -800,7 +839,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               <ScrollView
                 contentContainerStyle={[
                   styles.container,
-                  { padding: sizes.margin },
+                  // { padding: sizes.margin },
                 ]}
                 keyboardShouldPersistTaps='handled'
               >
@@ -811,7 +850,21 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                     {
                       justifyContent: isRTL ? 'end' : 'start',
                       position: 'relative',
-                      gridRowGap: height * 0.02,
+                      gridRowGap: scaleByHeight(15, height),
+                      gridColumnGap: scaleByHeight(21, height),
+                      gridTemplateColumns: `repeat(2, ${scaleByHeight(
+                        330,
+                        height
+                      )}px)`,
+                      gridTemplateRows: `
+                        ${scaleByHeight(64, height)}px 
+                        ${scaleByHeight(64, height)}px 
+                        ${scaleByHeight(64, height)}px 
+                        ${scaleByHeight(75, height)}px 
+                        ${scaleByHeight(75, height)}px 
+                        ${scaleByHeight(64, height)}px 
+                        ${scaleByHeight(64, height)}px 
+                      `,
                     },
                   ]}
                 >
@@ -826,15 +879,21 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                         styles.inputBlock,
                         {
                           backgroundColor: bg,
-                          padding: sizes.padding,
+                          paddingVertical: sizes.inputContainerPaddingVertical,
+                          paddingHorizontal:
+                            sizes.inputContainerPaddingHorizontal,
                           borderRadius: sizes.borderRadius,
                           marginBottom: 0,
+                          height: sizes.inputHeight,
                         },
                       ]}
                     >
                       <Text
                         style={[
                           styles.label,
+                          {
+                            color: themeController.current?.unactiveTextColor,
+                          },
                           isRTL && { textAlign: 'right' },
                           { fontSize: sizes.font },
                         ]}
@@ -844,7 +903,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                       <TextInput
                         value={JOB_TYPES[currentJobInfo?.type] || '-'}
                         style={{
-                          padding: sizes.padding,
+                          fontWeight: '500',
+                          padding: 0,
+                          paddingVertical: sizes.padding,
+                          color: themeController.current?.textColor,
                           fontSize: sizes.inputFont,
                           borderRadius: sizes.borderRadius,
                           backgroundColor: 'transparent',
@@ -866,7 +928,9 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                         styles.inputBlock,
                         {
                           backgroundColor: bg,
-                          padding: sizes.padding,
+                          paddingVertical: sizes.inputContainerPaddingVertical,
+                          paddingHorizontal:
+                            sizes.inputContainerPaddingHorizontal,
                           borderRadius: sizes.borderRadius,
                           height: '100%',
                           marginBottom: 0,
@@ -876,6 +940,9 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                       <Text
                         style={[
                           styles.label,
+                          {
+                            color: themeController.current?.unactiveTextColor,
+                          },
                           isRTL && { textAlign: 'right' },
                           { fontSize: sizes.font },
                         ]}
@@ -887,10 +954,12 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                       <TextInput
                         value={currentJobInfo?.description || ''}
                         style={{
-                          padding: sizes.padding,
+                          fontWeight: '500',
+                          padding: 0,
+                          paddingVertical: sizes.padding,
+                          color: themeController.current?.textColor,
                           fontSize: sizes.inputFont,
                           borderRadius: sizes.borderRadius,
-                          height: height * 0.12,
                           backgroundColor: 'transparent',
                           textAlign: isRTL ? 'right' : 'left',
                         }}
@@ -911,15 +980,22 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                         styles.inputBlock,
                         {
                           backgroundColor: bg,
-                          padding: sizes.padding,
+                          padding: 0,
+                          paddingHorizontal:
+                            sizes.inputContainerPaddingHorizontal,
+                          paddingVertical: sizes.inputContainerPaddingVertical,
                           borderRadius: sizes.borderRadius,
                           marginBottom: 0,
+                          height: sizes.inputHeight,
                         },
                       ]}
                     >
                       <Text
                         style={[
                           styles.label,
+                          {
+                            color: themeController.current?.unactiveTextColor,
+                          },
                           isRTL && { textAlign: 'right' },
                           { fontSize: sizes.font },
                         ]}
@@ -931,7 +1007,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                       <TextInput
                         value={JOB_SUB_TYPES[currentJobInfo?.subType] || '-'}
                         style={{
-                          padding: sizes.padding,
+                          fontWeight: '500',
+                          padding: 0,
+                          paddingVertical: sizes.padding,
+                          color: themeController.current?.textColor,
                           fontSize: sizes.inputFont,
                           borderRadius: sizes.borderRadius,
                           backgroundColor: 'transparent',
@@ -953,15 +1032,22 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                         styles.inputBlock,
                         {
                           backgroundColor: bg,
-                          padding: sizes.padding,
+                          padding: 0,
+                          paddingHorizontal:
+                            sizes.inputContainerPaddingHorizontal,
+                          paddingVertical: sizes.inputContainerPaddingVertical,
                           borderRadius: sizes.borderRadius,
                           marginBottom: 0,
+                          height: sizes.inputHeight,
                         },
                       ]}
                     >
                       <Text
                         style={[
                           styles.label,
+                          {
+                            color: themeController.current?.unactiveTextColor,
+                          },
                           isRTL && { textAlign: 'right' },
                           { fontSize: sizes.font },
                         ]}
@@ -973,7 +1059,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                       <TextInput
                         value={LICENSES[currentJobInfo?.profession] || '-'}
                         style={{
-                          padding: sizes.padding,
+                          fontWeight: '500',
+                          padding: 0,
+                          paddingVertical: sizes.padding,
+                          color: themeController.current?.textColor,
                           fontSize: sizes.inputFont,
                           borderRadius: sizes.borderRadius,
                           backgroundColor: 'transparent',
@@ -995,15 +1084,22 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                         styles.inputBlock,
                         {
                           backgroundColor: bg,
-                          padding: sizes.padding,
+                          padding: 0,
+                          paddingHorizontal:
+                            sizes.inputContainerPaddingHorizontal,
+                          paddingVertical: sizes.inputContainerPaddingVertical,
                           borderRadius: sizes.borderRadius,
                           marginBottom: 0,
+                          height: sizes.inputHeight,
                         },
                       ]}
                     >
                       <Text
                         style={[
                           styles.label,
+                          {
+                            color: themeController.current?.unactiveTextColor,
+                          },
                           isRTL && { textAlign: 'right' },
                           { fontSize: sizes.font },
                         ]}
@@ -1013,7 +1109,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                       <TextInput
                         value={currentJobInfo?.price || '-'}
                         style={{
-                          padding: sizes.padding,
+                          fontWeight: '500',
+                          padding: 0,
+                          paddingVertical: sizes.padding,
+                          color: themeController.current?.textColor,
                           fontSize: sizes.inputFont,
                           borderRadius: sizes.borderRadius,
                           backgroundColor: 'transparent',
@@ -1032,8 +1131,9 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                         styles.label,
                         isRTL && { textAlign: 'right' },
                         {
-                          fontSize: sizes.font,
-                          marginBottom: sizes.margin / 2,
+                          fontSize: sizes.photosLabelSize,
+                          marginBottom: sizes.photosLabelMarginBottom,
+                          color: themeController.current?.textColor
                         },
                       ]}
                     >
@@ -1060,7 +1160,12 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                             key={index}
                             style={[
                               styles.imageWrapper,
-                              isRTL && { marginRight: 0, marginLeft: 8 },
+                              {
+                                backgroundColor:
+                                  themeController.current?.formInputBackground,
+                                marginRight: isRTL ? 0 : sizes.margin / 2,
+                                marginLeft: isRTL ? sizes.margin / 2 : 0,
+                              },
                             ]}
                           >
                             <Image
@@ -1088,15 +1193,21 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                         styles.inputBlock,
                         {
                           backgroundColor: bg,
-                          padding: sizes.padding,
+                          paddingVertical: sizes.inputContainerPaddingVertical,
+                          paddingHorizontal:
+                            sizes.inputContainerPaddingHorizontal,
                           borderRadius: sizes.borderRadius,
                           marginBottom: 0,
+                          height: sizes.inputHeight,
                         },
                       ]}
                     >
                       <Text
                         style={[
                           styles.label,
+                          {
+                            color: themeController.current?.unactiveTextColor,
+                          },
                           isRTL && { textAlign: 'right' },
                           { fontSize: sizes.font },
                         ]}
@@ -1108,7 +1219,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                       <TextInput
                         value={currentJobInfo?.location || '-'}
                         style={{
-                          padding: sizes.padding,
+                          fontWeight: '500',
+                          color: themeController.current?.textColor,
+                          padding: 0,
+                          paddingVertical: sizes.padding,
                           fontSize: sizes.inputFont,
                           borderRadius: sizes.borderRadius,
                           backgroundColor: 'transparent',
@@ -1185,7 +1299,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   style={{ marginTop: sizes.margin, gap: sizes.margin / 2 }}
                 >
                   {extraUiByStatus(status).map((node, idx) => (
-                    <View key={`extra-${idx}`}>{node}</View>
+                    <View key={`extra-${idx}`} >{node}</View>
                   ))}
                 </View>
               </ScrollView>
@@ -1438,17 +1552,18 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
 
 const styles = StyleSheet.create({
   container: {
-    padding: RFValue(14),
+    // padding: RFValue(14),
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: RFValue(14),
+    borderBottomWidth: 1,
   },
   logo: {
     fontSize: RFValue(20),
-    fontWeight: 'bold',
+    fontFamily: 'Rubik-Bold',
   },
   closeButton: {
     fontSize: RFValue(18),
@@ -1479,11 +1594,14 @@ const styles = StyleSheet.create({
     }),
   },
   label: {
-    fontWeight: 'bold',
-    marginBottom: RFValue(4),
+    // fontWeight: 'bold',
+    // marginBottom: RFValue(4),
   },
   input: {
     padding: RFValue(8),
+    width: '100%',
+    fontFamily: 'Rubik-Medium',
+    fontWeight: '500',
   },
   addImageButton: {
     width: RFValue(80),
@@ -1510,17 +1628,18 @@ const styles = StyleSheet.create({
   },
   imageWrapper: {
     position: 'relative',
-    marginRight: 8, // отступ между картинками
+    marginRight: RFValue(6), // отступ между картинками
   },
   createButton: {
-    paddingVertical: RFValue(12),
+    // paddingVertical: RFValue(12),
     borderRadius: RFValue(5),
-    marginBottom: RFValue(10),
+    // marginBottom: RFValue(10),
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: RFValue(10),
   },
   errorOutline: {
     shadowColor: 'red',
@@ -1596,13 +1715,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: RFValue(5),
   },
-
-  // ====== ГРИД ДЛЯ ВЕБ-Альбомной (как в прошлом компоненте) ======
   gridContainer: {
     width: '100%',
     display: 'grid',
-    gridTemplateColumns: 'repeat(2, 30%)',
-    gridTemplateRows: 'repeat(8)',
-    gridColumnGap: '1%',
   },
 });

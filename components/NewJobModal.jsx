@@ -25,10 +25,12 @@ import { icons } from '../constants/icons';
 import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
 import { useWindowInfo } from '../context/windowContext';
 import { useTranslation } from 'react-i18next';
+import { scaleByHeight } from '../utils/resizeFuncs';
+import { t } from 'i18next';
 
 const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
   if (Platform.OS === 'web') {
-    return isLandscape ? webSize * 1.6 : RFValue(mobileSize);
+    return isLandscape ? webSize : RFValue(mobileSize);
   }
   return RFValue(mobileSize);
 };
@@ -39,8 +41,7 @@ const WebAbsoluteWrapper = ({ children, style, landscapeStyles }) => {
       <div
         style={{
           position: 'absolute',
-          top: landscapeStyles?.top ?? style?.top ?? 0,
-          left: style?.left ?? 0,
+          left: landscapeStyles?.left ?? style?.left ?? 0,
           right: style?.right ?? 0,
           backgroundColor: style?.backgroundColor ?? 'white',
           border: style?.borderWidth
@@ -52,7 +53,7 @@ const WebAbsoluteWrapper = ({ children, style, landscapeStyles }) => {
             landscapeStyles?.maxHeight ?? style?.maxHeight ?? undefined,
           overflow: style?.overflow ?? 'hidden',
           zIndex: 999,
-          // width: '80%',
+          width: landscapeStyles?.width ?? style?.width ?? '110%',
         }}
       >
         {children}
@@ -60,6 +61,50 @@ const WebAbsoluteWrapper = ({ children, style, landscapeStyles }) => {
     );
   }
   return <ScrollView style={style}>{children}</ScrollView>;
+};
+
+// Новый компонент для элемента списка с поддержкой hover-эффекта
+const SuggestionItem = ({
+  itemKey,
+  text,
+  onPress,
+  themeController,
+  isWebLandscape,
+  sizeOverrides,
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Обработчики событий для веб-платформы
+  const webHoverProps =
+    Platform.OS === 'web'
+      ? {
+          onMouseEnter: () => setIsHovered(true),
+          onMouseLeave: () => setIsHovered(false),
+        }
+      : {};
+
+  return (
+    <TouchableOpacity key={itemKey} onPress={onPress} {...webHoverProps}>
+      <Text
+        style={[
+          styles.suggestionItem,
+          { color: themeController.current?.formInputLabelColor },
+          isWebLandscape && {
+            paddingHorizontal: sizeOverrides.inputContainerPaddingHorizontal,
+            fontSize: sizeOverrides.inputFont,
+            paddingVertical: sizeOverrides.inputContainerPaddingVertical,
+          },
+          // Применяем стиль при наведении
+          isHovered && {
+            backgroundColor: themeController.current?.profileDefaultBackground,
+            borderRadius: themeController.current?.textColor,
+          },
+        ]}
+      >
+        {text}
+      </Text>
+    </TouchableOpacity>
+  );
 };
 
 const renderAutocomplete = ({
@@ -75,114 +120,158 @@ const renderAutocomplete = ({
   filterOptions,
   focusStates,
   error,
-  backgroundColor = '#DFDFFF',
+  backgroundColor = '#F0F0FA',
   rtl = false,
   isWebLandscape = false,
   sizeOverrides = {},
-}) => (
-  <View
-    style={[
-      styles.inputBlock,
-      { backgroundColor },
-      isWebLandscape && {
-        padding: sizeOverrides.padding,
-        borderRadius: sizeOverrides.borderRadius,
-        marginBottom: 0,
-      },
-    ]}
-  >
-    <Text
-      style={[
-        styles.label,
-        rtl && { textAlign: 'right' },
-        isWebLandscape && { fontSize: sizeOverrides.font },
-      ]}
-    >
-      {label}
-    </Text>
+}) => {
+  const { themeController } = useComponentContext();
+  return (
     <View
       style={[
-        styles.autocompleteContainer,
-        error && styles.errorOutline,
-        Platform.OS === 'web' && {
-          display: 'block',
-          position: 'relative',
-          zIndex: 1,
+        styles.inputBlock,
+        { backgroundColor },
+        isWebLandscape && {
+          paddingVertical: sizeOverrides.inputContainerPaddingVertical,
+          paddingHorizontal: sizeOverrides.inputContainerPaddingHorizontal,
+          borderRadius: sizeOverrides.borderRadius,
+          marginBottom: 0,
+          height: sizeOverrides.inputHeight,
         },
       ]}
-      onFocus={() =>
-        setFocusStates((prev) => {
-          const newFocusStates = Array(3).fill(false);
-          newFocusStates[stateFocusIndex] = true;
-          return newFocusStates;
-        })
-      }
-      // onBlur={() =>
-      //   setFocusStates((prev) => {
-      //     const newFocusStates = Array(3).fill(false);
-      //     newFocusStates[stateFocusIndex] = false;
-      //     return newFocusStates;
-      //   })
-      // }
     >
-      {/* <-- Web-specific override */}
-      <TextInput
-        value={options[value]}
-        onChangeText={(text) =>
-          filterOptions(text, options, setFiltered, setValue)
-        }
-        placeholder={placeholder}
-        placeholderTextColor={error ? '#FF0000' : '#999'}
+      <Text
         style={[
-          styles.input,
+          styles.label,
+          {
+            color: error
+              ? '#FF0000'
+              : themeController.current?.unactiveTextColor,
+          },
           rtl && { textAlign: 'right' },
-          isWebLandscape && {
-            padding: sizeOverrides.padding,
-            fontSize: sizeOverrides.inputFont,
-            borderRadius: sizeOverrides.borderRadius,
+          isWebLandscape && { fontSize: sizeOverrides.font },
+        ]}
+      >
+        {label}
+      </Text>
+      <View
+        style={[
+          styles.autocompleteContainer,
+          error && styles.errorOutline,
+          Platform.OS === 'web' && {
+            display: 'block',
+            position: 'relative',
+            zIndex: 1,
           },
         ]}
-      />
-      {Object.keys(filtered).length > 0 && focusStates[stateFocusIndex] && (
-        <WebAbsoluteWrapper
-          style={styles.suggestionBox}
-          landscapeStyles={
-            isWebLandscape && {
-              maxHeight: sizeOverrides.thumb,
-              borderRadius: sizeOverrides.borderRadius,
-              top: sizeOverrides.thumbGap,
-            }
+        onFocus={() =>
+          setFocusStates((prev) => {
+            const newFocusStates = Array(3).fill(false);
+            newFocusStates[stateFocusIndex] = true;
+            return newFocusStates;
+          })
+        }
+        // onBlur={() =>
+        //   setFocusStates((prev) => {
+        //     const newFocusStates = Array(3).fill(false);
+        //     newFocusStates[stateFocusIndex] = false;
+        //     return newFocusStates;
+        //   })
+        // }
+      >
+        {/* <-- Web-specific override */}
+        <TextInput
+          value={options[value]}
+          onChangeText={(text) =>
+            filterOptions(text, options, setFiltered, setValue)
           }
-        >
-          {Object.keys(filtered).map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              style={{ zIndex: 1999 }}
-              onPress={() => {
-                setValue(item);
-                setFiltered([]);
-                setFocusStates((prev) => {
-                  const newFocusStates = Array(3).fill(false);
-                  newFocusStates[stateFocusIndex] = false;
-                  return newFocusStates;
-                });
-              }}
-            >
-              <Text
-                style={[
-                  styles.suggestionItem,
-                  isWebLandscape && { padding: sizeOverrides.padding },
-                ]}
-              >
-                {options[item]}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </WebAbsoluteWrapper>
-      )}
+          placeholder={placeholder}
+          placeholderTextColor={
+            error ? '#FF0000' : themeController.current?.formInputLabelColor
+          }
+          style={[
+            styles.input,
+            rtl && { textAlign: 'right' },
+            { color: error ? '#FF0000' : themeController.current?.textColor },
+            isWebLandscape && {
+              padding: 0,
+              paddingVertical: sizeOverrides.padding,
+              fontSize: sizeOverrides.inputFont,
+              borderRadius: sizeOverrides.borderRadius,
+            },
+          ]}
+        />
+        {Object.keys(filtered).length > 0 && focusStates[stateFocusIndex] && (
+          <WebAbsoluteWrapper
+            style={{
+              ...styles.suggestionBox,
+              backgroundColor: themeController.current?.formInputBackground,
+            }}
+            landscapeStyles={
+              isWebLandscape && {
+                maxHeight: sizeOverrides.thumb,
+                borderRadius: sizeOverrides.borderRadius,
+                width: `calc(100% + ${
+                  sizeOverrides.inputContainerPaddingHorizontal * 2
+                }px)`,
+                left: `-${sizeOverrides.inputContainerPaddingHorizontal}px`,
+              }
+            }
+          >
+            {Object.keys(filtered).map((item, index) => (
+              // <TouchableOpacity
+              //   key={index}
+              //   style={{ zIndex: 1999 }}
+              //   onPress={() => {
+              //     setValue(item);
+              //     setFiltered([]);
+              //     setFocusStates((prev) => {
+              //       const newFocusStates = Array(3).fill(false);
+              //       newFocusStates[stateFocusIndex] = false;
+              //       return newFocusStates;
+              //     });
+              //   }}
+              // >
+              //   <Text
+              //     style={[
+              //       styles.suggestionItem,
+              //       { color: themeController.current?.formInputLabelColor },
+              //       isWebLandscape && {
+              //         paddingHorizontal:
+              //           sizeOverrides.inputContainerPaddingHorizontal,
+              //         fontSize: sizeOverrides.inputFont,
+              //         paddingVertical:
+              //           sizeOverrides.inputContainerPaddingVertical,
+              //       },
+              //     ]}
+              //   >
+              //     {options[item]}
+              //   </Text>
+              // </TouchableOpacity>
+              <SuggestionItem
+                key={index}
+                itemKey={item}
+                text={options[item]}
+                onPress={() => {
+                  setValue(item);
+                  setFiltered([]);
+                  setFocusStates((prev) => {
+                    const newFocusStates = Array(3).fill(false);
+                    newFocusStates[stateFocusIndex] = false;
+                    return newFocusStates;
+                  });
+                }}
+                themeController={themeController}
+                isWebLandscape={isWebLandscape}
+                sizeOverrides={sizeOverrides}
+              />
+            ))}
+          </WebAbsoluteWrapper>
+        )}
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -260,14 +349,20 @@ export default function NewJobModal({
 
   // размеры
   const sizes = {
-    font: isWebLandscape ? height * 0.016 : RFValue(12),
-    inputFont: isWebLandscape ? height * 0.014 : RFValue(10),
-    padding: isWebLandscape ? height * 0.01 : RFValue(8),
-    margin: isWebLandscape ? height * 0.012 : RFValue(10),
-    borderRadius: isWebLandscape ? height * 0.006 : RFValue(5),
-    thumb: isWebLandscape ? height * 0.12 : RFValue(80),
+    font: isWebLandscape ? scaleByHeight(12, height) : RFValue(12),
+    inputFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
+    padding: isWebLandscape ? scaleByHeight(4, height) : RFValue(8),
+    inputContainerPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(16, height)
+      : RFValue(8),
+    inputContainerPaddingVertical: isWebLandscape
+      ? scaleByHeight(10, height)
+      : RFValue(6),
+    margin: isWebLandscape ? scaleByHeight(18, height) : RFValue(10),
+    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
+    thumb: isWebLandscape ? scaleByHeight(128, height) : RFValue(80),
     thumbGap: isWebLandscape ? height * 0.05 : RFValue(28),
-    headerMargin: isWebLandscape ? height * 0.03 : RFValue(5),
+    headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
     modalPadding: isWebLandscape ? height * 0.014 : RFValue(12),
     modalRadius: isWebLandscape ? height * 0.006 : RFValue(5),
     modalTitle: isWebLandscape ? height * 0.022 : RFValue(16),
@@ -278,6 +373,21 @@ export default function NewJobModal({
     chipGap: isWebLandscape ? height * 0.012 : RFValue(8),
     modalCardW: isWebLandscape ? Math.min(height * 0.56, 520) : '88%',
     btnH: isWebLandscape ? height * 0.06 : RFValue(42),
+    headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
+    headerPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(7, height)
+      : RFValue(3),
+    containerPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(20, height)
+      : RFValue(14),
+    inputHeight: isWebLandscape ? scaleByHeight(64, height) : RFValue(40),
+    photosLabelSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(12),
+    photosLabelMarginBottom: isWebLandscape
+      ? scaleByHeight(14, height)
+      : RFValue(6),
+    saveBtnWidth: isWebLandscape ? scaleByHeight(380, height) : RFValue(120),
+    saveBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(40),
+    saveBtnFont: isWebLandscape ? scaleByHeight(20, height) : RFValue(14),
   };
 
   const [filteredTypes, setFilteredTypes] = useState(JOB_TYPES);
@@ -1258,6 +1368,7 @@ export default function NewJobModal({
         style={{
           flex: 1,
           backgroundColor: themeController.current?.backgroundColor,
+          paddingHorizontal: sizes.containerPaddingHorizontal,
         }}
       >
         <View
@@ -1265,19 +1376,29 @@ export default function NewJobModal({
             styles.header,
             {
               backgroundColor: themeController.current?.backgroundColor,
-              borderBottomColor: themeController.current?.formInputBackground,
-              height: isWebLandscape ? height * 0.07 : RFPercentage(7),
-              paddingHorizontal: RFValue(14),
-              marginBottom: sizes.headerMargin,
+              borderBottomColor:
+                themeController.current?.profileDefaultBackground,
+              height: sizes.headerHeight,
+              paddingHorizontal: sizes.headerPaddingHorizontal,
+              marginVertical: sizes.headerMargin,
             },
+              isRTL && { flexDirection: 'row-reverse' },
           ]}
         >
           <TouchableOpacity onPress={() => closeModal()}>
             <Image
               source={icons.cross}
               style={{
-                width: getResponsiveSize(20, height * 0.02, isLandscape),
-                height: getResponsiveSize(20, height * 0.02, isLandscape),
+                width: getResponsiveSize(
+                  20,
+                  scaleByHeight(24, height),
+                  isLandscape
+                ),
+                height: getResponsiveSize(
+                  20,
+                  scaleByHeight(24, height),
+                  isLandscape
+                ),
                 tintColor: themeController.current?.formInputLabelColor,
               }}
               resizeMode='contain'
@@ -1288,7 +1409,11 @@ export default function NewJobModal({
               styles.logo,
               {
                 color: themeController.current?.primaryColor,
-                fontSize: getResponsiveSize(18, height * 0.02, isLandscape),
+                fontSize: getResponsiveSize(
+                  18,
+                  scaleByHeight(24, height),
+                  isLandscape
+                ),
               },
             ]}
           >
@@ -1304,7 +1429,7 @@ export default function NewJobModal({
               <ScrollView
                 contentContainerStyle={[
                   styles.container,
-                  { padding: sizes.margin },
+                  // { padding: sizes.margin },
                 ]}
                 keyboardShouldPersistTaps='handled'
               >
@@ -1315,7 +1440,22 @@ export default function NewJobModal({
                     {
                       justifyContent: isRTL ? 'end' : 'start',
                       position: 'relative',
-                      gridRowGap: height * 0.02,
+                      gridRowGap: scaleByHeight(15, height),
+                      gridColumnGap: scaleByHeight(21, height),
+                      gridTemplateColumns: `repeat(2, ${scaleByHeight(
+                        330,
+                        height
+                      )}px)`,
+                      gridTemplateRows: `
+                        ${scaleByHeight(64, height)}px 
+                        ${scaleByHeight(64, height)}px 
+                        ${scaleByHeight(64, height)}px 
+                        ${scaleByHeight(75, height)}px 
+                        ${scaleByHeight(75, height)}px 
+                        ${scaleByHeight(64, height)}px 
+                        ${scaleByHeight(64, height)}px 
+                        ${scaleByHeight(64, height)}px
+                      `,
                     },
                   ]}
                 >
@@ -1372,7 +1512,9 @@ export default function NewJobModal({
                         styles.inputBlock,
                         { backgroundColor: bg },
                         {
-                          padding: sizes.padding,
+                          paddingVertical: sizes.inputContainerPaddingVertical,
+                          paddingHorizontal:
+                            sizes.inputContainerPaddingHorizontal,
                           borderRadius: sizes.borderRadius,
                           marginBottom: 0,
                           height: '100%',
@@ -1382,6 +1524,9 @@ export default function NewJobModal({
                       <Text
                         style={[
                           styles.label,
+                          {
+                            color: themeController.current?.unactiveTextColor,
+                          },
                           isRTL && { textAlign: 'right' },
                           { fontSize: sizes.font },
                         ]}
@@ -1396,12 +1541,16 @@ export default function NewJobModal({
                         placeholder={t('newJob.typePlaceholder', {
                           defaultValue: 'Type...',
                         })}
-                        placeholderTextColor={'#999'}
+                        placeholderTextColor={
+                          themeController.current?.formInputLabelColor
+                        }
                         style={{
-                          padding: sizes.padding,
+                          fontWeight: '500',
+                          padding: 0,
+                          paddingVertical: sizes.padding,
+                          color: themeController.current?.textColor,
                           fontSize: sizes.inputFont,
                           borderRadius: sizes.borderRadius,
-                          height: height * 0.12,
                           backgroundColor: 'transparent',
                           textAlign: isRTL ? 'right' : 'left',
                         }}
@@ -1510,15 +1659,22 @@ export default function NewJobModal({
                         styles.inputBlock,
                         { backgroundColor: bg },
                         {
-                          padding: sizes.padding,
+                          padding: 0,
+                          paddingHorizontal:
+                            sizes.inputContainerPaddingHorizontal,
+                          paddingVertical: sizes.inputContainerPaddingVertical,
                           borderRadius: sizes.borderRadius,
                           marginBottom: 0,
+                          height: sizes.inputHeight,
                         },
                       ]}
                     >
                       <Text
                         style={[
                           styles.label,
+                          {
+                            color: themeController.current?.unactiveTextColor,
+                          },
                           isRTL && { textAlign: 'right' },
                           { fontSize: sizes.font },
                         ]}
@@ -1532,9 +1688,14 @@ export default function NewJobModal({
                         placeholder={t('newJob.typePlaceholder', {
                           defaultValue: 'Type...',
                         })}
-                        placeholderTextColor={'#999'}
+                        placeholderTextColor={
+                          themeController.current?.formInputLabelColor
+                        }
                         style={{
-                          padding: sizes.padding,
+                          fontWeight: '500',
+                          padding: 0,
+                          paddingVertical: sizes.padding,
+                          color: themeController.current?.textColor,
                           fontSize: sizes.inputFont,
                           borderRadius: sizes.borderRadius,
                           backgroundColor: 'transparent',
@@ -1561,8 +1722,9 @@ export default function NewJobModal({
                         styles.label,
                         isRTL && { textAlign: 'right' },
                         {
-                          fontSize: sizes.font,
-                          marginBottom: sizes.margin / 2,
+                          fontSize: sizes.photosLabelSize,
+                          marginBottom: sizes.photosLabelMarginBottom,
+                          color: themeController.current?.textColor,
                         },
                       ]}
                     >
@@ -1582,6 +1744,8 @@ export default function NewJobModal({
                         style={[
                           styles.addImageButton,
                           {
+                            backgroundColor:
+                              themeController.current?.profileDefaultBackground,
                             width: sizes.thumb,
                             height: sizes.thumb,
                             borderRadius: sizes.borderRadius,
@@ -1593,10 +1757,9 @@ export default function NewJobModal({
                         <Image
                           source={icons.plus}
                           style={{
-                            width: RFPercentage(3),
-                            height: RFPercentage(3),
-                            tintColor:
-                              themeController.current?.buttonTextColorPrimary,
+                            width: scaleByHeight(32, height),
+                            height: scaleByHeight(32, height),
+                            tintColor: themeController.current?.primaryColor,
                           }}
                           resizeMode='contain'
                         />
@@ -1616,6 +1779,8 @@ export default function NewJobModal({
                             style={[
                               styles.imageWrapper,
                               {
+                                backgroundColor:
+                                  themeController.current?.formInputBackground,
                                 marginRight: isRTL ? 0 : sizes.margin / 2,
                                 marginLeft: isRTL ? sizes.margin / 2 : 0,
                               },
@@ -1636,8 +1801,8 @@ export default function NewJobModal({
                               <Image
                                 source={icons.cross}
                                 style={{
-                                  width: RFValue(16),
-                                  height: RFValue(16),
+                                  width: scaleByHeight(16, height),
+                                  height: scaleByHeight(16, height),
                                   tintColor:
                                     themeController.current
                                       ?.formInputLabelColor,
@@ -1666,15 +1831,21 @@ export default function NewJobModal({
                         styles.inputBlock,
                         { backgroundColor: bg },
                         {
-                          padding: sizes.padding,
+                          paddingVertical: sizes.inputContainerPaddingVertical,
+                          paddingHorizontal:
+                            sizes.inputContainerPaddingHorizontal,
                           borderRadius: sizes.borderRadius,
                           marginBottom: 0,
+                          height: sizes.inputHeight,
                         },
                       ]}
                     >
                       <Text
                         style={[
                           styles.label,
+                          {
+                            color: themeController.current?.unactiveTextColor,
+                          },
                           isRTL && { textAlign: 'right' },
                           { fontSize: sizes.font },
                         ]}
@@ -1689,7 +1860,10 @@ export default function NewJobModal({
                         })}
                         placeholderTextColor={'#999'}
                         style={{
-                          padding: sizes.padding,
+                          fontWeight: '500',
+                          color: themeController.current?.textColor,
+                          padding: 0,
+                          paddingVertical: sizes.padding,
                           fontSize: sizes.inputFont,
                           borderRadius: sizes.borderRadius,
                           backgroundColor: 'transparent',
@@ -1784,6 +1958,9 @@ export default function NewJobModal({
                           alignSelf: isRTL ? 'flex-end' : 'flex-start',
                           paddingVertical: sizes.padding * 1.2,
                           borderRadius: sizes.borderRadius,
+                          height: sizes.saveBtnHeight,
+                          width: sizes.saveBtnWidth,
+                          marginTop: scaleByHeight(17, height),
                         },
                       ]}
                       onPress={
@@ -1794,10 +1971,9 @@ export default function NewJobModal({
                     >
                       <Text
                         style={{
-                          color: 'white',
+                          color: themeController.current?.buttonTextColorPrimary,
                           textAlign: 'center',
-                          fontWeight: 'bold',
-                          fontSize: sizes.font,
+                          fontSize: sizes.saveBtnFont,
                         }}
                       >
                         {editMode
@@ -2179,7 +2355,7 @@ export default function NewJobModal({
 
 const styles = StyleSheet.create({
   container: {
-    padding: RFValue(14),
+    // padding: RFValue(14),
     flex: 1,
   },
   header: {
@@ -2190,7 +2366,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     fontSize: RFValue(20),
-    fontWeight: 'bold',
+    fontFamily: 'Rubik-Bold',
   },
   inputBlock: {
     marginBottom: RFValue(10),
@@ -2211,12 +2387,14 @@ const styles = StyleSheet.create({
     }),
   },
   label: {
-    fontWeight: 'bold',
-    marginBottom: RFValue(4),
+    // fontWeight: 'bold',
+    // marginBottom: RFValue(4),
   },
   input: {
     padding: RFValue(8),
     width: '100%',
+    fontFamily: 'Rubik-Medium',
+    fontWeight: '500',
   },
   autocompleteContainer: {
     position: 'relative',
@@ -2226,9 +2404,6 @@ const styles = StyleSheet.create({
     top: RFValue(28),
     left: 0,
     right: 0,
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#ccc',
     zIndex: 999,
     maxHeight: RFValue(120),
     borderRadius: 6,
@@ -2299,6 +2474,8 @@ const styles = StyleSheet.create({
   createButton: {
     paddingVertical: RFValue(12),
     borderRadius: RFValue(5),
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   row: {
     flexDirection: 'row',
@@ -2314,9 +2491,6 @@ const styles = StyleSheet.create({
   gridContainer: {
     width: '100%',
     display: 'grid',
-    gridTemplateColumns: 'repeat(2, 30%)',
-    gridTemplateRows: 'repeat(6)',
-    gridColumnGap: '1%',
   },
   gridHalf: {
     width: '100%',

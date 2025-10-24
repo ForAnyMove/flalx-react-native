@@ -29,6 +29,9 @@ export default function NewJobTemplateCard({
     font: isWebLandscape ? scaleByHeight(14, height) : RFValue(9),
     icon: isWebLandscape ? height * 0.04 : RFValue(26),
     padding: isWebLandscape ? height * 0.008 : RFValue(6),
+    textPaddingVertical: isWebLandscape ? scaleByHeight(15, height) : RFValue(4),
+    textMarginBottom: isWebLandscape ? scaleByHeight(14, height) : RFValue(4),
+    textPaddingHorizontal: isWebLandscape ? scaleByHeight(16, height) : RFValue(6),
     imageContainerHeight: isWebLandscape
       ? scaleByHeight(138, height)
       : RFValue(70),
@@ -84,10 +87,13 @@ export default function NewJobTemplateCard({
           {
             fontSize: sizes.font,
             color: themeController.current?.primaryColor,
-            paddingHorizontal: sizes.padding,
-            paddingVertical: sizes.padding,
+            paddingHorizontal: sizes.textPaddingHorizontal,
+            paddingTop: sizes.textPaddingVertical,
+            marginBottom: sizes.textMarginBottom,
           },
         ]}
+        numberOfLines={1}
+        ellipsisMode='tail'
       >
         {t(`jobTypes.${templateTitle}`)}
       </Text>
@@ -97,8 +103,8 @@ export default function NewJobTemplateCard({
           {
             fontSize: sizes.font,
             color: themeController.current?.buttonColorSecondaryDefault,
-            paddingHorizontal: sizes.padding,
-            paddingVertical: sizes.padding,
+            paddingHorizontal: sizes.textPaddingHorizontal,
+            paddingBottom: sizes.textPaddingVertical,
             textDecoration: 'underline',
           },
         ]}

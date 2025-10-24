@@ -43,7 +43,9 @@ export default function Settings() {
   // размеры/отступы
   const sizes = {
     baseFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(12),
-    iconSize: isWebLandscape ? RFValue(16) : RFValue(22),
+    questionsFont: isWebLandscape ? scaleByHeight(18, height) : RFValue(10),
+    iconCircleSize: isWebLandscape ? scaleByHeight(40, height) : RFValue(22),
+    iconSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(18),
     containerPadding: isWebLandscape ? height * 0.02 : RFValue(10),
     pickerHeight: isWebLandscape ? height * 0.06 : RFValue(50),
     rowGap: isWebLandscape ? height * 0.015 : RFValue(10),
@@ -364,38 +366,17 @@ export default function Settings() {
             left: sizes.containerPadding,
             right: sizes.containerPadding,
           },
+          isWebLandscape && { justifyContent: 'flex-start' },
         ]}
       >
-        <View
-          style={[
-            styles.connectBtnsContainer,
-            { flexDirection: isRTL ? 'row-reverse' : 'row' },
-          ]}
-        >
-          <Image
-            source={icons.email}
-            style={{
-              width: sizes.iconSize,
-              height: sizes.iconSize,
-              marginRight: isRTL ? 0 : RFValue(10),
-              marginLeft: isRTL ? RFValue(10) : 0,
-            }}
-            resizeMode='contain'
-          />
-          <Image
-            source={icons.phone}
-            style={{ width: sizes.iconSize, height: sizes.iconSize }}
-            resizeMode='contain'
-          />
-        </View>
-        <View>
+        <View style={isWebLandscape &&{ [isRTL ? 'marginLeft' : 'marginRight']: scaleByHeight(93, height), marginBottom: scaleByHeight(55, height) }}>
           <Text
             style={[
               styles.bottomText,
               {
-                color: themeController.current?.formInputTextColor,
-                fontSize: sizes.baseFont * 0.9,
-                textAlign: isRTL ? 'left' : 'right',
+                color: themeController.current?.unactiveTextColor,
+                fontSize: sizes.questionsFont,
+                textAlign: isRTL ? 'right' : 'left',
               },
             ]}
           >
@@ -405,33 +386,74 @@ export default function Settings() {
             style={[
               styles.bottomText,
               {
-                color: themeController.current?.formInputTextColor,
-                fontSize: sizes.baseFont * 0.9,
-                textAlign: isRTL ? 'left' : 'right',
+                color: themeController.current?.unactiveTextColor,
+                fontSize: sizes.questionsFont,
+                textAlign: isRTL ? 'right' : 'left',
               },
             ]}
           >
             {t('settings.just_cheer')}
           </Text>
+          <Text
+            style={[
+              styles.versionText,
+              {
+                color: themeController.current?.unactiveTextColor,
+                fontSize: sizes.questionsFont,
+                textAlign: isRTL ? 'right' : 'left',
+              },
+            ]}
+          >
+            v1.52
+          </Text>
+        </View>
+        <View
+          style={[
+            styles.connectBtnsContainer,
+            { flexDirection: isRTL ? 'row-reverse' : 'row' },
+          ]}
+        >
+          <TouchableOpacity
+            style={{
+              marginRight: isRTL ? 0 : RFValue(10),
+              marginLeft: isRTL ? RFValue(10) : 0,
+              height: sizes.iconCircleSize,
+              width: sizes.iconCircleSize,
+              borderRadius: sizes.iconCircleSize / 2,
+              backgroundColor: themeController.current?.primaryColor,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Image
+              source={icons.emailClear}
+              style={{
+                width: sizes.iconSize,
+                height: sizes.iconSize,
+              }}
+              resizeMode='contain'
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{
+              marginRight: isRTL ? 0 : RFValue(10),
+              marginLeft: isRTL ? RFValue(10) : 0,
+              height: sizes.iconCircleSize,
+              width: sizes.iconCircleSize,
+              borderRadius: sizes.iconCircleSize / 2,
+              backgroundColor: themeController.current?.primaryColor,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Image
+              source={icons.phoneClear}
+              style={{ width: sizes.iconSize, height: sizes.iconSize }}
+              resizeMode='contain'
+            />
+          </TouchableOpacity>
         </View>
       </View>
-
-      <Text
-        style={[
-          styles.versionText,
-          {
-            color: themeController.current?.unactiveTextColor,
-            fontSize: sizes.baseFont * 0.8,
-            textAlign: isRTL ? 'left' : 'right',
-            position: isWebLandscape ? 'absolute' : 'relative',
-            bottom: isWebLandscape ? sizes.bottomInset * 0.25 : 0,
-            right: isWebLandscape ? sizes.containerPadding : 0,
-            left: isWebLandscape && isRTL ? sizes.containerPadding : undefined,
-          },
-        ]}
-      >
-        v1.52
-      </Text>
 
       {/* About Modal */}
       <Modal visible={aboutVisible} animationType='slide'>
@@ -551,7 +573,7 @@ const styles = StyleSheet.create({
   },
   connectBtnsContainer: { gap: RFValue(5) },
   bottomText: { fontSize: RFValue(10) },
-  versionText: { fontSize: RFValue(10), marginTop: RFValue(5) },
+  versionText: { fontSize: RFValue(10)},
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',

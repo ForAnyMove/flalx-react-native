@@ -8,6 +8,7 @@ import { useComponentContext } from '../../context/globalAppContext';
 import { useWindowInfo } from '../../context/windowContext';
 import JobModalWrapper from '../../components/JobModalWrapper';
 import NewJobModal from '../../components/NewJobModal';
+import { scaleByHeight } from '../../utils/resizeFuncs';
 
 export default function Providers() {
   const { themeController, providersController, languageController } =
@@ -43,12 +44,12 @@ export default function Providers() {
         },
       ]}
     >
-      <View>
+      {/* <View>
         <SearchPanel
           searchValue={searchValue}
           setSearchValue={setSearchValue}
         />
-      </View>
+      </View> */}
       <View style={{ width: isWebLandscape ? '70%' : '100%' }}>
         <JobTypeSelector
           selectedTypes={filteredJobs}
@@ -63,7 +64,8 @@ export default function Providers() {
         <ScrollView
           contentContainerStyle={{
             flexDirection: isWebLandscape ? 'row' : 'column',
-            gap: isWebLandscape ? '2%' : 0,
+            columnGap: isWebLandscape ? '2%' : 0,
+            rowGap: isWebLandscape ? scaleByHeight(23, height) : RFValue(10),
             flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
             justifyContent: isWebLandscape
               ? isRTL

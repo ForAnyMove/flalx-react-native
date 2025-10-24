@@ -29,6 +29,8 @@ export const icons = {
   defaultAvatarInverse: require('../assets/register/UserImages/avatar-inverse.png'),
   camera: require('../assets/icon/photo-camera.png'),
   email: require('../assets/icon/email.png'),
+  emailClear: require('../assets/icon/email-clear.png'),
+  phoneClear: require('../assets/icon/phone-light.png'),
   phone: require('../assets/icon/phone.png'),
   delete: require('../assets/icon/delete.png'),
   arrowDown: require('../assets/icon/arrow-down.png'),
@@ -37,4 +39,6 @@ export const icons = {
   smallScreen: require('../assets/icon/full-screen.png'),
   likeOff: require('../assets/icon/Favorite/off.png'),
   likeOn: require('../assets/icon/Favorite/on.png'),
+  mobile: require('../assets/icon/mobile.png'),
+  emailContact: require('../assets/icon/email-primary.png'),
 };
