@@ -24,7 +24,7 @@ export default function DateTimeInput({
   const [inputActive, setInputActive] = useState(false);
   const displayValue = value
     ? new Date(value).toLocaleString()
-    : t('newJob.select');
+    : t(readOnly ? 'newJob.emptyDate' : 'newJob.select');
 
   const handleChange = (event, selectedDate) => {
     setShowPicker(false);

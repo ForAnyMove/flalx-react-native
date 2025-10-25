@@ -70,6 +70,11 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
       ? scaleByHeight(24, height)
       : RFValue(15),
     iconMargin: isWebLandscape ? scaleByHeight(7, height) : RFValue(3),
+    headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
+    headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
+    contactInfoHeight: isWebLandscape
+      ? scaleByHeight(50, height)
+      : RFValue(30),
   };
 
   const {
@@ -207,7 +212,13 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                     {
                       flexDirection: isRTL ? 'row-reverse' : 'row',
                       paddingHorizontal: sizes.modalHeaderPadding,
-                      paddingTop: sizes.modalHeaderPaddingTop,
+                      paddingVertical: sizes.modalHeaderPaddingTop,
+                      backgroundColor: themeController.current?.backgroundColor,
+                      borderBottomColor:
+                        themeController.current?.profileDefaultBackground,
+                      height: sizes.headerHeight,
+                      marginTop: sizes.headerMargin,
+                      borderBottomWidth: 2,
                     },
                   ]}
                 >
@@ -227,7 +238,13 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                     />
                   </TouchableOpacity>
                   <Text
-                    style={[styles.modalTitle, { fontSize: sizes.logoFont }]}
+                    style={[
+                      styles.modalTitle,
+                      {
+                        fontSize: sizes.logoFont,
+                        color: themeController.current?.primaryColor,
+                      },
+                    ]}
                   >
                     FLALX
                   </Text>
@@ -276,7 +293,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                   <Text
                     style={{
                       fontSize: sizes.professionSize,
-                      fontWeight: '600', // 👈 вернул жирность
+                      fontWeight: '600',
                       color: themeController.current?.unactiveTextColor,
                       marginHorizontal: RFValue(8),
                       textAlign: 'center',
@@ -320,8 +337,26 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         </Text>
                         <View style={styles.wrapRow}>
                           {jobTypes?.map((type, i) => (
-                            <View key={i} style={styles.typeBadge}>
-                              <Text style={{ fontSize: sizes.small }}>
+                            <View
+                              key={i}
+                              style={[
+                                styles.typeBadge,
+                                {
+                                  borderRadius: sizes.borderRadius / 2,
+                                  paddingHorizontal: sizes.padding * 0.75,
+                                  paddingVertical: sizes.padding * 0.45,
+                                  margin: sizes.padding * 0.25,
+                                },
+                              ]}
+                            >
+                              <Text
+                                style={{
+                                  fontSize: sizes.small,
+                                  color:
+                                    themeController.current
+                                      ?.formInputLabelColor,
+                                }}
+                              >
                                 {JOB_TYPES[type]}
                               </Text>
                             </View>
@@ -353,8 +388,27 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         </Text>
                         <View style={styles.centerRow}>
                           {professions?.map((p, i) => (
-                            <View key={i} style={styles.professionBadge}>
-                              <Text style={{ fontSize: sizes.small }}>
+                            <View
+                              key={i}
+                              style={[
+                                styles.professionBadge,
+                                {
+                                  paddingHorizontal: sizes.padding * 0.75,
+                                  paddingVertical: sizes.padding * 0.5,
+                                  borderRadius: sizes.borderRadius,
+                                  marginHorizontal: sizes.padding * 0.5,
+                                  marginVertical: sizes.padding * 0.15,
+                                },
+                              ]}
+                            >
+                              <Text
+                                style={{
+                                  fontSize: sizes.small,
+                                  color:
+                                    themeController.current
+                                      ?.formInputLabelColor,
+                                }}
+                              >
                                 {LICENSES[p]}
                               </Text>
                             </View>
@@ -462,6 +516,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                             isWebLandscape && {
                               flexDirection: isRTL ? 'row-reverse' : 'row',
                               alignItems: 'center',
+                              height: sizes.contactInfoHeight,
                             }
                           }
                         >
@@ -532,6 +587,9 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                       backgroundColor:
                         themeController.current?.buttonColorPrimaryDefault,
                       borderRadius: sizes.btnRadius,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: 0,
                     },
                     isWebLandscape && {
                       width: '30%',

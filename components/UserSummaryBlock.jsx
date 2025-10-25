@@ -19,6 +19,7 @@ import { useWindowInfo } from '../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import { icons } from '../constants/icons';
 import { scaleByHeight } from '../utils/resizeFuncs';
+import CommentsSection from './CommentsSection';
 
 const UserSummaryBlock = ({
   user,
@@ -43,7 +44,7 @@ const UserSummaryBlock = ({
 
   // компактные размеры для веб-альбомной (меньше, чем на мобильном)
   const sizes = {
-      font: isWebLandscape ? scaleByHeight(16, height) : RFValue(12),
+    font: isWebLandscape ? scaleByHeight(16, height) : RFValue(12),
     smallFont: isWebLandscape ? scaleByHeight(14, height) : RFValue(10),
     inputFont: isWebLandscape ? height * 0.013 : RFValue(10),
     padding: isWebLandscape ? height * 0.009 : RFValue(8),
@@ -51,16 +52,38 @@ const UserSummaryBlock = ({
     margin: isWebLandscape ? height * 0.01 : RFValue(10),
     borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
     thumb: isWebLandscape ? height * 0.11 : RFValue(80),
-    headerHeight: isWebLandscape ? height * 0.065 : RFPercentage(7),
+    headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
     avatar: isWebLandscape ? scaleByHeight(48, height) : RFValue(33),
-    icon: isWebLandscape ? height * 0.03 : RFValue(24),
+    icon: isWebLandscape ? scaleByHeight(24, height) : RFValue(24),
     iconSmall: isWebLandscape ? height * 0.025 : RFValue(20),
     panelWidth: isWebLandscape ? Math.min(width * 0.55, 720) : undefined, // ширина панели модалки на вебе
-    cardWidth: isWebLandscape ? '32%' : '100%', // 👈 3 в ряд для web-landscape
+    cardWidth: isWebLandscape ? '100%' : '100%', // 👈 3 в ряд для web-landscape
+    logoFont: isWebLandscape ? scaleByHeight(24, height) : RFValue(18),
     containerHeight: isWebLandscape ? scaleByHeight(80, height) : RFValue(70),
     pagePaddingHorizontal: isWebLandscape
       ? scaleByHeight(24, height)
       : RFValue(15),
+    nameSize: isWebLandscape ? scaleByHeight(28, height) : RFValue(14),
+    professionSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(12),
+    infoSectionMarginBottom: isWebLandscape
+      ? scaleByHeight(23, height)
+      : RFValue(15),
+    btnRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(6),
+    unlockContactBtnHeight: isWebLandscape
+      ? scaleByHeight(38, height)
+      : RFValue(40),
+    unlockContactBtnPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(24, height)
+      : RFValue(15),
+    iconMargin: isWebLandscape ? scaleByHeight(7, height) : RFValue(3),
+    showContactInfoMarginBottom: isWebLandscape
+      ? scaleByHeight(10, height)
+      : RFValue(5),
+    modalAvatar: isWebLandscape ? scaleByHeight(112, height) : RFValue(70),
+    avatarVerticalMargin: isWebLandscape ? scaleByHeight(12, height) : RFValue(8),
+    contactInfoHeight: isWebLandscape
+      ? scaleByHeight(50, height)
+      : RFValue(30),
   };
 
   const userId = user.id || user?._j?.id;
@@ -84,19 +107,20 @@ const UserSummaryBlock = ({
         style={[
           styles.summaryContainer,
           // isRTL && { flexDirection: 'row-reverse' },
-          { 
+          {
             height: sizes.containerHeight,
             width: sizes.cardWidth,
-              flexDirection: isRTL ? 'row-reverse' : 'row',
-              backgroundColor: themeController.current?.formInputBackground,
-              borderRadius: sizes.borderRadius,
-           },
+            flexDirection: isRTL ? 'row-reverse' : 'row',
+            backgroundColor: themeController.current?.formInputBackground,
+            borderRadius: sizes.borderRadius,
+            paddingHorizontal: sizes.paddingHorizontal,
+          },
         ]}
       >
         <View
           style={[
             styles.avatarNameContainer,
-              { flexDirection: isRTL ? 'row-reverse' : 'row' },
+            { flexDirection: isRTL ? 'row-reverse' : 'row' },
           ]}
         >
           {avatar ? (
@@ -116,40 +140,40 @@ const UserSummaryBlock = ({
               style={[
                 styles.avatarPlaceholder,
                 {
-                    width: sizes.avatar,
-                    height: sizes.avatar,
-                    borderRadius: sizes.avatar / 2,
+                  width: sizes.avatar,
+                  height: sizes.avatar,
+                  borderRadius: sizes.avatar / 2,
                 },
               ]}
             >
               <Image
                 source={icons.defaultAvatar}
-                  style={{ width: '100%', height: '100%' }}
+                style={{ width: '100%', height: '100%' }}
               />
             </View>
           )}
-            <View>
-              <Text
-                style={{
-                  fontSize: sizes.font,
-                  fontWeight: '600', // 👈 вернул жирность
-                  color: themeController.current?.textColor,
-                  marginHorizontal: RFValue(8),
-                }}
-              >
-                {name} {surname}
-              </Text>
-              <Text
-                style={{
-                  fontSize: sizes.smallFont,
-                  fontWeight: '600', // 👈 вернул жирность
-                  color: themeController.current?.unactiveTextColor,
-                  marginHorizontal: RFValue(8),
-                }}
-              >
-                {LICENSES[professions?.[0]]}
-              </Text>
-            </View>
+          <View>
+            <Text
+              style={{
+                fontSize: sizes.font,
+                fontWeight: '600', // 👈 вернул жирность
+                color: themeController.current?.textColor,
+                marginHorizontal: RFValue(8),
+              }}
+            >
+              {name} {surname}
+            </Text>
+            <Text
+              style={{
+                fontSize: sizes.smallFont,
+                fontWeight: '600', // 👈 вернул жирность
+                color: themeController.current?.unactiveTextColor,
+                marginHorizontal: RFValue(8),
+              }}
+            >
+              {LICENSES[professions?.[0]]}
+            </Text>
+          </View>
         </View>
         <TouchableOpacity
           onPress={() => setModalVisible(true)}
@@ -193,6 +217,7 @@ const UserSummaryBlock = ({
                     borderTopLeftRadius: sizes.borderRadius,
                     borderBottomLeftRadius: sizes.borderRadius,
                     paddingBottom: sizes.padding,
+                    paddingHorizontal: sizes.pagePaddingHorizontal,
                     // Веб-альбомная: узкая панель справа, с пустой кликабельной зоной слева
                     width: isWebLandscape ? width - sidebarWidth : '100%',
                     alignSelf: isRTL ? 'flex-start' : 'flex-end',
@@ -205,11 +230,15 @@ const UserSummaryBlock = ({
                   style={[
                     styles.modalHeader,
                     {
-                      padding: sizes.padding,
-                      height: sizes.headerHeight,
-                      borderBottomWidth: 1,
-                      borderColor: '#ccc',
                       flexDirection: isRTL ? 'row-reverse' : 'row',
+                      paddingHorizontal: sizes.modalHeaderPadding,
+                      paddingVertical: sizes.modalHeaderPaddingTop,
+                      backgroundColor: themeController.current?.backgroundColor,
+                      borderBottomColor:
+                        themeController.current?.profileDefaultBackground,
+                      height: sizes.headerHeight,
+                      marginTop: sizes.headerMargin,
+                      borderBottomWidth: 2,
                     },
                   ]}
                 >
@@ -224,7 +253,7 @@ const UserSummaryBlock = ({
                       style={{
                         width: sizes.icon,
                         height: sizes.icon,
-                        tintColor: '#000',
+                        tintColor: themeController.current?.textColor,
                       }}
                     />
                   </TouchableOpacity>
@@ -232,150 +261,177 @@ const UserSummaryBlock = ({
                     style={[
                       styles.modalTitle,
                       {
-                        fontSize: isWebLandscape ? height * 0.032 : RFValue(20),
+                        fontSize: sizes.logoFont,
+                        color: themeController.current?.primaryColor,
                       },
                     ]}
                   >
                     FLALX
                   </Text>
-                  <View
-                    style={{ width: isWebLandscape ? sizes.icon : RFValue(28) }}
-                  />
                 </View>
 
-                <ScrollView
-                  contentContainerStyle={[
-                    styles.modalContent,
-                    {
-                      padding: sizes.padding,
-                      paddingBottom: sizes.margin * 2,
-                    },
-                  ]}
-                >
+                <ScrollView contentContainerStyle={{}}>
                   <Image
                     source={avatar ? { uri: avatar } : icons.defaultAvatar}
                     style={[
                       styles.modalAvatar,
                       {
-                        width: isWebLandscape ? height * 0.085 : RFValue(70),
-                        height: isWebLandscape ? height * 0.085 : RFValue(70),
-                        borderRadius: isWebLandscape
-                          ? height * 0.06
-                          : RFValue(50),
-                        marginBottom: sizes.padding * 0.8,
+                        width: sizes.modalAvatar,
+                        height: sizes.modalAvatar,
+                        borderRadius: sizes.modalAvatar / 2,
+                        alignSelf: 'center',
+                        marginVertical: sizes.avatarVerticalMargin,
                       },
                     ]}
                   />
                   <Text
                     style={[
                       styles.modalName,
-                      { color: themeController.current?.textColor },
                       {
-                        fontSize: isWebLandscape ? height * 0.02 : RFValue(16),
-                        marginBottom: sizes.padding * 0.6,
+                        fontSize: sizes.nameSize,
+                        fontWeight: '600',
                         textAlign: 'center',
+                        marginBottom: RFValue(6),
+                        color: themeController.current?.textColor,
                       },
                     ]}
                   >
                     {name} {surname}
                   </Text>
-
-                  {/* Professions */}
-                  <View
-                    style={[
-                      styles.centerRow,
-                      {
-                        marginBottom: sizes.margin,
-                        flexDirection: isRTL ? 'row-reverse' : 'row',
-                      },
-                    ]}
-                  >
-                    {professions?.map((p, index) => (
-                      <View
-                        key={index}
-                        style={[
-                          styles.professionBadge,
-                          {
-                            paddingHorizontal: sizes.padding * 0.75,
-                            paddingVertical: sizes.padding * 0.5,
-                            borderRadius: sizes.borderRadius,
-                            marginHorizontal: sizes.padding * 0.5,
-                            marginVertical: sizes.padding * 0.15,
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.professionText,
-                            {
-                              fontSize: isWebLandscape
-                                ? height * 0.013
-                                : RFValue(10),
-                            },
-                          ]}
-                        >
-                          {LICENSES[p]}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-
-                  {/* Job Types */}
                   <Text
-                    style={[
-                      styles.sectionTitle,
-                      {
-                        fontSize: isWebLandscape ? height * 0.016 : RFValue(12),
-                        marginBottom: sizes.padding * 0.5,
-                        textAlign: isRTL ? 'right' : 'left',
-                      },
-                    ]}
+                    style={{
+                      fontSize: sizes.professionSize,
+                      fontWeight: '600',
+                      color: themeController.current?.unactiveTextColor,
+                      marginHorizontal: RFValue(8),
+                      textAlign: 'center',
+                    }}
                   >
-                    {t('userSummary.jobTypesTitle', {
-                      defaultValue: "Types of job I'm looking for",
-                    })}
+                    {LICENSES[professions?.[0]]}
                   </Text>
+
+                  {/* Контейнер для сетки 2x2 */}
                   <View
                     style={[
-                      styles.wrapRow,
-                      {
-                        gap: sizes.padding * 0.35,
-                        marginBottom: sizes.margin,
+                      isWebLandscape && {
                         flexDirection: isRTL ? 'row-reverse' : 'row',
+                        flexWrap: 'wrap',
+                        justifyContent: 'space-between',
+                        alignSelf: isRTL ? 'flex-end' : 'flex-start',
                       },
+                      isWebLandscape && { width: '66%' },
                     ]}
                   >
-                    {jobTypes?.map((type, index) => (
+                    {/* Job Types */}
+                    {jobTypes && (
                       <View
-                        key={index}
                         style={[
-                          styles.typeBadge,
-                          {
-                            borderRadius: sizes.borderRadius,
-                            paddingHorizontal: sizes.padding * 0.75,
-                            paddingVertical: sizes.padding * 0.45,
-                            margin: sizes.padding * 0.25,
+                          isWebLandscape && {
+                            width: '48%',
+                            marginBottom: sizes.infoSectionMarginBottom,
                           },
                         ]}
                       >
                         <Text
                           style={[
-                            styles.typeText,
+                            styles.sectionTitle,
                             {
-                              fontSize: isWebLandscape
-                                ? height * 0.013
-                                : RFValue(10),
+                              fontSize: sizes.sectionTitleSize,
+                              color: themeController.current?.textColor,
                             },
                           ]}
                         >
-                          {JOB_TYPES[type]}
+                          {t('profile.job_types')}
                         </Text>
+                        <View style={[styles.wrapRow]}>
+                          {jobTypes?.map((type, index) => (
+                            <View
+                              key={index}
+                              style={[
+                                styles.typeBadge,
+                                {
+                                  borderRadius: sizes.borderRadius / 2,
+                                  paddingHorizontal: sizes.padding * 0.75,
+                                  paddingVertical: sizes.padding * 0.45,
+                                  margin: sizes.padding * 0.25,
+                                },
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.typeText,
+                                  {
+                                    fontSize: sizes.small,
+                                    color:
+                                      themeController.current
+                                        ?.formInputLabelColor,
+                                  },
+                                ]}
+                              >
+                                {JOB_TYPES[type]}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
                       </View>
-                    ))}
-                  </View>
+                    )}
+                    {/* Professions */}
+                    {professions && (
+                      <View
+                        style={[
+                          isWebLandscape && {
+                            width: '48%',
+                            marginBottom: sizes.infoSectionMarginBottom,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.sectionTitle,
+                            {
+                              fontSize: sizes.sectionTitleSize,
+                              color: themeController.current?.textColor,
+                            },
+                          ]}
+                        >
+                          {t('profile.professions')}
+                        </Text>
+                        <View style={[styles.centerRow]}>
+                          {professions?.map((p, index) => (
+                            <View
+                              key={index}
+                              style={[
+                                styles.professionBadge,
+                                {
+                                  paddingHorizontal: sizes.padding * 0.75,
+                                  paddingVertical: sizes.padding * 0.5,
+                                  borderRadius: sizes.borderRadius,
+                                  marginHorizontal: sizes.padding * 0.5,
+                                  marginVertical: sizes.padding * 0.15,
+                                },
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.professionText,
+                                  {
+                                    fontSize: sizes.small,
+                                    color:
+                                      themeController.current
+                                        ?.formInputLabelColor,
+                                  },
+                                ]}
+                              >
+                                {LICENSES[p]}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
+                    )}
 
-                  {/* Sub Types */}
-                  <Text
+                    {/* Sub Types */}
+                    {/* <Text
                     style={[
                       styles.sectionTitle,
                       {
@@ -426,129 +482,191 @@ const UserSummaryBlock = ({
                         </Text>
                       </View>
                     ))}
-                  </View>
+                  </View> */}
 
-                  {/* About */}
-                  <Text
-                    style={[
-                      styles.sectionTitle,
-                      {
-                        fontSize: isWebLandscape ? height * 0.016 : RFValue(12),
-                        marginBottom: sizes.padding * 0.5,
-                        textAlign: isRTL ? 'right' : 'left',
-                      },
-                    ]}
-                  >
-                    {t('userSummary.aboutTitle', {
-                      defaultValue: 'A little about me',
-                    })}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.aboutText,
-                      {
-                        fontSize: isWebLandscape ? height * 0.014 : RFValue(10),
-                        marginBottom: sizes.margin,
-                        textAlign: isRTL ? 'right' : 'left',
-                      },
-                    ]}
-                  >
-                    {about}
-                  </Text>
-
-                  {/* Contact Info */}
-                  <Text
-                    style={[
-                      styles.sectionTitle,
-                      {
-                        fontSize: isWebLandscape ? height * 0.016 : RFValue(12),
-                        marginBottom: sizes.padding * 0.5,
-                        textAlign: isRTL ? 'right' : 'left',
-                      },
-                    ]}
-                  >
-                    {t('userSummary.contactTitle', {
-                      defaultValue: 'Contact information',
-                    })}
-                  </Text>
-                  {!showContactInfo && status === 'store-waiting' ? (
-                    <TouchableOpacity
+                    {/* About */}
+                    <View
                       style={[
-                        styles.primaryBtn,
-                        {
-                          backgroundColor:
-                            themeController.current?.buttonColorPrimaryDefault,
-                          marginHorizontal: 0,
-                          padding: sizes.padding,
-                          borderRadius: sizes.borderRadius,
-                          alignItems: 'center',
-                          marginVertical: sizes.padding * 0.5,
+                        isWebLandscape && {
+                          width: '48%',
+                          marginBottom: sizes.infoSectionMarginBottom,
                         },
                       ]}
-                      onPress={() => setShowContactInfo(true)}
                     >
                       <Text
                         style={[
-                          styles.primaryText,
+                          styles.sectionTitle,
                           {
-                            color:
-                              themeController.current?.buttonTextColorPrimary,
-                            fontSize: isWebLandscape
-                              ? height * 0.016
-                              : RFValue(12),
+                            fontSize: sizes.sectionTitleSize,
+                            color: themeController.current?.textColor,
                           },
                         ]}
                       >
-                        {t('userSummary.openContactCta', {
-                          defaultValue:
-                            'Open contact information for {{price}}',
-                          price: '1.50$',
+                        {t('profile.about_me')}
+                      </Text>
+                      <Text
+                        style={[
+                          {
+                            fontSize: sizes.small,
+                            color: themeController.current?.unactiveTextColor,
+                          },
+                        ]}
+                      >
+                        {about}
+                      </Text>
+                    </View>
+
+                    {/* Contact Info */}
+                    <View
+                      style={[
+                        isWebLandscape && {
+                          width: '48%',
+                          marginBottom: sizes.infoSectionMarginBottom,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.sectionTitle,
+                          {
+                            fontSize: sizes.sectionTitleSize,
+                            color: themeController.current?.textColor,
+                          },
+                        ]}
+                      >
+                        {t('userSummary.contactTitle', {
+                          defaultValue: 'Contact information',
                         })}
                       </Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <>
-                      <Text
-                        style={[
-                          styles.contactInfo,
-                          {
-                            fontSize: isWebLandscape
-                              ? height * 0.015
-                              : RFValue(11),
-                            textAlign: isRTL ? 'right' : 'left',
-                          },
-                        ]}
-                      >
-                        📞 {phoneNumber}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.contactInfo,
-                          {
-                            fontSize: isWebLandscape
-                              ? height * 0.015
-                              : RFValue(11),
-                            textAlign: isRTL ? 'right' : 'left',
-                          },
-                        ]}
-                      >
-                        ✉️ {email}
-                      </Text>
-                    </>
-                  )}
+                      {!showContactInfo && status === 'store-waiting' ? (
+                        <TouchableOpacity
+                          style={[
+                            styles.primaryBtn,
+                            {
+                              backgroundColor:
+                                themeController.current
+                                  ?.buttonColorPrimaryDefault,
+                              height: sizes.unlockContactBtnHeight,
+                              justifyContent: 'center',
+                              borderRadius: sizes.btnRadius,
+                              width: 'max-content',
+                              alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                              paddingHorizontal:
+                                sizes.unlockContactBtnPaddingHorizontal,
+                            },
+                          ]}
+                          onPress={() => setShowContactInfo(true)}
+                        >
+                          <Text
+                            style={[
+                              {
+                                fontSize: sizes.professionSize,
+                                color:
+                                  themeController.current
+                                    ?.buttonTextColorPrimary,
+                              },
+                            ]}
+                          >
+                            {t('userSummary.openContactCta', {
+                              defaultValue:
+                                'Open contact information for {{price}}',
+                              price: '1.50$',
+                            })}
+                          </Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <View
+                          style={
+                            isWebLandscape && {
+                              flexDirection: isRTL ? 'row-reverse' : 'row',
+                              alignItems: 'center',
+                              height: sizes.contactInfoHeight,
+                            }
+                          }
+                        >
+                          {phoneNumber && (
+                            <View
+                              style={{
+                                flexDirection: isRTL ? 'row-reverse' : 'row',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <Image
+                                source={icons.mobile}
+                                style={{
+                                  width: sizes.icon,
+                                  height: sizes.icon,
+                                  [isRTL ? 'marginLeft' : 'marginRight']:
+                                    sizes.iconMargin,
+                                }}
+                              />
+                              <Text
+                                style={[
+                                  styles.contactInfo,
+                                  {
+                                    fontSize: sizes.small,
+                                    color:
+                                      themeController.current
+                                        ?.unactiveTextColor,
+                                  },
+                                ]}
+                              >
+                                {phoneNumber}
+                              </Text>
+                            </View>
+                          )}
+                          {email && (
+                            <View
+                              style={{
+                                flexDirection: isRTL ? 'row-reverse' : 'row',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <Image
+                                source={icons.emailContact}
+                                style={{
+                                  width: sizes.icon,
+                                  height: sizes.icon,
+                                  [isRTL ? 'marginLeft' : 'marginRight']:
+                                    sizes.iconMargin,
+                                }}
+                              />
+                              <Text
+                                style={[
+                                  {
+                                    fontSize: sizes.small,
+                                    color:
+                                      themeController.current
+                                        ?.unactiveTextColor,
+                                  },
+                                ]}
+                              >
+                                {email}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                  <CommentsSection userId={user.id} />
                 </ScrollView>
 
                 {status === 'store-waiting' && (
                   <View>
                     {!showContactInfo && (
                       <Text
-                        style={{
-                          color: '#f33',
-                          textAlign: 'center',
-                          fontSize: isWebLandscape
-                            ? height * 0.012
-                            : RFValue(10),
-                        }}
+                        style={[
+                          {
+                            color: '#f33',
+                            textAlign: 'center',
+                            fontSize: sizes.small,
+                            marginBottom: sizes.showContactInfoMarginBottom,
+                          },
+                          isWebLandscape && {
+                            textAlign: isRTL ? 'right' : 'left',
+                          },
+                        ]}
                       >
                         {t('userSummary.openContactHint', {
                           defaultValue:
@@ -564,11 +682,16 @@ const UserSummaryBlock = ({
                             ? themeController.current?.buttonColorPrimaryDefault
                             : themeController.current
                                 ?.buttonColorPrimaryDisabled,
-                          padding: sizes.padding,
                           borderRadius: sizes.borderRadius,
                           alignItems: 'center',
-                          marginVertical: sizes.padding * 0.6,
-                          marginHorizontal: sizes.padding * 1.2,
+                          justifyContent: 'center',
+                          padding: 0,
+                        },
+                        isWebLandscape && {
+                          width: '30%',
+                          height: scaleByHeight(62, height),
+                          alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                          marginBottom: sizes.infoSectionMarginBottom,
                         },
                       ]}
                       onPress={() => {
@@ -585,13 +708,10 @@ const UserSummaryBlock = ({
                     >
                       <Text
                         style={[
-                          styles.primaryText,
                           {
+                            fontSize: sizes.professionSize,
                             color:
                               themeController.current?.buttonTextColorPrimary,
-                            fontSize: isWebLandscape
-                              ? height * 0.016
-                              : RFValue(12),
                           },
                         ]}
                       >
@@ -609,13 +729,16 @@ const UserSummaryBlock = ({
                         {
                           backgroundColor:
                             themeController.current?.buttonColorPrimaryDefault,
-                          marginHorizontal: isWebLandscape
-                            ? sizes.padding * 1.2
-                            : RFValue(12),
-                          padding: sizes.padding,
                           borderRadius: sizes.borderRadius,
                           alignItems: 'center',
-                          marginVertical: sizes.padding * 0.5,
+                          justifyContent: 'center',
+                          padding: 0,
+                        },
+                        isWebLandscape && {
+                          width: '30%',
+                          height: scaleByHeight(62, height),
+                          alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                          marginBottom: sizes.infoSectionMarginBottom,
                         },
                       ]}
                       onPress={() => {
@@ -629,13 +752,10 @@ const UserSummaryBlock = ({
                     >
                       <Text
                         style={[
-                          styles.primaryText,
                           {
+                            fontSize: sizes.professionSize,
                             color:
                               themeController.current?.buttonTextColorPrimary,
-                            fontSize: isWebLandscape
-                              ? height * 0.016
-                              : RFValue(12),
                           },
                         ]}
                       >
@@ -730,8 +850,7 @@ const styles = StyleSheet.create({
   wrapRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: RFValue(3),
-    marginBottom: RFValue(12),
+    marginBottom: RFValue(10),
   },
   professionBadge: {
     backgroundColor: '#eee',
@@ -782,16 +901,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   modalTitle: {
-    fontSize: RFValue(20),
     fontWeight: 'bold',
     color: '#0A62EA',
+    fontFamily: 'Rubik-Bold',
   },
   primaryBtn: {
     padding: RFValue(12),
-    marginHorizontal: RFValue(12),
+    // marginHorizontal: RFValue(12),
     borderRadius: RFValue(6),
     alignItems: 'center',
-    marginVertical: RFValue(5),
+    // marginVertical: RFValue(5),
   },
   primaryText: {
     fontSize: RFValue(12),

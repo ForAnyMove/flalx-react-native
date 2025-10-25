@@ -53,6 +53,7 @@ function UserSummaryBlockWrapper({
   currentJobId,
   closeAllModal,
   providersController,
+  isFullScreen = false,
 }) {
   const [user, setUser] = useState(null);
 
@@ -74,6 +75,7 @@ function UserSummaryBlockWrapper({
       user={user}
       currentJobId={currentJobId}
       closeAllModal={closeAllModal}
+      isFullScreen={isFullScreen}
     />
   );
 }
@@ -98,13 +100,15 @@ export default function ProvidersSection({
   };
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
+  const isShortProviderBlock = status !== 'store-waiting';
+
   // размеры (в веб-альбомной — компактнее и от высоты)
   const sizes = {
     font: isWebLandscape ? scaleByHeight(18, height) : RFValue(12),
     inputFont: isWebLandscape ? height * 0.014 : RFValue(10),
     padding: isWebLandscape ? height * 0.01 : RFValue(8),
     margin: isWebLandscape ? height * 0.012 : RFValue(10),
-    borderRadius: isWebLandscape ? height * 0.006 : RFValue(5),
+    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
     thumb: isWebLandscape ? height * 0.12 : RFValue(80),
     headerHeight: isWebLandscape ? height * 0.07 : RFPercentage(7),
     icon: isWebLandscape ? scaleByHeight(24, height) : RFValue(16),
@@ -120,13 +124,16 @@ export default function ProvidersSection({
     sectionMarginBottom: isWebLandscape
       ? scaleByHeight(30, height)
       : RFValue(15),
+    providerFullScreenPadding: isWebLandscape
+      ? scaleByHeight(20, height)
+      : RFValue(30),
   };
 
   // сетка 3×N для веб-альбомной
   const gridContainerStyleWeb = isWebLandscape
     ? {
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+        gridTemplateColumns: `repeat(${isShortProviderBlock ? 1 : 3}, minmax(0, 1fr))`,
         gridAutoRows: 'auto',
         gridColumnGap: sizes.horizontalGap || RFValue(8),
         gridRowGap: sizes.horizontalGap || RFValue(8),
@@ -201,18 +208,24 @@ export default function ProvidersSection({
             backgroundColor: themeController.current?.formInputBackground,
             maxHeight: isWebLandscape ? height * 0.25 : RFValue(200),
             overflow: 'hidden',
-            paddingHorizontal: sizes.containerPaddingHorizontal,
+            // paddingHorizontal: sizes.containerPaddingHorizontal,
             paddingVertical: sizes.containerPaddingVertical,
             borderRadius: sizes.borderRadius,
             marginBottom: sizes.sectionMarginBottom,
           },
-          isWebLandscape && { width: scaleByHeight(1040, height) },
+          isWebLandscape && { width: scaleByHeight(isShortProviderBlock ? 330 : 1040, height) },
         ]}
         key='providers'
       >
         <View>
           <View
-            style={[styleRow.header, isRTL && { flexDirection: 'row-reverse' }]}
+            style={[
+              styleRow.header,
+              isRTL && { flexDirection: 'row-reverse' },
+              {
+                paddingHorizontal: sizes.containerPaddingHorizontal,
+              },
+            ]}
           >
             <View
               style={[
@@ -305,8 +318,10 @@ export default function ProvidersSection({
                   styleRow.modalContainer,
                   {
                     backgroundColor: themeController.current?.backgroundColor,
-                    padding: sizes.padding,
-                    paddingTop: isWebLandscape ? height * 0.04 : RFValue(30),
+                    padding: sizes.providerFullScreenPadding,
+                    paddingTop: isWebLandscape
+                      ? scaleByHeight(30, height)
+                      : RFValue(30),
                     ...(isWebLandscape && {
                       width: width - sidebarWidth,
                       alignSelf: isRTL ? 'flex-start' : 'flex-end',
@@ -322,6 +337,10 @@ export default function ProvidersSection({
                       marginBottom: isWebLandscape
                         ? sizes.margin / 1.2
                         : RFValue(10),
+                      borderBottomColor:
+                        themeController.current?.formInputLabelColor,
+                      borderBottomWidth: 2,
+                      paddingBottom: sizes.padding / 2,
                     },
                   ]}
                 >
@@ -329,7 +348,7 @@ export default function ProvidersSection({
                     style={[
                       styleRow.modalTitle,
                       {
-                        fontSize: sizes.font * 1.1,
+                        fontSize: sizes.font * 1.2,
                         textAlign: isRTL ? 'right' : 'left',
                       },
                     ]}
@@ -379,7 +398,6 @@ const styleRow = StyleSheet.create({
   },
   modalTitle: {
     fontSize: RFValue(16),
-    fontWeight: 'bold',
   },
   // элемент сетки
   gridItem: {

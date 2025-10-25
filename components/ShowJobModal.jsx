@@ -61,7 +61,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
     thumb: isWebLandscape ? scaleByHeight(128, height) : RFValue(80),
     headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
     headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
-    icon: isWebLandscape ? height * 0.035 : RFValue(16),
+    icon: isWebLandscape ? scaleByHeight(24, height) : RFValue(16),
     horizontalGap: isWebLandscape ? width * 0.01 : 0,
     headerPaddingHorizontal: isWebLandscape
       ? scaleByHeight(7, height)
@@ -77,6 +77,9 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
     saveBtnWidth: isWebLandscape ? scaleByHeight(380, height) : RFValue(120),
     saveBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(40),
     saveBtnFont: isWebLandscape ? scaleByHeight(20, height) : RFValue(14),
+    underBtnTextMarginTop: isWebLandscape
+      ? scaleByHeight(14, height)
+      : RFValue(10),
   };
 
   const [newJobModalVisible, setNewJobModalVisible] = useState(false);
@@ -153,11 +156,12 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 {
                   backgroundColor:
                     themeController.current?.buttonColorPrimaryDefault,
-                  ...(isWebLandscape && {
-                    borderRadius: sizes.borderRadius,
-                  }),
+                  borderRadius: sizes.borderRadius,
                 },
-                isWebLandscape && { width: sizes.saveBtnWidth, height: sizes.saveBtnHeight}
+                isWebLandscape && {
+                  width: sizes.saveBtnWidth,
+                  height: sizes.saveBtnHeight,
+                },
               ]}
               onPress={() => setNewJobModalVisible(true)}
             >
@@ -178,11 +182,12 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 {
                   backgroundColor:
                     themeController.current?.buttonColorSecondaryDefault,
-                  ...(isWebLandscape && {
-                    borderRadius: sizes.borderRadius,
-                  }),
+                  borderRadius: sizes.borderRadius,
                 },
-                isWebLandscape && { width: sizes.saveBtnWidth, height: sizes.saveBtnHeight }
+                isWebLandscape && {
+                  width: sizes.saveBtnWidth,
+                  height: sizes.saveBtnHeight,
+                },
               ]}
               onPress={() => {
                 jobsController.actions
@@ -214,35 +219,65 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
         ];
       case 'store-done':
         return [
+          <View
+            style={
+              isWebLandscape && {
+                flexDirection: isRTL ? 'row-reverse' : 'row',
+                gap: scaleByHeight(21, height),
+              }
+            }
+            key='done-view-store'
+          >
           <ProvidersSection
             key='providers'
             styles={styles}
             currentJobInfo={currentJobInfo}
             status={status}
             closeAllModal={closeModal}
-          />,
+          />
           <View
             style={[
               styles.inputBlock,
-              { backgroundColor: themeController.current?.formInputBackground },
+                {
+                  backgroundColor: themeController.current?.formInputBackground,
+                  borderRadius: sizes.borderRadius,
+                },
+                isWebLandscape && {
+                  width: scaleByHeight(330, height),
+                  height: scaleByHeight(131, height),
+                },
             ]}
             key='provider-comments'
           >
-            <Text style={[styles.label, isRTL && { textAlign: 'right' }]}>
+            <Text style={[styles.label, 
+                    {
+                      fontSize: sizes.font,
+                      color: themeController.current?.unactiveTextColor,
+                    }, isRTL && { textAlign: 'right' }]}>
               {t('showJob.fields.providerComments', {
                 defaultValue: 'Provider comments',
               })}
             </Text>
             <TextInput
               value={currentJobInfo?.doneComment || ''}
+                placeholder={t('showJob.fields.commentsPlaceholder', {
+                  defaultValue: 'Comment on the completed work...',
+                })}
+                placeholderTextColor={
+                  themeController.current?.formInputPlaceholderColor
+                }
               style={[
                 styles.input,
-                { height: RFValue(70) },
+                { height: RFValue(70),
+                    color: themeController.current?.textColor,
+                    fontSize: sizes.inputFont, },
+                  isWebLandscape && { height: '100%', padding: 0 },
                 isRTL && { textAlign: 'right' },
               ]}
               multiline
               readOnly
             />
+          </View>
           </View>,
           !currentJobInfo?.isClosed && (
             <TouchableOpacity
@@ -252,10 +287,15 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 {
                   backgroundColor:
                     themeController.current?.buttonColorPrimaryDefault,
+                  borderRadius: sizes.borderRadius,
                   ...(isWebLandscape && {
                     paddingVertical: sizes.padding * 1.2,
                     borderRadius: sizes.borderRadius,
                   }),
+                },
+                isWebLandscape && {
+                  width: sizes.saveBtnWidth,
+                  height: sizes.saveBtnHeight,
                 },
               ]}
               onPress={() => jobsController.actions.confirmJob(currentJobId)}
@@ -264,8 +304,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 style={{
                   color: 'white',
                   textAlign: 'center',
-                  fontWeight: 'bold',
-                  ...(isWebLandscape && { fontSize: sizes.font }),
+                  ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
                 }}
               >
                 {t('showJob.buttons.confirmCompletion', {
@@ -285,22 +324,25 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   styles.createButton,
                   {
                     backgroundColor: 'transparent',
-                    borderColor: 'red',
-                    borderWidth: 1,
+                    backgroundColor:
+                      themeController.current?.buttonColorSecondaryDefault,
+                    borderRadius: sizes.borderRadius,
                     ...(isWebLandscape && {
                       paddingVertical: sizes.padding * 1.2,
-                      borderRadius: sizes.borderRadius,
                     }),
+                  },
+                  isWebLandscape && {
+                    width: sizes.saveBtnWidth,
+                    height: sizes.saveBtnHeight,
                   },
                 ]}
                 onPress={() => setCancelRequestModal(true)}
               >
                 <Text
                   style={{
-                    color: 'red',
+                    color: themeController.current?.buttonTextColorSecondary,
                     textAlign: 'center',
-                    fontWeight: 'bold',
-                    ...(isWebLandscape && { fontSize: sizes.font }),
+                    ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
                   }}
                 >
                   {t('showJob.buttons.cancelRequest', {
@@ -311,9 +353,14 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               <Text
                 style={[
                   styles.waitText,
-                  { color: themeController.current?.unactiveTextColor },
-                  isRTL && { textAlign: 'right' },
-                  isWebLandscape && { fontSize: sizes.inputFont },
+                  {
+                    color: themeController.current?.unactiveTextColor,
+                    marginTop: sizes.underBtnTextMarginTop,
+                  },
+                  isWebLandscape && {
+                    fontSize: sizes.inputFont,
+                    textAlign: isRTL ? 'right' : 'left',
+                  },
                 ]}
                 key='waitText'
               >
@@ -335,6 +382,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                     borderRadius: sizes.borderRadius,
                   }),
                 },
+                isWebLandscape && {
+                  width: sizes.saveBtnWidth,
+                  height: sizes.saveBtnHeight,
+                },
               ]}
               onPress={() => setConfirmInterestModal(true)}
             >
@@ -342,8 +393,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 style={{
                   color: 'white',
                   textAlign: 'center',
-                  fontWeight: 'bold',
-                  ...(isWebLandscape && { fontSize: sizes.font }),
+                  ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
                 }}
               >
                 {t('showJob.buttons.interested', {
@@ -363,22 +413,25 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   styles.createButton,
                   {
                     backgroundColor: 'transparent',
-                    borderColor: 'red',
-                    borderWidth: 1,
+                    backgroundColor:
+                      themeController.current?.buttonColorSecondaryDefault,
+                    borderRadius: sizes.borderRadius,
                     ...(isWebLandscape && {
                       paddingVertical: sizes.padding * 1.2,
-                      borderRadius: sizes.borderRadius,
                     }),
+                  },
+                  isWebLandscape && {
+                    width: sizes.saveBtnWidth,
+                    height: sizes.saveBtnHeight,
                   },
                 ]}
                 onPress={() => setCancelRequestModal(true)}
               >
                 <Text
                   style={{
-                    color: 'red',
+                    color: themeController.current?.buttonTextColorSecondary,
                     textAlign: 'center',
-                    fontWeight: 'bold',
-                    ...(isWebLandscape && { fontSize: sizes.font }),
+                    ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
                   }}
                 >
                   {t('showJob.buttons.cancelRequest', {
@@ -389,9 +442,15 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               <Text
                 style={[
                   styles.waitText,
-                  { color: themeController.current?.unactiveTextColor },
+                  {
+                    color: themeController.current?.unactiveTextColor,
+                    marginTop: sizes.underBtnTextMarginTop,
+                  },
                   isRTL && { textAlign: 'right' },
-                  isWebLandscape && { fontSize: sizes.inputFont },
+                  isWebLandscape && {
+                    fontSize: sizes.inputFont,
+                    textAlign: isRTL ? 'right' : 'left',
+                  },
                 ]}
                 key='waitText'
               >
@@ -408,10 +467,14 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 {
                   backgroundColor:
                     themeController.current?.buttonColorPrimaryDefault,
+                  borderRadius: sizes.borderRadius,
                   ...(isWebLandscape && {
                     paddingVertical: sizes.padding * 1.2,
-                    borderRadius: sizes.borderRadius,
                   }),
+                },
+                isWebLandscape && {
+                  width: sizes.saveBtnWidth,
+                  height: sizes.saveBtnHeight,
                 },
               ]}
               onPress={() => setConfirmInterestModal(true)}
@@ -420,8 +483,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 style={{
                   color: 'white',
                   textAlign: 'center',
-                  fontWeight: 'bold',
-                  ...(isWebLandscape && { fontSize: sizes.font }),
+                  ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
                 }}
               >
                 {t('showJob.buttons.interested', {
@@ -447,10 +509,14 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               {
                 backgroundColor:
                   themeController.current?.buttonColorPrimaryDefault,
+                borderRadius: sizes.borderRadius,
                 ...(isWebLandscape && {
                   paddingVertical: sizes.padding * 1.2,
-                  borderRadius: sizes.borderRadius,
                 }),
+              },
+              isWebLandscape && {
+                width: sizes.saveBtnWidth,
+                height: sizes.saveBtnHeight,
               },
             ]}
             onPress={() =>
@@ -463,8 +529,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               style={{
                 color: 'white',
                 textAlign: 'center',
-                fontWeight: 'bold',
-                ...(isWebLandscape && { fontSize: sizes.font }),
+                ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
               }}
             >
               {t('showJob.buttons.markCompleted', {
@@ -475,84 +540,123 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
         ];
       case 'jobs-done':
         return [
-          <ProvidersSection
-            key='providers'
-            styles={styles}
-            currentJobInfo={currentJobInfo}
-            status={status}
-            closeAllModal={closeModal}
-          />,
           <View
-            style={[
-              styles.inputBlock,
-              { backgroundColor: themeController.current?.formInputBackground },
-            ]}
-            key='provider-comments'
+            style={
+              isWebLandscape && {
+                flexDirection: isRTL ? 'row-reverse' : 'row',
+                gap: scaleByHeight(21, height),
+              }
+            }
+            key='done-view'
           >
+            <ProvidersSection
+              key='providers'
+              styles={styles}
+              currentJobInfo={currentJobInfo}
+              status={status}
+              closeAllModal={closeModal}
+            />
             <View
               style={[
-                styles.editableTitlePanel,
-                isRTL && { flexDirection: 'row-reverse' },
+                styles.inputBlock,
+                {
+                  backgroundColor: themeController.current?.formInputBackground,
+                  borderRadius: sizes.borderRadius,
+                },
+                isWebLandscape && {
+                  width: scaleByHeight(330, height),
+                  height: scaleByHeight(131, height),
+                },
               ]}
+              key='provider-comments'
             >
-              <Text style={[styles.label, isRTL && { textAlign: 'right' }]}>
-                {t('showJob.fields.myComments', {
-                  defaultValue: 'My comments',
-                })}
-              </Text>
-              {editableCommentState ? (
-                <View
+              <View
+                style={[
+                  styles.editableTitlePanel,
+                  isRTL && { flexDirection: 'row-reverse' },
+                ]}
+              >
+                <Text
                   style={[
-                    styles.editPanel,
-                    isRTL && { flexDirection: 'row-reverse' },
+                    styles.label,
+                    {
+                      fontSize: sizes.font,
+                      color: themeController.current?.unactiveTextColor,
+                    },
+                    isRTL && { textAlign: 'right' },
                   ]}
                 >
-                  <TouchableOpacity
-                    onPress={() => {
-                      setEditableCommentState(false);
-                      setEditableCommentValue(currentJobInfo?.doneComment);
-                    }}
+                  {t('showJob.fields.myComments', {
+                    defaultValue: 'My comments',
+                  })}
+                </Text>
+                {editableCommentState ? (
+                  <View
+                    style={[
+                      styles.editPanel,
+                      isRTL && { flexDirection: 'row-reverse' },
+                    ]}
                   >
-                    <MaterialIcons
-                      name='cancel'
-                      size={RFValue(18)}
+                    <TouchableOpacity
+                      onPress={() => {
+                        setEditableCommentState(false);
+                        setEditableCommentValue(currentJobInfo?.doneComment);
+                      }}
+                    >
+                      <MaterialIcons
+                        name='cancel'
+                        size={sizes.icon}
+                        color='#00000080'
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setEditableCommentState(false);
+                        // currentJobInfo.doneComment = editableCommentValue;
+                      }}
+                    >
+                      <MaterialIcons
+                        name='check-circle'
+                        size={sizes.icon}
+                        color='#00000080'
+                      />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => setEditableCommentState(true)}
+                  >
+                    <MaterialCommunityIcons
+                      name='pencil'
+                      size={sizes.icon}
                       color='#00000080'
                     />
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setEditableCommentState(false);
-                      // currentJobInfo.doneComment = editableCommentValue;
-                    }}
-                  >
-                    <MaterialIcons
-                      name='check-circle'
-                      size={RFValue(18)}
-                      color='#00000080'
-                    />
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <TouchableOpacity onPress={() => setEditableCommentState(true)}>
-                  <MaterialCommunityIcons
-                    name='pencil'
-                    size={RFValue(18)}
-                    color='#00000080'
-                  />
-                </TouchableOpacity>
-              )}
+                )}
+              </View>
+              <TextInput
+                value={editableCommentValue}
+                placeholder={t('showJob.fields.myCommentsPlaceholder', {
+                  defaultValue: 'Write a comment on the completed work...',
+                })}
+                placeholderTextColor={
+                  themeController.current?.formInputPlaceholderColor
+                }
+                style={[
+                  styles.input,
+                  {
+                    height: RFValue(70),
+                    color: themeController.current?.textColor,
+                    fontSize: sizes.inputFont,
+                  },
+                  isWebLandscape && { height: '100%', padding: 0 },
+                  isRTL && { textAlign: 'right' },
+                ]}
+                onChangeText={setEditableCommentValue}
+                multiline
+                readOnly={!editableCommentState}
+              />
             </View>
-            <TextInput
-              value={editableCommentValue}
-              style={[
-                styles.input,
-                { height: RFValue(70) },
-                isRTL && { textAlign: 'right' },
-              ]}
-              onChangeText={setEditableCommentValue}
-              multiline
-              readOnly={!editableCommentState}
-            />
           </View>,
         ];
       default:
@@ -741,7 +845,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: themeController.current?.backgroundColor,
-          paddingHorizontal: sizes.containerPaddingHorizontal,
+            paddingHorizontal: sizes.containerPaddingHorizontal,
           }}
         >
           <Text style={{ color: themeController.current?.unactiveTextColor }}>
@@ -753,19 +857,19 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
           style={{
             flex: 1,
             backgroundColor: themeController.current?.backgroundColor,
-          paddingHorizontal: sizes.containerPaddingHorizontal,
+            paddingHorizontal: sizes.containerPaddingHorizontal,
           }}
         >
           <View
             style={[
               styles.header,
               {
-              backgroundColor: themeController.current?.backgroundColor,
-              borderBottomColor:
-                themeController.current?.profileDefaultBackground,
-              height: sizes.headerHeight,
-              paddingHorizontal: sizes.headerPaddingHorizontal,
-              marginVertical: sizes.headerMargin,
+                backgroundColor: themeController.current?.backgroundColor,
+                borderBottomColor:
+                  themeController.current?.profileDefaultBackground,
+                height: sizes.headerHeight,
+                paddingHorizontal: sizes.headerPaddingHorizontal,
+                marginVertical: sizes.headerMargin,
               },
               isRTL && { flexDirection: 'row-reverse' },
             ]}
@@ -779,19 +883,19 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               <Image
                 source={icons.cross}
                 style={{
-                                  width: getResponsiveSize(
-                                    20,
-                                    scaleByHeight(24, height),
-                                    isLandscape
-                                  ),
-                                  height: getResponsiveSize(
-                                    20,
-                                    scaleByHeight(24, height),
-                                    isLandscape
-                                  ),
-                tintColor: themeController.current?.formInputLabelColor,
+                  width: getResponsiveSize(
+                    20,
+                    scaleByHeight(24, height),
+                    isLandscape
+                  ),
+                  height: getResponsiveSize(
+                    20,
+                    scaleByHeight(24, height),
+                    isLandscape
+                  ),
+                  tintColor: themeController.current?.formInputLabelColor,
                 }}
-              resizeMode='contain'
+                resizeMode='contain'
               />
             </TouchableOpacity>
             <Text
@@ -799,11 +903,11 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 styles.logo,
                 {
                   color: themeController.current?.primaryColor,
-                                  fontSize: getResponsiveSize(
-                                    18,
-                                    scaleByHeight(24, height),
-                                    isLandscape
-                                  ),
+                  fontSize: getResponsiveSize(
+                    18,
+                    scaleByHeight(24, height),
+                    isLandscape
+                  ),
                 },
               ]}
             >
@@ -818,17 +922,17 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               <Image
                 source={icons.history}
                 style={{
-                width: getResponsiveSize(
-                  20,
-                  scaleByHeight(24, height),
-                  isLandscape
-                ),
-                height: getResponsiveSize(
-                  20,
-                  scaleByHeight(24, height),
-                  isLandscape
-                ),
-                tintColor: themeController.current?.formInputLabelColor,
+                  width: getResponsiveSize(
+                    20,
+                    scaleByHeight(24, height),
+                    isLandscape
+                  ),
+                  height: getResponsiveSize(
+                    20,
+                    scaleByHeight(24, height),
+                    isLandscape
+                  ),
+                  tintColor: themeController.current?.formInputLabelColor,
                 }}
               />
             </TouchableOpacity>
@@ -1133,12 +1237,12 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                         {
                           fontSize: sizes.photosLabelSize,
                           marginBottom: sizes.photosLabelMarginBottom,
-                          color: themeController.current?.textColor
+                          color: themeController.current?.textColor,
                         },
                       ]}
                     >
-                      {t('showJob.fields.uploadingPhotos', {
-                        defaultValue: 'Uploading photos',
+                      {t('showJob.fields.photos', {
+                        defaultValue: 'Photos',
                       })}
                     </Text>
                     <View
@@ -1299,7 +1403,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   style={{ marginTop: sizes.margin, gap: sizes.margin / 2 }}
                 >
                   {extraUiByStatus(status).map((node, idx) => (
-                    <View key={`extra-${idx}`} >{node}</View>
+                    <View key={`extra-${idx}`}>{node}</View>
                   ))}
                 </View>
               </ScrollView>
