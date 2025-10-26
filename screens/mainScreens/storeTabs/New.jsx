@@ -32,6 +32,7 @@ export default function NewScreen({
   // const [activeKey, setActiveKey] = useState(null);
 
   const [likes, setLikes] = useState([]);
+
   return (
     <>
       <View

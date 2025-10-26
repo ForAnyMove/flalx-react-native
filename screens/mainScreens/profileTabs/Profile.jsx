@@ -24,7 +24,11 @@ export default function Profile() {
   const { user, themeController, languageController, session } =
     useComponentContext();
   const [userState, setUserState] = useState(user.current || {});
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [acceptModalVisible, setAcceptModalVisible] = useState(false);
+  const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
+  const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
+    () => {}
+  );
   const [pickerVisible, setPickerVisible] = useState(false);
   const { height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
@@ -51,8 +55,8 @@ export default function Profile() {
     avatarSize: isWebLandscape ? scaleByHeight(114, height) : avatarSize,
     btnPadding: isWebLandscape ? height * 0.0144 : btnPadding,
     btnMargin: isWebLandscape ? height * 0 : RFValue(12),
-    btnFont: isWebLandscape ? height * 0.017 : btnFont,
-    bthHeight: isWebLandscape ? scaleByHeight(64, height) : RFValue(64),
+    btnFont: isWebLandscape ? scaleByHeight(20, height) : btnFont,
+    btnHeight: isWebLandscape ? scaleByHeight(64, height) : RFValue(64),
     btnWidth: isWebLandscape ? '32%' : btnWidth,
     fieldFont: isWebLandscape ? height * 0.0145 : fieldFont,
     fieldPadding: isWebLandscape ? height * 0.009 : fieldPadding,
@@ -60,8 +64,24 @@ export default function Profile() {
     containerPaddingH: isWebLandscape ? height * 0.02 : containerPaddingH,
     containerPaddingV: isWebLandscape ? height * 0.01 : containerPaddingV,
     containerWidth: isWebLandscape ? '100%' : containerWidth,
-    iconSize: isWebLandscape ? RFValue(8) : iconSize,
+    iconSize: isWebLandscape ? scaleByHeight(24, height) : iconSize,
     paddingVertical: isWebLandscape ? height * 0.005 : RFPercentage(2),
+    modalWidth: isWebLandscape ? scaleByHeight(450, height) : '80%',
+    modalHeight: isWebLandscape ? scaleByHeight(230, height) : '60%',
+    modalFont: isWebLandscape ? scaleByHeight(24, height) : baseFont,
+    modalTextMarginBottom: isWebLandscape
+      ? scaleByHeight(32, height)
+      : RFValue(12),
+    modalBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(50),
+    modalBtnWidth: isWebLandscape ? scaleByHeight(153, height) : '40%',
+    modalBtnFont: isWebLandscape ? scaleByHeight(20, height) : baseFont,
+    modalBtnBorderRadius: isWebLandscape ? 8 : RFValue(6),
+    modalBtnsGap: isWebLandscape ? scaleByHeight(24, height) : RFValue(12),
+    modalPadding: isWebLandscape ? scaleByHeight(32, height) : RFValue(16),
+    modalLineHeight: isWebLandscape ? scaleByHeight(32, height) : 1,
+    modalCloseBtnTopRightPosition: isWebLandscape
+      ? scaleByHeight(7, height)
+      : RFValue(5),
   };
 
   // Функция загрузки и обновления аватара
@@ -110,7 +130,7 @@ export default function Profile() {
                 themeController.current?.profileDefaultBackground,
               height: isWebLandscape ? height * 0.3 : RFPercentage(30),
               marginBottom: isWebLandscape ? height * 0.01 : RFValue(12),
-              borderRadius: isWebLandscape ? RFValue(5) : RFValue(10),
+              borderRadius: isWebLandscape ? 10 : RFValue(10),
             },
           ]}
         >
@@ -190,7 +210,7 @@ export default function Profile() {
               }}
               baseFont={sizes.fieldFont}
               fieldPadding={sizes.fieldPadding}
-              bthHeight={sizes.bthHeight}
+              btnHeight={sizes.btnHeight}
               fieldMargin={sizes.fieldMargin}
               iconSize={sizes.iconSize}
               isLandscape={isLandscape}
@@ -228,11 +248,11 @@ export default function Profile() {
                   backgroundColor:
                     themeController.current?.buttonColorPrimaryDefault,
                   [isWebLandscape ? 'height' : 'padding']: isWebLandscape
-                    ? sizes.bthHeight
+                    ? sizes.btnHeight
                     : sizes.btnPadding,
                   marginBottom: sizes.btnMargin,
                   width: sizes.btnWidth,
-                  borderRadius: isWebLandscape ? RFValue(3) : RFValue(5),
+                  borderRadius: isWebLandscape ? 8 : RFValue(5),
                 },
               ]}
             >
@@ -290,7 +310,16 @@ export default function Profile() {
               color: themeController.current?.buttonColorSecondaryDefault,
               border: themeController.current?.buttonColorSecondaryDefault,
               onPress: () => {
-                session.signOut();
+                setAcceptModalVisible(true);
+                setAcceptModalVisibleTitle(t('my_profile.confirm_logout'));
+                setAcceptModalVisibleFunc(() => async () => {
+                  try {
+                    await session.signOut();
+                  } catch (err) {
+                    console.error('Ошибка выхода из системы:', err.message);
+                  }
+                  setAcceptModalVisible(false);
+                });
               },
             },
             {
@@ -312,11 +341,11 @@ export default function Profile() {
                   backgroundColor: btn.bg,
                   borderColor: btn.border,
                   [isWebLandscape ? 'height' : 'padding']: isWebLandscape
-                    ? sizes.bthHeight
+                    ? sizes.btnHeight
                     : sizes.btnPadding,
                   marginBottom: sizes.btnMargin,
                   width: sizes.btnWidth,
-                  borderRadius: isWebLandscape ? RFValue(3) : RFValue(5),
+                  borderRadius: isWebLandscape ? 8 : RFValue(5),
                 },
               ]}
             >
@@ -351,14 +380,25 @@ export default function Profile() {
                 borderColor:
                   themeController.current?.buttonColorSecondaryDefault,
                 [isWebLandscape ? 'height' : 'padding']: isWebLandscape
-                  ? sizes.bthHeight
+                  ? sizes.btnHeight
                   : sizes.btnPadding,
                 marginBottom: sizes.btnMargin,
                 width: sizes.btnWidth,
-                borderRadius: isWebLandscape ? RFValue(3) : RFValue(5),
+                borderRadius: isWebLandscape ? 8 : RFValue(5),
               },
             ]}
-            onPress={() => setDeleteModalVisible(true)}
+            onPress={() => {
+              setAcceptModalVisible(true);
+              setAcceptModalVisibleTitle(t('my_profile.confirm_delete'));
+              setAcceptModalVisibleFunc(() => async () => {
+                try {
+                  await user.delete();
+                } catch (err) {
+                  console.error('Ошибка удаления:', err.message);
+                }
+                setAcceptModalVisible(false);
+              });
+            }}
           >
             <Text
               style={[
@@ -375,29 +415,61 @@ export default function Profile() {
         </View>
       </View>
 
-      {/* Modal подтверждения удаления */}
-      <Modal visible={deleteModalVisible} transparent animationType='fade'>
+      {/* Modal подтверждения */}
+      <Modal visible={acceptModalVisible} transparent animationType='fade'>
         <View style={styles.modalOverlay}>
           <View
             style={[
               styles.modalCard,
-              { backgroundColor: themeController.current?.backgroundColor },
+              {
+                backgroundColor: themeController.current?.backgroundColor,
+                width: sizes.modalWidth,
+                padding: sizes.modalPadding,
+                borderRadius: sizes.modalBtnBorderRadius,
+              },
+              isWebLandscape && { height: sizes.modalHeight },
             ]}
           >
-            <Text
-              style={{
-                fontSize: sizes.baseFont,
-                marginBottom: RFValue(12),
-                textAlign: 'center',
-                color: themeController.current?.textColor,
-              }}
+            <TouchableOpacity
+              style={[
+                {
+                  position: 'absolute',
+                  top: sizes.modalCloseBtnTopRightPosition,
+                  right: sizes.modalCloseBtnTopRightPosition,
+                },
+              ]}
+              onPress={() => setAcceptModalVisible(false)}
             >
-              {t('my_profile.confirm_delete')}
+              <Image
+                source={icons.cross}
+                style={{
+                  width: sizes.iconSize,
+                  height: sizes.iconSize,
+                  tintColor: themeController.current?.textColor,
+                }}
+              />
+            </TouchableOpacity>
+            <Text
+              style={[
+                styles.modalText,
+                {
+                  fontSize: sizes.modalFont,
+                  marginBottom: sizes.modalTextMarginBottom,
+                  textAlign: 'center',
+                  color: themeController.current?.textColor,
+                  lineHeight: sizes.modalLineHeight,
+                },
+              ]}
+            >
+              {acceptModalVisibleTitle}
             </Text>
             <View
               style={[
                 styles.modalButtonsRow,
-                { flexDirection: isRTL ? 'row-reverse' : 'row' },
+                {
+                  flexDirection: isRTL ? 'row-reverse' : 'row',
+                  gap: sizes.modalBtnsGap,
+                },
               ]}
             >
               <TouchableOpacity
@@ -406,24 +478,20 @@ export default function Profile() {
                   {
                     backgroundColor:
                       themeController.current?.buttonColorPrimaryDefault,
+                    height: sizes.modalBtnHeight,
+                    width: sizes.modalBtnWidth,
+                    borderRadius: sizes.modalBtnBorderRadius,
                   },
                 ]}
-                onPress={async () => {
-                  try {
-                    await user.delete();
-                  } catch (err) {
-                    console.error('Ошибка удаления:', err.message);
-                  }
-                  setDeleteModalVisible(false);
-                }}
+                onPress={() => setAcceptModalVisible(false)}
               >
                 <Text
                   style={{
                     color: themeController.current?.buttonTextColorPrimary,
-                    fontWeight: '600',
+                    fontSize: sizes.modalBtnFont,
                   }}
                 >
-                  {t('common.yes')}
+                  {t('common.no')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -431,18 +499,24 @@ export default function Profile() {
                   styles.modalBtn,
                   {
                     backgroundColor:
+                      themeController.current?.buttonTextColorPrimary,
+                    height: sizes.modalBtnHeight,
+                    width: sizes.modalBtnWidth,
+                    borderRadius: sizes.modalBtnBorderRadius,
+                    borderWidth: 1,
+                    borderColor:
                       themeController.current?.buttonColorPrimaryDefault,
                   },
                 ]}
-                onPress={() => setDeleteModalVisible(false)}
+                onPress={() => acceptModalVisibleFunc()}
               >
                 <Text
                   style={{
-                    color: themeController.current?.buttonTextColorPrimary,
-                    fontWeight: '600',
+                    color: themeController.current?.buttonColorPrimaryDefault,
+                    fontSize: sizes.modalBtnFont,
                   }}
                 >
-                  {t('common.no')}
+                  {t('common.yes')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -474,7 +548,7 @@ function InfoField({
   fieldMargin,
   iconSize,
   isLandscape,
-  bthHeight,
+  btnHeight,
 }) {
   const { themeController } = useComponentContext();
   const [editMode, setEditMode] = useState(false);
@@ -487,13 +561,10 @@ function InfoField({
         {
           width: Platform.OS === 'web' && isLandscape ? '32%' : '100%',
           [Platform.OS === 'web' && isLandscape ? 'height' : 'paddingVertical']:
-            Platform.OS === 'web' && isLandscape ? bthHeight : fieldPadding,
+            Platform.OS === 'web' && isLandscape ? btnHeight : fieldPadding,
           marginBottom: fieldMargin,
-          backgroundColor: editMode
-            ? themeController.current?.formInputBackgroundEditMode
-            : themeController.current?.formInputBackground,
-          borderRadius:
-            Platform.OS === 'web' && isLandscape ? RFValue(3) : RFValue(5),
+          backgroundColor: themeController.current?.formInputBackground,
+          borderRadius: Platform.OS === 'web' && isLandscape ? 8 : RFValue(5),
           paddingHorizontal:
             Platform.OS === 'web' && isLandscape ? RFValue(8) : RFValue(14),
         },
@@ -628,14 +699,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: RFValue(12),
   },
-  primaryText: { fontWeight: 'bold' },
+  primaryText: {
+    // fontWeight: 'bold'
+  },
   secondaryBtn: {
     borderRadius: RFValue(5),
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: RFValue(12),
   },
-  secondaryText: { fontWeight: 'bold' },
+  secondaryText: {
+    // fontWeight: 'bold'
+  },
   primaryReverseBtn: {
     borderRadius: RFValue(5),
     alignItems: 'center',
@@ -651,7 +726,11 @@ const styles = StyleSheet.create({
     marginBottom: RFValue(12),
   },
   profileInfoLabel: { fontWeight: 'bold', marginBottom: RFValue(4) },
-  profileInfoText: { width: '100%' },
+  profileInfoText: {
+    width: '100%',
+    fontFamily: 'Rubik-Medium',
+    fontWeight: '500',
+  },
   editPanel: { flexDirection: 'row', gap: RFValue(5) },
   modalOverlay: {
     flex: 1,
@@ -659,13 +738,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  modalCard: { width: '80%', borderRadius: RFValue(8), padding: RFValue(16) },
-  modalButtonsRow: { justifyContent: 'space-around', marginTop: RFValue(12) },
+  modalCard: { width: '80%', position: 'relative' },
+  modalButtonsRow: { justifyContent: 'center' },
   modalBtn: {
-    flex: 1,
-    marginHorizontal: RFValue(6),
-    padding: RFValue(10),
-    borderRadius: RFValue(6),
     alignItems: 'center',
+    justifyContent: 'center',
+    boxSizing: 'border-box',
+  },
+  modalText: {
+    fontFamily: 'Rubik-Bold',
   },
 });

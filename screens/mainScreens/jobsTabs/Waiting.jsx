@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-// import JobTypeSelector from '../../../components/JobTypeSelector';
+import JobTypeSelector from '../../../components/JobTypeSelector';
 import { RFValue } from 'react-native-responsive-fontsize';
 import SearchPanel from '../../../components/SearchPanel';
 import { useComponentContext } from '../../../context/globalAppContext';
@@ -51,6 +51,11 @@ export default function WaitingScreen({
       : RFValue(8),
     personalMarkerFontSize: isWebLandscape ? height * 0.015 : RFValue(10),
   };
+
+  const filteredJobsList = jobsController.executor.waiting.filter((job) =>
+    filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
+  );
+
   return (
     <View
       style={[
@@ -61,15 +66,18 @@ export default function WaitingScreen({
         },
       ]}
     >
-      <View>
+      {/* <View>
         <SearchPanel
           searchValue={searchValue}
           setSearchValue={setSearchValue}
         />
-      </View>
-      {/* <View>
-        <JobTypeSelector selectedTypes={filteredJobs} setSelectedTypes={setFilteredJobs} />
       </View> */}
+      <View>
+        <JobTypeSelector
+          selectedTypes={filteredJobs}
+          setSelectedTypes={setFilteredJobs}
+        />
+      </View>
       {jobsController.loading.any ? (
         <Text>Loading...</Text>
       ) : jobsController.error ? (
@@ -81,7 +89,7 @@ export default function WaitingScreen({
             { width: sizes.scrollContainerWidth },
           ]}
         >
-          {jobsController.executor.waiting.map((job, index) => {
+          {filteredJobsList.map((job, index) => {
             const hasImage = job.images && job.images.length > 0;
             return (
               <TouchableOpacity

@@ -29,10 +29,15 @@ export default function Header({ switchToProfile }) {
   const sizes = {
     headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
     headerPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(9, height)
+      : RFValue(3),
+    headerMarginHorizontal: isWebLandscape
       ? scaleByHeight(31, height)
       : RFValue(3),
     headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
+    borderBottomWidth: isWebLandscape ? scaleByHeight(2, height) : 1,
   };
+
   return (
     <View
       style={[
@@ -41,8 +46,10 @@ export default function Header({ switchToProfile }) {
           backgroundColor: themeController.current?.backgroundColor,
           borderBottomColor: themeController.current?.profileDefaultBackground,
           height: sizes.headerHeight,
+          marginHorizontal: sizes.headerMarginHorizontal,
           paddingHorizontal: sizes.headerPaddingHorizontal,
           marginTop: sizes.headerMargin,
+          borderBottomWidth: sizes.borderBottomWidth,
         },
         isRTL && { flexDirection: 'row-reverse' },
       ]}
@@ -93,7 +100,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: RFValue(12),
+    // paddingHorizontal: RFValue(12),
   },
   logoText: {
     textTransform: 'uppercase',

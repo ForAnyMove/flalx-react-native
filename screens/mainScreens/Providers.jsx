@@ -64,7 +64,7 @@ export default function Providers() {
         <ScrollView
           contentContainerStyle={{
             flexDirection: isWebLandscape ? 'row' : 'column',
-            columnGap: isWebLandscape ? '2%' : 0,
+            columnGap: isWebLandscape ? scaleByHeight(23, height) : 0,
             rowGap: isWebLandscape ? scaleByHeight(23, height) : RFValue(10),
             flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
             justifyContent: isWebLandscape

@@ -111,7 +111,7 @@ export default function NewJobTemplateCard({
       >
         {t(`common.readMore`)}
       </Text>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         onPress={switchLikeStatus}
         style={[
           styles.likeIcon,
@@ -125,7 +125,7 @@ export default function NewJobTemplateCard({
           }}
           resizeMode='cover'
         />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 }
