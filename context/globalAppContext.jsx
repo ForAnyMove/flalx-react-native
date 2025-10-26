@@ -9,7 +9,7 @@ import languageManager from '../managers/languageManager';
 import tabsManager from '../managers/tabsManager';
 import jobsManager from '../managers/jobsManager';
 import providersManager from '../managers/providersManager';
-import { View, Text } from 'react-native-web';
+import { View, ActivityIndicator } from 'react-native';
 
 const ComponentContext = createContext();
 
@@ -35,7 +35,7 @@ const profileTabsList = ['profile', 'professions', 'settings'];
 
 export const ComponentProvider = ({ children }) => {
   const themeController = themeManager();
-  const { session, user } = sessionManager();
+  const { session, user, subscription, usersReveal } = sessionManager();
   const languageController = languageManager();
   const appTabController = tabsManager({ name: 'app', defaultTab: appTabsList[0], list: appTabsList });
   const profileTabController = tabsManager({ name: 'profile', defaultTab: profileTabsList[0], list: profileTabsList });
@@ -57,6 +57,8 @@ export const ComponentProvider = ({ children }) => {
         themeController,
         session,
         user,
+        subscription,
+        usersReveal,
         languageController,
         appTabController,
         profileTabController,
@@ -74,44 +76,11 @@ export const ComponentProvider = ({ children }) => {
             backgroundColor: 'rgba(0,0,0,0.3)',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 9999,
+            zIndex: 10000,
           }}
           pointerEvents="auto"
         >
-          <View
-            style={{
-              padding: 24,
-              backgroundColor: '#fff',
-              borderRadius: 8,
-              elevation: 8,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.15,
-              shadowRadius: 8,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <View
-              style={{
-                width: 40,
-                height: 40,
-                borderWidth: 4,
-                borderColor: '#3498db',
-                borderTopColor: 'transparent',
-                borderRadius: 20,
-                marginBottom: 8,
-                animationKeyframes: [
-                  { transform: [{ rotate: '0deg' }] },
-                  { transform: [{ rotate: '360deg' }] }
-                ],
-                animationDuration: '1s',
-                animationIterationCount: 'infinite',
-                animationTimingFunction: 'linear'
-              }}
-            />
-            <Text>Loading...</Text>
-          </View>
+          <ActivityIndicator size="large" color="#ffffff" />
         </View>
       )}
     </ComponentContext.Provider>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Image,
   Modal,
@@ -20,10 +20,12 @@ import { useWindowInfo } from '../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import CommentsSection from './CommentsSection';
 import { scaleByHeight } from '../utils/resizeFuncs';
+import { useWebView } from '../context/webViewContext';
 
 const ProviderSummaryBlock = ({ user, chooseUser }) => {
   const { t } = useTranslation();
-  const { themeController, languageController } = useComponentContext();
+  const { themeController, languageController, usersReveal, setAppLoading } = useComponentContext();
+  const { openWebView } = useWebView();
   const { height, isLandscape, width, sidebarWidth } = useWindowInfo();
   const isRTL = languageController.isRTL;
 
@@ -88,6 +90,21 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
     email,
     phoneNumber,
   } = user;
+
+  const handleUserRevealTry = async () => {
+    try {
+      setAppLoading(true);
+
+      const result = await usersReveal.tryReveal(user.id);
+      if (result.paymentUrl) {
+        openWebView(result.paymentUrl);
+      }
+
+      setAppLoading(false);
+    } catch (error) {
+      console.error("Error revealing user:", error);
+    }
+  }
 
   return (
     <>
@@ -481,7 +498,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                       >
                         {t('profile.contact_info')}
                       </Text>
-                      {!showContactInfo ? (
+                      {!usersReveal.contains(user.id) ? (
                         <TouchableOpacity
                           style={[
                             styles.primaryBtn,
@@ -498,7 +515,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                                 sizes.unlockContactBtnPaddingHorizontal,
                             },
                           ]}
-                          onPress={() => setShowContactInfo(true)}
+                          onPress={handleUserRevealTry}
                         >
                           <Text
                             style={{

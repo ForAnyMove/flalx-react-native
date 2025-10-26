@@ -342,11 +342,12 @@ async function createNewJob(jobData, session, openWebView, updateJobsList) {
 }
 
 // варианты статусов и цены
-const STATUS_OPTIONS = [
-  { key: 'normal', i18n: 'default', price: 0.99 },
-  { key: 'top', i18n: 'top', price: 4.99 },
-  // { key: 'verified', i18n: 'verified', price: 2.99 },
-];
+const STATUS_OPTIONS = {
+  normal: { i18n: 'default', default: 'Default' },
+  top: { i18n: 'top', default: 'Top' },
+  quick: { i18n: 'quick', default: 'Quickly' },
+  pro: { i18n: 'pro', default: 'for Pro users' },
+};
 
 export default function NewJobModal({
   activeKey = '',
@@ -425,9 +426,9 @@ export default function NewJobModal({
   const [endDateTime, setEndDateTime] = useState(
     initialJob?.endDateTime || null
   );
-  const [jobType, setJobType] = useState('default');
+  const [jobType, setJobType] = useState('normal');
   const selectedOption =
-    STATUS_OPTIONS.find((o) => o.key === jobType) || STATUS_OPTIONS[0];
+    jobsController.products.find((o) => o.type === jobType) || jobsController.products[0];
 
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [plansModalVisible, setPlansModalVisible] = useState(false);
@@ -2174,12 +2175,13 @@ export default function NewJobModal({
                     marginBottom: sizes.modalPadding,
                   }}
                 >
-                  {STATUS_OPTIONS.map((opt) => {
-                    const active = jobType === opt.key;
+                  {jobsController.products.map((opt) => {
+                    const productType = opt.type;
+                    const active = jobType === productType;
                     return (
                       <TouchableOpacity
-                        key={opt.key}
-                        onPress={() => setJobType(opt.key)}
+                        key={productType}
+                        onPress={() => setJobType(productType)}
                         style={[
                           styles.chip,
                           {
@@ -2210,13 +2212,8 @@ export default function NewJobModal({
                             marginHorizontal: RFValue(2),
                           }}
                         >
-                          {t(`newJob.statusModal.option.${opt.i18n}`, {
-                            defaultValue:
-                              opt.key === 'default'
-                                ? 'Default'
-                                : opt.key === 'top'
-                                  ? 'Top'
-                                  : 'Verified',
+                          {t(`newJob.statusModal.option.${STATUS_OPTIONS[productType].i18n}`, {
+                            defaultValue: STATUS_OPTIONS[productType].default,
                           })}
                         </Text>
 

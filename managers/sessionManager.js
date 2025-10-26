@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './../utils/supabase/supabase';
 import { API_BASE_URL } from '../utils/config';
+import { getRevealedUsers, revealUser } from '../src/api/users';
 
 // ⚠️ Замени этот IP на свой (или 10.0.2.2 для Android эмулятора)
 // const SERVER_URL =
@@ -11,6 +12,8 @@ import { API_BASE_URL } from '../utils/config';
 export default function sessionManager() {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
+  const [subscription, setSubscription] = useState(null);
+  const [revealedUsers, setRevealedUsers] = useState([]); // для хранения ID пользователей с раскрытыми контактами
   const [email, setEmail] = useState(null); // для verifyOtp
 
   // Загружаем сессию при старте
@@ -47,6 +50,7 @@ export default function sessionManager() {
 
         // Загружаем профиль пользователя
         await fetchUserProfile(parsed.access_token);
+        await refreshRevealedUsers({ token: { access_token: parsed.access_token }, serverURL: API_BASE_URL });
       }
     } catch (e) {
       console.error('Ошибка загрузки сессии:', e);
@@ -103,6 +107,7 @@ export default function sessionManager() {
 
       // Загружаем профиль пользователя
       await fetchUserProfile(data.session.access_token);
+      await refreshRevealedUsers(data.session);
     }
   }
 
@@ -119,9 +124,13 @@ export default function sessionManager() {
         throw new Error('Ошибка загрузки профиля');
       }
 
-      const profile = await res.json();
+      const { profile, subscription } = await res.json();
       console.log('Профиль пользователя:', profile);
+      console.log('Подписка пользователя:', subscription);
+
       setUser(profile);
+      setSubscription(subscription);
+
     } catch (err) {
       // console.error('Ошибка запроса профиля:', err.message);
     }
@@ -184,6 +193,43 @@ export default function sessionManager() {
     }
   }
 
+  function isHasSubscription() {
+    if (!subscription) return false;
+
+    const currentDate = new Date();
+    const expiryDate = new Date(subscription.expiry);
+    return expiryDate > currentDate;
+  }
+
+  async function refreshRevealedUsers(sessionProps = null) {
+    try {
+      const revealed = await getRevealedUsers(sessionProps || session);
+      setRevealedUsers(revealed.map((user) => user.id));
+    }
+    catch (error) {
+      console.error('Error refreshing revealed users:', error);
+    }
+  }
+
+  // Reveal user contacts
+  async function tryReveal(userId) {
+    if (revealedUsers.includes(userId)) {
+      return;
+    }
+
+    try {
+      const data = await revealUser(userId, { token: { access_token: session.access_token }, serverURL: API_BASE_URL });
+      if (data.user) {
+        setRevealedUsers((prev) => [...prev, userId]);
+        return { user: data.user };
+      } else if (data.paymentUrl) {
+        return { paymentUrl: data.paymentUrl };
+      }
+    } catch (error) {
+      console.error('Error revealing user contacts:', error);
+    }
+  }
+
   useEffect(() => {
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -214,5 +260,19 @@ export default function sessionManager() {
       update: updateUser,
       delete: deleteUser,
     },
-  };
+    subscription: {
+      current: subscription,
+      isActive: isHasSubscription(),
+    },
+    usersReveal: {
+      list: revealedUsers,
+      contains: (userId) => subscription != null || revealedUsers.includes(userId),
+      tryReveal,
+      refresh: refreshRevealedUsers,
+      appendRevealed: (userId) => {
+        if (revealedUsers.includes(userId)) return;
+        setRevealedUsers((prev) => [...prev, userId]);
+      },
+    }
+  }
 }

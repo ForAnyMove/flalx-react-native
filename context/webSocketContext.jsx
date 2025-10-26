@@ -7,7 +7,7 @@ const WebSocketContext = createContext();
 export const useWebSocket = () => useContext(WebSocketContext);
 
 export const WebSocketProvider = ({ children }) => {
-    const { session, user } = useComponentContext();
+    const { session, user, usersReveal, providersController } = useComponentContext();
     const { jobsController } = useComponentContext();
 
     const wsRef = useRef(null);
@@ -39,6 +39,12 @@ export const WebSocketProvider = ({ children }) => {
                 console.log("Job payment successful:", message.type);
 
                 jobsController.reloadCreator();
+                break;
+            case "USER_INFO_PAYMENT_SUCCESS":
+                if (message.userId) usersReveal.appendRevealed(message.userId);
+                else usersReveal.refresh();
+
+                providersController.reload();
                 break;
             default:
                 break;

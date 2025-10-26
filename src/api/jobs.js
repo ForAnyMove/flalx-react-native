@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { openURL } from 'expo-linking';
 
 async function createJob(jobData, session) {
     try {
@@ -87,4 +86,35 @@ async function checkHasPendingJob(session) {
     }
 }
 
-export { createJob, checkHasPendingJob };
+async function getJobProducts(session) {
+    try {
+        const token = session?.token?.access_token;
+        const url = session?.serverURL || 'http://localhost:3000';
+
+        if (!token) {
+            throw new Error('No valid session token found');
+        }
+
+        if (!url) {
+            throw new Error('No valid server URL found in session');
+        }
+
+        const headers = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+        };
+
+        const response = await axios.get(`${url}/api/jobs/products`, { headers });
+
+        if (response.status === 200) {
+            return response.data.products;
+        } else {
+            throw new Error('Failed to fetch job products');
+        }
+    } catch (error) {
+        console.error('Error fetching job products:', error);
+        throw error;
+    }
+}
+
+export { createJob, checkHasPendingJob, getJobProducts };

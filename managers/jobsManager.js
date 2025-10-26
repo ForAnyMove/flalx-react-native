@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { getJobProducts } from "../src/api/jobs";
 
 /**
  * jobsManager — агрегирует все списки заявок для вкладок:
@@ -14,6 +15,7 @@ export default function jobsManager({ session, user }) {
   const [creatorWaiting, setCreatorWaiting] = useState([]);
   const [creatorInProgress, setCreatorInProgress] = useState([]);
   const [creatorDone, setCreatorDone] = useState([]);
+  const [products, setProducts] = useState([]);
 
   const [execNew, setExecNew] = useState([]);
   const [execWaiting, setExecWaiting] = useState([]);
@@ -82,6 +84,10 @@ export default function jobsManager({ session, user }) {
     return safeFetch(`${serverURL}/jobs/as-executor/done`, { headers: authHeaders });
   }
 
+  async function loadJobProducts() {
+    return getJobProducts(session);
+  }
+
   // ------- публичные методы -------
 
   async function reloadCreator() {
@@ -89,15 +95,17 @@ export default function jobsManager({ session, user }) {
     setLoadingCreator(true);
     setError(null);
     try {
-      const [waiting, inProgress, done] = await Promise.all([
+      const [waiting, inProgress, done, products] = await Promise.all([
         loadCreatorWaiting(),
         loadCreatorInProgress(),
         loadCreatorDone(),
+        loadJobProducts(),
       ]);
       if (!alive.current) return;
       setCreatorWaiting(waiting);
       setCreatorInProgress(inProgress);
       setCreatorDone(done);
+      setProducts(products);
     } catch (e) {
       if (!alive.current) return;
       setError(e.message || "Creator lists load error");
@@ -240,6 +248,7 @@ export default function jobsManager({ session, user }) {
       addProvider,
       removeProvider,
       getJobById
-    }
+    },
+    products
   };
 }
