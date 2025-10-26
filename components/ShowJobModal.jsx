@@ -57,11 +57,12 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
       ? scaleByHeight(10, height)
       : RFValue(6),
     margin: isWebLandscape ? scaleByHeight(18, height) : RFValue(10),
-    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
+    borderRadius: isWebLandscape ? 8 : RFValue(5),
     thumb: isWebLandscape ? scaleByHeight(128, height) : RFValue(80),
     headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
     headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
     icon: isWebLandscape ? scaleByHeight(24, height) : RFValue(16),
+    iconSize: isWebLandscape ? scaleByHeight(24, height) : iconSize,
     horizontalGap: isWebLandscape ? width * 0.01 : 0,
     headerPaddingHorizontal: isWebLandscape
       ? scaleByHeight(7, height)
@@ -80,6 +81,22 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
     underBtnTextMarginTop: isWebLandscape
       ? scaleByHeight(14, height)
       : RFValue(10),
+    modalWidth: isWebLandscape ? scaleByHeight(450, height) : '80%',
+    modalHeight: isWebLandscape ? scaleByHeight(230, height) : '60%',
+    modalFont: isWebLandscape ? scaleByHeight(24, height) : baseFont,
+    modalTextMarginBottom: isWebLandscape
+      ? scaleByHeight(32, height)
+      : RFValue(12),
+    modalBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(50),
+    modalBtnWidth: isWebLandscape ? scaleByHeight(153, height) : '40%',
+    modalBtnFont: isWebLandscape ? scaleByHeight(20, height) : baseFont,
+    modalBtnBorderRadius: isWebLandscape ? 8 : RFValue(6),
+    modalBtnsGap: isWebLandscape ? scaleByHeight(24, height) : RFValue(12),
+    modalPadding: isWebLandscape ? scaleByHeight(32, height) : RFValue(16),
+    modalLineHeight: isWebLandscape ? scaleByHeight(32, height) : 1,
+    modalCloseBtnTopRightPosition: isWebLandscape
+      ? scaleByHeight(7, height)
+      : RFValue(5),
   };
 
   const [newJobModalVisible, setNewJobModalVisible] = useState(false);
@@ -91,6 +108,12 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
   const [showConfirmInterestModal, setConfirmInterestModal] = useState(false);
 
   const [showHistoryModal, setHistoryModal] = useState(false);
+
+  const [acceptModalVisible, setAcceptModalVisible] = useState(false);
+  const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
+  const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
+    () => {}
+  );
 
   const [currentJobInfo, setCurrentJobInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -190,9 +213,18 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 },
               ]}
               onPress={() => {
-                jobsController.actions
-                  .deleteJob(currentJobId)
-                  .then(closeModal());
+                setAcceptModalVisible(true);
+                setAcceptModalVisibleTitle(t('showJob.messages.closeJobTitle'));
+                setAcceptModalVisibleFunc(() => async () => {
+                  try {
+                    await jobsController.actions
+                      .deleteJob(currentJobId)
+                      .then(closeModal());
+                  } catch (err) {
+                    console.error('Ошибка закрытия заявки:', err.message);
+                  }
+                  setAcceptModalVisible(false);
+                });
               }}
             >
               <Text
@@ -228,16 +260,16 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
             }
             key='done-view-store'
           >
-          <ProvidersSection
-            key='providers'
-            styles={styles}
-            currentJobInfo={currentJobInfo}
-            status={status}
-            closeAllModal={closeModal}
-          />
-          <View
-            style={[
-              styles.inputBlock,
+            <ProvidersSection
+              key='providers'
+              styles={styles}
+              currentJobInfo={currentJobInfo}
+              status={status}
+              closeAllModal={closeModal}
+            />
+            <View
+              style={[
+                styles.inputBlock,
                 {
                   backgroundColor: themeController.current?.formInputBackground,
                   borderRadius: sizes.borderRadius,
@@ -246,38 +278,45 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   width: scaleByHeight(330, height),
                   height: scaleByHeight(131, height),
                 },
-            ]}
-            key='provider-comments'
-          >
-            <Text style={[styles.label, 
-                    {
-                      fontSize: sizes.font,
-                      color: themeController.current?.unactiveTextColor,
-                    }, isRTL && { textAlign: 'right' }]}>
-              {t('showJob.fields.providerComments', {
-                defaultValue: 'Provider comments',
-              })}
-            </Text>
-            <TextInput
-              value={currentJobInfo?.doneComment || ''}
+              ]}
+              key='provider-comments'
+            >
+              <Text
+                style={[
+                  styles.label,
+                  {
+                    fontSize: sizes.font,
+                    color: themeController.current?.unactiveTextColor,
+                  },
+                  isRTL && { textAlign: 'right' },
+                ]}
+              >
+                {t('showJob.fields.providerComments', {
+                  defaultValue: 'Provider comments',
+                })}
+              </Text>
+              <TextInput
+                value={currentJobInfo?.doneComment || ''}
                 placeholder={t('showJob.fields.commentsPlaceholder', {
                   defaultValue: 'Comment on the completed work...',
                 })}
                 placeholderTextColor={
                   themeController.current?.formInputPlaceholderColor
                 }
-              style={[
-                styles.input,
-                { height: RFValue(70),
+                style={[
+                  styles.input,
+                  {
+                    height: RFValue(70),
                     color: themeController.current?.textColor,
-                    fontSize: sizes.inputFont, },
+                    fontSize: sizes.inputFont,
+                  },
                   isWebLandscape && { height: '100%', padding: 0 },
-                isRTL && { textAlign: 'right' },
-              ]}
-              multiline
-              readOnly
-            />
-          </View>
+                  isRTL && { textAlign: 'right' },
+                ]}
+                multiline
+                readOnly
+              />
+            </View>
           </View>,
           !currentJobInfo?.isClosed && (
             <TouchableOpacity
@@ -1435,20 +1474,50 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
           initialJob={currentJobInfo}
         />
       </Modal>
+      {/* Cancel interest modal */}
       <Modal visible={showCancelRequestModal} transparent animationType='fade'>
-        <View style={styles.overlay}>
+        <View style={styles.modalOverlay}>
           <View
             style={[
-              styles.modalContent,
-              { backgroundColor: themeController.current?.backgroundColor },
+              styles.modalCard,
+              {
+                backgroundColor: themeController.current?.backgroundColor,
+                width: sizes.modalWidth,
+                padding: sizes.modalPadding,
+                borderRadius: sizes.modalBtnBorderRadius,
+              },
+              isWebLandscape && { height: sizes.modalHeight },
             ]}
           >
+            <TouchableOpacity
+              style={[
+                {
+                  position: 'absolute',
+                  top: sizes.modalCloseBtnTopRightPosition,
+                  right: sizes.modalCloseBtnTopRightPosition,
+                },
+              ]}
+              onPress={() => setAcceptModalVisible(false)}
+            >
+              <Image
+                source={icons.cross}
+                style={{
+                  width: sizes.iconSize,
+                  height: sizes.iconSize,
+                  tintColor: themeController.current?.textColor,
+                }}
+              />
+            </TouchableOpacity>
             <Text
               style={[
-                styles.message,
-                { color: themeController.current?.textColor },
-                isRTL && { textAlign: 'right' },
-                isWebLandscape && { fontSize: sizes.font },
+                styles.modalText,
+                {
+                  fontSize: sizes.modalFont,
+                  marginBottom: sizes.modalTextMarginBottom,
+                  textAlign: 'center',
+                  color: themeController.current?.textColor,
+                  lineHeight: sizes.modalLineHeight,
+                },
               ]}
             >
               {t('showJob.messages.confirmCancelTitle', {
@@ -1457,44 +1526,47 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
             </Text>
             <View
               style={[
-                styles.buttonRow,
-                isRTL && { flexDirection: 'row-reverse' },
+                styles.modalButtonsRow,
+                {
+                  flexDirection: isRTL ? 'row-reverse' : 'row',
+                  gap: sizes.modalBtnsGap,
+                },
               ]}
             >
               <TouchableOpacity
                 style={[
-                  styles.button,
+                  styles.modalBtn,
                   {
                     backgroundColor:
                       themeController.current?.buttonColorPrimaryDefault,
-                    ...(isWebLandscape && {
-                      paddingVertical: sizes.padding,
-                      borderRadius: sizes.borderRadius,
-                    }),
+                    height: sizes.modalBtnHeight,
+                    width: sizes.modalBtnWidth,
+                    borderRadius: sizes.modalBtnBorderRadius,
                   },
                 ]}
                 onPress={() => setCancelRequestModal(false)}
               >
                 <Text
-                  style={[
-                    styles.buttonText,
-                    { color: themeController.current?.buttonTextColorPrimary },
-                    isWebLandscape && { fontSize: sizes.font },
-                  ]}
+                  style={{
+                    color: themeController.current?.buttonTextColorPrimary,
+                    fontSize: sizes.modalBtnFont,
+                  }}
                 >
                   {t('common.no', { defaultValue: 'No' })}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
-                  styles.button,
+                  styles.modalBtn,
                   {
                     backgroundColor:
-                      themeController.current?.buttonColorPrimaryDisabled,
-                    ...(isWebLandscape && {
-                      paddingVertical: sizes.padding,
-                      borderRadius: sizes.borderRadius,
-                    }),
+                      themeController.current?.buttonTextColorSecondary,
+                    borderColor:
+                      themeController.current?.buttonColorPrimaryDefault,
+                    height: sizes.modalBtnHeight,
+                    width: sizes.modalBtnWidth,
+                    borderRadius: sizes.modalBtnBorderRadius,
+                    borderWidth: 1,
                   },
                 ]}
                 onPress={() => {
@@ -1507,11 +1579,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 }}
               >
                 <Text
-                  style={[
-                    styles.buttonText,
-                    { color: themeController.current?.buttonTextColorPrimary },
-                    isWebLandscape && { fontSize: sizes.font },
-                  ]}
+                  style={{
+                    color: themeController.current?.buttonColorPrimaryDefault,
+                    fontSize: sizes.modalBtnFont,
+                  }}
                 >
                   {t('common.yes', { defaultValue: 'Yes' })}
                 </Text>
@@ -1645,6 +1716,115 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
           </View>
         </View>
       </Modal> */}
+
+      {/* Modal подтверждения */}
+      <Modal visible={acceptModalVisible} transparent animationType='fade'>
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalCard,
+              {
+                backgroundColor: themeController.current?.backgroundColor,
+                width: sizes.modalWidth,
+                padding: sizes.modalPadding,
+                borderRadius: sizes.modalBtnBorderRadius,
+              },
+              isWebLandscape && { height: sizes.modalHeight },
+            ]}
+          >
+            <TouchableOpacity
+              style={[
+                {
+                  position: 'absolute',
+                  top: sizes.modalCloseBtnTopRightPosition,
+                  right: sizes.modalCloseBtnTopRightPosition,
+                },
+              ]}
+              onPress={() => setAcceptModalVisible(false)}
+            >
+              <Image
+                source={icons.cross}
+                style={{
+                  width: sizes.iconSize,
+                  height: sizes.iconSize,
+                  tintColor: themeController.current?.textColor,
+                }}
+              />
+            </TouchableOpacity>
+            <Text
+              style={[
+                styles.modalText,
+                {
+                  fontSize: sizes.modalFont,
+                  marginBottom: sizes.modalTextMarginBottom,
+                  textAlign: 'center',
+                  color: themeController.current?.textColor,
+                  lineHeight: sizes.modalLineHeight,
+                },
+              ]}
+            >
+              {acceptModalVisibleTitle}
+            </Text>
+            <View
+              style={[
+                styles.modalButtonsRow,
+                {
+                  flexDirection: isRTL ? 'row-reverse' : 'row',
+                  gap: sizes.modalBtnsGap,
+                },
+              ]}
+            >
+              <TouchableOpacity
+                style={[
+                  styles.modalBtn,
+                  {
+                    backgroundColor:
+                      themeController.current?.buttonColorPrimaryDefault,
+                    height: sizes.modalBtnHeight,
+                    width: sizes.modalBtnWidth,
+                    borderRadius: sizes.modalBtnBorderRadius,
+                  },
+                ]}
+                onPress={() => setAcceptModalVisible(false)}
+              >
+                <Text
+                  style={{
+                    color: themeController.current?.buttonTextColorPrimary,
+                    fontSize: sizes.modalBtnFont,
+                  }}
+                >
+                  {t('common.no')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.modalBtn,
+                  {
+                    backgroundColor:
+                      themeController.current?.buttonTextColorSecondary,
+                    borderColor:
+                      themeController.current?.buttonColorPrimaryDefault,
+                    height: sizes.modalBtnHeight,
+                    width: sizes.modalBtnWidth,
+                    borderRadius: sizes.modalBtnBorderRadius,
+                    borderWidth: 1,
+                  },
+                ]}
+                onPress={() => acceptModalVisibleFunc()}
+              >
+                <Text
+                  style={{
+                    color: themeController.current?.buttonColorPrimaryDefault,
+                    fontSize: sizes.modalBtnFont,
+                  }}
+                >
+                  {t('common.yes')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
       <JobHistoryModal
         visible={showHistoryModal}
         onClose={() => setHistoryModal(false)}
@@ -1822,5 +2002,21 @@ const styles = StyleSheet.create({
   gridContainer: {
     width: '100%',
     display: 'grid',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalCard: { width: '80%', position: 'relative' },
+  modalButtonsRow: { justifyContent: 'center' },
+  modalBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxSizing: 'border-box',
+  },
+  modalText: {
+    fontFamily: 'Rubik-Bold',
   },
 });

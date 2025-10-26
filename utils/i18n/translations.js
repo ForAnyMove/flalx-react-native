@@ -90,6 +90,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         export_data: 'Export data',
         delete: 'Delete User',
         confirm_delete: 'Are you sure you want to delete your account?',
+        confirm_logout: 'Are you sure you want to logout?',
       },
       settings: {
         language: 'Language',
@@ -194,6 +195,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
           loading: 'Loading...',
           waitForCall: 'Wait for a call from the customer...',
           confirmCancelTitle: 'Are you sure to cancel the request?',
+          closeJobTitle: 'Are you sure you want to close the job?',
         },
         paywall: {
           notice: 'To continue this action, you need to pay or subscribe',
@@ -405,6 +407,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
           loading: 'טוען...',
           waitForCall: 'המתן לשיחת טלפון מהלקוח...',
           confirmCancelTitle: 'האם אתה בטוח/ה שברצונך לבטל את הבקשה?',
+          closeJobTitle: 'האם אתה בטוח שברצונך לסגור את העבודה?',
         },
         paywall: {
           notice: 'כדי להמשיך, יש לשלם או להירשם כמנוי',

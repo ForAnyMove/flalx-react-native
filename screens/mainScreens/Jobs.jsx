@@ -25,16 +25,20 @@ import JobModalWrapper from '../../components/JobModalWrapper';
 const TAB_TITLES = ['new', 'waiting', 'in-progress', 'done'];
 const TAB_TITLES_RTL = ['done', 'in-progress', 'waiting', 'new'];
 
-const badgeCounts = {
+const badgeCountsExample = {
   new: 0,
-  waiting: 3,
+  waiting: 0,
   'in-progress': 0,
-  done: 5,
+  done: 0,
 };
 
 export default function Jobs() {
-  const { themeController, appTabController, languageController } =
-    useComponentContext();
+  const {
+    themeController,
+    appTabController,
+    languageController,
+    jobsController,
+  } = useComponentContext();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
   const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
@@ -53,6 +57,17 @@ export default function Jobs() {
   const [showJobModalVisible, setShowJobModalVisible] = useState(false);
   const [currentJobId, setCurrentJobId] = useState(null);
   const [jobModalStatus, setJobModalStatus] = useState(null);
+
+  const [badgeCounts, setBadgeCounts] = useState(badgeCountsExample);
+
+  useEffect(() => {
+    setBadgeCounts({
+      new: jobsController.executor.new.length,
+      waiting: jobsController.executor.waiting.length,
+      'in-progress': jobsController.executor.inProgress.length,
+      done: jobsController.executor.done.length,
+    });
+  }, [jobsController.executor]);
 
   const storeActiveTab = useRef(
     orderedTabs.indexOf(appTabController.activeSubTab) >= 0
@@ -223,7 +238,7 @@ export default function Jobs() {
   }, [isRTL, orderedTabs]);
 
   return (
-    <View style={{ flex: 1, userSelect: 'none'}}>
+    <View style={{ flex: 1, userSelect: 'none' }}>
       {/* Заголовки вкладок */}
       <View
         style={{
@@ -350,7 +365,7 @@ export default function Jobs() {
                 setShowJobModalVisible={setShowJobModalVisible}
                 setCurrentJobId={setCurrentJobId}
                 setJobModalStatus={setJobModalStatus}
-               />
+              />
             </View>
           ))}
         </Animated.View>

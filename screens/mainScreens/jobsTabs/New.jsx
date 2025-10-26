@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-// import JobTypeSelector from '../../../components/JobTypeSelector';
+import JobTypeSelector from '../../../components/JobTypeSelector';
 import { RFValue } from 'react-native-responsive-fontsize';
 import SearchPanel from '../../../components/SearchPanel';
 import { useComponentContext } from '../../../context/globalAppContext';
@@ -50,7 +50,14 @@ export default function NewScreen({
       ? height * 0.01
       : RFValue(8),
     personalMarkerFontSize: isWebLandscape ? height * 0.015 : RFValue(10),
+    containerMarginTop: isWebLandscape
+      ? scaleByHeight(24, height)
+      : RFValue(14),
   };
+
+  const filteredJobsList = jobsController.executor.new.filter((job) =>
+    filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
+  );
 
   return (
     <View
@@ -62,15 +69,18 @@ export default function NewScreen({
         },
       ]}
     >
-      <View>
+      {/* <View>
         <SearchPanel
           searchValue={searchValue}
           setSearchValue={setSearchValue}
         />
-      </View>
-      {/* <View>
-        <JobTypeSelector selectedTypes={filteredJobs} setSelectedTypes={setFilteredJobs} />
       </View> */}
+      <View>
+        <JobTypeSelector
+          selectedTypes={filteredJobs}
+          setSelectedTypes={setFilteredJobs}
+        />
+      </View>
       {jobsController.loading.any ? (
         <Text>Loading...</Text>
       ) : jobsController.error ? (
@@ -79,10 +89,13 @@ export default function NewScreen({
         <ScrollView
           contentContainerStyle={[
             styles.scrollContainer,
-            { width: sizes.scrollContainerWidth },
+            {
+              width: sizes.scrollContainerWidth,
+              marginTop: sizes.containerMarginTop,
+            },
           ]}
         >
-          {jobsController.executor.new.map((job, index) => {
+          {filteredJobsList.map((job, index) => {
             const hasImage = job.images && job.images.length > 0;
             let extraMarkerStyle = {};
             let isMarkerExist = false;

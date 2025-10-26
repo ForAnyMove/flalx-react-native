@@ -27,15 +27,15 @@ const TAB_TITLES = ['new', 'waiting', 'in-progress', 'done'];
 const TAB_TITLES_RTL = ['done', 'in-progress', 'waiting', 'new'];
 
 // Тестовые значения для badge
-const badgeCounts = {
+const badgeCountsExample = {
   new: 0,
-  waiting: 3,
+  waiting: 0,
   'in-progress': 0,
-  done: 5,
+  done: 0,
 };
 
 export default function Store() {
-  const { themeController, appTabController, languageController, session } =
+  const { themeController, appTabController, languageController, jobsController, session } =
     useComponentContext();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
@@ -57,6 +57,17 @@ export default function Store() {
   const [showJobModalVisible, setShowJobModalVisible] = useState(false);
   const [currentJobId, setCurrentJobId] = useState(null);
   const [jobModalStatus, setJobModalStatus] = useState(null);
+
+  const [badgeCounts, setBadgeCounts] = useState(badgeCountsExample);
+
+  useEffect(() => {
+    setBadgeCounts({
+      new: 0,
+      waiting: jobsController.creator.waiting.length,
+      'in-progress': jobsController.creator.inProgress.length,
+      done: jobsController.creator.done.length,
+    });
+  }, [jobsController.creator]);
 
   const storeActiveTab = useRef(
     orderedTabs.indexOf(appTabController.activeSubTab) >= 0

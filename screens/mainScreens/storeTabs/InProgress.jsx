@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
-// import JobTypeSelector from '../../../components/JobTypeSelector';
+import JobTypeSelector from '../../../components/JobTypeSelector';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { RFValue } from 'react-native-responsive-fontsize';
 import SearchPanel from '../../../components/SearchPanel';
@@ -45,6 +45,10 @@ export default function InProgressScreen({
     scrollContainerWidth: isWebLandscape ? '60%' : '100%',
   };
 
+  const filteredJobsList = jobsController.creator.inProgress.filter((job) =>
+    filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
+  );
+
   return (
     <View
       style={[
@@ -55,15 +59,18 @@ export default function InProgressScreen({
         },
       ]}
     >
-      <View>
+      {/* <View>
         <SearchPanel
           searchValue={searchValue}
           setSearchValue={setSearchValue}
         />
-      </View>
-      {/* <View>
-        <JobTypeSelector selectedTypes={filteredJobs} setSelectedTypes={setFilteredJobs} />
       </View> */}
+      <View>
+        <JobTypeSelector
+          selectedTypes={filteredJobs}
+          setSelectedTypes={setFilteredJobs}
+        />
+      </View>
       {jobsController.loading.any ? (
         <Text>Loading...</Text>
       ) : jobsController.error ? (
@@ -75,7 +82,7 @@ export default function InProgressScreen({
             { width: sizes.scrollContainerWidth },
           ]}
         >
-          {jobsController.creator.inProgress.map((job, index) => {
+          {filteredJobsList.map((job, index) => {
             const hasImage = job.images && job.images.length > 0;
             return (
               <TouchableOpacity

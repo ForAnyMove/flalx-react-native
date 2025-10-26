@@ -16,6 +16,7 @@ import { useComponentContext } from '../../../context/globalAppContext';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight } from '../../../utils/resizeFuncs';
+import JobTypeSelector from '../../../components/JobTypeSelector';
 
 export default function WaitingScreen({
   setShowJobModalVisible,
@@ -49,6 +50,10 @@ export default function WaitingScreen({
     badgePosition: isWebLandscape ? height * 0.005 : RFValue(5),
   };
 
+  const filteredJobsList = jobsController.creator.waiting.filter((job) =>
+    filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
+  );
+
   return (
     <View
       style={[
@@ -59,13 +64,19 @@ export default function WaitingScreen({
         },
       ]}
     >
-      <View>
+      {/* <View>
         <SearchPanel
           searchValue={searchValue}
           setSearchValue={setSearchValue}
         />
-      </View>
+      </View> */}
 
+      <View style={{ width: isWebLandscape ? '70%' : '100%' }}>
+        <JobTypeSelector
+          selectedTypes={filteredJobs}
+          setSelectedTypes={setFilteredJobs}
+        />
+      </View>
       {jobsController.loading.any ? (
         <Text>Loading...</Text>
       ) : jobsController.error ? (
@@ -77,7 +88,7 @@ export default function WaitingScreen({
             { width: sizes.scrollContainerWidth },
           ]}
         >
-          {jobsController.creator.waiting.map((job, index) => {
+          {filteredJobsList.map((job, index) => {
             const hasImage = job.images && job.images.length > 0;
             return (
               <TouchableOpacity
