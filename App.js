@@ -14,6 +14,9 @@ import RegisterScreen from './screens/RegisterScreen';
 import AppScreen from './screens/AppScreen';
 import { WindowProvider } from './context/windowContext';
 import { useFonts } from 'expo-font';
+import { WebViewProvider } from './context/webViewContext';
+import { GlobalWebScreen } from './screens/GlobalWebScreen';
+import { WebSocketProvider } from './context/webSocketContext';
 
 // --- Глобальное применение шрифта ---
 const originalTextRender = Text.render;
@@ -90,14 +93,20 @@ function App() {
   }
   // 4. Основное приложение
   else {
-    content = <AppScreen />;
+    content =
+      (<WebSocketProvider>
+        <AppScreen />
+      </WebSocketProvider>);
   }
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
-        {content}
-        <StatusBar style='auto' />
+        <WebViewProvider>
+          {content}
+          <GlobalWebScreen />
+          <StatusBar style='auto' />
+        </WebViewProvider>
       </SafeAreaView>
     </SafeAreaProvider>
   );

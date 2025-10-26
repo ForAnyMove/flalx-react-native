@@ -27,6 +27,8 @@ import { useWindowInfo } from '../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight } from '../utils/resizeFuncs';
 import { t } from 'i18next';
+import { createJob } from '../src/api/jobs';
+import { useWebView } from '../context/webViewContext';
 
 const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
   if (Platform.OS === 'web') {
@@ -78,9 +80,9 @@ const SuggestionItem = ({
   const webHoverProps =
     Platform.OS === 'web'
       ? {
-          onMouseEnter: () => setIsHovered(true),
-          onMouseLeave: () => setIsHovered(false),
-        }
+        onMouseEnter: () => setIsHovered(true),
+        onMouseLeave: () => setIsHovered(false),
+      }
       : {};
 
   return (
@@ -171,13 +173,13 @@ const renderAutocomplete = ({
             return newFocusStates;
           })
         }
-        // onBlur={() =>
-        //   setFocusStates((prev) => {
-        //     const newFocusStates = Array(3).fill(false);
-        //     newFocusStates[stateFocusIndex] = false;
-        //     return newFocusStates;
-        //   })
-        // }
+      // onBlur={() =>
+      //   setFocusStates((prev) => {
+      //     const newFocusStates = Array(3).fill(false);
+      //     newFocusStates[stateFocusIndex] = false;
+      //     return newFocusStates;
+      //   })
+      // }
       >
         {/* <-- Web-specific override */}
         <TextInput
@@ -211,9 +213,8 @@ const renderAutocomplete = ({
               isWebLandscape && {
                 maxHeight: sizeOverrides.thumb,
                 borderRadius: sizeOverrides.borderRadius,
-                width: `calc(100% + ${
-                  sizeOverrides.inputContainerPaddingHorizontal * 2
-                }px)`,
+                width: `calc(100% + ${sizeOverrides.inputContainerPaddingHorizontal * 2
+                  }px)`,
                 left: `-${sizeOverrides.inputContainerPaddingHorizontal}px`,
               }
             }
@@ -299,37 +300,52 @@ async function editJobById(jobId, updates, session) {
   }
 }
 
-async function createNewJob(jobData, session) {
+async function createNewJob(jobData, session, openWebView, updateJobsList) {
   try {
-    const token = session?.token?.access_token;
-
-    const response = await fetch(`${session.serverURL}/jobs`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`, // если у тебя авторизация через JWT
-      },
-      body: JSON.stringify(jobData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Ошибка при создании заявки');
+    const data = await createJob(jobData, session);
+    if (data.paymentUrl) {
+      openWebView(data.paymentUrl, () => {
+        // reload jobs after closing webview
+      });
     }
-
-    const createdJob = await response.json();
-    return createdJob;
+    else if (data.job) {
+      updateJobsList?.();
+    }
   } catch (error) {
     console.error('Ошибка создания job:', error.message);
     throw error;
   }
+
+  // try {
+  //   const token = session?.token?.access_token;
+
+  //   const response = await fetch(`${session.serverURL}/jobs`, {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //       Authorization: `Bearer ${token}`, // если у тебя авторизация через JWT
+  //     },
+  //     body: JSON.stringify(jobData),
+  //   });
+
+  //   if (!response.ok) {
+  //     const errorData = await response.json();
+  //     throw new Error(errorData.error || 'Ошибка при создании заявки');
+  //   }
+
+  //   const createdJob = await response.json();
+  //   return createdJob;
+  // } catch (error) {
+  //   console.error('Ошибка создания job:', error.message);
+  //   throw error;
+  // }
 }
 
 // варианты статусов и цены
 const STATUS_OPTIONS = [
-  { key: 'default', i18n: 'default', price: 0.99 },
+  { key: 'normal', i18n: 'default', price: 0.99 },
   { key: 'top', i18n: 'top', price: 4.99 },
-  { key: 'verified', i18n: 'verified', price: 2.99 },
+  // { key: 'verified', i18n: 'verified', price: 2.99 },
 ];
 
 export default function NewJobModal({
@@ -340,7 +356,7 @@ export default function NewJobModal({
   initialJob = null,
   executorId,
 }) {
-  const { themeController, session, user, jobsController, languageController } =
+  const { themeController, session, user, jobsController, languageController, setAppLoading } =
     useComponentContext();
   const { width, height, isLandscape, sidebarWidth = 0 } = useWindowInfo();
   const { t } = useTranslation();
@@ -409,9 +425,9 @@ export default function NewJobModal({
   const [endDateTime, setEndDateTime] = useState(
     initialJob?.endDateTime || null
   );
-  const [status, setStatus] = useState('default');
+  const [jobType, setJobType] = useState('default');
   const selectedOption =
-    STATUS_OPTIONS.find((o) => o.key === status) || STATUS_OPTIONS[0];
+    STATUS_OPTIONS.find((o) => o.key === jobType) || STATUS_OPTIONS[0];
 
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [plansModalVisible, setPlansModalVisible] = useState(false);
@@ -426,6 +442,8 @@ export default function NewJobModal({
     subType: false,
     profession: false,
   });
+
+  const { openWebView } = useWebView();
 
   const handleCreate = () => {
     const newErrors = {
@@ -486,13 +504,21 @@ export default function NewJobModal({
           : null,
         endDateTime: endDateTime ? new Date(endDateTime).toISOString() : null,
         // createdAt: new Date().toISOString(),
-        status: status, // статус задания
+        jobType: jobType, // статус задания
         creator: user.current.id,
       };
       if (executorId) {
         newJob.personalExecutor = executorId;
       }
-      createNewJob(newJob, session).then(() => jobsController.reloadCreator());
+
+      setAppLoading(true);
+
+      createNewJob(newJob, session, openWebView, () => {
+        jobsController.reloadCreator();
+        setAppLoading(false);
+      }).then(() => {
+        setAppLoading(false);
+      });
     }
     closeModal();
   };
@@ -1382,7 +1408,7 @@ export default function NewJobModal({
               paddingHorizontal: sizes.headerPaddingHorizontal,
               marginVertical: sizes.headerMargin,
             },
-              isRTL && { flexDirection: 'row-reverse' },
+            isRTL && { flexDirection: 'row-reverse' },
           ]}
         >
           <TouchableOpacity onPress={() => closeModal()}>
@@ -2051,7 +2077,7 @@ export default function NewJobModal({
           </TouchableOpacity>
         </View>
       </Modal> */}
-      {/* STATUS PICKER MODAL */}
+      {/* jobType PICKER MODAL */}
       <Modal visible={statusModalVisible} animationType='fade' transparent>
         {/* кликабельная подложка с отступом под сайдбар на web-landscape */}
         <View
@@ -2149,11 +2175,11 @@ export default function NewJobModal({
                   }}
                 >
                   {STATUS_OPTIONS.map((opt) => {
-                    const active = status === opt.key;
+                    const active = jobType === opt.key;
                     return (
                       <TouchableOpacity
                         key={opt.key}
-                        onPress={() => setStatus(opt.key)}
+                        onPress={() => setJobType(opt.key)}
                         style={[
                           styles.chip,
                           {
@@ -2163,11 +2189,11 @@ export default function NewJobModal({
                             borderWidth: 1,
                             borderColor: active
                               ? themeController.current
-                                  ?.buttonColorPrimaryDefault
+                                ?.buttonColorPrimaryDefault
                               : themeController.current?.unactiveTextColor,
                             backgroundColor: active
                               ? themeController.current
-                                  ?.buttonColorPrimaryDefault
+                                ?.buttonColorPrimaryDefault
                               : themeController.current?.formInputBackground,
                             flexDirection: isRTL ? 'row-reverse' : 'row',
                             alignItems: 'center',
@@ -2189,8 +2215,8 @@ export default function NewJobModal({
                               opt.key === 'default'
                                 ? 'Default'
                                 : opt.key === 'top'
-                                ? 'Top'
-                                : 'Verified',
+                                  ? 'Top'
+                                  : 'Verified',
                           })}
                         </Text>
 
@@ -2278,8 +2304,8 @@ export default function NewJobModal({
                       price:
                         selectedOption.price === 0
                           ? t('newJob.statusModal.free', {
-                              defaultValue: 'Free',
-                            })
+                            defaultValue: 'Free',
+                          })
                           : `$${selectedOption.price.toFixed(2)}`,
                     })}
                   </Text>

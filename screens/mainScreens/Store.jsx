@@ -21,6 +21,7 @@ import InProgressScreen from './storeTabs/InProgress';
 import DoneScreen from './storeTabs/Done';
 import JobModalWrapper from '../../components/JobModalWrapper';
 import ShowJobModal from '../../components/ShowJobModal';
+import { checkHasPendingJob } from '../../src/api/jobs';
 
 const TAB_TITLES = ['new', 'waiting', 'in-progress', 'done'];
 const TAB_TITLES_RTL = ['done', 'in-progress', 'waiting', 'new'];
@@ -34,7 +35,7 @@ const badgeCounts = {
 };
 
 export default function Store() {
-  const { themeController, appTabController, languageController } =
+  const { themeController, appTabController, languageController, session } =
     useComponentContext();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
@@ -228,7 +229,7 @@ export default function Store() {
   }, [isRTL, orderedTabs]);
 
   return (
-    <View style={{ flex: 1, userSelect: 'none'}}>
+    <View style={{ flex: 1, userSelect: 'none' }}>
       {/* Заголовки вкладок */}
       <View
         style={{
@@ -376,19 +377,24 @@ export default function Store() {
           position: 'absolute',
           ...(isRTL
             ? {
-                left: RFPercentage(2),
-              }
+              left: RFPercentage(2),
+            }
             : {
-                right: RFPercentage(2),
-              }),
+              right: RFPercentage(2),
+            }),
           bottom: RFPercentage(2),
           ...Platform.select({
             web: { right: RFPercentage(4) },
           }),
         }}
-        onPress={() => {
-          setNewJobModalVisible(true);
-          setActiveKey(null);
+        onPress={async () => {
+          const pendingJobRequest = await checkHasPendingJob(session);
+          if (!pendingJobRequest.job) {
+            setActiveKey(null);
+            setNewJobModalVisible(true);
+          } else {
+            alert(`You have a pending job. Please complete it before creating a new one.\n Payment URL: ${pendingJobRequest.payment?.paymentMetadata?.paypalApproval?.href || 'N/A'}. The payment URL has been copied to your clipboard.`);
+          }
         }}
       >
         <Image

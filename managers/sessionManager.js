@@ -32,6 +32,8 @@ export default function sessionManager() {
 
         // Проверяем актуальность токена
         const { data, error } = await supabase.auth.setSession(parsed);
+        console.log(data.session);
+
 
         if (error) {
           // console.error('Ошибка восстановления сессии:', error.message);
@@ -135,7 +137,7 @@ export default function sessionManager() {
       await AsyncStorage.removeItem('supabase_session');
     }
   }
-  
+
   // Обновить данные пользователя
   async function updateUser(updates) {
     try {
@@ -197,7 +199,7 @@ export default function sessionManager() {
 
     return () => subscription.subscription.unsubscribe();
   }, []);
-  
+
   return {
     session: {
       status: !!session && !!user,

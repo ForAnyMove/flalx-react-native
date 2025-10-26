@@ -46,7 +46,7 @@ export default function jobsManager({ session, user }) {
       try {
         const body = await res.json();
         msg = body?.error || msg;
-      } catch {}
+      } catch { }
       throw new Error(msg);
     }
     return res.json();
