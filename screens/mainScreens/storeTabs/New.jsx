@@ -14,6 +14,7 @@ import SearchPanel from '../../../components/SearchPanel';
 import { JOB_TYPES } from '../../../constants/jobTypes';
 import { useComponentContext } from '../../../context/globalAppContext';
 import { useWindowInfo } from '../../../context/windowContext';
+import { checkHasPendingJob } from '../../../src/api/jobs';
 // import JobModalWrapper from '../../../components/JobModalWrapper';
 
 export default function NewScreen({
@@ -21,7 +22,7 @@ export default function NewScreen({
   setNewJobModalVisible,
   setActiveKey,
 }) {
-  const { themeController, languageController } = useComponentContext();
+  const { themeController, languageController, session } = useComponentContext();
   const isRTL = languageController.isRTL;
   const { isLandscape } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
@@ -64,9 +65,25 @@ export default function NewScreen({
               .map(([key, label]) => (
                 <TouchableOpacity
                   key={key}
-                  onPress={() => {
-                    setNewJobModalVisible(true);
-                    setActiveKey(key);
+                  onPress={async () => {
+                    const pendingJobRequest = await checkHasPendingJob(session);
+
+                    if (!pendingJobRequest.job) {
+                      setActiveKey(null);
+                      setNewJobModalVisible(true);
+                    } else {
+                      if (pendingJobRequest.payment?.paymentMetadata?.paypalApproval?.href) {
+                        if (Platform.OS === 'web') {
+                          navigator.clipboard.writeText(pendingJobRequest.payment.paymentMetadata.paypalApproval.href);
+                        } else {
+                          // For mobile, you can use 'expo-clipboard'
+                          // import('expo-clipboard').then(Clipboard => {
+                          //   Clipboard.setStringAsync(pendingJobRequest.payment.paymentMetadata.paypalApproval.href);
+                          // });
+                        }
+                      }
+                      alert(`You have a pending job. Please complete it before creating a new one.\n Payment URL: ${pendingJobRequest.payment?.paymentMetadata?.paypalApproval?.href || 'N/A'}. The payment URL has been copied to your clipboard.`);
+                    }
                   }}
                 >
                   <NewJobTemplateCard

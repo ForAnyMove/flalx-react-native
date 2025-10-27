@@ -31,6 +31,7 @@
     "@react-navigation/native": "^7.1.6",
     "@react-navigation/stack": "^7.4.7",
     "@supabase/supabase-js": "^2.55.0",
+    "axios": "^1.12.2",
     "base64-arraybuffer": "^1.0.2",
     "expo": "~53.0.23",
     "expo-constants": "~17.1.7",
@@ -54,7 +55,8 @@
     "react-native-responsive-fontsize": "^0.5.1",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
-    "react-native-web": "^0.20.0"
+    "react-native-web": "^0.20.0",
+    "react-native-webview": "^13.16.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
