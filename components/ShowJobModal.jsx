@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { useWindowInfo } from '../context/windowContext';
 import { icons } from '../constants/icons';
 import { scaleByHeight } from '../utils/resizeFuncs';
+import JobModalWrapper from './JobModalWrapper';
 
 const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
   if (Platform.OS === 'web') {
@@ -83,12 +84,16 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
       : RFValue(10),
     modalWidth: isWebLandscape ? scaleByHeight(450, height) : '80%',
     modalHeight: isWebLandscape ? scaleByHeight(230, height) : '60%',
+    doubleBtnLineModalHeight: isWebLandscape
+      ? scaleByHeight(306, height)
+      : RFValue(40),
     modalFont: isWebLandscape ? scaleByHeight(24, height) : baseFont,
     modalTextMarginBottom: isWebLandscape
       ? scaleByHeight(32, height)
       : RFValue(12),
     modalBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(50),
     modalBtnWidth: isWebLandscape ? scaleByHeight(153, height) : '40%',
+    modalLongBtnWidth: isWebLandscape ? scaleByHeight(300, height) : '80%',
     modalBtnFont: isWebLandscape ? scaleByHeight(20, height) : baseFont,
     modalBtnBorderRadius: isWebLandscape ? 8 : RFValue(6),
     modalBtnsGap: isWebLandscape ? scaleByHeight(24, height) : RFValue(12),
@@ -97,6 +102,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
     modalCloseBtnTopRightPosition: isWebLandscape
       ? scaleByHeight(7, height)
       : RFValue(5),
+    btnsColumnGap: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
   };
 
   const [newJobModalVisible, setNewJobModalVisible] = useState(false);
@@ -1466,14 +1472,34 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
           )}
         </View>
       )}
-      <Modal visible={newJobModalVisible} animationType='slide'>
+      {/* Edit job modal */}
+      {/* <Modal visible={newJobModalVisible} animationType='slide'>
         <NewJobModal
           closeModal={() => setNewJobModalVisible(false)}
           editMode={true}
           currentJobId={currentJobId}
           initialJob={currentJobInfo}
         />
-      </Modal>
+      </Modal> */}
+      {isWebLandscape ? (
+        <JobModalWrapper visible={newJobModalVisible} main={false}>
+          <NewJobModal
+            closeModal={() => setNewJobModalVisible(false)}
+          editMode={true}
+          currentJobId={currentJobId}
+          initialJob={currentJobInfo}
+          />
+        </JobModalWrapper>
+      ) : (
+        <Modal visible={newJobModalVisible} animationType='slide' transparent>
+          <NewJobModal
+            closeModal={() => setNewJobModalVisible(false)}
+          editMode={true}
+          currentJobId={currentJobId}
+          initialJob={currentJobInfo}
+          />
+        </Modal>
+      )}
       {/* Cancel interest modal */}
       <Modal visible={showCancelRequestModal} transparent animationType='fade'>
         <View style={styles.modalOverlay}>
@@ -1591,19 +1617,23 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
           </View>
         </View>
       </Modal>
+      {/* Confirm interest modal */}
       <Modal
         visible={showConfirmInterestModal}
         transparent
         animationType='fade'
       >
-        <View style={styles.overlay}>
+        <View style={styles.modalOverlay}>
           <View
             style={[
-              styles.modalContent,
+              styles.modalCard,
               {
                 backgroundColor: themeController.current?.backgroundColor,
-                paddingTop: RFValue(5),
+                width: sizes.modalWidth,
+                padding: sizes.modalPadding,
+                borderRadius: sizes.modalBtnBorderRadius,
               },
+              isWebLandscape && { height: sizes.doubleBtnLineModalHeight },
             ]}
           >
             <TouchableOpacity
@@ -1611,16 +1641,33 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               //   router.canGoBack?.() ? router.back() : router.replace('/store')
               // }
               onPress={() => setConfirmInterestModal(false)}
-              style={styles.modalCloseTouchableArea}
+              style={[
+                {
+                  position: 'absolute',
+                  top: sizes.modalCloseBtnTopRightPosition,
+                  right: sizes.modalCloseBtnTopRightPosition,
+                },
+              ]}
             >
-              <Text style={styles.modalCloseButton}>✕</Text>
+              <Image
+                source={icons.cross}
+                style={{
+                  width: sizes.iconSize,
+                  height: sizes.iconSize,
+                  tintColor: themeController.current?.textColor,
+                }}
+              />
             </TouchableOpacity>
             <Text
               style={[
-                styles.message,
-                { color: themeController.current?.textColor },
-                isRTL && { textAlign: 'right' },
-                isWebLandscape && { fontSize: sizes.font },
+                styles.modalText,
+                {
+                  fontSize: sizes.modalFont,
+                  marginBottom: sizes.modalTextMarginBottom,
+                  textAlign: 'center',
+                  color: themeController.current?.textColor,
+                  lineHeight: sizes.modalLineHeight,
+                },
               ]}
             >
               {t('showJob.paywall.notice', {
@@ -1628,19 +1675,19 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   'To continue this action, you need to pay or subscribe',
               })}
             </Text>
-            <View style={styles.buttonColumn}>
+            <View style={[styles.buttonColumn, { gap: sizes.btnsColumnGap }]}>
               <TouchableOpacity
                 style={[
-                  styles.button,
+                  styles.modalBtn,
                   {
-                    backgroundColor: 'transparent',
+                    backgroundColor:
+                      themeController.current?.buttonTextColorSecondary,
                     borderColor:
                       themeController.current?.buttonColorPrimaryDefault,
+                    height: sizes.modalBtnHeight,
+                    width: sizes.modalLongBtnWidth,
+                    borderRadius: sizes.modalBtnBorderRadius,
                     borderWidth: 1,
-                    ...(isWebLandscape && {
-                      paddingVertical: sizes.padding,
-                      borderRadius: sizes.borderRadius,
-                    }),
                   },
                 ]}
                 onPress={() => {
@@ -1652,11 +1699,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               >
                 <Text
                   style={[
-                    styles.buttonText,
                     {
                       color: themeController.current?.buttonColorPrimaryDefault,
+                      fontSize: sizes.modalBtnFont,
                     },
-                    isWebLandscape && { fontSize: sizes.font },
                   ]}
                 >
                   {t('showJob.buttons.buy099', {
@@ -1666,14 +1712,13 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
-                  styles.button,
+                  styles.modalBtn,
                   {
                     backgroundColor:
                       themeController.current?.buttonColorPrimaryDefault,
-                    ...(isWebLandscape && {
-                      paddingVertical: sizes.padding,
-                      borderRadius: sizes.borderRadius,
-                    }),
+                    height: sizes.modalBtnHeight,
+                    width: sizes.modalLongBtnWidth,
+                    borderRadius: sizes.modalBtnBorderRadius,
                   },
                 ]}
                 // onPress={() => {
@@ -1682,11 +1727,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 // }}
               >
                 <Text
-                  style={[
-                    styles.buttonText,
-                    { color: themeController.current?.buttonTextColorPrimary },
-                    isWebLandscape && { fontSize: sizes.font },
-                  ]}
+                  style={{
+                    color: themeController.current?.buttonTextColorPrimary,
+                    fontSize: sizes.modalBtnFont,
+                  }}
                 >
                   {t('showJob.buttons.getSubscription', {
                     defaultValue: 'Get a subscription',
@@ -1976,8 +2020,8 @@ const styles = StyleSheet.create({
   },
   buttonColumn: {
     flexDirection: 'column',
+    alignItems: 'center',
     width: '100%',
-    gap: RFValue(8),
   },
   button: {
     flex: 1,

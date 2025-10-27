@@ -27,6 +27,7 @@ import { useWindowInfo } from '../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight } from '../utils/resizeFuncs';
 import { t } from 'i18next';
+import SubscriptionsModal from './SubscriptionsModal';
 
 const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
   if (Platform.OS === 'web') {
@@ -329,7 +330,8 @@ async function createNewJob(jobData, session) {
 const STATUS_OPTIONS = [
   { key: 'default', i18n: 'default', price: 0.99 },
   { key: 'top', i18n: 'top', price: 4.99 },
-  { key: 'verified', i18n: 'verified', price: 2.99 },
+  { key: 'forPro', i18n: 'forPro', price: 9.99 },
+  { key: 'quickly', i18n: 'quickly', price: 1.99 },
 ];
 
 export default function NewJobModal({
@@ -347,6 +349,8 @@ export default function NewJobModal({
   const isRTL = languageController.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
+  const [statusOptions, setStatusOptions] = useState(STATUS_OPTIONS);
+
   // размеры
   const sizes = {
     font: isWebLandscape ? scaleByHeight(12, height) : RFValue(12),
@@ -359,20 +363,29 @@ export default function NewJobModal({
       ? scaleByHeight(10, height)
       : RFValue(6),
     margin: isWebLandscape ? scaleByHeight(18, height) : RFValue(10),
-    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
+    borderRadius: isWebLandscape ? 8 : RFValue(5),
     thumb: isWebLandscape ? scaleByHeight(128, height) : RFValue(80),
     thumbGap: isWebLandscape ? height * 0.05 : RFValue(28),
     headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
-    modalPadding: isWebLandscape ? height * 0.014 : RFValue(12),
-    modalRadius: isWebLandscape ? height * 0.006 : RFValue(5),
-    modalTitle: isWebLandscape ? height * 0.022 : RFValue(16),
-    modalSub: isWebLandscape ? height * 0.016 : RFValue(12),
-    chipFont: isWebLandscape ? height * 0.016 : RFValue(12),
-    chipPadV: isWebLandscape ? height * 0.009 : RFValue(6),
-    chipPadH: isWebLandscape ? height * 0.016 : RFValue(12),
-    chipGap: isWebLandscape ? height * 0.012 : RFValue(8),
-    modalCardW: isWebLandscape ? Math.min(height * 0.56, 520) : '88%',
-    btnH: isWebLandscape ? height * 0.06 : RFValue(42),
+    modalPadding: isWebLandscape ? scaleByHeight(45, height) : RFValue(12),
+    modalRadius: isWebLandscape ? 8 : RFValue(5),
+    modalCrossTopRightPos: isWebLandscape
+      ? scaleByHeight(7, height)
+      : RFValue(10),
+    modalTitle: isWebLandscape ? scaleByHeight(24, height) : RFValue(16),
+    modalTitleMarginBottom: isWebLandscape
+      ? scaleByHeight(22, height)
+      : RFValue(10),
+    modalSub: isWebLandscape ? scaleByHeight(20, height) : RFValue(12),
+    chipFont: isWebLandscape ? scaleByHeight(14, height) : RFValue(12),
+    chipHeight: isWebLandscape ? scaleByHeight(34, height) : RFValue(6),
+    chipPadH: isWebLandscape ? scaleByHeight(11, height) : RFValue(12),
+    chipGap: isWebLandscape ? scaleByHeight(8, height) : RFValue(8),
+    chipMarginBottom: isWebLandscape ? scaleByHeight(40, height) : RFValue(12),
+    modalCardW: isWebLandscape ? scaleByHeight(450, height) : '88%',
+    btnH: isWebLandscape ? scaleByHeight(62, height) : RFValue(42),
+    btnW: isWebLandscape ? scaleByHeight(300, height) : '100%',
+    btnMarginBottom: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
     headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
     headerPaddingHorizontal: isWebLandscape
       ? scaleByHeight(7, height)
@@ -388,6 +401,7 @@ export default function NewJobModal({
     saveBtnWidth: isWebLandscape ? scaleByHeight(380, height) : RFValue(120),
     saveBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(40),
     saveBtnFont: isWebLandscape ? scaleByHeight(20, height) : RFValue(14),
+    iconSize: isWebLandscape ? scaleByHeight(24, height) : RFValue(20),
   };
 
   const [filteredTypes, setFilteredTypes] = useState(JOB_TYPES);
@@ -411,7 +425,7 @@ export default function NewJobModal({
   );
   const [status, setStatus] = useState('default');
   const selectedOption =
-    STATUS_OPTIONS.find((o) => o.key === status) || STATUS_OPTIONS[0];
+    statusOptions.find((o) => o.key === status) || statusOptions[0];
 
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [plansModalVisible, setPlansModalVisible] = useState(false);
@@ -766,14 +780,23 @@ export default function NewJobModal({
                 ]}
               />
               <TouchableOpacity
-                style={styles.removeIcon}
+                style={[
+                  styles.removeIcon,
+                  {
+                    top: RFValue(4),
+                    right: RFValue(4),
+                    width: sizes.iconSize,
+                    height: sizes.iconSize,
+                  },
+                  isRTL && { right: 'auto', left: RFValue(4) },
+                ]}
                 onPress={() => removeImage(index)}
               >
                 <Image
                   source={icons.cross}
                   style={{
-                    width: RFValue(16),
-                    height: RFValue(16),
+                    width: sizes.iconSize,
+                    height: sizes.iconSize,
                     tintColor: themeController.current?.formInputLabelColor,
                   }}
                   resizeMode='contain'
@@ -1382,7 +1405,7 @@ export default function NewJobModal({
               paddingHorizontal: sizes.headerPaddingHorizontal,
               marginVertical: sizes.headerMargin,
             },
-              isRTL && { flexDirection: 'row-reverse' },
+            isRTL && { flexDirection: 'row-reverse' },
           ]}
         >
           <TouchableOpacity onPress={() => closeModal()}>
@@ -1795,7 +1818,16 @@ export default function NewJobModal({
                               }}
                             />
                             <TouchableOpacity
-                              style={styles.removeIcon}
+                              style={[
+                                styles.removeIcon,
+                                {
+                                  borderRadius: sizes.iconSize,
+                                  top: scaleByHeight(3, height),
+                                  right: scaleByHeight(3, height),
+                                  width: scaleByHeight(20, height),
+                                  height: scaleByHeight(20, height),
+                                },
+                              ]}
                               onPress={() => removeImage(index)}
                             >
                               <Image
@@ -1803,9 +1835,7 @@ export default function NewJobModal({
                                 style={{
                                   width: scaleByHeight(16, height),
                                   height: scaleByHeight(16, height),
-                                  tintColor:
-                                    themeController.current
-                                      ?.formInputLabelColor,
+                                  tintColor: themeController.current?.textColor,
                                 }}
                                 resizeMode='contain'
                               />
@@ -1815,6 +1845,12 @@ export default function NewJobModal({
                       </ScrollView>
                     </View>
                   </View>
+
+                  <ImagePickerModal
+                    visible={modalVisible}
+                    onClose={() => setModalVisible(false)}
+                    onAdd={handleImageAdd}
+                  />
 
                   <View
                     style={[
@@ -1971,7 +2007,8 @@ export default function NewJobModal({
                     >
                       <Text
                         style={{
-                          color: themeController.current?.buttonTextColorPrimary,
+                          color:
+                            themeController.current?.buttonTextColorPrimary,
                           textAlign: 'center',
                           fontSize: sizes.saveBtnFont,
                         }}
@@ -2061,13 +2098,13 @@ export default function NewJobModal({
           ]}
         >
           {/* пустая зона над сайдбаром — клик закрывает */}
-          {isWebLandscape ? (
+          {/* {isWebLandscape ? (
             <TouchableOpacity
               activeOpacity={1}
               onPress={() => setStatusModalVisible(false)}
               style={{ width: sidebarWidth, height: '100%' }}
             />
-          ) : null}
+          ) : null} */}
 
           {/* рабочая область — центрируем карточку */}
           <TouchableOpacity
@@ -2078,7 +2115,8 @@ export default function NewJobModal({
             <View
               style={[
                 styles.centerArea,
-                { width: isWebLandscape ? width - sidebarWidth : '100%' },
+                // { width: isWebLandscape ? width - sidebarWidth : '100%' },
+                { width: '100%' },
               ]}
             >
               {/* сама карточка; клики внутри НЕ закрывают */}
@@ -2092,18 +2130,24 @@ export default function NewJobModal({
                     borderRadius: sizes.modalRadius,
                     padding: sizes.modalPadding,
                     width: sizes.modalCardW,
+                    position: 'relative',
+                    alignItems: 'center',
                   },
                 ]}
               >
                 <TouchableOpacity
                   onPress={() => setStatusModalVisible(false)}
-                  style={{ alignSelf: isRTL ? 'flex-end' : 'flex-start' }}
+                  style={{
+                    position: 'absolute',
+                    top: sizes.modalCrossTopRightPos,
+                    right: sizes.modalCrossTopRightPos,
+                  }}
                 >
                   <Image
                     source={icons.cross}
                     style={{
-                      width: getResponsiveSize(20, height * 0.02, isLandscape),
-                      height: getResponsiveSize(20, height * 0.02, isLandscape),
+                      width: sizes.iconSize,
+                      height: sizes.iconSize,
                       tintColor: themeController.current?.formInputLabelColor,
                     }}
                     resizeMode='contain'
@@ -2113,11 +2157,10 @@ export default function NewJobModal({
                 <Text
                   style={{
                     fontSize: sizes.modalTitle,
-                    fontWeight: '700',
+                    fontFamily: 'Rubik-Bold',
                     color: themeController.current?.textColor,
                     textAlign: 'center',
-                    marginBottom:
-                      sizes.modalPadHalf || sizes.modalPadding * 0.6,
+                    marginBottom: sizes.modalTitleMarginBottom,
                   }}
                 >
                   {t('newJob.statusModal.title', {
@@ -2126,7 +2169,7 @@ export default function NewJobModal({
                 </Text>
 
                 {/* подзаголовок (второй ряд) */}
-                <Text
+                {/* <Text
                   style={{
                     fontSize: sizes.modalSub,
                     color: themeController.current?.formInputLabelColor,
@@ -2137,7 +2180,7 @@ export default function NewJobModal({
                   {t('newJob.statusModal.subtitle', {
                     defaultValue: 'Select how your request will be shown',
                   })}
-                </Text>
+                </Text> */}
 
                 {/* плашки статусов */}
                 <View
@@ -2145,10 +2188,12 @@ export default function NewJobModal({
                     flexDirection: isRTL ? 'row-reverse' : 'row',
                     flexWrap: 'wrap',
                     gap: sizes.chipGap,
-                    marginBottom: sizes.modalPadding,
+                    marginBottom: sizes.chipMarginBottom,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  {STATUS_OPTIONS.map((opt) => {
+                  {statusOptions.map((opt) => {
                     const active = status === opt.key;
                     return (
                       <TouchableOpacity
@@ -2157,41 +2202,35 @@ export default function NewJobModal({
                         style={[
                           styles.chip,
                           {
-                            paddingVertical: sizes.chipPadV,
+                            height: sizes.chipHeight,
                             paddingHorizontal: sizes.chipPadH,
-                            borderRadius: sizes.modalRadius,
+                            borderRadius: sizes.modalRadius / 2,
                             borderWidth: 1,
                             borderColor: active
                               ? themeController.current
                                   ?.buttonColorPrimaryDefault
-                              : themeController.current?.unactiveTextColor,
+                              : themeController.current
+                                  ?.formInputPlaceholderColor,
                             backgroundColor: active
                               ? themeController.current
                                   ?.buttonColorPrimaryDefault
-                              : themeController.current?.formInputBackground,
+                              : 'transparent',
                             flexDirection: isRTL ? 'row-reverse' : 'row',
                             alignItems: 'center',
+                            justifyContent: 'center',
                           },
                         ]}
                       >
                         <Text
                           style={{
                             fontSize: sizes.chipFont,
-                            fontWeight: '600',
                             color: active
                               ? themeController.current?.buttonTextColorPrimary
-                              : themeController.current?.unactiveTextColor,
-                            marginHorizontal: RFValue(2),
+                              : themeController.current
+                                  ?.formInputPlaceholderColor,
                           }}
                         >
-                          {t(`newJob.statusModal.option.${opt.i18n}`, {
-                            defaultValue:
-                              opt.key === 'default'
-                                ? 'Default'
-                                : opt.key === 'top'
-                                ? 'Top'
-                                : 'Verified',
-                          })}
+                          {t(`newJob.statusModal.option.${opt.i18n}`)}
                         </Text>
 
                         {/* маленький PRO-бейдж для некоторых опций */}
@@ -2224,33 +2263,6 @@ export default function NewJobModal({
                   })}
                 </View>
 
-                {/* кнопка тарифов */}
-                <TouchableOpacity
-                  onPress={() => setPlansModalVisible(true)}
-                  style={{
-                    height: sizes.btnH,
-                    borderRadius: sizes.modalRadius,
-                    borderWidth: 1,
-                    borderColor:
-                      themeController.current?.buttonColorPrimaryDefault,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: sizes.modalPadding * 0.8,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: sizes.modalSub,
-                      color: themeController.current?.buttonColorPrimaryDefault,
-                      fontWeight: '600',
-                    }}
-                  >
-                    {t('newJob.statusModal.buttons.viewPlans', {
-                      defaultValue: 'See pricing plans',
-                    })}
-                  </Text>
-                </TouchableOpacity>
-
                 {/* кнопка подтверждения с ценой */}
                 <TouchableOpacity
                   onPress={() => {
@@ -2259,18 +2271,20 @@ export default function NewJobModal({
                   }}
                   style={{
                     height: sizes.btnH,
+                    width: sizes.btnW,
                     borderRadius: sizes.modalRadius,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor:
+                    borderWidth: 1,
+                    borderColor:
                       themeController.current?.buttonColorPrimaryDefault,
+                    marginBottom: sizes.borderRadius,
                   }}
                 >
                   <Text
                     style={{
                       fontSize: sizes.modalSub,
-                      fontWeight: '800',
-                      color: themeController.current?.buttonTextColorPrimary,
+                      color: themeController.current?.buttonColorPrimaryDefault,
                     }}
                   >
                     {t('newJob.statusModal.buttons.confirmWithPrice', {
@@ -2284,6 +2298,34 @@ export default function NewJobModal({
                     })}
                   </Text>
                 </TouchableOpacity>
+
+                {/* кнопка тарифов */}
+                <TouchableOpacity
+                  onPress={() => {
+                    setPlansModalVisible(true);
+                    setStatusModalVisible(false);
+                  }}
+                  style={{
+                    height: sizes.btnH,
+                    width: sizes.btnW,
+                    borderRadius: sizes.modalRadius,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor:
+                      themeController.current?.buttonColorPrimaryDefault,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: sizes.modalSub,
+                      color: themeController.current?.buttonTextColorPrimary,
+                    }}
+                  >
+                    {t('newJob.statusModal.buttons.viewPlans', {
+                      defaultValue: 'See pricing plans',
+                    })}
+                  </Text>
+                </TouchableOpacity>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -2291,7 +2333,15 @@ export default function NewJobModal({
       </Modal>
 
       {/* PLANS MODAL (простая заглушка, такой же фон/центрирование) */}
-      <Modal visible={plansModalVisible} animationType='fade' transparent>
+      <SubscriptionsModal
+        visible={plansModalVisible}
+        main={false}
+        closeModal={() => {
+          setPlansModalVisible(false);
+          setStatusModalVisible(true);
+        }}
+      />
+      {/* <Modal visible={plansModalVisible} animationType='fade' transparent>
         <TouchableOpacity
           activeOpacity={1}
           onPress={() => setPlansModalVisible(false)}
@@ -2348,7 +2398,7 @@ export default function NewJobModal({
             </TouchableOpacity>
           </TouchableOpacity>
         </TouchableOpacity>
-      </Modal>
+      </Modal> */}
     </KeyboardAvoidingView>
   );
 }
@@ -2519,5 +2569,6 @@ const styles = StyleSheet.create({
   },
   chip: {
     // базовые параметры, динамика — в JSX
+    boxSizing: 'border-box',
   },
 });

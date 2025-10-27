@@ -8,9 +8,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { scaleByHeight } from '../../utils/resizeFuncs';
+import { useWindowInfo } from '../../context/windowContext';
+import { RFValue } from 'react-native-responsive-fontsize';
 
 export default function ImagePickerModal({ visible, onClose, onAdd }) {
   const [url, setUrl] = useState('');
+
+  const { width, height, isLandscape, sidebarWidth = 0 } = useWindowInfo();
+  const isWebLandscape = isLandscape && Platform.OS === 'web';
 
   const pickImageFromDevice = async () => {
     try {
@@ -58,6 +64,10 @@ export default function ImagePickerModal({ visible, onClose, onAdd }) {
     }
   };
 
+  const sizes = {
+    modalWidth: isWebLandscape ? scaleByHeight(350, height) : '80%',
+    borderRadius: isWebLandscape ? 8 : RFValue(5),
+  };
   return (
     <Modal visible={visible} transparent animationType='slide'>
       <View
@@ -72,8 +82,8 @@ export default function ImagePickerModal({ visible, onClose, onAdd }) {
           style={{
             backgroundColor: 'white',
             padding: 20,
-            borderRadius: 10,
-            width: '80%',
+            borderRadius: sizes.borderRadius,
+            width: sizes.modalWidth,
           }}
         >
           <Text style={{ fontSize: 18, marginBottom: 10 }}>Add Image</Text>
@@ -98,7 +108,7 @@ export default function ImagePickerModal({ visible, onClose, onAdd }) {
             style={{
               borderWidth: 1,
               borderColor: '#ccc',
-              borderRadius: 5,
+              borderRadius: sizes.borderRadius,
               padding: 8,
               marginBottom: 10,
             }}

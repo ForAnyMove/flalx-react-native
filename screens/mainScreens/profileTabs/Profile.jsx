@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import ImagePickerModal from '../../../components/ui/ImagePickerModal';
 import { uploadImageToSupabase } from '../../../utils/supabase/uploadImageToSupabase';
 import { scaleByHeight } from '../../../utils/resizeFuncs';
+import SubscriptionsModal from '../../../components/SubscriptionsModal';
 
 export default function Profile() {
   const { user, themeController, languageController, session } =
@@ -33,6 +34,8 @@ export default function Profile() {
   const { height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
+
+  const [subscriptionsModal, setSubscriptionsModal] = useState(false);
 
   // базовые размеры
   const baseFont = RFValue(12);
@@ -255,6 +258,13 @@ export default function Profile() {
                   borderRadius: isWebLandscape ? 8 : RFValue(5),
                 },
               ]}
+              onPress={() => {
+                /* Навигация по кнопкам */
+                if (key === 'subscription') {
+                  // Открыть модалку подписок
+                  setSubscriptionsModal(true);
+                }
+              }}
             >
               <Text
                 style={[
@@ -532,6 +542,15 @@ export default function Profile() {
           if (uris?.length > 0) {
             await uploadAvatar(uris[0]);
           }
+        }}
+      />
+      
+      {/* Subscriptions */}
+      <SubscriptionsModal
+        visible={subscriptionsModal}
+        main={false}
+        closeModal={() => {
+          setSubscriptionsModal(false);
         }}
       />
     </ScrollView>

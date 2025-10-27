@@ -55,13 +55,14 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         otp_label: 'Security code',
         confirm: 'Confirm',
         back_to_email: 'Change email',
-        resend_code: 'I didn\'t receive a code',
+        resend_code: "I didn't receive a code",
         resend_modal_text: 'A new code has been sent to your email.',
         ok: 'OK',
         invalid_email: 'Enter a valid email',
         clear_code: 'Clear code',
         invalid_code: 'Invalid code',
-        email_description: 'Search for already sent me a verification code.\nYou agree to the terms of use and privacy.',
+        email_description:
+          'Search for already sent me a verification code.\nYou agree to the terms of use and privacy.',
       },
       tabs: {
         store: 'Store',
@@ -149,20 +150,54 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         startDateTime: 'Start date and time',
         endDateTime: 'End date and time',
         statusModal: {
-          title: 'Choose the post type to publish',
-          subtitle: 'Select how your request will be shown',
+          title: 'Select the type of ad you want to publish',
           option: {
             default: 'Default',
-            top: 'Top',
+            top: 'TOP',
             verified: 'Verified',
+            forPro: 'For PRO users',
+            quickly: 'Quickly',
           },
           proBadge: 'For PRO users',
           buttons: {
-            viewPlans: 'See pricing plans',
+            viewPlans: 'Get a subscription',
             confirmWithPrice: 'Publish for {{price}}',
           },
           plansTitle: 'Pricing plans',
           free: 'Free',
+        },
+      },
+      providersSection: {
+        title: {
+          storeWaiting: 'Interested Providers',
+          storeInProgress: 'Provider working on request',
+          storeDone: 'Provider complete request',
+          jobsInProgress: 'Customer placed request',
+          jobsDone: 'Customer placed request',
+        },
+        modalTitle: 'Interested Providers',
+        createRequest: 'Create request',
+      },
+      subscriptions: {
+        choose: 'Choose',
+        month: 'month',
+        subscription: {
+          default: {
+            name: 'Default',
+            description: 'Basic features for everyday use.',
+          },
+          top: {
+            name: 'TOP',
+            description: 'Advanced features and support.',
+          },
+          plus: {
+            name: 'Plus',
+            description: 'Advanced features and support.',
+          },
+          forPro: {
+            name: 'For PRO users',
+            description: 'Maximum features, priority support.',
+          },
         },
       },
       showJob: {
@@ -200,17 +235,6 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         paywall: {
           notice: 'To continue this action, you need to pay or subscribe',
         },
-      },
-      providersSection: {
-        title: {
-          storeWaiting: 'Interested Providers',
-          storeInProgress: 'Provider working on request',
-          storeDone: 'Provider complete request',
-          jobsInProgress: 'Customer placed request',
-          jobsDone: 'Customer placed request',
-        },
-        modalTitle: 'Interested Providers',
-        createRequest: 'Create request',
       },
     },
   },
@@ -274,7 +298,8 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         invalid_email: 'הזן אימייל תקין',
         clear_code: 'נקה קוד',
         invalid_code: 'קוד שגוי',
-        email_description: 'חפש כבר שלח לי קוד אימות.\nאתה מסכים לתנאי השימוש והפרטיות.',
+        email_description:
+          'חפש כבר שלח לי קוד אימות.\nאתה מסכים לתנאי השימוש והפרטיות.',
       },
       tabs: {
         store: 'חנות',
@@ -362,19 +387,53 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         endDateTime: 'תאריך ושעת סיום',
         statusModal: {
           title: 'בחר את סוג המודעה שברצונך לפרסם',
-          subtitle: 'בחר כיצד תוצג הבקשה שלך',
           option: {
             default: 'ברירת מחדל',
-            top: 'הטוב ביותר',
+            top: 'TOP',
             verified: 'מְאוּמָת',
+            forPro: 'עבור משתמשי PRO',
+            quickly: 'במהירות',
           },
           proBadge: 'עבור משתמשי PRO',
           buttons: {
-            viewPlans: 'הצג תוכניות תמחור',
+            viewPlans: 'קבל/י מנוי',
             confirmWithPrice: 'פרסם ב-{{price}}',
           },
           plansTitle: 'תוכניות תמחור',
           free: 'חינם',
+        },
+      },
+      providersSection: {
+        title: {
+          storeWaiting: 'ספקים מעוניינים',
+          storeInProgress: 'ספק עובד על הבקשה',
+          storeDone: 'הספק השלים את הבקשה',
+          jobsInProgress: 'לקוח יצר בקשה',
+          jobsDone: 'לקוח יצר בקשה',
+        },
+        modalTitle: 'ספקים מעוניינים',
+        createRequest: 'צור בקשה',
+      },
+      subscriptions: {
+        choose: 'בחר',
+        month: 'חודש',
+        subscription: {
+          default: {
+            name: 'ברירת מחדל',
+            description: 'תכונות בסיסיות לשימוש יומיומי.',
+          },
+          top: {
+            name: 'TOP',
+            description: 'תכונות מתקדמות ותמיכה.',
+          },
+          plus: {
+            name: 'פלוס',
+            description: 'תכונות מתקדמות ותמיכה.',
+          },
+          forPro: {
+            name: 'עבור משתמשי PRO',
+            description: 'תכונות מקסימליות, תמיכה עדיפות.',
+          },
         },
       },
       showJob: {
@@ -413,17 +472,6 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
           notice: 'כדי להמשיך, יש לשלם או להירשם כמנוי',
         },
       },
-    },
-    providersSection: {
-      title: {
-        storeWaiting: 'ספקים מעוניינים',
-        storeInProgress: 'ספק עובד על הבקשה',
-        storeDone: 'הספק השלים את הבקשה',
-        jobsInProgress: 'לקוח יצר בקשה',
-        jobsDone: 'לקוח יצר בקשה',
-      },
-      modalTitle: 'ספקים מעוניינים',
-      createRequest: 'צור בקשה',
     },
   },
 };
