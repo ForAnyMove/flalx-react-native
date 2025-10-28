@@ -58,12 +58,12 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
       ? scaleByHeight(10, height)
       : RFValue(6),
     margin: isWebLandscape ? scaleByHeight(18, height) : RFValue(10),
-    borderRadius: isWebLandscape ? 8 : RFValue(5),
+    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
     thumb: isWebLandscape ? scaleByHeight(128, height) : RFValue(80),
     headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
     headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
     icon: isWebLandscape ? scaleByHeight(24, height) : RFValue(16),
-    iconSize: isWebLandscape ? scaleByHeight(24, height) : iconSize,
+    iconSize: isWebLandscape ? scaleByHeight(24, height) : RFValue(15),
     horizontalGap: isWebLandscape ? width * 0.01 : 0,
     headerPaddingHorizontal: isWebLandscape
       ? scaleByHeight(7, height)
@@ -95,7 +95,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
     modalBtnWidth: isWebLandscape ? scaleByHeight(153, height) : '40%',
     modalLongBtnWidth: isWebLandscape ? scaleByHeight(300, height) : '80%',
     modalBtnFont: isWebLandscape ? scaleByHeight(20, height) : baseFont,
-    modalBtnBorderRadius: isWebLandscape ? 8 : RFValue(6),
+    modalBtnBorderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(6),
     modalBtnsGap: isWebLandscape ? scaleByHeight(24, height) : RFValue(12),
     modalPadding: isWebLandscape ? scaleByHeight(32, height) : RFValue(16),
     modalLineHeight: isWebLandscape ? scaleByHeight(32, height) : 1,

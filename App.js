@@ -92,12 +92,12 @@ function App() {
     content = <RegisterScreen />;
   }
   // 4. Основное приложение
-  else {
+  // else {
     content =
       (<WebSocketProvider>
         <AppScreen />
       </WebSocketProvider>);
-  }
+  // }
 
   return (
     <SafeAreaProvider>

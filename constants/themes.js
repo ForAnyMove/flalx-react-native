@@ -13,7 +13,7 @@ export const LIGHT_THEME = {
   secondaryBadgeBackground: '#0A62EA',
   badgeTextColor: '#ffffff',
   formInputBackground: '#F0F0FA',
-  formInputBackgroundEditMode: '#c5c5ff',
+  formInputBackgroundEditMode: '#edeaffff',
   formInputBorderColor: '#333',
   formInputLabelColor: '#9FAACD',
   formInputTextColor: '#555',

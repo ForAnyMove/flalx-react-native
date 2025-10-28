@@ -65,7 +65,7 @@ function SubscriptionsModalContent({ closeModal }) {
     subscriptionMarginBottom: isWebLandscape
       ? scaleByHeight(23, height)
       : RFValue(15),
-    borderRadius: isWebLandscape ? 8 : RFValue(5),
+    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
     subscriptionWidth: isWebLandscape
       ? scaleByHeight(419, height)
       : RFValue(300),

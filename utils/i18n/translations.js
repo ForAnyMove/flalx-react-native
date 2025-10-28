@@ -94,6 +94,29 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         confirm_logout: 'Are you sure you want to logout?',
       },
       settings: {
+        modals: {
+          contact_us: {
+            topic: {
+              label: 'Topic',
+              placeholder: 'Your login and message subject',
+            },
+            message: {
+              label: 'Message',
+              placeholder: 'Describe your question',
+            },
+            email: {
+              label: 'Email',
+              placeholder: 'electric@example.com',
+            },
+            name: {
+              label: 'Your name',
+              placeholder: 'Name',
+            },
+            reason: {
+              label: 'Reason for contacting',
+              placeholder: 'Select a reason',},
+          },
+        },
         language: 'Language',
         language_en: 'English',
         language_he: 'Hebrew',
@@ -106,6 +129,11 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         regulations: 'Regulations',
         have_question: 'Do you have a question?',
         just_cheer: 'Just want to cheer?',
+        contact_us: 'Contact us',
+        feedback: 'Feedback',
+        about_content: `Hi, my name is Yossi.
+Electrician and ____ since ____. Being independent is not easy. I myself have gone through a lot of frustrations during my years as a freelancer. I didn't have enough money to keep an employee/s, work was not continuous throughout the year, difficulty taking short and long vacation days, there was simply no one to provide regular service to all my clients. Then I realized, I'm not the only one and like me, many other independent electricians live with this frustration. So I created a platform that brings together all electricians in one place and serves a common interest. Together, we will create a tremendous force of helping each other. Posting jobs and receiving job offers from electricians in the area. An hourly price list that will be acceptable to anyone who joins as a member. Mutual agreements with other professionals so that we can use them in a more organized way. Basically, everything you need to make it easier for all of us and create something like never before!`,
+        regulations_content: `- A three and a half year old man, a minor from the village of Havitz, a Dalmatian from Yassab, Hana won the Nimrgi Shachim Tok, a Hatsh that appeared to be Hitidam Khair and Klorum Ipsum Dolor Sit Emet, a constructor of the Adipiscing Elite Hoinav who lives in the wilderness of Simchat - three and told the education of Othlasach and Tlalshu. A minor from the village of Havitz, a Dalmatian from Yassab, Hana won the Nimrgi Shachim Tok, a Hatsh that appeared to be Hitidam Khair and Klorum Ipsum Dolor Sit Emet, a constructor of the Education Elite Hoinav who lives in the wilderness of Simchat - Shushia and told the Shloh of Othlasach and Tlalshu. Zuta from the clean summer of Havits, a dry summer, Hana won Nimrgi Shachim Tok, Hatsh Shanra Hitidam Khair and K. Lorem Ipsum Dolor Sit Emet, Constructor of Elite Education Huinab Sits Shammat Simhit - Shushia and Telbro Shloh Uthlasach and Telbro Shloh Uthlasach and Teltlasach. Zuta from the summer Clean summer, dry summer, Kahana.`
       },
       common: {
         visit: 'Visit',
@@ -330,6 +358,30 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         confirm_delete: 'האם אתה בטוח שברצונך למחוק את החשבון שלך?',
       },
       settings: {
+        modals: {
+          contact_us: {
+            topic: {
+              label: 'נושא',
+              placeholder: 'הכניסו את שם המשתמש ונושא ההודעה שלכם',
+            },
+            message: {
+              label: 'הודעה',
+              placeholder: 'כתוב את ההודעה שלך כאן...',
+            },
+            email: {
+              label: 'אימייל',
+              placeholder: 'electric@example.com',
+            },
+            name: {
+              label: 'שמך',
+              placeholder: 'שם',
+            },
+            reason: {
+              label: 'סיבת יצירת הקשר',
+              placeholder: 'בחר סיבה',
+            },
+          },
+        },
         language: 'שפה',
         language_en: 'אנגלית',
         language_he: 'עברית',
@@ -342,6 +394,14 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         regulations: 'תקנות',
         have_question: 'יש לך שאלה?',
         just_cheer: 'רק רוצה לעודד?',
+        contact_us: 'צרו קשר',
+        feedback: 'מָשׁוֹב',
+        about_content: `היי, שמי יוסי.
+
+חשמלאי ו-____ מאז ____. להיות עצמאי זה לא דבר קל. אני עצמי עברתי הרבה תסכולים במהלך שנותיי כפרילנסר. לא היה לי מספיק כסף כדי להחזיק עובד/ים, עבודה לא רציפה לאורך כל השנה, קושי לקחת ימי חופשה קצרים וארוכים, פשוט לא היה מי שיספק שירות קבוע לכל הלקוחות שלי. ואז הבנתי, אני לא היחיד וכמוני, הרבה חשמלאים עצמאיים אחרים חיים עם התסכול הזה. אז יצרתי פלטפורמה שמאגדת את כל אנשי החשמל במקום אחד ומשרתת אינטרס משותף. יחד, ניצור כוח אדיר של עזרה אחד לשני. פרסום משרות וקבלת הצעות עבודה מחשמלאים באזור. מחירון שעתי שיהיה מקובל על כל מי שיצטרף כחבר. הסכמים הדדיים עם אנשי מקצוע אחרים כדי שנוכל להשתמש בהם בצורה מסודרת יותר. בעצם כל מה שצריך כדי להקל על כולנו וליצור משהו שמעולם לא היה כמותו!`,
+        regulations_content: ` - גבר בן שלוש וחצי,זוטא מנק חאביץ אפה דלמאת יאסב, חנה ניצחו נימרגי שחים טוק, חתש שנרא חיטידם ח'יר וקלורום איפסום דולור סיט אמת, קונסטקטורר אדיפיסינג עלית הוינב יושב שממת שמחות - שלוש וטלברו השכלת אותלאשך וטלבשו. זוטא מנק חאביץ אפה דלמאת יאסב, חנה ניצחו נימרגי שחים טוק, חת"ש שנרא היטידם ח'יר וק' לורם איפסום דולור סיט אמת, קונסטקטורר חינוך עלית הואינב יושב שממת שמחית - שושיה וטלברו השלו"ת אותלסך ותלברו השלוח אותלסך ותלתלסך. זוטא מנק חאביץ אפה דלמאת יאסב, חנה ניצחו נימרגי שחים טוק, חת"ש שנרא היטידם ח'יר וק' לורם איפסום דולור סיט אמת, קונסטקטורר חינוך עלית הואינב יושב שממת שמחית - שושיה וטלברו השלו"ת אותלסך ותלברו השלוח אותלסך ותלתלסך. זוטא מהקיץ נקי אפה דלמת יבש, כהנא.
+
+ היושב ישב על מיטת חייט - גבר בן שלוש וחצי, ו-chait novas arashshef. זוטא מנק חאביץ אפה דלמאת ישב, חנה ניצחו נימרגי שחים טוק, חת"ש שנרא חיתידם ח'יר וקבולור סיט אמת, קונסקטורר אדיפיזינג עלית הואינב יושב ש"ה שמחות שלוש וטלברו החול התולש"ך וחי' נובש ארששף. זוטא מהקיץ  היושב ישב על מיטת חייט - גבר בן שלוש וחצי, ו-chait novas arashshef. זוטא מנק חאביץ אפה דלמאת ישב, חנה ניצחו נימרגי שחים טוק, חת"ש שנרא חיתידם ח'יר וקבולור סיט אמת, קונסקטורר אדיפיזינג עלית הואינב יושב ש"ה שמחות שלוש וטלברו החול `,
       },
       common: {
         visit: 'בקר',

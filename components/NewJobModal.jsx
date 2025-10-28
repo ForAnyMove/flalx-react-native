@@ -379,12 +379,12 @@ export default function NewJobModal({
       ? scaleByHeight(10, height)
       : RFValue(6),
     margin: isWebLandscape ? scaleByHeight(18, height) : RFValue(10),
-    borderRadius: isWebLandscape ? 8 : RFValue(5),
+    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
     thumb: isWebLandscape ? scaleByHeight(128, height) : RFValue(80),
     thumbGap: isWebLandscape ? height * 0.05 : RFValue(28),
     headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
     modalPadding: isWebLandscape ? scaleByHeight(45, height) : RFValue(12),
-    modalRadius: isWebLandscape ? 8 : RFValue(5),
+    modalRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
     modalCrossTopRightPos: isWebLandscape
       ? scaleByHeight(7, height)
       : RFValue(10),

@@ -8,22 +8,19 @@ import {
   TouchableOpacity,
   View,
   Platform,
+  TextInput,
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
-import { Picker } from '@react-native-picker/picker';
-import { RFValue, RFPercentage } from 'react-native-responsive-fontsize';
+import CustomPicker from '../../../components/ui/CustomPicker';
 import { icons } from '../../../constants/icons';
 import { useState } from 'react';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight } from '../../../utils/resizeFuncs';
+import { RFValue } from 'react-native-responsive-fontsize';
+import BouncyCheckbox from 'react-native-bouncy-checkbox';
 
-const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
-  if (Platform.OS === 'web') {
-    return isLandscape ? webSize * 1.6 : RFValue(mobileSize);
-  }
-  return RFValue(mobileSize);
-};
+// getResponsiveSize helper was unused and removed
 
 export default function Settings() {
   const { themeController, languageController } = useComponentContext();
@@ -39,10 +36,13 @@ export default function Settings() {
   // Modals
   const [aboutVisible, setAboutVisible] = useState(false);
   const [regulationsVisible, setRegulationsVisible] = useState(false);
+  const [contactUsVisible, setContactUsVisible] = useState(false);
+  const [feedbackVisible, setFeedbackVisible] = useState(false);
 
   // размеры/отступы
   const sizes = {
     baseFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(12),
+    font: isWebLandscape ? scaleByHeight(12, height) : RFValue(12),
     questionsFont: isWebLandscape ? scaleByHeight(18, height) : RFValue(10),
     iconCircleSize: isWebLandscape ? scaleByHeight(40, height) : RFValue(22),
     iconSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(18),
@@ -56,6 +56,52 @@ export default function Settings() {
     rowsWidth: isWebLandscape ? '65%' : '100%',
     rowsAlign: isWebLandscape ? (isRTL ? 'flex-end' : 'flex-start') : 'stretch',
     bottomInset: isWebLandscape ? height * 0.02 : 0,
+    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
+    regulationsModalWidth: isWebLandscape ? scaleByHeight(480, height) : '100%',
+    regulationsModalHeight: isWebLandscape
+      ? scaleByHeight(600, height)
+      : '100%',
+    aboutModalHeight: isWebLandscape ? scaleByHeight(650, height) : '100%',
+    modalIconSize: isWebLandscape ? scaleByHeight(24, height) : RFValue(15),
+    modalCloseBtnTopRightPosition: isWebLandscape
+      ? scaleByHeight(7, height)
+      : RFValue(5),
+    regulationsModalPaddingVertical: isWebLandscape
+      ? scaleByHeight(36, height)
+      : RFValue(10),
+    regulationsModalPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(44, height)
+      : RFValue(10),
+    regulationsModalTitle: isWebLandscape
+      ? scaleByHeight(24, height)
+      : RFValue(18),
+    modalContentHeight: isWebLandscape
+      ? scaleByHeight(440, height)
+      : RFValue(400),
+    avatarModalMarginBottom: isWebLandscape
+      ? scaleByHeight(16, height)
+      : RFValue(16),
+    nonAvatarModalMarginBottom: isWebLandscape
+      ? scaleByHeight(24, height)
+      : RFValue(20),
+    avatarSize: isWebLandscape ? scaleByHeight(80, height) : RFValue(65),
+    contactUsModalHeight: isWebLandscape ? scaleByHeight(790, height) : '100%',
+    feedbackModalHeight: isWebLandscape ? scaleByHeight(480, height) : '100%',
+    sendContactFormModalHeight: isWebLandscape
+      ? scaleByHeight(450, height)
+      : '100%',
+    inputContainerPaddingVertical: isWebLandscape
+      ? scaleByHeight(10, height)
+      : RFValue(6),
+    inputContainerPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(16, height)
+      : RFValue(8),
+    inputHeight: isWebLandscape ? scaleByHeight(64, height) : RFValue(40),
+    inputWidth: isWebLandscape ? scaleByHeight(330, height) : RFValue(150),
+    textAreaHeight: isWebLandscape ? scaleByHeight(144, height) : RFValue(40),
+    textInputPadding: isWebLandscape ? scaleByHeight(4, height) : RFValue(8),
+    inputFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
+    checkboxIconSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(13),
   };
 
   // помощник для контейнеров-строк
@@ -97,113 +143,33 @@ export default function Settings() {
             isWebLandscape && { height: scaleByHeight(64, height) },
           ]}
         >
-          {/* Language */}
-          <View
-            style={[
-              styles.pickerContainer,
-              {
-                backgroundColor: themeController.current?.formInputBackground,
-                height: sizes.pickerHeight,
-                flex: isWebLandscape ? 1 : undefined,
-                paddingHorizontal: isWebLandscape
-                  ? scaleByHeight(15, height)
-                  : RFValue(8),
-              },
+          <CustomPicker
+            label={t('settings.language')}
+            options={[
+              { label: t('settings.lang_en', 'English'), value: 'en' },
+              { label: t('settings.lang_he', 'עברית'), value: 'he' },
             ]}
-          >
-            <Text
-              style={[
-                styles.label,
-                {
-                  color: themeController.current?.unactiveTextColor,
-                  fontSize: sizes.baseFont * 0.75,
-                  // зеркалка подписи
-                  // top: isWebLandscape ? '20%' : RFValue(5),
-                  // left: isRTL
-                  //   ? undefined
-                  //   : isWebLandscape
-                  //   ? scaleByHeight(15, height)
-                  //   : RFValue(8),
-                  // right: isRTL
-                  //   ? isWebLandscape
-                  //     ? scaleByHeight(15, height)
-                  //     : RFValue(8)
-                  //   : undefined,
-                  textAlign: isRTL ? 'right' : 'left',
-                },
-              ]}
-            >
-              {t('settings.language')}
-            </Text>
-            <Picker
-              selectedValue={languageController.current}
-              onValueChange={(itemValue) =>
-                languageController.setLang(itemValue)
-              }
-              style={[
-                styles.picker,
-                {
-                  color: themeController.current?.textColor,
-                },
-              ]}
-              dropdownIconColor={themeController.current?.primaryColor}
-              itemStyle={{ marginTop: RFValue(10) }}
-            >
-              <Picker.Item
-                label={t('settings.lang_en', 'English')}
-                value='en'
-              />
-              <Picker.Item label={t('settings.lang_he', 'עברית')} value='he' />
-            </Picker>
-          </View>
+            selectedValue={languageController.current}
+            onValueChange={(itemValue) =>
+              languageController.setLang(itemValue)
+            }
+            isRTL={isRTL}
+            sizes={sizes}
+            fullScreen={isWebLandscape}
+          />
 
-          {/* Theme */}
-          <View
-            style={[
-              styles.pickerContainer,
-              {
-                backgroundColor: themeController.current?.formInputBackground,
-                height: sizes.pickerHeight,
-                flex: isWebLandscape ? 1 : undefined,
-                paddingHorizontal: isWebLandscape
-                  ? scaleByHeight(15, height)
-                  : RFValue(8),
-              },
+          <CustomPicker
+            label={t('settings.theme')}
+            options={[
+              { label: t('settings.theme_light', 'Light'), value: 'light' },
+              { label: t('settings.theme_dark', 'Dark'), value: 'dark' },
             ]}
-          >
-            <Text
-              style={[
-                styles.label,
-                {
-                  color: themeController.current?.unactiveTextColor,
-                  fontSize: sizes.baseFont * 0.75,
-                  // left: isRTL ? undefined : RFValue(10),
-                  // right: isRTL ? RFValue(10) : undefined,
-                  textAlign: isRTL ? 'right' : 'left',
-                },
-              ]}
-            >
-              {t('settings.theme')}
-            </Text>
-            <Picker
-              selectedValue={themeController.isTheme}
-              onValueChange={(itemValue) => themeController.setTheme(itemValue)}
-              style={[
-                styles.picker,
-                { color: themeController.current?.textColor },
-              ]}
-              dropdownIconColor={themeController.current?.primaryColor}
-            >
-              <Picker.Item
-                label={t('settings.theme_light', 'Light')}
-                value='light'
-              />
-              <Picker.Item
-                label={t('settings.theme_dark', 'Dark')}
-                value='dark'
-              />
-            </Picker>
-          </View>
+            selectedValue={themeController.isTheme}
+            onValueChange={(itemValue) => themeController.setTheme(itemValue)}
+            isRTL={isRTL}
+            sizes={sizes}
+            fullScreen={isWebLandscape}
+          />
         </View>
 
         {/* Break Line */}
@@ -301,6 +267,7 @@ export default function Settings() {
                   themeController.current?.buttonColorPrimaryDefault,
                 padding: sizes.btnPadding,
                 flex: isWebLandscape ? 1 : undefined,
+                borderRadius: sizes.borderRadius,
               },
               isWebLandscape && {
                 height: scaleByHeight(62, height),
@@ -312,7 +279,7 @@ export default function Settings() {
           >
             <Text
               style={[
-                styles.primaryText,
+                // styles.primaryText,
                 {
                   color: themeController.current?.buttonTextColorPrimary,
                   fontSize: sizes.btnFont,
@@ -330,6 +297,7 @@ export default function Settings() {
                 backgroundColor:
                   themeController.current?.buttonColorPrimaryDefault,
                 padding: sizes.btnPadding,
+                borderRadius: sizes.borderRadius,
                 flex: isWebLandscape ? 1 : undefined,
               },
               isWebLandscape && {
@@ -342,7 +310,7 @@ export default function Settings() {
           >
             <Text
               style={[
-                styles.primaryText,
+                // styles.primaryText,
                 {
                   color: themeController.current?.buttonTextColorPrimary,
                   fontSize: sizes.btnFont,
@@ -369,7 +337,14 @@ export default function Settings() {
           isWebLandscape && { justifyContent: 'flex-start' },
         ]}
       >
-        <View style={isWebLandscape &&{ [isRTL ? 'marginLeft' : 'marginRight']: scaleByHeight(93, height), marginBottom: scaleByHeight(55, height) }}>
+        <View
+          style={
+            isWebLandscape && {
+              [isRTL ? 'marginLeft' : 'marginRight']: scaleByHeight(93, height),
+              marginBottom: scaleByHeight(55, height),
+            }
+          }
+        >
           <Text
             style={[
               styles.bottomText,
@@ -424,6 +399,7 @@ export default function Settings() {
               justifyContent: 'center',
               alignItems: 'center',
             }}
+            onPress={() => setContactUsVisible(true)}
           >
             <Image
               source={icons.emailClear}
@@ -445,6 +421,7 @@ export default function Settings() {
               justifyContent: 'center',
               alignItems: 'center',
             }}
+            onPress={() => setFeedbackVisible(true)}
           >
             <Image
               source={icons.phoneClear}
@@ -456,24 +433,73 @@ export default function Settings() {
       </View>
 
       {/* About Modal */}
-      <Modal visible={aboutVisible} animationType='slide'>
+      <Modal
+        visible={aboutVisible}
+        animationType='slide'
+        transparent={isWebLandscape}
+      >
         <ModalContent
-          title='FLALX'
+          title={t('settings.about')}
           onClose={() => setAboutVisible(false)}
-          lines={20}
           isWebLandscape={isWebLandscape}
           sizes={sizes}
+          content={t('settings.about_content')}
+          avatar={true}
+          isRTL={isRTL}
+          height={height}
         />
       </Modal>
 
       {/* Regulations Modal */}
-      <Modal visible={regulationsVisible} animationType='slide'>
+      <Modal
+        visible={regulationsVisible}
+        animationType='slide'
+        transparent={isWebLandscape}
+      >
         <ModalContent
-          title='FLALX'
+          title={t('settings.regulations')}
           onClose={() => setRegulationsVisible(false)}
-          lines={50}
           isWebLandscape={isWebLandscape}
           sizes={sizes}
+          content={t('settings.regulations_content')}
+          isRTL={isRTL}
+          height={height}
+        />
+      </Modal>
+
+      {/* Contact Us Modal */}
+      <Modal
+        visible={contactUsVisible}
+        animationType='slide'
+        transparent={isWebLandscape}
+      >
+        <ModalContent
+          title={t('settings.contact_us')}
+          onClose={() => setContactUsVisible(false)}
+          isWebLandscape={isWebLandscape}
+          sizes={sizes}
+          content={''}
+          contactForm={true}
+          isRTL={isRTL}
+          height={height}
+        />
+      </Modal>
+
+      {/* Feedback Modal */}
+      <Modal
+        visible={feedbackVisible}
+        animationType='slide'
+        transparent={isWebLandscape}
+      >
+        <ModalContent
+          title={t('settings.feedback')}
+          onClose={() => setFeedbackVisible(false)}
+          isWebLandscape={isWebLandscape}
+          sizes={sizes}
+          content={''}
+          feedback={true}
+          isRTL={isRTL}
+          height={height}
         />
       </Modal>
     </View>
@@ -481,61 +507,521 @@ export default function Settings() {
 }
 
 // Модальное содержимое
-function ModalContent({ title, onClose, lines, isWebLandscape, sizes }) {
+function ModalContent({
+  title,
+  onClose,
+  lines,
+  isWebLandscape,
+  sizes,
+  content,
+  avatar = false,
+  contactForm = false,
+  feedback = false,
+  isRTL,
+  height
+}) {
   const { themeController } = useComponentContext();
-  const { isLandscape, height } = useWindowInfo();
+  const { t } = useTranslation();
+
+  const [accepted, setAccepted] = useState(false);
+  const [contactUsForm, setContactUsForm] = useState({
+    topic: '',
+    message: '',
+    email: '',
+    name: '',
+    reason: '',
+  });
+
   return (
-    <View style={{ flex: 1 }}>
-      <View
+    <TouchableOpacity
+      style={[
+        { flex: 1 },
+        isWebLandscape && {
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+      ]}
+      onPress={() => onClose()}
+    >
+      <TouchableOpacity
+        onPress={(e) => {
+          e.stopPropagation();
+        }}
         style={[
-          styles.modalHeader,
           {
-            height:
-              Platform.OS === 'web' && isLandscape
-                ? height * 0.07
-                : RFPercentage(7),
+            position: 'relative',
+            paddingVertical: sizes.regulationsModalPaddingVertical,
+            paddingHorizontal: sizes.regulationsModalPaddingHorizontal,
+            justifyContent: 'center',
+          },
+          isWebLandscape && {
+            width: sizes.regulationsModalWidth,
+            height: avatar
+              ? sizes.aboutModalHeight
+              : sizes.regulationsModalHeight,
+            borderRadius: sizes.borderRadius,
+            backgroundColor: themeController.current?.backgroundColor,
           },
         ]}
       >
-        <TouchableOpacity onPress={onClose}>
+        <TouchableOpacity
+          style={[
+            {
+              position: 'absolute',
+              top: sizes.modalCloseBtnTopRightPosition,
+              right: sizes.modalCloseBtnTopRightPosition,
+            },
+          ]}
+          onPress={() => onClose()}
+        >
           <Image
-            source={icons.back}
+            source={icons.cross}
             style={{
-              width: getResponsiveSize(20, height * 0.02, isLandscape),
-              height: getResponsiveSize(20, height * 0.02, isLandscape),
-              margin: RFValue(10),
+              width: sizes.modalIconSize,
+              height: sizes.modalIconSize,
               tintColor: themeController.current?.textColor,
             }}
-            resizeMode='contain'
           />
         </TouchableOpacity>
         <Text
           style={[
-            styles.modalTitle,
-            { fontSize: getResponsiveSize(18, height * 0.02, isLandscape) },
+            {
+              fontSize: sizes.regulationsModalTitle,
+              color: themeController.current?.textColor,
+              fontFamily: 'Rubik-Bold',
+              textAlign: 'center',
+              marginBottom: avatar
+                ? sizes.avatarModalMarginBottom
+                : sizes.nonAvatarModalMarginBottom,
+            },
           ]}
         >
           {title}
         </Text>
-      </View>
-      <ScrollView style={styles.modalContent}>
-        {Array.from({ length: lines }).map((_, i) => (
-          <Text
-            key={i}
-            style={[
-              styles.modalText,
-              {
-                color: themeController.current?.textColor,
-                fontSize: isWebLandscape ? sizes.baseFont : RFValue(12),
-              },
-            ]}
+        {avatar && (
+          <View
+            style={{
+              overflow: 'hidden',
+              marginBottom: sizes.avatarModalMarginBottom,
+              alignItems: 'center',
+            }}
           >
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua.
-          </Text>
-        ))}
-      </ScrollView>
-    </View>
+            <Image
+              source={icons.defaultAvatar}
+              style={{
+                width: sizes.avatarSize,
+                height: sizes.avatarSize,
+                borderRadius: sizes.avatarSize / 2,
+              }}
+            />
+          </View>
+        )}
+        {contactForm || feedback ? (
+          <>
+            {contactForm && (
+              <ScrollView style={[{ width: '100%' }]}>
+                <View
+                  style={[
+                    styles.inputBlock,
+                    {
+                      backgroundColor:
+                        themeController.current?.formInputBackground,
+                      paddingVertical: sizes.inputContainerPaddingVertical,
+                      paddingHorizontal: sizes.inputContainerPaddingHorizontal,
+                      borderRadius: sizes.borderRadius,
+                      marginBottom: 0,
+                      height: sizes.inputHeight,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      {
+                        color: themeController.current?.unactiveTextColor,
+                      },
+                      isRTL && { textAlign: 'right' },
+                      { fontSize: sizes.font },
+                    ]}
+                  >
+                    {t('settings.modals.contact_us.topic.label', {
+                      defaultValue: 'Topic',
+                    })}
+                  </Text>
+                  <TextInput
+                    value={contactUsForm.topic}
+                    onChangeText={(v) =>
+                      setContactUsForm((p) => ({ ...p, topic: v }))
+                    }
+                    placeholder={t(
+                      'settings.modals.contact_us.topic.placeholder',
+                      {
+                        defaultValue: 'Your login and message subject',
+                      }
+                    )}
+                    placeholderTextColor={
+                      themeController.current?.formInputLabelColor
+                    }
+                    style={{
+                      fontWeight: '500',
+                      color: themeController.current?.textColor,
+                      padding: 0,
+                      paddingVertical: sizes.textInputPadding,
+                      fontSize: sizes.inputFont,
+                      borderRadius: sizes.borderRadius,
+                      backgroundColor: 'transparent',
+                      textAlign: isRTL ? 'right' : 'left',
+                    }}
+                  />
+                </View>
+                <Text
+                  style={[
+                    {
+                      color: themeController.current?.unactiveTextColor,
+                      fontSize: sizes.baseFont,
+                    },
+                  ]}
+                >
+                  {t('settings.modals.contact_us.description')}
+                </Text>
+                <View
+                  style={[
+                    styles.inputBlock,
+                    {
+                      backgroundColor:
+                        themeController.current?.formInputBackground,
+                      paddingVertical: sizes.inputContainerPaddingVertical,
+                      paddingHorizontal: sizes.inputContainerPaddingHorizontal,
+                      borderRadius: sizes.borderRadius,
+                      marginBottom: 0,
+                      height: sizes.textAreaHeight,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      { color: themeController.current?.unactiveTextColor },
+                      isRTL && { textAlign: 'right' },
+                      { fontSize: sizes.font },
+                    ]}
+                  >
+                    {t('settings.modals.contact_us.message.label', {
+                      defaultValue: 'Message',
+                    })}
+                  </Text>
+                  <TextInput
+                    value={contactUsForm.message}
+                    onChangeText={(v) =>
+                      setContactUsForm((p) => ({ ...p, message: v }))
+                    }
+                    placeholder={t(
+                      'settings.modals.contact_us.message.placeholder',
+                      {
+                        defaultValue: 'Write your message here...',
+                      }
+                    )}
+                    placeholderTextColor={
+                      themeController.current?.formInputLabelColor
+                    }
+                    style={{
+                      fontWeight: '500',
+                      color: themeController.current?.textColor,
+                      padding: 0,
+                      paddingVertical: sizes.textInputPadding,
+                      fontSize: sizes.inputFont,
+                      borderRadius: sizes.borderRadius,
+                      backgroundColor: 'transparent',
+                      textAlign: isRTL ? 'right' : 'left',
+                    }}
+                    multiline={true}
+                  />
+                </View>
+                <View
+                  style={[
+                    styles.inputBlock,
+                    {
+                      backgroundColor:
+                        themeController.current?.formInputBackground,
+                      paddingVertical: sizes.inputContainerPaddingVertical,
+                      paddingHorizontal: sizes.inputContainerPaddingHorizontal,
+                      borderRadius: sizes.borderRadius,
+                      marginBottom: 0,
+                      height: sizes.inputHeight,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      { color: themeController.current?.unactiveTextColor },
+                      isRTL && { textAlign: 'right' },
+                      { fontSize: sizes.font },
+                    ]}
+                  >
+                    {t('settings.modals.contact_us.email.label', {
+                      defaultValue: 'Email',
+                    })}
+                  </Text>
+                  <TextInput
+                    value={contactUsForm.email}
+                    onChangeText={(v) =>
+                      setContactUsForm((p) => ({ ...p, email: v }))
+                    }
+                    placeholder={t(
+                      'settings.modals.contact_us.email.placeholder',
+                      {
+                        defaultValue: 'Your email address',
+                      }
+                    )}
+                    placeholderTextColor={
+                      themeController.current?.formInputLabelColor
+                    }
+                    style={{
+                      fontWeight: '500',
+                      color: themeController.current?.textColor,
+                      padding: 0,
+                      paddingVertical: sizes.textInputPadding,
+                      fontSize: sizes.inputFont,
+                      borderRadius: sizes.borderRadius,
+                      backgroundColor: 'transparent',
+                      textAlign: isRTL ? 'right' : 'left',
+                    }}
+                  />
+                </View>
+                <View
+                  style={[
+                    styles.inputBlock,
+                    {
+                      backgroundColor:
+                        themeController.current?.formInputBackground,
+                      paddingVertical: sizes.inputContainerPaddingVertical,
+                      paddingHorizontal: sizes.inputContainerPaddingHorizontal,
+                      borderRadius: sizes.borderRadius,
+                      marginBottom: 0,
+                      height: sizes.inputHeight,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      { color: themeController.current?.unactiveTextColor },
+                      isRTL && { textAlign: 'right' },
+                      { fontSize: sizes.font },
+                    ]}
+                  />
+                  <TextInput
+                    value={contactUsForm.name}
+                    onChangeText={(v) =>
+                      setContactUsForm((p) => ({ ...p, name: v }))
+                    }
+                    placeholder={t(
+                      'settings.modals.contact_us.name.placeholder',
+                      {
+                        defaultValue: 'Your full name',
+                      }
+                    )}
+                    placeholderTextColor={
+                      themeController.current?.formInputLabelColor
+                    }
+                    style={{
+                      fontWeight: '500',
+                      color: themeController.current?.textColor,
+                      padding: 0,
+                      paddingVertical: sizes.textInputPadding,
+                      fontSize: sizes.inputFont,
+                      borderRadius: sizes.borderRadius,
+                      backgroundColor: 'transparent',
+                      textAlign: isRTL ? 'right' : 'left',
+                    }}
+                  />
+                </View>
+                <CustomPicker
+                  label={t('settings.modals.contact_us.reason.label', {
+                    defaultValue: 'Reason for contact',
+                  })}
+                  options={[
+                    {
+                      label: t('settings.modals.contact_us.reason.option1', {
+                        defaultValue: 'General Inquiry',
+                      }),
+                      value: 'general',
+                    },
+                    {
+                      label: t('settings.modals.contact_us.reason.option2', {
+                        defaultValue: 'Technical Support',
+                      }),
+                      value: 'technical',
+                    },
+                    {
+                      label: t('settings.modals.contact_us.reason.option3', {
+                        defaultValue: 'Feedback',
+                      }),
+                      value: 'feedback',
+                    },
+                  ]}
+                  selectedValue={contactUsForm.reason}
+                  onValueChange={(value) =>
+                    setContactUsForm((p) => ({ ...p, reason: value }))
+                  }
+                  isRTL={isRTL}
+                  sizes={sizes}
+                />
+
+                <View style={{ height: RFValue(20) }}>
+                  <BouncyCheckbox
+                    size={scaleByHeight(18, height)}
+                    isChecked={accepted}
+                    onPress={setAccepted}
+                    text={t('register.terms_accept')}
+                    textStyle={[
+                      styles.termsCheckboxText,
+                      {
+                        textAlign: isRTL ? 'right' : 'left',
+                        color: themeController.current?.unactiveTextColor,
+                        textDecorationLine: 'none',
+                      },
+                    ]}
+                    textContainerStyle={{
+                      [isRTL ? 'marginRight' : 'marginLeft']: 
+                        scaleByHeight(10, height)
+                      ,
+                    }}
+                    fillColor={themeController.current?.primaryColor}
+                    innerIconStyle={{
+                      borderWidth: scaleByHeight(
+                        2,
+                        height
+                      ),
+                      borderRadius: scaleByHeight(3, height),
+                    }}
+                    iconStyle={{
+                      borderRadius: scaleByHeight(
+                        3,
+                        height
+                      ),
+                    }}
+                  />
+                  <Text
+                    style={[
+                      { color: themeController.current?.unactiveTextColor },
+                    ]}
+                  >
+                    {t('settings.modals.contact_us.privacy_policy')}
+                  </Text>
+                </View>
+              </ScrollView>
+            )}
+            {feedback && (
+              <ScrollView style={[{ width: '100%' }]}>
+                <Text
+                  style={[
+                    {
+                      color: themeController.current?.unactiveTextColor,
+                      fontSize: sizes.baseFont,
+                    },
+                  ]}
+                >
+                  {t('settings.feedback_title')}
+                </Text>
+                <Text
+                  style={[
+                    {
+                      color: themeController.current?.primaryColor,
+                      fontSize: sizes.baseFont,
+                    },
+                  ]}
+                >
+                  +1(800) 123-456
+                </Text>
+                <Text
+                  style={[
+                    {
+                      color: themeController.current?.unactiveTextColor,
+                      fontSize: sizes.baseFont,
+                    },
+                  ]}
+                >
+                  {t('settings.feedback_description')}
+                </Text>
+                <View style={{ height: RFValue(20) }}>
+                  <Text
+                    style={[
+                      {
+                        color: themeController.current?.unactiveTextColor,
+                        fontSize: sizes.baseFont,
+                      },
+                    ]}
+                  >
+                    {t('settings.feedback_email')}
+                  </Text>
+                  <TextInput
+                    style={[
+                      {
+                        borderBottomWidth: 1,
+                        borderBottomColor: themeController.current?.borderColor,
+                        color: themeController.current?.textColor,
+                        fontSize: sizes.baseFont,
+                        paddingVertical: RFValue(8),
+                      },
+                    ]}
+                    placeholder={t('settings.feedback_email_placeholder')}
+                    placeholderTextColor={
+                      themeController.current?.unactiveTextColor
+                    }
+                  />
+                </View>
+              </ScrollView>
+            )}
+            <TouchableOpacity
+              style={[
+                styles.primaryBtn,
+                {
+                  backgroundColor:
+                    themeController.current?.buttonColorPrimaryDefault,
+                  padding: sizes.btnPadding,
+                  borderRadius: sizes.borderRadius,
+                  marginTop: RFValue(20),
+                },
+              ]}
+              onPress={() => {
+                // TODO: implement submit behavior
+                console.log('submit form', {
+                  contactForm,
+                  feedback,
+                  contactUsForm,
+                });
+                onClose();
+              }}
+            >
+              <Text
+                style={[
+                  {
+                    color: themeController.current?.buttonTextColorPrimary,
+                    fontSize: sizes.btnFont,
+                  },
+                ]}
+              >
+                {t(contactForm ? 'settings.send' : 'settings.submit')}
+              </Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <ScrollView
+            style={[{ width: '100%', height: sizes.modalContentHeight }]}
+          >
+            <Text
+              style={[
+                {
+                  color: themeController.current?.textColor,
+                  fontSize: sizes.baseFont,
+                },
+              ]}
+            >
+              {content}
+            </Text>
+          </ScrollView>
+        )}
+      </TouchableOpacity>
+    </TouchableOpacity>
   );
 }
 
@@ -565,7 +1051,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: RFValue(5),
   },
-  primaryText: { fontWeight: 'bold' },
+  // primaryText: { fontWeight: 'bold' },
   bottomRow: {
     alignItems: 'flex-start',
     justifyContent: 'space-between',
@@ -573,7 +1059,7 @@ const styles = StyleSheet.create({
   },
   connectBtnsContainer: { gap: RFValue(5) },
   bottomText: { fontSize: RFValue(10) },
-  versionText: { fontSize: RFValue(10)},
+  versionText: { fontSize: RFValue(10) },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -582,11 +1068,26 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     justifyContent: 'space-between',
   },
-  modalTitle: { fontSize: RFValue(20), fontWeight: 'bold', color: '#0A62EA' },
+  modalTitle: { fontSize: RFValue(20), color: '#0A62EA' },
   modalContent: { padding: RFValue(10) },
   modalText: {
     fontSize: RFValue(12),
     marginBottom: RFValue(8),
     lineHeight: RFValue(16),
+  },
+  inputBlock: {
+    marginBottom: RFValue(10),
+    borderRadius: RFValue(5),
+    padding: RFValue(8),
+    ...Platform.select({
+      web: {
+        zIndex: 1,
+      },
+    }),
+  },
+  termsCheckboxText: {
+    // fontSize: getResponsiveSize(14, 13),
+    opacity: 0.8,
+    fontWeight: 'bold',
   },
 });

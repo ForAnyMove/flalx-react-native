@@ -78,7 +78,7 @@ export default function Profile() {
     modalBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(50),
     modalBtnWidth: isWebLandscape ? scaleByHeight(153, height) : '40%',
     modalBtnFont: isWebLandscape ? scaleByHeight(20, height) : baseFont,
-    modalBtnBorderRadius: isWebLandscape ? 8 : RFValue(6),
+    modalBtnBorderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(6),
     modalBtnsGap: isWebLandscape ? scaleByHeight(24, height) : RFValue(12),
     modalPadding: isWebLandscape ? scaleByHeight(32, height) : RFValue(16),
     modalLineHeight: isWebLandscape ? scaleByHeight(32, height) : 1,
@@ -131,9 +131,9 @@ export default function Profile() {
             {
               backgroundColor:
                 themeController.current?.profileDefaultBackground,
-              height: isWebLandscape ? height * 0.3 : RFPercentage(30),
-              marginBottom: isWebLandscape ? height * 0.01 : RFValue(12),
-              borderRadius: isWebLandscape ? 10 : RFValue(10),
+              height: isWebLandscape ? scaleByHeight(250, height) : RFPercentage(30),
+              marginBottom: isWebLandscape ? scaleByHeight(15, height) : RFValue(12),
+              borderRadius: isWebLandscape ? scaleByHeight(10, height) : RFValue(10),
             },
           ]}
         >
@@ -255,7 +255,7 @@ export default function Profile() {
                     : sizes.btnPadding,
                   marginBottom: sizes.btnMargin,
                   width: sizes.btnWidth,
-                  borderRadius: isWebLandscape ? 8 : RFValue(5),
+                  borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
                 },
               ]}
               onPress={() => {
@@ -355,7 +355,7 @@ export default function Profile() {
                     : sizes.btnPadding,
                   marginBottom: sizes.btnMargin,
                   width: sizes.btnWidth,
-                  borderRadius: isWebLandscape ? 8 : RFValue(5),
+                  borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
                 },
               ]}
             >
@@ -394,7 +394,7 @@ export default function Profile() {
                   : sizes.btnPadding,
                 marginBottom: sizes.btnMargin,
                 width: sizes.btnWidth,
-                borderRadius: isWebLandscape ? 8 : RFValue(5),
+                borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
               },
             ]}
             onPress={() => {
@@ -544,7 +544,7 @@ export default function Profile() {
           }
         }}
       />
-      
+
       {/* Subscriptions */}
       <SubscriptionsModal
         visible={subscriptionsModal}
@@ -582,7 +582,9 @@ function InfoField({
           [Platform.OS === 'web' && isLandscape ? 'height' : 'paddingVertical']:
             Platform.OS === 'web' && isLandscape ? btnHeight : fieldPadding,
           marginBottom: fieldMargin,
-          backgroundColor: themeController.current?.formInputBackground,
+          backgroundColor: editMode
+            ? themeController.current?.formInputBackgroundEditMode
+            : themeController.current?.formInputBackground,
           borderRadius: Platform.OS === 'web' && isLandscape ? 8 : RFValue(5),
           paddingHorizontal:
             Platform.OS === 'web' && isLandscape ? RFValue(8) : RFValue(14),
