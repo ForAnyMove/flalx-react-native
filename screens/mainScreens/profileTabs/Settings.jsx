@@ -155,7 +155,6 @@ export default function Settings() {
             }
             isRTL={isRTL}
             sizes={sizes}
-            fullScreen={isWebLandscape}
           />
 
           <CustomPicker
@@ -168,7 +167,6 @@ export default function Settings() {
             onValueChange={(itemValue) => themeController.setTheme(itemValue)}
             isRTL={isRTL}
             sizes={sizes}
-            fullScreen={isWebLandscape}
           />
         </View>
 
@@ -547,6 +545,7 @@ function ModalContent({
       <TouchableOpacity
         onPress={(e) => {
           e.stopPropagation();
+          e.preventDefault();
         }}
         style={[
           {
@@ -565,6 +564,7 @@ function ModalContent({
           },
         ]}
       >
+        <View>
         <TouchableOpacity
           style={[
             {
@@ -1020,6 +1020,7 @@ function ModalContent({
             </Text>
           </ScrollView>
         )}
+        </View>
       </TouchableOpacity>
     </TouchableOpacity>
   );
