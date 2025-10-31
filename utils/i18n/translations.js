@@ -94,12 +94,15 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         confirm_logout: 'Are you sure you want to logout?',
       },
       settings: {
+        sent: 'Sent',
+        submit: 'Submit',
         modals: {
           contact_us: {
             topic: {
               label: 'Topic',
               placeholder: 'Your login and message subject',
             },
+            description: 'Important! Please include your username in the subject line. This information will speed up our response.',
             message: {
               label: 'Message',
               placeholder: 'Describe your question',
@@ -114,8 +117,21 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
             },
             reason: {
               label: 'Reason for contacting',
-              placeholder: 'Select a reason',},
+              placeholder: 'Select a reason',
+            },
+            checkbox_text: 'I consent for FLALX.com to process my data and agree to the terms of the',
+            privacy_policy: 'Privacy Policy',
+            success_title: 'Your message has been sent!',
+            success_message: 'We will carefully review your \nquestion and contact you \nas soon as possible!'
           },
+          feedback_title: 'Contact our tech support',
+          feedback_description: 'Leave your phone number and we will contact you. You agree to the terms of use and privacy.',
+          feedback: {
+            phone: {
+              label: 'Your phone number',
+              placeholder: 'Enter your phone number',
+            }
+          }
         },
         language: 'Language',
         language_en: 'English',
@@ -358,12 +374,15 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         confirm_delete: 'האם אתה בטוח שברצונך למחוק את החשבון שלך?',
       },
       settings: {
+        sent: 'נשלח',
+        submit: 'שלח',
         modals: {
           contact_us: {
             topic: {
               label: 'נושא',
               placeholder: 'הכניסו את שם המשתמש ונושא ההודעה שלכם',
             },
+            description: 'חשוב! יש לכלול את שם המשתמש שלך בשורת הנושא. מידע זה יזרז את התגובה שלנו.',
             message: {
               label: 'הודעה',
               placeholder: 'כתוב את ההודעה שלך כאן...',
@@ -380,7 +399,19 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
               label: 'סיבת יצירת הקשר',
               placeholder: 'בחר סיבה',
             },
+            checkbox_text: 'אני מסכים ש-FLALX.com יעבד את הנתונים שלי ומסכים לתנאי ה',
+            privacy_policy: 'מדיניות פרטיות',
+            success_title: 'ההודעה שלך נשלחה!',
+            success_message: 'נבחן בקפידה את \nהשאלה שלך וניצור איתך קשר \nבהקדם האפשרי!'
           },
+          feedback_title: 'צור קשר עם התמיכה הטכנית שלנו',
+          feedback_description: 'השאר את מספר הטלפון שלך ואנו ניצור איתך קשר. אתה מסכים לתנאי השימוש והפרטיות.',
+          feedback: {
+            phone: {
+              label: 'מספר הטלפון שלך',
+              placeholder: 'הזן את מספר הטלפון שלך',
+            }
+          }
         },
         language: 'שפה',
         language_en: 'אנגלית',

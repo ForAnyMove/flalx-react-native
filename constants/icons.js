@@ -41,4 +41,5 @@ export const icons = {
   likeOn: require('../assets/icon/Favorite/on.png'),
   mobile: require('../assets/icon/mobile.png'),
   emailContact: require('../assets/icon/email-primary.png'),
+  checkDefault: require('../assets/register/UserImages/check-default.png'),
 };

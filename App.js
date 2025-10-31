@@ -6,6 +6,10 @@ import {
   useComponentContext,
 } from './context/globalAppContext';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Platform } from 'react-native';
+import { useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Экраны
 import AuthScreen from './screens/AuthScreen';
@@ -46,6 +50,48 @@ function App() {
   const { session, user, themeController, languageController } =
     useComponentContext();
   const [isOnboardingShowed, setOnboardingShowed] = useState(false);
+  const [onboardingStatusChecked, setOnboardingStatusChecked] = useState(false);
+
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      try {
+        let status;
+        if (Platform.OS === 'web') {
+          status = localStorage.getItem('onboarding_completed');
+        } else {
+          status = await AsyncStorage.getItem('onboarding_completed');
+        }
+        if (status === 'true') {
+          setOnboardingShowed(true);
+        }
+      } catch (e) {
+        console.error('Failed to load onboarding status', e);
+      } finally {
+        setOnboardingStatusChecked(true);
+      }
+    };
+
+    checkOnboardingStatus();
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const style = document.createElement('style');
+      style.textContent = `
+        *:focus {
+          outline: none !important;
+        }
+        input:focus,
+        textarea:focus {
+          outline: none !important;
+        }
+        [data-focusable="true"]:focus {
+          outline: none !important;
+        }
+      `;
+      document.head.append(style);
+    }
+  }, []);
 
   const [fontsLoaded, fontError] = useFonts({
     'Rubik-Regular': require('./assets/fonts/static/Rubik-Regular.ttf'),
@@ -59,7 +105,8 @@ function App() {
     session !== undefined &&
     user !== undefined &&
     languageController?.current !== undefined &&
-    (fontsLoaded || fontError);
+    (fontsLoaded || fontError) &&
+    onboardingStatusChecked;
 
   if (!isReady) {
     return (
@@ -76,12 +123,27 @@ function App() {
     );
   }
 
+  const handleOnboardingFinish = async () => {
+    try {
+      if (Platform.OS === 'web') {
+        localStorage.setItem('onboarding_completed', 'true');
+      } else {
+        await AsyncStorage.setItem('onboarding_completed', 'true');
+      }
+      setOnboardingShowed(true);
+    } catch (e) {
+      console.error('Failed to save onboarding status', e);
+      // Fallback for current session
+      setOnboardingShowed(true);
+    }
+  };
+
   let content;
   // console.log('!isOnboardingShowed - ', !isOnboardingShowed, '!session.status - ', !session.status, 'user?.current?.firstauth - ', user?.current?.firstauth);
 
   // 1. Онбординг
   if (!isOnboardingShowed) {
-    content = <OnboardingScreen onFinish={() => setOnboardingShowed(true)} />;
+    content = <OnboardingScreen onFinish={handleOnboardingFinish} />;
   }
   // 2. Авторизация
   else if (!session.status) {

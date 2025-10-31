@@ -236,7 +236,7 @@ const styles = {
   },
   title: {
     fontSize: RFValue(12),
-    fontWeight: '600',
+    // fontWeight: '600',
   },
   description: {
     fontSize: RFValue(10),

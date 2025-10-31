@@ -24,7 +24,8 @@ import { useWebView } from '../context/webViewContext';
 
 const ProviderSummaryBlock = ({ user, chooseUser }) => {
   const { t } = useTranslation();
-  const { themeController, languageController, usersReveal, setAppLoading } = useComponentContext();
+  const { themeController, languageController, usersReveal, setAppLoading } =
+    useComponentContext();
   const { openWebView } = useWebView();
   const { height, isLandscape, width, sidebarWidth } = useWindowInfo();
   const isRTL = languageController.isRTL;
@@ -74,9 +75,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
     iconMargin: isWebLandscape ? scaleByHeight(7, height) : RFValue(3),
     headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
     headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
-    contactInfoHeight: isWebLandscape
-      ? scaleByHeight(50, height)
-      : RFValue(30),
+    contactInfoHeight: isWebLandscape ? scaleByHeight(50, height) : RFValue(30),
   };
 
   const {
@@ -102,9 +101,9 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
 
       setAppLoading(false);
     } catch (error) {
-      console.error("Error revealing user:", error);
+      console.error('Error revealing user:', error);
     }
-  }
+  };
 
   return (
     <>
@@ -169,7 +168,6 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
               <Text
                 style={{
                   fontSize: sizes.font,
-                  fontWeight: '600', // 👈 вернул жирность
                   color: themeController.current?.textColor,
                   marginHorizontal: RFValue(8),
                 }}
@@ -179,7 +177,6 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
               <Text
                 style={{
                   fontSize: sizes.smallFont,
-                  fontWeight: '600', // 👈 вернул жирность
                   color: themeController.current?.unactiveTextColor,
                   marginHorizontal: RFValue(8),
                 }}
@@ -299,7 +296,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                   <Text
                     style={{
                       fontSize: sizes.nameSize,
-                      fontWeight: '600',
+                      // fontWeight: '600',
                       textAlign: 'center',
                       marginBottom: RFValue(6),
                       color: themeController.current?.textColor,
@@ -310,7 +307,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                   <Text
                     style={{
                       fontSize: sizes.professionSize,
-                      fontWeight: '600',
+                      // fontWeight: '600',
                       color: themeController.current?.unactiveTextColor,
                       marginHorizontal: RFValue(8),
                       textAlign: 'center',
@@ -662,11 +659,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   modalTitle: {
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
     color: '#0A62EA',
     fontFamily: 'Rubik-Bold',
   },
-  sectionTitle: { fontWeight: '600', marginBottom: RFValue(5), color: '#333' },
+  sectionTitle: { marginBottom: RFValue(5) },
   centerRow: {
     flexDirection: 'row',
     justifyContent: 'center',

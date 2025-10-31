@@ -12,6 +12,8 @@ import {
 import { useComponentContext } from '../../context/globalAppContext';
 import { icons } from '../../constants/icons';
 import { RFValue } from 'react-native-responsive-fontsize';
+import { useWindowInfo } from '../../context/windowContext';
+import { scaleByHeight } from '../../utils/resizeFuncs';
 
 const CustomPicker = ({
   label,
@@ -19,20 +21,37 @@ const CustomPicker = ({
   selectedValue,
   onValueChange,
   isRTL,
-  sizes,
   fullScreen = false, // Новый пропс, по умолчанию false
+  containerStyle = {},
 }) => {
   const { themeController } = useComponentContext();
+  const { height, isLandscape } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  const sizes = {
+    baseFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(12),
+    font: isWebLandscape ? scaleByHeight(12, height) : RFValue(12),
+    iconSize: isWebLandscape ? scaleByHeight(24, height) : RFValue(18),
+    pickerHeight: isWebLandscape ? scaleByHeight(64, height) : RFValue(50),
+    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
+    inputContainerPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(16, height)
+      : RFValue(8),
+    labelTopPosition: isWebLandscape ? scaleByHeight(12, height) : RFValue(5),
+    labelGap: isWebLandscape ? scaleByHeight(4, height) : RFValue(3),
+  };
+
   const [modalVisible, setModalVisible] = useState(false);
   const [pickerLayout, setPickerLayout] = useState(null);
   const pickerRef = useRef(null);
+  const [hoveredValue, setHoveredValue] = useState(null);
 
   const selectedLabel =
-    options.find((option) => option.value === selectedValue)?.label || '';
+    options.find((option) => option.value === selectedValue)?.label ||
+    options[0]?.label;
 
   const itemHeight = sizes.pickerHeight * 0.9;
-  const dropdownHeight =
-    itemHeight * (options.length > 4 ? 4 : options.length);
+  const dropdownHeight = itemHeight * (options.length > 4 ? 4 : options.length);
 
   const handlePress = () => {
     if (fullScreen) {
@@ -49,39 +68,56 @@ const CustomPicker = ({
     }
   };
 
-  const renderOption = ({ item }) => (
-    <TouchableOpacity
-      style={[
-        styles.option,
-        {
-          backgroundColor:
-            selectedValue === item.value
-              ? themeController.current?.primaryColor
+  const renderOption = ({ item }) => {
+    const isSelected = selectedValue === item.value;
+    const isHovered = hoveredValue === item.value;
+
+    const webHoverProps =
+      Platform.OS === 'web'
+        ? {
+            onMouseEnter: () => setHoveredValue(item.value),
+            onMouseLeave: () => setHoveredValue(null),
+          }
+        : {};
+
+    return (
+      <TouchableOpacity
+        {...webHoverProps}
+        style={[
+          styles.option,
+          {
+            backgroundColor: isSelected
+              ? themeController.current?.selectedItemBackground
+              : isHovered
+              ? themeController.current?.profileDefaultBackground
               : 'transparent',
-          borderRadius: sizes.borderRadius,
-          height: itemHeight,
-          justifyContent: 'center',
-        },
-      ]}
-      onPress={() => {
-        onValueChange(item.value);
-        setModalVisible(false);
-      }}
-    >
-      <Text
-        style={{
-          color:
-            selectedValue === item.value
-              ? themeController.current?.buttonTextColorPrimary
-              : themeController.current?.textColor,
-          fontSize: sizes.baseFont,
-          textAlign: 'center',
+            height: itemHeight,
+            justifyContent: 'center',
+          },
+        ]}
+        onPress={() => {
+          onValueChange(item.value);
+          setModalVisible(false);
         }}
       >
-        {item.label}
-      </Text>
-    </TouchableOpacity>
-  );
+        <Text
+          style={[
+            {
+              color:
+                isSelected || isHovered
+                  ? themeController.current?.textColor
+                  : themeController.current?.formInputPlaceholderColor,
+              fontSize: sizes.baseFont,
+              textAlign: isRTL ? 'right' : 'left',
+              paddingHorizontal: sizes.inputContainerPaddingHorizontal,
+            },
+          ]}
+        >
+          {item.label}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   const renderFullScreenModal = () => (
     <Modal
@@ -99,8 +135,7 @@ const CustomPicker = ({
           style={[
             styles.fullScreenModalContent,
             {
-              backgroundColor: themeController.current?.backgroundColor,
-              borderRadius: sizes.borderRadius,
+              backgroundColor: themeController.current?.formInputBackground,
             },
           ]}
         >
@@ -108,6 +143,7 @@ const CustomPicker = ({
             data={options}
             keyExtractor={(item) => item.value}
             renderItem={renderOption}
+            showsVerticalScrollIndicator={false}
           />
         </View>
       </TouchableOpacity>
@@ -136,8 +172,8 @@ const CustomPicker = ({
                 width: pickerLayout.width,
                 height: dropdownHeight,
                 backgroundColor: themeController.current?.backgroundColor,
-                borderRadius: sizes.borderRadius,
-                padding: sizes.baseFont * 0.5,
+                borderBottomLeftRadius: sizes.borderRadius,
+                borderBottomRightRadius: sizes.borderRadius,
               },
             ]}
           >
@@ -145,6 +181,7 @@ const CustomPicker = ({
               data={options}
               keyExtractor={(item) => item.value}
               renderItem={renderOption}
+              showsVerticalScrollIndicator={false}
             />
           </View>
         )}
@@ -161,18 +198,20 @@ const CustomPicker = ({
           {
             backgroundColor: themeController.current?.formInputBackground,
             height: sizes.pickerHeight,
-            flex: 1,
             paddingHorizontal: sizes.inputContainerPaddingHorizontal,
             borderRadius: sizes.borderRadius,
             flexDirection: isRTL ? 'row-reverse' : 'row',
           },
+          containerStyle,
         ]}
         onPress={handlePress}
       >
-        <View style={{ flex: 1, justifyContent: 'center' }}>
+        <View
+          style={{ flex: 1, justifyContent: 'center', gap: sizes.labelGap }}
+        >
           <Text
             style={[
-              styles.label,
+              // styles.label,
               {
                 color: themeController.current?.unactiveTextColor,
                 fontSize: sizes.font,
@@ -184,7 +223,7 @@ const CustomPicker = ({
           </Text>
           <Text
             style={[
-              styles.value,
+              // styles.value,
               {
                 color: themeController.current?.textColor,
                 fontSize: sizes.baseFont,
@@ -204,7 +243,9 @@ const CustomPicker = ({
                 width: sizes.iconSize,
                 height: sizes.iconSize,
                 tintColor: themeController.current?.primaryColor,
-                transform: modalVisible ? [{ rotate: '180deg' }] : [{ rotate: '0deg' }],
+                transform: modalVisible
+                  ? [{ rotate: '180deg' }]
+                  : [{ rotate: '0deg' }],
               },
             ]}
           />
@@ -265,7 +306,7 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   option: {
-    paddingHorizontal: 15,
+    // paddingHorizontal: 15,
   },
 });
 

@@ -72,6 +72,12 @@ export default function Settings() {
     regulationsModalPaddingHorizontal: isWebLandscape
       ? scaleByHeight(44, height)
       : RFValue(10),
+    contactUsModalPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(74.5, height)
+      : RFValue(10),
+    feedbackModalPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(62.5, height)
+      : RFValue(10),
     regulationsModalTitle: isWebLandscape
       ? scaleByHeight(24, height)
       : RFValue(18),
@@ -101,7 +107,37 @@ export default function Settings() {
     textAreaHeight: isWebLandscape ? scaleByHeight(144, height) : RFValue(40),
     textInputPadding: isWebLandscape ? scaleByHeight(4, height) : RFValue(8),
     inputFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
+    modalInputMarginBottom: isWebLandscape
+      ? scaleByHeight(16, height)
+      : RFValue(8),
+    contactUsDescriptionPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(18, height)
+      : RFValue(12),
+    checkboxContainerHeight: isWebLandscape
+      ? scaleByHeight(36, height)
+      : RFValue(20),
     checkboxIconSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(13),
+    checkboxTextSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(10),
+    checkboxMarginBottom: isWebLandscape
+      ? scaleByHeight(24, height)
+      : RFValue(8),
+    checkboxPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(4, height)
+      : RFValue(4),
+    btnHeight: isWebLandscape ? scaleByHeight(62, height) : undefined,
+    successModalHeight: isWebLandscape ? scaleByHeight(450, height) : '100%',
+    successModalPaddingHorizontal: isWebLandscape
+      ? scaleByHeight(24, height)
+      : RFValue(16),
+    successModalIconSize: isWebLandscape
+      ? scaleByHeight(112, height)
+      : RFValue(40),
+    successModalDescriptionFont: isWebLandscape
+      ? scaleByHeight(18, height)
+      : RFValue(14),
+    successModalDescriptionWidth: isWebLandscape
+      ? scaleByHeight(246, height)
+      : RFValue(150),
   };
 
   // помощник для контейнеров-строк
@@ -150,11 +186,9 @@ export default function Settings() {
               { label: t('settings.lang_he', 'עברית'), value: 'he' },
             ]}
             selectedValue={languageController.current}
-            onValueChange={(itemValue) =>
-              languageController.setLang(itemValue)
-            }
+            onValueChange={(itemValue) => languageController.setLang(itemValue)}
             isRTL={isRTL}
-            sizes={sizes}
+            containerStyle={{ flex: 1 }}
           />
 
           <CustomPicker
@@ -166,7 +200,7 @@ export default function Settings() {
             selectedValue={themeController.isTheme}
             onValueChange={(itemValue) => themeController.setTheme(itemValue)}
             isRTL={isRTL}
-            sizes={sizes}
+            containerStyle={{ flex: 1 }}
           />
         </View>
 
@@ -191,7 +225,7 @@ export default function Settings() {
           >
             <Text
               style={[
-                styles.switchName,
+                // styles.switchName,
                 {
                   color: themeController.current?.unactiveTextColor,
                   fontSize: sizes.baseFont,
@@ -224,7 +258,7 @@ export default function Settings() {
           >
             <Text
               style={[
-                styles.switchName,
+                // styles.switchName,
                 {
                   color: themeController.current?.unactiveTextColor,
                   fontSize: sizes.baseFont,
@@ -516,7 +550,7 @@ function ModalContent({
   contactForm = false,
   feedback = false,
   isRTL,
-  height
+  height,
 }) {
   const { themeController } = useComponentContext();
   const { t } = useTranslation();
@@ -529,6 +563,33 @@ function ModalContent({
     name: '',
     reason: '',
   });
+
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const heightByType = () => {
+    if (showSuccessModal) {
+      return sizes.successModalHeight;
+    } else if (contactForm) {
+      return sizes.contactUsModalHeight;
+    } else if (feedback) {
+      return sizes.feedbackModalHeight;
+    } else if (avatar) {
+      return sizes.aboutModalHeight;
+    } else {
+      return sizes.regulationsModalHeight;
+    }
+  };
+
+  const paddingHorizontalByType = () => {
+    if (showSuccessModal) {
+      return sizes.successModalPaddingHorizontal;
+    } else if (contactForm) {
+      return sizes.contactUsModalPaddingHorizontal;
+    } else if (feedback) {
+      return sizes.feedbackModalPaddingHorizontal;
+    }
+    return sizes.regulationsModalPaddingHorizontal;
+  };
 
   return (
     <TouchableOpacity
@@ -543,6 +604,7 @@ function ModalContent({
       onPress={() => onClose()}
     >
       <TouchableOpacity
+        activeOpacity={1}
         onPress={(e) => {
           e.stopPropagation();
           e.preventDefault();
@@ -551,20 +613,18 @@ function ModalContent({
           {
             position: 'relative',
             paddingVertical: sizes.regulationsModalPaddingVertical,
-            paddingHorizontal: sizes.regulationsModalPaddingHorizontal,
+            paddingHorizontal: paddingHorizontalByType(),
             justifyContent: 'center',
+            boxSizing: 'border-box',
           },
           isWebLandscape && {
             width: sizes.regulationsModalWidth,
-            height: avatar
-              ? sizes.aboutModalHeight
-              : sizes.regulationsModalHeight,
+            height: heightByType(),
             borderRadius: sizes.borderRadius,
             backgroundColor: themeController.current?.backgroundColor,
           },
         ]}
       >
-        <View>
         <TouchableOpacity
           style={[
             {
@@ -584,443 +644,573 @@ function ModalContent({
             }}
           />
         </TouchableOpacity>
-        <Text
-          style={[
-            {
-              fontSize: sizes.regulationsModalTitle,
-              color: themeController.current?.textColor,
-              fontFamily: 'Rubik-Bold',
-              textAlign: 'center',
-              marginBottom: avatar
-                ? sizes.avatarModalMarginBottom
-                : sizes.nonAvatarModalMarginBottom,
-            },
-          ]}
-        >
-          {title}
-        </Text>
-        {avatar && (
-          <View
-            style={{
-              overflow: 'hidden',
-              marginBottom: sizes.avatarModalMarginBottom,
-              alignItems: 'center',
-            }}
-          >
-            <Image
-              source={icons.defaultAvatar}
+        {showSuccessModal ? (
+          <View>
+            <View
               style={{
-                width: sizes.avatarSize,
-                height: sizes.avatarSize,
-                borderRadius: sizes.avatarSize / 2,
-              }}
-            />
-          </View>
-        )}
-        {contactForm || feedback ? (
-          <>
-            {contactForm && (
-              <ScrollView style={[{ width: '100%' }]}>
-                <View
-                  style={[
-                    styles.inputBlock,
-                    {
-                      backgroundColor:
-                        themeController.current?.formInputBackground,
-                      paddingVertical: sizes.inputContainerPaddingVertical,
-                      paddingHorizontal: sizes.inputContainerPaddingHorizontal,
-                      borderRadius: sizes.borderRadius,
-                      marginBottom: 0,
-                      height: sizes.inputHeight,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      {
-                        color: themeController.current?.unactiveTextColor,
-                      },
-                      isRTL && { textAlign: 'right' },
-                      { fontSize: sizes.font },
-                    ]}
-                  >
-                    {t('settings.modals.contact_us.topic.label', {
-                      defaultValue: 'Topic',
-                    })}
-                  </Text>
-                  <TextInput
-                    value={contactUsForm.topic}
-                    onChangeText={(v) =>
-                      setContactUsForm((p) => ({ ...p, topic: v }))
-                    }
-                    placeholder={t(
-                      'settings.modals.contact_us.topic.placeholder',
-                      {
-                        defaultValue: 'Your login and message subject',
-                      }
-                    )}
-                    placeholderTextColor={
-                      themeController.current?.formInputLabelColor
-                    }
-                    style={{
-                      fontWeight: '500',
-                      color: themeController.current?.textColor,
-                      padding: 0,
-                      paddingVertical: sizes.textInputPadding,
-                      fontSize: sizes.inputFont,
-                      borderRadius: sizes.borderRadius,
-                      backgroundColor: 'transparent',
-                      textAlign: isRTL ? 'right' : 'left',
-                    }}
-                  />
-                </View>
-                <Text
-                  style={[
-                    {
-                      color: themeController.current?.unactiveTextColor,
-                      fontSize: sizes.baseFont,
-                    },
-                  ]}
-                >
-                  {t('settings.modals.contact_us.description')}
-                </Text>
-                <View
-                  style={[
-                    styles.inputBlock,
-                    {
-                      backgroundColor:
-                        themeController.current?.formInputBackground,
-                      paddingVertical: sizes.inputContainerPaddingVertical,
-                      paddingHorizontal: sizes.inputContainerPaddingHorizontal,
-                      borderRadius: sizes.borderRadius,
-                      marginBottom: 0,
-                      height: sizes.textAreaHeight,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      { color: themeController.current?.unactiveTextColor },
-                      isRTL && { textAlign: 'right' },
-                      { fontSize: sizes.font },
-                    ]}
-                  >
-                    {t('settings.modals.contact_us.message.label', {
-                      defaultValue: 'Message',
-                    })}
-                  </Text>
-                  <TextInput
-                    value={contactUsForm.message}
-                    onChangeText={(v) =>
-                      setContactUsForm((p) => ({ ...p, message: v }))
-                    }
-                    placeholder={t(
-                      'settings.modals.contact_us.message.placeholder',
-                      {
-                        defaultValue: 'Write your message here...',
-                      }
-                    )}
-                    placeholderTextColor={
-                      themeController.current?.formInputLabelColor
-                    }
-                    style={{
-                      fontWeight: '500',
-                      color: themeController.current?.textColor,
-                      padding: 0,
-                      paddingVertical: sizes.textInputPadding,
-                      fontSize: sizes.inputFont,
-                      borderRadius: sizes.borderRadius,
-                      backgroundColor: 'transparent',
-                      textAlign: isRTL ? 'right' : 'left',
-                    }}
-                    multiline={true}
-                  />
-                </View>
-                <View
-                  style={[
-                    styles.inputBlock,
-                    {
-                      backgroundColor:
-                        themeController.current?.formInputBackground,
-                      paddingVertical: sizes.inputContainerPaddingVertical,
-                      paddingHorizontal: sizes.inputContainerPaddingHorizontal,
-                      borderRadius: sizes.borderRadius,
-                      marginBottom: 0,
-                      height: sizes.inputHeight,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      { color: themeController.current?.unactiveTextColor },
-                      isRTL && { textAlign: 'right' },
-                      { fontSize: sizes.font },
-                    ]}
-                  >
-                    {t('settings.modals.contact_us.email.label', {
-                      defaultValue: 'Email',
-                    })}
-                  </Text>
-                  <TextInput
-                    value={contactUsForm.email}
-                    onChangeText={(v) =>
-                      setContactUsForm((p) => ({ ...p, email: v }))
-                    }
-                    placeholder={t(
-                      'settings.modals.contact_us.email.placeholder',
-                      {
-                        defaultValue: 'Your email address',
-                      }
-                    )}
-                    placeholderTextColor={
-                      themeController.current?.formInputLabelColor
-                    }
-                    style={{
-                      fontWeight: '500',
-                      color: themeController.current?.textColor,
-                      padding: 0,
-                      paddingVertical: sizes.textInputPadding,
-                      fontSize: sizes.inputFont,
-                      borderRadius: sizes.borderRadius,
-                      backgroundColor: 'transparent',
-                      textAlign: isRTL ? 'right' : 'left',
-                    }}
-                  />
-                </View>
-                <View
-                  style={[
-                    styles.inputBlock,
-                    {
-                      backgroundColor:
-                        themeController.current?.formInputBackground,
-                      paddingVertical: sizes.inputContainerPaddingVertical,
-                      paddingHorizontal: sizes.inputContainerPaddingHorizontal,
-                      borderRadius: sizes.borderRadius,
-                      marginBottom: 0,
-                      height: sizes.inputHeight,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      { color: themeController.current?.unactiveTextColor },
-                      isRTL && { textAlign: 'right' },
-                      { fontSize: sizes.font },
-                    ]}
-                  />
-                  <TextInput
-                    value={contactUsForm.name}
-                    onChangeText={(v) =>
-                      setContactUsForm((p) => ({ ...p, name: v }))
-                    }
-                    placeholder={t(
-                      'settings.modals.contact_us.name.placeholder',
-                      {
-                        defaultValue: 'Your full name',
-                      }
-                    )}
-                    placeholderTextColor={
-                      themeController.current?.formInputLabelColor
-                    }
-                    style={{
-                      fontWeight: '500',
-                      color: themeController.current?.textColor,
-                      padding: 0,
-                      paddingVertical: sizes.textInputPadding,
-                      fontSize: sizes.inputFont,
-                      borderRadius: sizes.borderRadius,
-                      backgroundColor: 'transparent',
-                      textAlign: isRTL ? 'right' : 'left',
-                    }}
-                  />
-                </View>
-                <CustomPicker
-                  label={t('settings.modals.contact_us.reason.label', {
-                    defaultValue: 'Reason for contact',
-                  })}
-                  options={[
-                    {
-                      label: t('settings.modals.contact_us.reason.option1', {
-                        defaultValue: 'General Inquiry',
-                      }),
-                      value: 'general',
-                    },
-                    {
-                      label: t('settings.modals.contact_us.reason.option2', {
-                        defaultValue: 'Technical Support',
-                      }),
-                      value: 'technical',
-                    },
-                    {
-                      label: t('settings.modals.contact_us.reason.option3', {
-                        defaultValue: 'Feedback',
-                      }),
-                      value: 'feedback',
-                    },
-                  ]}
-                  selectedValue={contactUsForm.reason}
-                  onValueChange={(value) =>
-                    setContactUsForm((p) => ({ ...p, reason: value }))
-                  }
-                  isRTL={isRTL}
-                  sizes={sizes}
-                />
-
-                <View style={{ height: RFValue(20) }}>
-                  <BouncyCheckbox
-                    size={scaleByHeight(18, height)}
-                    isChecked={accepted}
-                    onPress={setAccepted}
-                    text={t('register.terms_accept')}
-                    textStyle={[
-                      styles.termsCheckboxText,
-                      {
-                        textAlign: isRTL ? 'right' : 'left',
-                        color: themeController.current?.unactiveTextColor,
-                        textDecorationLine: 'none',
-                      },
-                    ]}
-                    textContainerStyle={{
-                      [isRTL ? 'marginRight' : 'marginLeft']: 
-                        scaleByHeight(10, height)
-                      ,
-                    }}
-                    fillColor={themeController.current?.primaryColor}
-                    innerIconStyle={{
-                      borderWidth: scaleByHeight(
-                        2,
-                        height
-                      ),
-                      borderRadius: scaleByHeight(3, height),
-                    }}
-                    iconStyle={{
-                      borderRadius: scaleByHeight(
-                        3,
-                        height
-                      ),
-                    }}
-                  />
-                  <Text
-                    style={[
-                      { color: themeController.current?.unactiveTextColor },
-                    ]}
-                  >
-                    {t('settings.modals.contact_us.privacy_policy')}
-                  </Text>
-                </View>
-              </ScrollView>
-            )}
-            {feedback && (
-              <ScrollView style={[{ width: '100%' }]}>
-                <Text
-                  style={[
-                    {
-                      color: themeController.current?.unactiveTextColor,
-                      fontSize: sizes.baseFont,
-                    },
-                  ]}
-                >
-                  {t('settings.feedback_title')}
-                </Text>
-                <Text
-                  style={[
-                    {
-                      color: themeController.current?.primaryColor,
-                      fontSize: sizes.baseFont,
-                    },
-                  ]}
-                >
-                  +1(800) 123-456
-                </Text>
-                <Text
-                  style={[
-                    {
-                      color: themeController.current?.unactiveTextColor,
-                      fontSize: sizes.baseFont,
-                    },
-                  ]}
-                >
-                  {t('settings.feedback_description')}
-                </Text>
-                <View style={{ height: RFValue(20) }}>
-                  <Text
-                    style={[
-                      {
-                        color: themeController.current?.unactiveTextColor,
-                        fontSize: sizes.baseFont,
-                      },
-                    ]}
-                  >
-                    {t('settings.feedback_email')}
-                  </Text>
-                  <TextInput
-                    style={[
-                      {
-                        borderBottomWidth: 1,
-                        borderBottomColor: themeController.current?.borderColor,
-                        color: themeController.current?.textColor,
-                        fontSize: sizes.baseFont,
-                        paddingVertical: RFValue(8),
-                      },
-                    ]}
-                    placeholder={t('settings.feedback_email_placeholder')}
-                    placeholderTextColor={
-                      themeController.current?.unactiveTextColor
-                    }
-                  />
-                </View>
-              </ScrollView>
-            )}
-            <TouchableOpacity
-              style={[
-                styles.primaryBtn,
-                {
-                  backgroundColor:
-                    themeController.current?.buttonColorPrimaryDefault,
-                  padding: sizes.btnPadding,
-                  borderRadius: sizes.borderRadius,
-                  marginTop: RFValue(20),
-                },
-              ]}
-              onPress={() => {
-                // TODO: implement submit behavior
-                console.log('submit form', {
-                  contactForm,
-                  feedback,
-                  contactUsForm,
-                });
-                onClose();
+                overflow: 'hidden',
+                alignItems: 'center',
+                marginBottom: sizes.avatarModalMarginBottom,
               }}
             >
-              <Text
-                style={[
-                  {
-                    color: themeController.current?.buttonTextColorPrimary,
-                    fontSize: sizes.btnFont,
-                  },
-                ]}
-              >
-                {t(contactForm ? 'settings.send' : 'settings.submit')}
-              </Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <ScrollView
-            style={[{ width: '100%', height: sizes.modalContentHeight }]}
-          >
+              <Image
+                source={icons.checkDefault}
+                style={{
+                  width: sizes.successModalIconSize,
+                  height: sizes.successModalIconSize,
+                  borderRadius: sizes.successModalIconSize / 2,
+                }}
+              />
+            </View>
             <Text
               style={[
                 {
-                  color: themeController.current?.textColor,
-                  fontSize: sizes.baseFont,
+                  fontSize: sizes.regulationsModalTitle,
+                  color: themeController.current?.primaryColor,
+                  fontFamily: 'Rubik-Bold',
+                  textAlign: 'center',
+                  marginBottom: sizes.avatarModalMarginBottom * 2,
                 },
               ]}
             >
-              {content}
+              {t('settings.modals.contact_us.success_title', {
+                defaultValue: 'Your message has been sent!',
+              })}
             </Text>
-          </ScrollView>
+            <Text
+              style={[
+                {
+                  fontSize: sizes.successModalDescriptionFont,
+                  color: themeController.current?.unactiveTextColor,
+                  textAlign: 'center',
+                  width: sizes.successModalDescriptionWidth,
+                  alignSelf: 'center',
+                },
+              ]}
+            >
+              {t('settings.modals.contact_us.success_message', {
+                defaultValue:
+                  'We will carefully review your \nquestion and contact you \nas soon as possible!',
+              })}
+            </Text>
+          </View>
+        ) : (
+          <View>
+            <Text
+              style={[
+                {
+                  fontSize: sizes.regulationsModalTitle,
+                  color: themeController.current?.textColor,
+                  fontFamily: 'Rubik-Bold',
+                  textAlign: 'center',
+                  marginBottom: avatar
+                    ? sizes.avatarModalMarginBottom
+                    : sizes.nonAvatarModalMarginBottom,
+                },
+              ]}
+            >
+              {title}
+            </Text>
+            {avatar && (
+              <View
+                style={{
+                  overflow: 'hidden',
+                  marginBottom: sizes.avatarModalMarginBottom,
+                  alignItems: 'center',
+                }}
+              >
+                <Image
+                  source={icons.defaultAvatar}
+                  style={{
+                    width: sizes.avatarSize,
+                    height: sizes.avatarSize,
+                    borderRadius: sizes.avatarSize / 2,
+                  }}
+                />
+              </View>
+            )}
+            {contactForm || feedback ? (
+              <>
+                {contactForm && (
+                  <ScrollView style={[{ width: '100%' }]}>
+                    <View
+                      style={[
+                        styles.inputBlock,
+                        {
+                          backgroundColor:
+                            themeController.current?.formInputBackground,
+                          paddingVertical: sizes.inputContainerPaddingVertical,
+                          paddingHorizontal:
+                            sizes.inputContainerPaddingHorizontal,
+                          borderRadius: sizes.borderRadius,
+                          marginBottom: 0,
+                          height: sizes.inputHeight,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          {
+                            color: themeController.current?.unactiveTextColor,
+                          },
+                          isRTL && { textAlign: 'right' },
+                          { fontSize: sizes.font },
+                        ]}
+                      >
+                        {t('settings.modals.contact_us.topic.label', {
+                          defaultValue: 'Topic',
+                        })}
+                      </Text>
+                      <TextInput
+                        value={contactUsForm.topic}
+                        onChangeText={(v) =>
+                          setContactUsForm((p) => ({ ...p, topic: v }))
+                        }
+                        placeholder={t(
+                          'settings.modals.contact_us.topic.placeholder',
+                          {
+                            defaultValue: 'Your login and message subject',
+                          }
+                        )}
+                        placeholderTextColor={
+                          themeController.current?.formInputLabelColor
+                        }
+                        style={{
+                          fontWeight: '500',
+                          color: themeController.current?.textColor,
+                          padding: 0,
+                          paddingVertical: sizes.textInputPadding,
+                          fontSize: sizes.inputFont,
+                          borderRadius: sizes.borderRadius,
+                          backgroundColor: 'transparent',
+                          textAlign: isRTL ? 'right' : 'left',
+                        }}
+                      />
+                    </View>
+                    <Text
+                      style={[
+                        {
+                          color:
+                            themeController.current?.formInputPlaceholderColor,
+                          fontSize: sizes.font,
+                          paddingHorizontal:
+                            sizes.contactUsDescriptionPaddingHorizontal,
+                          marginBottom: sizes.modalInputMarginBottom,
+                        },
+                      ]}
+                    >
+                      {t('settings.modals.contact_us.description')}
+                    </Text>
+                    <View
+                      style={[
+                        styles.inputBlock,
+                        {
+                          backgroundColor:
+                            themeController.current?.formInputBackground,
+                          paddingVertical: sizes.inputContainerPaddingVertical,
+                          paddingHorizontal:
+                            sizes.inputContainerPaddingHorizontal,
+                          borderRadius: sizes.borderRadius,
+                          marginBottom: sizes.modalInputMarginBottom,
+                          height: sizes.textAreaHeight,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          { color: themeController.current?.unactiveTextColor },
+                          isRTL && { textAlign: 'right' },
+                          { fontSize: sizes.font },
+                        ]}
+                      >
+                        {t('settings.modals.contact_us.message.label', {
+                          defaultValue: 'Message',
+                        })}
+                      </Text>
+                      <TextInput
+                        value={contactUsForm.message}
+                        onChangeText={(v) =>
+                          setContactUsForm((p) => ({ ...p, message: v }))
+                        }
+                        placeholder={t(
+                          'settings.modals.contact_us.message.placeholder',
+                          {
+                            defaultValue: 'Write your message here...',
+                          }
+                        )}
+                        placeholderTextColor={
+                          themeController.current?.formInputLabelColor
+                        }
+                        style={{
+                          fontWeight: '500',
+                          color: themeController.current?.textColor,
+                          padding: 0,
+                          paddingVertical: sizes.textInputPadding,
+                          fontSize: sizes.inputFont,
+                          borderRadius: sizes.borderRadius,
+                          backgroundColor: 'transparent',
+                          textAlign: isRTL ? 'right' : 'left',
+                        }}
+                        multiline={true}
+                      />
+                    </View>
+                    <View
+                      style={[
+                        styles.inputBlock,
+                        {
+                          backgroundColor:
+                            themeController.current?.formInputBackground,
+                          paddingVertical: sizes.inputContainerPaddingVertical,
+                          paddingHorizontal:
+                            sizes.inputContainerPaddingHorizontal,
+                          borderRadius: sizes.borderRadius,
+                          marginBottom: sizes.modalInputMarginBottom,
+                          height: sizes.inputHeight,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          { color: themeController.current?.unactiveTextColor },
+                          isRTL && { textAlign: 'right' },
+                          { fontSize: sizes.font },
+                        ]}
+                      >
+                        {t('settings.modals.contact_us.email.label', {
+                          defaultValue: 'Email',
+                        })}
+                      </Text>
+                      <TextInput
+                        value={contactUsForm.email}
+                        onChangeText={(v) =>
+                          setContactUsForm((p) => ({ ...p, email: v }))
+                        }
+                        placeholder={t(
+                          'settings.modals.contact_us.email.placeholder',
+                          {
+                            defaultValue: 'Your email address',
+                          }
+                        )}
+                        placeholderTextColor={
+                          themeController.current?.formInputLabelColor
+                        }
+                        style={{
+                          fontWeight: '500',
+                          color: themeController.current?.textColor,
+                          padding: 0,
+                          paddingVertical: sizes.textInputPadding,
+                          fontSize: sizes.inputFont,
+                          borderRadius: sizes.borderRadius,
+                          backgroundColor: 'transparent',
+                          textAlign: isRTL ? 'right' : 'left',
+                        }}
+                      />
+                    </View>
+                    <View
+                      style={[
+                        styles.inputBlock,
+                        {
+                          backgroundColor:
+                            themeController.current?.formInputBackground,
+                          paddingVertical: sizes.inputContainerPaddingVertical,
+                          paddingHorizontal:
+                            sizes.inputContainerPaddingHorizontal,
+                          borderRadius: sizes.borderRadius,
+                          marginBottom: sizes.modalInputMarginBottom,
+                          height: sizes.inputHeight,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          { color: themeController.current?.unactiveTextColor },
+                          isRTL && { textAlign: 'right' },
+                          { fontSize: sizes.font },
+                        ]}
+                      >
+                        {t('settings.modals.contact_us.name.label', {
+                          defaultValue: 'Your name',
+                        })}
+                      </Text>
+                      <TextInput
+                        value={contactUsForm.name}
+                        onChangeText={(v) =>
+                          setContactUsForm((p) => ({ ...p, name: v }))
+                        }
+                        placeholder={t(
+                          'settings.modals.contact_us.name.placeholder',
+                          {
+                            defaultValue: 'Your full name',
+                          }
+                        )}
+                        placeholderTextColor={
+                          themeController.current?.formInputLabelColor
+                        }
+                        style={{
+                          fontWeight: '500',
+                          color: themeController.current?.textColor,
+                          padding: 0,
+                          paddingVertical: sizes.textInputPadding,
+                          fontSize: sizes.inputFont,
+                          borderRadius: sizes.borderRadius,
+                          backgroundColor: 'transparent',
+                          textAlign: isRTL ? 'right' : 'left',
+                        }}
+                      />
+                    </View>
+                    <CustomPicker
+                      label={t('settings.modals.contact_us.reason.label', {
+                        defaultValue: 'Reason for contact',
+                      })}
+                      options={[
+                        {
+                          label: t(
+                            'settings.modals.contact_us.reason.option1',
+                            {
+                              defaultValue: 'General Inquiry',
+                            }
+                          ),
+                          value: 'general',
+                        },
+                        {
+                          label: t(
+                            'settings.modals.contact_us.reason.option2',
+                            {
+                              defaultValue: 'Technical Support',
+                            }
+                          ),
+                          value: 'technical',
+                        },
+                        {
+                          label: t(
+                            'settings.modals.contact_us.reason.option3',
+                            {
+                              defaultValue: 'Feedback',
+                            }
+                          ),
+                          value: 'feedback',
+                        },
+                      ]}
+                      selectedValue={contactUsForm.reason}
+                      onValueChange={(value) =>
+                        setContactUsForm((p) => ({ ...p, reason: value }))
+                      }
+                      isRTL={isRTL}
+                      containerStyle={{
+                        marginBottom: sizes.modalInputMarginBottom,
+                        width: '100%',
+                      }}
+                    />
+
+                    <View
+                      style={{
+                        height: sizes.checkboxContainerHeight,
+                        flexDirection: isRTL ? 'row-reverse' : 'row',
+                        alignItems: 'center',
+                        marginBottom: sizes.checkboxMarginBottom,
+                        paddingHorizontal: sizes.checkboxPaddingHorizontal,
+                      }}
+                    >
+                      <BouncyCheckbox
+                        size={scaleByHeight(18, height)}
+                        isChecked={accepted}
+                        onPress={setAccepted}
+                        textStyle={[
+                          styles.termsCheckboxText,
+                          {
+                            textAlign: isRTL ? 'right' : 'left',
+                            color: themeController.current?.unactiveTextColor,
+                            textDecorationLine: 'none',
+                          },
+                        ]}
+                        textContainerStyle={{
+                          [isRTL ? 'marginRight' : 'marginLeft']: scaleByHeight(
+                            10,
+                            height
+                          ),
+                        }}
+                        fillColor={themeController.current?.primaryColor}
+                        innerIconStyle={{
+                          borderWidth: scaleByHeight(2, height),
+                          borderRadius: scaleByHeight(3, height),
+                        }}
+                        iconStyle={{
+                          borderRadius: scaleByHeight(3, height),
+                          fontSize: sizes.checkboxIconSize,
+                        }}
+                      />
+                      <Text
+                        style={[
+                          {
+                            color: themeController.current?.unactiveTextColor,
+                            fontSize: sizes.checkboxTextSize,
+                          },
+                        ]}
+                      >
+                        {t('settings.modals.contact_us.checkbox_text')}{' '}
+                        <Text
+                          style={[
+                            { color: themeController.current?.primaryColor },
+                          ]}
+                        >
+                          {t('settings.modals.contact_us.privacy_policy')}
+                        </Text>
+                      </Text>
+                    </View>
+                  </ScrollView>
+                )}
+                {feedback && (
+                  <ScrollView style={[{ width: '100%' }]}>
+                    <Text
+                      style={[
+                        {
+                          color: themeController.current?.unactiveTextColor,
+                          fontSize: sizes.successModalDescriptionFont,
+                          textAlign: 'center',
+                          marginBottom: sizes.modalInputMarginBottom,
+                        },
+                      ]}
+                    >
+                      {t('settings.modals.feedback_title')}
+                    </Text>
+                    <Text
+                      style={[
+                        {
+                          color: themeController.current?.primaryColor,
+                          fontSize: sizes.regulationsModalTitle,
+                          fontFamily: 'Rubik-Bold',
+                          textAlign: 'center',
+                          marginBottom: sizes.modalInputMarginBottom,
+                        },
+                      ]}
+                    >
+                      +1(800) 123-456
+                    </Text>
+                    <Text
+                      style={[
+                        {
+                          color: themeController.current?.unactiveTextColor,
+                          fontSize: sizes.checkboxTextSize,
+                          textAlign: 'center',
+                          marginBottom: sizes.checkboxMarginBottom,
+                        },
+                      ]}
+                    >
+                      {t('settings.modals.feedback_description')}
+                    </Text>
+                    <View
+                      style={[
+                        styles.inputBlock,
+                        {
+                          backgroundColor:
+                            themeController.current?.formInputBackground,
+                          paddingVertical: sizes.inputContainerPaddingVertical,
+                          paddingHorizontal:
+                            sizes.inputContainerPaddingHorizontal,
+                          borderRadius: sizes.borderRadius,
+                          marginBottom: sizes.modalInputMarginBottom * 2,
+                          height: sizes.inputHeight,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          { color: themeController.current?.unactiveTextColor },
+                          isRTL && { textAlign: 'right' },
+                          { fontSize: sizes.font },
+                        ]}
+                      >
+                        {t('settings.modals.feedback.phone.label', {
+                          defaultValue: 'Your phone number',
+                        })}
+                      </Text>
+                      <TextInput
+                        value={contactUsForm.name}
+                        onChangeText={(v) =>
+                          setContactUsForm((p) => ({ ...p, name: v }))
+                        }
+                        placeholder={t(
+                          'settings.modals.feedback.phone.placeholder',
+                          {
+                            defaultValue: 'Enter your phone number',
+                          }
+                        )}
+                        placeholderTextColor={
+                          themeController.current?.formInputLabelColor
+                        }
+                        style={{
+                          fontWeight: '500',
+                          color: themeController.current?.textColor,
+                          padding: 0,
+                          paddingVertical: sizes.textInputPadding,
+                          fontSize: sizes.inputFont,
+                          borderRadius: sizes.borderRadius,
+                          backgroundColor: 'transparent',
+                          textAlign: isRTL ? 'right' : 'left',
+                        }}
+                      />
+                    </View>
+                  </ScrollView>
+                )}
+                <TouchableOpacity
+                  style={[
+                    styles.primaryBtn,
+                    {
+                      backgroundColor:
+                        themeController.current?.buttonColorPrimaryDefault,
+                      padding: sizes.btnPadding,
+                      borderRadius: sizes.borderRadius,
+                      height: sizes.btnHeight,
+                    },
+                  ]}
+                  onPress={() => {
+                    // TODO: implement submit behavior
+                    console.log('submit form', {
+                      contactForm,
+                      feedback,
+                      contactUsForm,
+                    });
+                    if (contactForm) {
+                      setShowSuccessModal(true);
+                      setTimeout(() => {
+                        onClose();
+                        setShowSuccessModal(false);
+                      }, 2000);
+                    } else {
+                      onClose();
+                    }
+                  }}
+                >
+                  <Text
+                    style={[
+                      {
+                        color: themeController.current?.buttonTextColorPrimary,
+                        fontSize: sizes.btnFont,
+                      },
+                    ]}
+                  >
+                    {t(contactForm ? 'settings.sent' : 'settings.submit')}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <ScrollView
+                style={[{ width: '100%', height: sizes.modalContentHeight }]}
+              >
+                <Text
+                  style={[
+                    {
+                      color: themeController.current?.textColor,
+                      fontSize: sizes.baseFont,
+                    },
+                  ]}
+                >
+                  {content}
+                </Text>
+              </ScrollView>
+            )}
+          </View>
         )}
-        </View>
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -1048,9 +1238,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   primaryBtn: {
-    borderRadius: RFValue(6),
     alignItems: 'center',
-    marginVertical: RFValue(5),
+    justifyContent: 'center',
   },
   // primaryText: { fontWeight: 'bold' },
   bottomRow: {
