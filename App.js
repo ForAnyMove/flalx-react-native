@@ -160,7 +160,6 @@ function App() {
         <AppScreen />
       </WebSocketProvider>);
   }
-    content = <RegisterScreen />;
 
   return (
     <SafeAreaProvider>
