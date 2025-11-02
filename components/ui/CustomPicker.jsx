@@ -171,7 +171,7 @@ const CustomPicker = ({
                 left: pickerLayout.left,
                 width: pickerLayout.width,
                 height: dropdownHeight,
-                backgroundColor: themeController.current?.backgroundColor,
+                backgroundColor: themeController.current?.formInputBackground,
                 borderBottomLeftRadius: sizes.borderRadius,
                 borderBottomRightRadius: sizes.borderRadius,
               },

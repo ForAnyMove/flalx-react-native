@@ -9,11 +9,10 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   I18nManager,
-  Modal,
-  useWindowDimensions,
   Animated,
   ActivityIndicator,
   Image,
+  useWindowDimensions,
 } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTranslation } from 'react-i18next';
@@ -46,10 +45,31 @@ export default function AuthScreen() {
 
   const [otp, setOtp] = useState(Array.from({ length: OTP_LENGTH }, () => ''));
   const inputsRef = useRef([]);
-  const [showResentModal, setShowResentModal] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [otpError, setOtpError] = useState(null);
   const [focusedOtpIndex, setFocusedOtpIndex] = useState(null);
+
+  // --- Новая логика таймера ---
+  const [cooldown, setCooldown] = useState(0); // Время в секундах
+  const [cooldownMode, setCooldownMode] = useState('ready'); // 'standard', 'error', 'ready'
+  const [showResendButton, setShowResendButton] = useState(false); // Показать кнопку "Отправить повторно"
+  const timerRef = useRef(null);
+
+  // Запускает и останавливает интервал таймера
+  useEffect(() => {
+    if (cooldown > 0) {
+      timerRef.current = setInterval(() => {
+        setCooldown((prev) => prev - 1);
+      }, 1000);
+    } else {
+      clearInterval(timerRef.current);
+      // Когда таймер дошел до нуля, переводим его в состояние "готов"
+      if (cooldownMode !== 'ready') {
+        setCooldownMode('ready');
+      }
+    }
+    return () => clearInterval(timerRef.current);
+  }, [cooldown, cooldownMode]);
 
   // Анимации
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -88,7 +108,7 @@ export default function AuthScreen() {
       otpRow: {
         marginTop: getResponsiveSize(6, scaleByHeight(4, height)),
         marginBottom: getResponsiveSize(12, scaleByHeight(8, height)),
-        width: getResponsiveSize( '100%', scaleByHeight(314, height)),
+        width: getResponsiveSize('100%', scaleByHeight(314, height)),
         height: getResponsiveSize(52, scaleByHeight(74, height)),
       },
       otpCell: {
@@ -99,7 +119,7 @@ export default function AuthScreen() {
       },
       linksRow: {
         marginBottom: getResponsiveSize(10, scaleByHeight(8, height)),
-        width: getResponsiveSize( '100%', scaleByHeight(314, height)),
+        width: getResponsiveSize('100%', scaleByHeight(314, height)),
       },
       linkIcon: {
         width: getResponsiveSize(22, scaleByHeight(24, height)),
@@ -109,7 +129,10 @@ export default function AuthScreen() {
         fontSize: getResponsiveSize(13, scaleByHeight(14, height)),
       },
       error: {
-        fontSize: getResponsiveSize(13, scaleByHeight(12, height)),
+        fontSize: getResponsiveSize(13, scaleByHeight(14, height)),
+      },
+      sentCodeTimer: {
+        fontSize: getResponsiveSize(13, scaleByHeight(14, height)),
       },
       modalCard: {
         padding: getResponsiveSize(18, scaleByHeight(12, height)),
@@ -212,31 +235,73 @@ export default function AuthScreen() {
     ]).start();
   };
 
-  // Отправка кода
+  // --- Новая логика отправки и переотправки кода ---
+
+  // Обработчик ошибки "Too Many Requests"
+  const handleCooldownError = (error) => {
+    const message = error.message || '';
+    // Ищем число в строке "For security purposes, you can only request this after 56 seconds."
+    const match = message.match(/after (\d+) seconds/);
+    const seconds = match ? parseInt(match[1], 10) : 60;
+
+    setCooldown(seconds);
+    setCooldownMode('error');
+    setShowResendButton(true); // Сразу показываем кнопку в режиме ошибки
+  };
+
+  // Запуск таймера
+  const startTimer = (seconds, mode = 'standard') => {
+    setCooldown(seconds);
+    setCooldownMode(mode);
+  };
+
+  // Отправка кода (первичная)
   const onSendCode = async () => {
     if (!isValidEmail) {
       setEmailError(t('auth.invalid_email'));
       return;
     }
     setEmailError(null);
+    setSending(true);
     try {
-      setSending(true);
       await session?.sendCode(email.trim());
+      startTimer(60, 'standard');
+      setShowResendButton(false); // Начинаем с ссылки "Не получил код"
       animateStepChange('otp');
     } catch (e) {
-      console.error(e);
+      console.error('Ошибка при отправке кода:', e.message);
+      if (e.message && e.message.includes('after')) {
+        handleCooldownError(e);
+        animateStepChange('otp'); // Все равно переходим на экран OTP
+      } else {
+        setEmailError(e.message || t('auth.send_code_error'));
+      }
     } finally {
       setSending(false);
     }
   };
 
-  // Переотправка
+  // Переотправка кода
   const handleResend = async () => {
+    if (cooldown > 0 && cooldownMode === 'error') return; // Защита от случайного клика
+    setSending(true);
+    setOtpError(null); // Сбрасываем ошибку OTP при переотправке
     try {
-      await session?.sendCode(email.trim());
-      setShowResentModal(true);
+      const { success, error } = await session?.sendCode(email.trim());
+      if (!success) {
+        throw new Error(error);
+      }
+      startTimer(60, 'standard'); // Сбрасываем таймер на 60 секунд в стандартном режиме
     } catch (e) {
-      console.error(e);
+      console.error('Ошибка при переотправке кода:', e.message);
+      if (e.message && e.message.includes('after')) {
+        handleCooldownError(e);
+      } else {
+        // Показываем ошибку в поле OTP, как просили
+        setOtpError(e.message || t('auth.send_code_error'));
+      }
+    } finally {
+      setSending(false);
     }
   };
 
@@ -448,7 +513,7 @@ export default function AuthScreen() {
                   style={[
                     styles.error,
                     dynamicStyles.error,
-                    { color: '#D32F2F' },
+                    { color: theme.errorTextColor },
                   ]}
                 >
                   {emailError}
@@ -524,7 +589,7 @@ export default function AuthScreen() {
                       dynamicStyles.otpCell,
                       {
                         backgroundColor: theme.formInputBackground,
-                        borderColor: 
+                        borderColor:
                           focusedOtpIndex === i
                             ? theme.primaryColor
                             : theme.formInputBackground,
@@ -550,30 +615,40 @@ export default function AuthScreen() {
                   style={[
                     styles.error,
                     dynamicStyles.error,
-                    { color: '#D32F2F', textAlign: 'center' },
+                    { color: theme.errorTextColor, textAlign: 'center' },
                   ]}
                 >
                   {otpError}
                 </Text>
               )}
 
-              {/* Линки: back + resend (зеркалим порядок через isRTL) */}
+              {/* Линки и таймер */}
               <View
                 style={[
                   styles.linksRow,
                   dynamicStyles.linksRow,
-                  { flexDirection: 'row' },
-                  // { flexDirection: isRTL ? 'row' : 'row-reverse' },
+                  {
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  },
                 ]}
               >
-                <TouchableOpacity onPress={backToEmail} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Image source={icons.arrowLeft} style={dynamicStyles.linkIcon} />
+                {/* Ссылка "Назад" */}
+                <TouchableOpacity
+                  onPress={backToEmail}
+                  style={{ flexDirection: 'row', alignItems: 'center' }}
+                >
+                  <Image
+                    source={icons.arrowLeft}
+                    style={dynamicStyles.linkIcon}
+                  />
                   <Text
                     style={[
                       styles.link,
                       dynamicStyles.link,
                       {
-                        color: theme.unactiveTextColor,
+                        color: theme.formInputLabelColor,
                         textDecorationLine: 'none',
                       },
                     ]}
@@ -582,21 +657,65 @@ export default function AuthScreen() {
                   </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={handleResend}>
-                  <Text
-                    style={[
-                      styles.link,
-                      dynamicStyles.link,
-                      {
-                        color: theme.unactiveTextColor,
-                        textDecorationLine: 'none',
-                      },
-                    ]}
-                  >
-                    {t('auth.resend_code')}
-                  </Text>
-                </TouchableOpacity>
+                {/* Блок переотправки: при нажатии показывается кнопка */}
+                {(!showResendButton && cooldownMode !== 'ready') && (
+                  <TouchableOpacity onPress={() => setShowResendButton(true)}>
+                    <Text
+                      style={[
+                        styles.link,
+                        dynamicStyles.link,
+                        {
+                          color: theme.formInputLabelColor,
+                          textDecorationLine: 'underline',
+                        },
+                      ]}
+                    >
+                      {t('auth.resend_code')}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
+
+              {/* Таймер */}
+              <View style={{ justifyContent: 'center' }}>
+                <Text
+                  style={[
+                    styles.sentCodeTimer,
+                    dynamicStyles.sentCodeTimer,
+                    {
+                      color:
+                        cooldownMode === 'error'
+                          ? theme.errorTextColor
+                          : theme.textColor,
+                      textAlign: 'center',
+                    },
+                  ]}
+                >
+                  {t(
+                    cooldown > 0
+                      ? `auth.sent_code_timer_${cooldownMode}_text`
+                      : 'auth.sent_code_timer_ready_text',
+                    { count: cooldown }
+                  )}
+                </Text>
+              </View>
+
+              {/* Кнопка переотправки - УДАЛЕНА */}
+              {(showResendButton || cooldownMode === 'ready') && (
+                <PrimaryOutlineButton
+                  isLandscape={isLandscape}
+                  height={height}
+                  theme={theme}
+                  title={
+                    sending ? t('auth.sending') : t('auth.resent_code_text')
+                  }
+                  onPress={handleResend}
+                  disabled={cooldown > 0 && cooldownMode === 'error'}
+                  containerStyle={{
+                    marginTop: getResponsiveSize(8, scaleByHeight(16, height)),
+                  }}
+                />
+              )}
 
               {/* Кнопка подтверждения/очистки */}
               {otpError ? (
@@ -606,6 +725,12 @@ export default function AuthScreen() {
                   theme={theme}
                   title={t('auth.clear_code')}
                   onPress={clearOtp}
+                  containerStyle={ {
+                    marginTop: getResponsiveSize(
+                      8,
+                      scaleByHeight(16, height)
+                    ),
+                  }}
                 />
               ) : (
                 <PrimaryOutlineButton
@@ -621,6 +746,12 @@ export default function AuthScreen() {
                   }
                   onPress={onConfirm}
                   disabled={!canConfirm || verifying}
+                  containerStyle={ {
+                    marginTop: getResponsiveSize(
+                      8,
+                      scaleByHeight(16, height)
+                    ),
+                  }}
                 />
               )}
             </>
@@ -628,37 +759,7 @@ export default function AuthScreen() {
         </Animated.View>
       </ScrollView>
 
-      {/* Модалка "код отправлен" — вернул */}
-      <Modal visible={showResentModal} transparent animationType='fade'>
-        <View style={styles.modalBackdrop}>
-          <View
-            style={[
-              styles.modalCard,
-              dynamicStyles.modalCard,
-              { backgroundColor: theme.defaultBlocksBackground },
-            ]}
-          >
-            <Text
-              style={[
-                styles.modalText,
-                dynamicStyles.modalText,
-                {
-                  color: theme.textColor,
-                },
-              ]}
-            >
-              {t('auth.resend_modal_text')}
-            </Text>
-            <PrimaryOutlineButton
-              isLandscape={isLandscape}
-              height={height}
-              theme={theme}
-              title={t('auth.ok')}
-              onPress={() => setShowResentModal(false)}
-            />
-          </View>
-        </View>
-      </Modal>
+      {/* Модалка "код отправлен" - УДАЛЕНА */}
     </KeyboardAvoidingView>
   );
 }
@@ -670,8 +771,10 @@ function PrimaryOutlineButton({
   theme,
   isLandscape,
   height,
-}) {  
-  const buttonDynamicStyles = useMemo(() => ({
+  containerStyle = {},
+}) {
+  const buttonDynamicStyles = useMemo(
+    () => ({
       outlineBtn: {
         height: getResponsiveSize(48, scaleByHeight(40, height)),
         marginTop: getResponsiveSize(12, scaleByHeight(38, height)),
@@ -684,8 +787,10 @@ function PrimaryOutlineButton({
       webLandscapeButton: {
         width: scaleByHeight(330, height),
         height: scaleByHeight(62, height),
-      }
-  }), [height]);
+      },
+    }),
+    [height]
+  );
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -699,10 +804,17 @@ function PrimaryOutlineButton({
             width: scaleByHeight(330, height),
             height: scaleByHeight(62, height),
           },
+        containerStyle,
       ]}
     >
       {typeof title === 'string' ? (
-        <Text style={[styles.outlineBtnText, buttonDynamicStyles.outlineBtnText, { color: theme.primaryColor }]}>
+        <Text
+          style={[
+            styles.outlineBtnText,
+            buttonDynamicStyles.outlineBtnText,
+            { color: theme.primaryColor },
+          ]}
+        >
           {title}
         </Text>
       ) : (
@@ -792,7 +904,7 @@ const styles = StyleSheet.create({
       web: {
         outlineStyle: 'none',
       },
-        }),
+    }),
   },
   linksRow: {
     width: '100%',

@@ -80,8 +80,10 @@ export default function sessionManager() {
     const { error } = await supabase.auth.signInWithOtp({ email: userEmail });
     if (error) {
       console.error('Ошибка при отправке кода:', error.message);
+      return { success: false, error: error.message };
     } else {
       console.log('Код отправлен на email:', userEmail);
+      return { success: true };
     }
   }
 

@@ -230,7 +230,7 @@ const AutocompletePicker = ({
               top: sizes.pickerHeight, // Позиционируем относительно родителя
               left: 0,
               right: 0,
-              backgroundColor: themeController.current?.backgroundColor,
+              backgroundColor: themeController.current?.formInputBackground,
               borderBottomLeftRadius: sizes.borderRadius,
               borderBottomRightRadius: sizes.borderRadius,
             },
