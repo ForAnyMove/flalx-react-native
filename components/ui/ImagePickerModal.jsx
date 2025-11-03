@@ -66,7 +66,7 @@ export default function ImagePickerModal({ visible, onClose, onAdd }) {
 
   const sizes = {
     modalWidth: isWebLandscape ? scaleByHeight(350, height) : '80%',
-    borderRadius: isWebLandscape ? 8 : RFValue(5),
+    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
   };
   return (
     <Modal visible={visible} transparent animationType='slide'>

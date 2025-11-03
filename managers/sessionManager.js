@@ -81,8 +81,10 @@ export default function sessionManager() {
     const { error } = await supabase.auth.signInWithOtp({ email: userEmail });
     if (error) {
       console.error('Ошибка при отправке кода:', error.message);
+      return { success: false, error: error.message };
     } else {
       console.log('Код отправлен на email:', userEmail);
+      return { success: true };
     }
   }
 
@@ -106,9 +108,20 @@ export default function sessionManager() {
       console.log('Успешный вход:', data);
       await saveSession(data.session);
 
-      // Загружаем профиль пользователя
-      await fetchUserProfile(data.session.access_token);
-      await refreshRevealedUsers(data.session);
+      try {
+        // Загружаем профиль пользователя
+        await fetchUserProfile(data.session.access_token);
+        await refreshRevealedUsers(data.session);
+      } catch (profileError) {
+        console.error(
+          'Ошибка загрузки профиля после входа:',
+          profileError.message
+        );
+        // Выходим из системы, чтобы избежать несогласованного состояния
+        await signOut();
+        // Передаем ошибку дальше, чтобы UI мог ее обработать
+        throw new Error('Не удалось загрузить профиль пользователя.');
+      }
     }
   }
 

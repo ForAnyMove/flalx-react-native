@@ -20,6 +20,8 @@ import ImagePickerModal from '../components/ui/ImagePickerModal';
 import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
 import { icons } from '../constants/icons';
 import { scaleByHeight } from '../utils/resizeFuncs';
+import TagSelector from '../components/TagSelector';
+import CustomPicker from '../components/ui/CustomPicker';
 
 // универсальная адаптация размеров: на мобиле RFValue, на web — уменьшенный фикс
 const getResponsiveSize = (mobileSize, webSize) => {
@@ -129,6 +131,9 @@ export default function RegisterScreen() {
       inputsContainer: {
         paddingHorizontal: getResponsiveSize(10, scaleByHeight(10, height)),
       },
+      typeTagsSelector: {
+        marginBottom: getResponsiveSize(32, scaleByHeight(32, height)),
+      },
     };
   }, [height, isRTL]);
 
@@ -140,6 +145,12 @@ export default function RegisterScreen() {
   });
   const [loading, setLoading] = useState(false);
   const [finished, setFinished] = useState(false);
+
+  // Step 3 states
+  const [selectedJobTypes, setSelectedJobTypes] = useState([]);
+  const [selectedLicenseTypes, setSelectedLicenseTypes] = useState([]);
+  const [qualificationLevel, setQualificationLevel] = useState(null);
+  const [experience, setExperience] = useState(null);
 
   const isNameValid = form.name.trim().length > 1;
   const isSurnameValid = form.surname.trim().length > 1;
@@ -162,9 +173,14 @@ export default function RegisterScreen() {
       const updatedUser = {};
       if (form.name) updatedUser.name = form.name;
       if (form.surname) updatedUser.surname = form.surname;
-      // if (form.profession) updatedUser.professions = [...form.profession];
       if (form.description) updatedUser.about = form.description;
       if (avatarUrl) updatedUser.avatar = avatarUrl;
+      if (selectedJobTypes.length > 0) updatedUser.jobTypes = selectedJobTypes;
+      if (selectedLicenseTypes.length > 0)
+        updatedUser.professions = selectedLicenseTypes;
+      if (qualificationLevel)
+        updatedUser.qualificationLevel = qualificationLevel;
+      if (experience) updatedUser.experience = experience;
 
       await user.update({ ...updatedUser });
       setFinished(true);
@@ -283,6 +299,28 @@ export default function RegisterScreen() {
       ? { width: step === 1 ? height * 0.7 : height * 0.4 }
       : { width: '100%' };
 
+  const jobTypes = t('jobTypes', { returnObjects: true });
+  const licenses = t('licenses', { returnObjects: true });
+
+  const qualificationLevels = [
+    { label: t('register.qualifications.beginner'), value: 'beginner' },
+    { label: t('register.qualifications.intermediate'), value: 'intermediate' },
+    { label: t('register.qualifications.advanced'), value: 'advanced' },
+    {
+      label: t('register.qualifications.professional'),
+      value: 'professional',
+    },
+    { label: t('register.qualifications.expert'), value: 'expert' },
+  ];
+
+  const experienceLevels = [
+    { label: t('register.experience.none'), value: 'none' },
+    { label: t('register.experience.less_1'), value: 'less_1' },
+    { label: t('register.experience.1_3'), value: '1_3' },
+    { label: t('register.experience.3_5'), value: '3_5' },
+    { label: t('register.experience.5_plus'), value: '5_plus' },
+  ];
+
   return (
     <View
       style={[
@@ -320,10 +358,14 @@ export default function RegisterScreen() {
             { height: '100%', justifyContent: 'space-between' },
             Platform.OS === 'web' &&
               isLandscape &&
-              (step === 2 || step === 3) && {
+              step === 2 && {
                 height: scaleByHeight(741, height),
                 width: scaleByHeight(354, height),
               },
+            step === 3 && {
+              height: scaleByHeight(741, height),
+              width: scaleByHeight(951, height),
+            },
           ]}
         >
           {step === 1 && (
@@ -474,7 +516,7 @@ export default function RegisterScreen() {
                       },
                     ]}
                   >
-                    {t('register.name')}
+                    {t('register.name')} ({t('register.required')})
                   </Text>
                   <TextInput
                     placeholder={t('register.name')}
@@ -525,7 +567,7 @@ export default function RegisterScreen() {
                       },
                     ]}
                   >
-                    {t('register.surname')}
+                    {t('register.surname')} ({t('register.required')})
                   </Text>
                   <TextInput
                     placeholder={t('register.surname')}
@@ -653,19 +695,74 @@ export default function RegisterScreen() {
 
           {step === 3 && (
             <>
-              <View style={{ flex: 1, justifyContent: 'space-between' }}>
-                <View>
-                  <Text
-                    style={[
-                      styles.title,
-                      dynamicStyles.title,
-                      dynamicStyles.step2Title,
-                      { color: theme.textColor },
-                    ]}
-                  >
-                    {t('register.profile_description')}
-                  </Text>
+              <Text
+                style={[
+                  styles.title,
+                  dynamicStyles.title,
+                  {
+                    color: theme.textColor,
+                  },
+                ]}
+              >
+                {t('register.profile_create')}
+              </Text>
 
+              <View
+                style={
+                  isLandscape && Platform.OS === 'web'
+                    ? { flexDirection: 'row', gap: scaleByHeight(108, height) }
+                    : {}
+                }
+              >
+                {/* Left Column */}
+                <View
+                  style={
+                    isLandscape && Platform.OS === 'web'
+                      ? { flex: 1.5 }
+                      : { }
+                  }
+                >
+                  <TagSelector
+                    title={t('register.job_types_title')}
+                    subtitle={t('register.job_types_subtitle')}
+                    options={jobTypes}
+                    selectedItems={selectedJobTypes}
+                    setSelectedItems={setSelectedJobTypes}
+                    containerStyle={dynamicStyles.typeTagsSelector}
+                    numberOfRows={6}
+                  />
+                  <TagSelector
+                    title={t('register.license_types_title')}
+                    subtitle={t('register.license_types_subtitle')}
+                    options={licenses}
+                    selectedItems={selectedLicenseTypes}
+                    setSelectedItems={setSelectedLicenseTypes}
+                    numberOfRows={2}
+                  />
+                </View>
+
+                {/* Right Column */}
+                <View
+                  style={
+                    isLandscape && Platform.OS === 'web' ? { flex: 1 } : {}
+                  }
+                >
+                  <CustomPicker
+                    label={t('register.qualification_label')}
+                    options={qualificationLevels}
+                    selectedValue={qualificationLevel}
+                    onValueChange={setQualificationLevel}
+                    isRTL={isRTL}
+                    containerStyle={dynamicStyles.typeTagsSelector}
+                  />
+                  <CustomPicker
+                    label={t('register.experience_label')}
+                    options={experienceLevels}
+                    selectedValue={experience}
+                    onValueChange={setExperience}
+                    isRTL={isRTL}
+                    containerStyle={dynamicStyles.typeTagsSelector}
+                  />
                   <View
                     style={[
                       styles.inputBlock,
@@ -722,9 +819,37 @@ export default function RegisterScreen() {
                     />
                   </View>
                 </View>
-                <View>
-                  <ProgressDots />
+              </View>
+              <View>
+                <ProgressDots />
 
+                <View
+                  style={{
+                    flexDirection: isRTL ? 'row-reverse' : 'row',
+                    justifyContent: 'center',
+                    gap: getResponsiveSize(10, scaleByHeight(25, height)),
+                    paddingHorizontal: getResponsiveSize(
+                      10,
+                      scaleByHeight(10, height)
+                    ),
+                  }}
+                >
+                  <PrimaryButton
+                    title={t('register.previous')}
+                    onPress={() => setStep(2)}
+                    customStyle={{
+                      btn: {
+                        backgroundColor: 'transparent',
+                        borderWidth: 1,
+                        borderColor: theme.primaryColor,
+                        width: getResponsiveSize(
+                          75,
+                          scaleByHeight(153, height)
+                        ),
+                      },
+                      btnText: { color: theme.primaryColor },
+                    }}
+                  />
                   <PrimaryButton
                     title={
                       loading ? (
@@ -732,11 +857,19 @@ export default function RegisterScreen() {
                           color={theme.buttonTextColorPrimary}
                         />
                       ) : (
-                        t('register.finish')
+                        t('register.create')
                       )
                     }
                     onPress={handleSubmit}
                     disabled={loading}
+                    customStyle={{
+                      btn: {
+                        width: getResponsiveSize(
+                          75,
+                          scaleByHeight(153, height)
+                        ),
+                      },
+                    }}
                   />
                 </View>
               </View>
@@ -763,7 +896,7 @@ const styles = StyleSheet.create({
     // fontSize: getResponsiveSize(20, 18),
     // marginBottom: getResponsiveSize(20, '4vh'),
     textAlign: 'center',
-    fontWeight: 'bold',
+    fontFamily: 'Rubik-Bold',
   },
 
   button: {
@@ -776,7 +909,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     // fontSize: getResponsiveSize(16, 14),
-    fontWeight: '600',
   },
 
   progressContainer: {
@@ -816,12 +948,12 @@ const styles = StyleSheet.create({
   termsBoxText: {
     // fontSize: getResponsiveSize(14, 13),
     // lineHeight: getResponsiveSize(20, 18),
-    opacity: 0.6,
+    // opacity: 0.6,
   },
   termsCheckboxText: {
     // fontSize: getResponsiveSize(14, 13),
-    opacity: 0.8,
-    fontWeight: 'bold',
+    // opacity: 0.8,
+    fontFamily: 'Rubik-SemiBold',
   },
 
   avatarContainer: {
@@ -872,8 +1004,7 @@ const styles = StyleSheet.create({
     }),
   },
   label: {
-    fontWeight: 'bold',
-    opacity: 0.7,
+    // opacity: 0.7,
     // paddingHorizontal: getResponsiveSize(10, 10),
     // paddingTop: getResponsiveSize(6, 4),
     // fontSize: getResponsiveSize(12, 11),

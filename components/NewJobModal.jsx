@@ -30,6 +30,7 @@ import { t } from 'i18next';
 import SubscriptionsModal from './SubscriptionsModal';
 import { createJob } from '../src/api/jobs';
 import { useWebView } from '../context/webViewContext';
+import AutocompletePicker from './ui/AutocompletePicker';
 
 const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
   if (Platform.OS === 'web') {
@@ -379,12 +380,12 @@ export default function NewJobModal({
       ? scaleByHeight(10, height)
       : RFValue(6),
     margin: isWebLandscape ? scaleByHeight(18, height) : RFValue(10),
-    borderRadius: isWebLandscape ? 8 : RFValue(5),
+    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
     thumb: isWebLandscape ? scaleByHeight(128, height) : RFValue(80),
     thumbGap: isWebLandscape ? height * 0.05 : RFValue(28),
     headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
     modalPadding: isWebLandscape ? scaleByHeight(45, height) : RFValue(12),
-    modalRadius: isWebLandscape ? 8 : RFValue(5),
+    modalRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
     modalCrossTopRightPos: isWebLandscape
       ? scaleByHeight(7, height)
       : RFValue(10),
@@ -582,81 +583,81 @@ export default function NewJobModal({
   };
 
   const formContent = [
-    renderAutocomplete({
-      label: t('newJob.type', { defaultValue: 'Type' }),
-      value: type,
-      setValue: (text) => {
+    <AutocompletePicker
+      label={t('newJob.type', { defaultValue: 'Type' })}
+      value={type}
+      setValue={(text) => {
         setType(text);
         if (fieldErrors.type && text) {
           setFieldErrors((prev) => ({ ...prev, type: false }));
         }
-      },
-      filtered: filteredTypes,
-      setFiltered: setFilteredTypes,
-      options: JOB_TYPES,
-      placeholder: t('newJob.selectOrType', {
+      }}
+      filtered={filteredTypes}
+      setFiltered={setFilteredTypes}
+      options={JOB_TYPES}
+      placeholder={t('newJob.selectOrType', {
         defaultValue: 'Select or type...',
-      }),
-      stateFocusIndex: 0,
-      setFocusStates: setFocusStates,
-      filterOptions: filterOptions,
-      focusStates: focusStates,
-      error: fieldErrors.type,
-      backgroundColor: themeController.current?.formInputBackground,
-      rtl: isRTL,
-      isWebLandscape,
-      sizeOverrides: sizes,
-    }),
-    renderAutocomplete({
-      label: t('newJob.subType', { defaultValue: 'Sub type' }),
-      value: subType,
-      setValue: (text) => {
+      })}
+      stateFocusIndex={0}
+      setFocusStates={setFocusStates}
+      filterOptions={filterOptions}
+      focusStates={focusStates}
+      error={fieldErrors.type}
+      backgroundColor={themeController.current?.formInputBackground}
+      rtl={isRTL}
+      isWebLandscape={isWebLandscape}
+      sizeOverrides={sizes}
+    />,
+    <AutocompletePicker
+      label={t('newJob.subType', { defaultValue: 'Sub type' })}
+      value={subType}
+      setValue={(text) => {
         setSubType(text);
         if (fieldErrors.subType && text) {
           setFieldErrors((prev) => ({ ...prev, subType: false }));
         }
-      },
-      filtered: filteredSubTypes,
-      setFiltered: setFilteredSubTypes,
-      options: JOB_SUB_TYPES,
-      placeholder: t('newJob.selectOrType', {
+      }}
+      filtered={filteredSubTypes}
+      setFiltered={setFilteredSubTypes}
+      options={JOB_SUB_TYPES}
+      placeholder={t('newJob.selectOrType', {
         defaultValue: 'Select or type...',
-      }),
-      stateFocusIndex: 1,
-      setFocusStates: setFocusStates,
-      filterOptions: filterOptions,
-      focusStates: focusStates,
-      error: fieldErrors.subType,
-      backgroundColor: themeController.current?.formInputBackground,
-      rtl: isRTL,
-      isWebLandscape,
-      sizeOverrides: sizes,
-    }),
-    renderAutocomplete({
-      label: t('newJob.profession', {
+      })}
+      stateFocusIndex={1}
+      setFocusStates={setFocusStates}
+      filterOptions={filterOptions}
+      focusStates={focusStates}
+      error={fieldErrors.subType}
+      backgroundColor={themeController.current?.formInputBackground}
+      rtl={isRTL}
+      isWebLandscape={isWebLandscape}
+      sizeOverrides={sizes}
+    />,
+    <AutocompletePicker
+      label={t('newJob.profession', {
         defaultValue: 'Profession (optional)',
-      }),
-      value: profession,
-      setValue: (text) => {
+      })}
+      value={profession}
+      setValue={(text) => {
         setProfession(text);
         if (fieldErrors.profession && text) {
           setFieldErrors((prev) => ({ ...prev, profession: false }));
         }
-      },
-      filtered: filteredProfessions,
-      setFiltered: setFilteredProfessions,
-      options: LICENSES,
-      placeholder: t('newJob.select', { defaultValue: 'Select...' }),
-      stateFocusIndex: 2,
-      setFocusStates: setFocusStates,
-      filterOptions: filterOptions,
-      focusStates: focusStates,
-      error: fieldErrors.profession,
-      backgroundColor: themeController.current?.formInputBackground,
-      rtl: isRTL,
-      isWebLandscape,
-      sizeOverrides: sizes,
-    }),
+      }}
+      filtered={filteredProfessions}
+      setFiltered={setFilteredProfessions}
+      options={LICENSES}
+      placeholder={t('newJob.select', { defaultValue: 'Select...' })}
+      stateFocusIndex={2}
+      setFocusStates={setFocusStates}
+      filterOptions={filterOptions}
+      focusStates={focusStates}
+      error={fieldErrors.profession}
+      backgroundColor={themeController.current?.formInputBackground}
+      rtl={isRTL}
+      isWebLandscape={isWebLandscape}
+      sizeOverrides={sizes}
+    />,
     <View
       style={[
         styles.inputBlock,
@@ -1519,31 +1520,31 @@ export default function NewJobModal({
                       },
                     ]}
                   >
-                    {renderAutocomplete({
-                      label: t('newJob.type', { defaultValue: 'Type' }),
-                      value: type,
-                      setValue: (text) => {
+                    <AutocompletePicker
+                      label={t('newJob.type', { defaultValue: 'Type' })}
+                      value={type}
+                      setValue={(text) => {
                         setType(text);
                         if (fieldErrors.type && text) {
                           setFieldErrors((prev) => ({ ...prev, type: false }));
                         }
-                      },
-                      filtered: filteredTypes,
-                      setFiltered: setFilteredTypes,
-                      options: JOB_TYPES,
-                      placeholder: t('newJob.selectOrType', {
+                      }}
+                      filtered={filteredTypes}
+                      setFiltered={setFilteredTypes}
+                      options={JOB_TYPES}
+                      placeholder={t('newJob.selectOrType', {
                         defaultValue: 'Select or type...',
-                      }),
-                      stateFocusIndex: 0,
-                      setFocusStates: setFocusStates,
-                      filterOptions,
-                      focusStates,
-                      error: fieldErrors.type,
-                      backgroundColor: bg,
-                      rtl: isRTL,
-                      isWebLandscape,
-                      sizeOverrides: sizes,
-                    })}
+                      })}
+                      stateFocusIndex={0}
+                      setFocusStates={setFocusStates}
+                      filterOptions={filterOptions}
+                      focusStates={focusStates}
+                      error={fieldErrors.type}
+                      backgroundColor={bg}
+                      rtl={isRTL}
+                      isWebLandscape={isWebLandscape}
+                      sizeOverrides={sizes}
+                    />
                   </View>
 
                   <View
@@ -1619,10 +1620,10 @@ export default function NewJobModal({
                       },
                     ]}
                   >
-                    {renderAutocomplete({
-                      label: t('newJob.subType', { defaultValue: 'Sub type' }),
-                      value: subType,
-                      setValue: (text) => {
+                    <AutocompletePicker
+                      label={t('newJob.subType', { defaultValue: 'Sub type' })}
+                      value={subType}
+                      setValue={(text) => {
                         setSubType(text);
                         if (fieldErrors.subType && text) {
                           setFieldErrors((prev) => ({
@@ -1630,23 +1631,23 @@ export default function NewJobModal({
                             subType: false,
                           }));
                         }
-                      },
-                      filtered: filteredSubTypes,
-                      setFiltered: setFilteredSubTypes,
-                      options: JOB_SUB_TYPES,
-                      placeholder: t('newJob.selectOrType', {
+                      }}
+                      filtered={filteredSubTypes}
+                      setFiltered={setFilteredSubTypes}
+                      options={JOB_SUB_TYPES}
+                      placeholder={t('newJob.selectOrType', {
                         defaultValue: 'Select or type...',
-                      }),
-                      stateFocusIndex: 1,
-                      setFocusStates: setFocusStates,
-                      filterOptions,
-                      focusStates,
-                      error: fieldErrors.subType,
-                      backgroundColor: bg,
-                      rtl: isRTL,
-                      isWebLandscape,
-                      sizeOverrides: sizes,
-                    })}
+                      })}
+                      stateFocusIndex={1}
+                      setFocusStates={setFocusStates}
+                      filterOptions={filterOptions}
+                      focusStates={focusStates}
+                      error={fieldErrors.subType}
+                      backgroundColor={bg}
+                      rtl={isRTL}
+                      isWebLandscape={isWebLandscape}
+                      sizeOverrides={sizes}
+                    />
                   </View>
 
                   {/* Row 3: Profession (1/2) + Location (1/2) */}
@@ -1660,12 +1661,12 @@ export default function NewJobModal({
                       },
                     ]}
                   >
-                    {renderAutocomplete({
-                      label: t('newJob.profession', {
+                    <AutocompletePicker
+                      label={t('newJob.profession', {
                         defaultValue: 'Profession (optional)',
-                      }),
-                      value: profession,
-                      setValue: (text) => {
+                      })}
+                      value={profession}
+                      setValue={(text) => {
                         setProfession(text);
                         if (fieldErrors.profession && text) {
                           setFieldErrors((prev) => ({
@@ -1673,23 +1674,23 @@ export default function NewJobModal({
                             profession: false,
                           }));
                         }
-                      },
-                      filtered: filteredProfessions,
-                      setFiltered: setFilteredProfessions,
-                      options: LICENSES,
-                      placeholder: t('newJob.select', {
+                      }}
+                      filtered={filteredProfessions}
+                      setFiltered={setFilteredProfessions}
+                      options={LICENSES}
+                      placeholder={t('newJob.select', {
                         defaultValue: 'Select...',
-                      }),
-                      stateFocusIndex: 2,
-                      setFocusStates: setFocusStates,
-                      filterOptions,
-                      focusStates,
-                      error: fieldErrors.profession,
-                      backgroundColor: bg,
-                      rtl: isRTL,
-                      isWebLandscape,
-                      sizeOverrides: sizes,
-                    })}
+                      })}
+                      stateFocusIndex={2}
+                      setFocusStates={setFocusStates}
+                      filterOptions={filterOptions}
+                      focusStates={focusStates}
+                      error={fieldErrors.profession}
+                      backgroundColor={bg}
+                      rtl={isRTL}
+                      isWebLandscape={isWebLandscape}
+                      sizeOverrides={sizes}
+                    />
                   </View>
 
                   <View
@@ -2324,7 +2325,7 @@ export default function NewJobModal({
                           ? t('newJob.statusModal.free', {
                             defaultValue: 'Free',
                           })
-                          : `$${selectedOption.price.toFixed(2)}`,
+                          : `$${selectedOption?.price.toFixed(2)}`,
                     })}
                   </Text>
                 </TouchableOpacity>

@@ -265,7 +265,7 @@ const styles = {
     justifyContent: 'center',
   },
   title: {
-    fontWeight: '600',
+    // fontWeight: '600',
   },
   description: {
     marginTop: RFValue(2),
@@ -278,6 +278,6 @@ const styles = {
     justifyContent: 'center',
   },
   badgeText: {
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
   },
 };

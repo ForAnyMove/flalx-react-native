@@ -221,7 +221,7 @@ export default function WaitingScreen({
                         style={[
                           {
                             color: '#fff',
-                            fontWeight: 'bold',
+                            // fontWeight: 'bold',
                             fontSize: sizes.personalMarkerFontSize,
                           },
                         ]}
@@ -286,7 +286,7 @@ const styles = {
   },
   title: {
     fontSize: RFValue(12),
-    fontWeight: '600',
+    // fontWeight: '600',
   },
   description: {
     fontSize: RFValue(10),
@@ -305,7 +305,7 @@ const styles = {
     justifyContent: 'center',
   },
   badgeText: {
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
     fontSize: RFValue(10),
   },
   specialMarkerContainer: {

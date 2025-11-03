@@ -33,16 +33,38 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         next: 'Next',
         previous: 'Previous',
         profile_create: 'Create a profile',
-        name: 'Name',
-        surname: 'Surname',
+        name: 'First Name',
+        surname: 'Last Name',
+        business_name: 'Business Name',
+        required: 'required',
         profile_profession: 'Choose your profession',
         profession_placeholder: 'Enter your profession',
         profile_services: 'Select your services',
         profile_description: 'Profile description',
         description_placeholder: 'Tell about yourself...',
-        finish: 'Finish',
+        create: 'Create',
         register_success: 'All set!',
         profile_avatar_recommended: `We recommend putting a clear profile picture of you smiling to increase the number of leads you receive.`,
+        job_types_title: 'What types of jobs are you looking for?',
+        job_types_subtitle: 'You can choose more than one.',
+        license_types_title: 'What types of license jobs would you like to get?',
+        license_types_subtitle: 'You can choose more than one.',
+        qualification_label: 'License level',
+        experience_label: 'Practical experience in the field',
+        qualifications: {
+          beginner: 'Beginner',
+          intermediate: 'Intermediate',
+          advanced: 'Advanced',
+          professional: 'Professional/Certified',
+          expert: 'Instructor/Expert',
+        },
+        experience: {
+          none: 'No experience',
+          less_1: 'Less than a year',
+          '1_3': '1-3 years',
+          '3_5': '3-5 years',
+          '5_plus': '5+ years',
+        },
       },
       auth: {
         app_name: 'FLALX',
@@ -63,6 +85,11 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         invalid_code: 'Invalid code',
         email_description:
           'Search for already sent me a verification code.\nYou agree to the terms of use and privacy.',
+        sent_code_timer_standard_text: 'Code sent. Check your email {{count}} sec...',
+        sent_code_timer_error_text: 'Can\'t send code. Try again in {{count}} sec.',
+        sent_code_timer_ready_text: 'Code still not received? Resend',
+        resent_code_text: 'Sent code again',
+        sending: 'Sending...',
       },
       tabs: {
         store: 'Store',
@@ -94,6 +121,49 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         confirm_logout: 'Are you sure you want to logout?',
       },
       settings: {
+        sent: 'Sent',
+        submit: 'Submit',
+        modals: {
+          contact_us: {
+            topic: {
+              label: 'Topic',
+              placeholder: 'Your login and message subject',
+            },
+            description:
+              'Important! Please include your username in the subject line. This information will speed up our response.',
+            message: {
+              label: 'Message',
+              placeholder: 'Describe your question',
+            },
+            email: {
+              label: 'Email',
+              placeholder: 'electric@example.com',
+            },
+            name: {
+              label: 'Your name',
+              placeholder: 'Name',
+            },
+            reason: {
+              label: 'Reason for contacting',
+              placeholder: 'Select a reason',
+            },
+            checkbox_text:
+              'I consent for FLALX.com to process my data and agree to the terms of the',
+            privacy_policy: 'Privacy Policy',
+            success_title: 'Your message has been sent!',
+            success_message:
+              'We will carefully review your \nquestion and contact you \nas soon as possible!',
+          },
+          feedback_title: 'Contact our tech support',
+          feedback_description:
+            'Leave your phone number and we will contact you. You agree to the terms of use and privacy.',
+          feedback: {
+            phone: {
+              label: 'Your phone number',
+              placeholder: 'Enter your phone number',
+            },
+          },
+        },
         language: 'Language',
         language_en: 'English',
         language_he: 'Hebrew',
@@ -106,6 +176,11 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         regulations: 'Regulations',
         have_question: 'Do you have a question?',
         just_cheer: 'Just want to cheer?',
+        contact_us: 'Contact us',
+        feedback: 'Feedback',
+        about_content: `Hi, my name is Yossi.
+Electrician and ____ since ____. Being independent is not easy. I myself have gone through a lot of frustrations during my years as a freelancer. I didn't have enough money to keep an employee/s, work was not continuous throughout the year, difficulty taking short and long vacation days, there was simply no one to provide regular service to all my clients. Then I realized, I'm not the only one and like me, many other independent electricians live with this frustration. So I created a platform that brings together all electricians in one place and serves a common interest. Together, we will create a tremendous force of helping each other. Posting jobs and receiving job offers from electricians in the area. An hourly price list that will be acceptable to anyone who joins as a member. Mutual agreements with other professionals so that we can use them in a more organized way. Basically, everything you need to make it easier for all of us and create something like never before!`,
+        regulations_content: `- A three and a half year old man, a minor from the village of Havitz, a Dalmatian from Yassab, Hana won the Nimrgi Shachim Tok, a Hatsh that appeared to be Hitidam Khair and Klorum Ipsum Dolor Sit Emet, a constructor of the Adipiscing Elite Hoinav who lives in the wilderness of Simchat - three and told the education of Othlasach and Tlalshu. A minor from the village of Havitz, a Dalmatian from Yassab, Hana won the Nimrgi Shachim Tok, a Hatsh that appeared to be Hitidam Khair and Klorum Ipsum Dolor Sit Emet, a constructor of the Education Elite Hoinav who lives in the wilderness of Simchat - Shushia and told the Shloh of Othlasach and Tlalshu. Zuta from the clean summer of Havits, a dry summer, Hana won Nimrgi Shachim Tok, Hatsh Shanra Hitidam Khair and K. Lorem Ipsum Dolor Sit Emet, Constructor of Elite Education Huinab Sits Shammat Simhit - Shushia and Telbro Shloh Uthlasach and Telbro Shloh Uthlasach and Teltlasach. Zuta from the summer Clean summer, dry summer, Kahana.`,
       },
       common: {
         visit: 'Visit',
@@ -270,17 +345,39 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         next: 'הבא',
         previous: 'הקודם',
         profile_create: 'צור פרופיל',
-        name: 'שם',
+        name: 'שם פרטי',
         surname: 'שם משפחה',
+        business_name: 'שם עסק',
+        required: 'נדרש',
         profile_profession: 'בחר את סוג הרישיון שלך',
         profession_placeholder: 'הזן את מקצועך',
         profile_services: 'אלו סוגי שירותים אתה מספק?',
         profile_description: 'תיאור פרופיל',
         description_placeholder: 'כתוב על עצמך...',
-        finish: 'סיום',
+        create: 'צור',
         register_success: 'הכל מוכן!',
         profile_avatar_recommended: `אנו ממליצים לשים תמונת פרופיל ברורה של
 אתה מחייך כדי להגדיל את כמות הפניות שתקבל`,
+        job_types_title: 'אילו סוגי עבודות אתה מחפש?',
+        job_types_subtitle: 'ניתן לבחור יותר מאחד.',
+        license_types_title: 'אילו סוגי עבודות רישיון תרצה לקבל?',
+        license_types_subtitle: 'ניתן לבחור יותר מאחד.',
+        qualification_label: 'רמת רישיון',
+        experience_label: 'ניסיון מעשי בתחום',
+        qualifications: {
+          beginner: 'מתחיל',
+          intermediate: 'בינוני',
+          advanced: 'מתקדם',
+          professional: 'מקצועי/מוסמך',
+          expert: 'מדריך/מומחה',
+        },
+        experience: {
+          none: 'ללא ניסיון',
+          less_1: 'פחות משנה',
+          '1_3': '1-3 שנים',
+          '3_5': '3-5 שנים',
+          '5_plus': '5+ שנים',
+        },
       },
       auth: {
         app_name: 'FLALX',
@@ -301,6 +398,12 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         invalid_code: 'קוד שגוי',
         email_description:
           'חפש כבר שלח לי קוד אימות.\nאתה מסכים לתנאי השימוש והפרטיות.',
+        sent_code_timer_standard_text:
+          'הקוד נשלח. בדוק את האימייל שלך בעוד {{count}} שניות...',
+        sent_code_timer_error_text: 'לא ניתן לשלוח קוד. נסה שוב בעוד {{count}} שניות.',
+        sent_code_timer_ready_text: 'הקוד עדיין לא התקבל? שלח שוב',
+        resent_code_text: 'שלח קוד שוב',
+        sending: 'שולח...',
       },
       tabs: {
         store: 'חנות',
@@ -331,6 +434,49 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         confirm_delete: 'האם אתה בטוח שברצונך למחוק את החשבון שלך?',
       },
       settings: {
+        sent: 'נשלח',
+        submit: 'שלח',
+        modals: {
+          contact_us: {
+            topic: {
+              label: 'נושא',
+              placeholder: 'הכניסו את שם המשתמש ונושא ההודעה שלכם',
+            },
+            description:
+              'חשוב! יש לכלול את שם המשתמש שלך בשורת הנושא. מידע זה יזרז את התגובה שלנו.',
+            message: {
+              label: 'הודעה',
+              placeholder: 'כתוב את ההודעה שלך כאן...',
+            },
+            email: {
+              label: 'אימייל',
+              placeholder: 'electric@example.com',
+            },
+            name: {
+              label: 'שמך',
+              placeholder: 'שם',
+            },
+            reason: {
+              label: 'סיבת יצירת הקשר',
+              placeholder: 'בחר סיבה',
+            },
+            checkbox_text:
+              'אני מסכים ש-FLALX.com יעבד את הנתונים שלי ומסכים לתנאי ה',
+            privacy_policy: 'מדיניות פרטיות',
+            success_title: 'ההודעה שלך נשלחה!',
+            success_message:
+              'נבחן בקפידה את \nהשאלה שלך וניצור איתך קשר \nבהקדם האפשרי!',
+          },
+          feedback_title: 'צור קשר עם התמיכה הטכנית שלנו',
+          feedback_description:
+            'השאר את מספר הטלפון שלך ואנו ניצור איתך קשר. אתה מסכים לתנאי השימוש והפרטיות.',
+          feedback: {
+            phone: {
+              label: 'מספר הטלפון שלך',
+              placeholder: 'הזן את מספר הטלפון שלך',
+            },
+          },
+        },
         language: 'שפה',
         language_en: 'אנגלית',
         language_he: 'עברית',
@@ -343,6 +489,14 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         regulations: 'תקנות',
         have_question: 'יש לך שאלה?',
         just_cheer: 'רק רוצה לעודד?',
+        contact_us: 'צרו קשר',
+        feedback: 'מָשׁוֹב',
+        about_content: `היי, שמי יוסי.
+
+חשמלאי ו-____ מאז ____. להיות עצמאי זה לא דבר קל. אני עצמי עברתי הרבה תסכולים במהלך שנותיי כפרילנסר. לא היה לי מספיק כסף כדי להחזיק עובד/ים, עבודה לא רציפה לאורך כל השנה, קושי לקחת ימי חופשה קצרים וארוכים, פשוט לא היה מי שיספק שירות קבוע לכל הלקוחות שלי. ואז הבנתי, אני לא היחיד וכמוני, הרבה חשמלאים עצמאיים אחרים חיים עם התסכול הזה. אז יצרתי פלטפורמה שמאגדת את כל אנשי החשמל במקום אחד ומשרתת אינטרס משותף. יחד, ניצור כוח אדיר של עזרה אחד לשני. פרסום משרות וקבלת הצעות עבודה מחשמלאים באזור. מחירון שעתי שיהיה מקובל על כל מי שיצטרף כחבר. הסכמים הדדיים עם אנשי מקצוע אחרים כדי שנוכל להשתמש בהם בצורה מסודרת יותר. בעצם כל מה שצריך כדי להקל על כולנו וליצור משהו שמעולם לא היה כמותו!`,
+        regulations_content: ` - גבר בן שלוש וחצי,זוטא מנק חאביץ אפה דלמאת יאסב, חנה ניצחו נימרגי שחים טוק, חתש שנרא חיטידם ח'יר וקלורום איפסום דולור סיט אמת, קונסטקטורר אדיפיסינג עלית הוינב יושב שממת שמחות - שלוש וטלברו השכלת אותלאשך וטלבשו. זוטא מנק חאביץ אפה דלמאת יאסב, חנה ניצחו נימרגי שחים טוק, חת"ש שנרא היטידם ח'יר וק' לורם איפסום דולור סיט אמת, קונסטקטורר חינוך עלית הואינב יושב שממת שמחית - שושיה וטלברו השלו"ת אותלסך ותלברו השלוח אותלסך ותלתלסך. זוטא מנק חאביץ אפה דלמאת יאסב, חנה ניצחו נימרגי שחים טוק, חת"ש שנרא היטידם ח'יר וק' לורם איפסום דולור סיט אמת, קונסטקטורר חינוך עלית הואינב יושב שממת שמחית - שושיה וטלברו השלו"ת אותלסך ותלברו השלוח אותלסך ותלתלסך. זוטא מהקיץ נקי אפה דלמת יבש, כהנא.
+
+ היושב ישב על מיטת חייט - גבר בן שלוש וחצי, ו-chait novas arashshef. זוטא מנק חאביץ אפה דלמאת ישב, חנה ניצחו נימרגי שחים טוק, חת"ש שנרא חיתידם ח'יר וקבולור סיט אמת, קונסקטורר אדיפיזינג עלית הואינב יושב ש"ה שמחות שלוש וטלברו החול התולש"ך וחי' נובש ארששף. זוטא מהקיץ  היושב ישב על מיטת חייט - גבר בן שלוש וחצי, ו-chait novas arashshef. זוטא מנק חאביץ אפה דלמאת ישב, חנה ניצחו נימרגי שחים טוק, חת"ש שנרא חיתידם ח'יר וקבולור סיט אמת, קונסקטורר אדיפיזינג עלית הואינב יושב ש"ה שמחות שלוש וטלברו החול `,
       },
       common: {
         visit: 'בקר',

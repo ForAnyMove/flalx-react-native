@@ -2,7 +2,7 @@ import axios from 'axios';
 
 async function getRevealedUsers(session) {
     try {
-        const token = session?.token?.access_token;
+        const token = session?.token?.access_token || session?.access_token;
         const url = session?.serverURL || 'http://localhost:3000';
 
         if (!token) {

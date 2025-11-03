@@ -13,12 +13,14 @@ import { useWindowInfo } from '../context/windowContext';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
 import { scaleByHeight } from '../utils/resizeFuncs';
+import { useEffect, useRef } from 'react';
 
 export default function JobTypeSelector({ selectedTypes, setSelectedTypes }) {
   const { t } = useTranslation();
   const { height, isLandscape } = useWindowInfo();
   const { themeController, languageController } = useComponentContext();
 
+  const scrollRef = useRef(null);
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
@@ -64,10 +66,38 @@ export default function JobTypeSelector({ selectedTypes, setSelectedTypes }) {
   // объект переведённых значений: { job_1: '...', job_2: '...', ... }
   const jobTypes = t('jobTypes', { returnObjects: true });
 
+  useEffect(() => {
+    const scrollElement = scrollRef.current;
+    if (Platform.OS === 'web' && scrollElement) {
+      const handleWheel = (e) => {
+        // Если горизонтальный скролл (deltaX) уже есть (свайп на тачпаде),
+        // то ничего не делаем, позволяя браузеру обработать его нативно.
+        if (e.deltaX !== 0) {
+          return;
+        }
+
+        // Если был только вертикальный скролл (deltaY, колесо мыши),
+        // то мы перехватываем его.
+        e.preventDefault();
+        // и прокручиваем наш компонент по горизонтали.
+        scrollElement.scrollBy({ left: e.deltaY, top: 0, behavior: 'smooth' });
+      };
+
+      // Добавляем "активный" слушатель, чтобы preventDefault работал
+      scrollElement.addEventListener('wheel', handleWheel, { passive: false });
+
+      // Очищаем слушатель при размонтировании компонента
+      return () => {
+        scrollElement.removeEventListener('wheel', handleWheel);
+      };
+    }
+  }, []);
+
   return (
     <View style={[styles.container, { width: sizes.containerWidth, marginBottom: sizes.containerMarginBottom }]}>
       {/* Теги */}
       <ScrollView
+        ref={scrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}

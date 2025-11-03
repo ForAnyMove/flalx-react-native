@@ -295,7 +295,7 @@ export default function Jobs() {
                       style={{
                         color: themeController.current?.badgeTextColor,
                         fontSize: badgeSize * 0.6,
-                        fontWeight: 'bold',
+                        // fontWeight: 'bold',
                       }}
                     >
                       {badgeCounts[title]}
@@ -315,7 +315,7 @@ export default function Jobs() {
                 <Animated.Text
                   style={{
                     color: interpolatedColorValues[idx],
-                    fontWeight: 'bold',
+                    // fontWeight: 'bold',
                     textAlign: 'center',
                     fontSize,
                   }}
