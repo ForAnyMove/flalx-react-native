@@ -358,7 +358,7 @@ export default function NewJobModal({
   initialJob = null,
   executorId,
 }) {
-  const { themeController, session, user, jobsController, languageController, setAppLoading } =
+  const { themeController, session, user, jobsController, languageController, setAppLoading, subscription } =
     useComponentContext();
   const { width, height, isLandscape, sidebarWidth = 0 } = useWindowInfo();
   const { t } = useTranslation();
@@ -2222,6 +2222,7 @@ export default function NewJobModal({
                   {jobsController.products.map((opt) => {
                     const productType = opt.type;
                     const active = jobType === productType;
+
                     return (
                       <TouchableOpacity
                         key={productType}
@@ -2235,12 +2236,12 @@ export default function NewJobModal({
                             borderWidth: 1,
                             borderColor: active
                               ? themeController.current
-                                  ?.buttonColorPrimaryDefault
+                                ?.buttonColorPrimaryDefault
                               : themeController.current
-                                  ?.formInputPlaceholderColor,
+                                ?.formInputPlaceholderColor,
                             backgroundColor: active
                               ? themeController.current
-                                  ?.buttonColorPrimaryDefault
+                                ?.buttonColorPrimaryDefault
                               : 'transparent',
                             flexDirection: isRTL ? 'row-reverse' : 'row',
                             alignItems: 'center',
@@ -2254,7 +2255,7 @@ export default function NewJobModal({
                             color: active
                               ? themeController.current?.buttonTextColorPrimary
                               : themeController.current
-                                  ?.formInputPlaceholderColor,
+                                ?.formInputPlaceholderColor,
                           }}
                         >
                           {t(`newJob.statusModal.option.${STATUS_OPTIONS[productType].i18n}`, {
@@ -2319,7 +2320,7 @@ export default function NewJobModal({
                     {t('newJob.statusModal.buttons.confirmWithPrice', {
                       defaultValue: 'Publish for {{price}}',
                       price:
-                        selectedOption.price === 0
+                        subscription != null && selectedOption.type == 'normal'
                           ? t('newJob.statusModal.free', {
                             defaultValue: 'Free',
                           })
@@ -2329,7 +2330,7 @@ export default function NewJobModal({
                 </TouchableOpacity>
 
                 {/* кнопка тарифов */}
-                <TouchableOpacity
+                {(subscription == null && selectedOption.type == 'normal') && < TouchableOpacity
                   onPress={() => {
                     setPlansModalVisible(true);
                     setStatusModalVisible(false);
@@ -2354,21 +2355,22 @@ export default function NewJobModal({
                       defaultValue: 'See pricing plans',
                     })}
                   </Text>
-                </TouchableOpacity>
+                </TouchableOpacity>}
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
         </View>
-      </Modal>
+      </Modal >
 
       {/* PLANS MODAL (простая заглушка, такой же фон/центрирование) */}
-      <SubscriptionsModal
+      < SubscriptionsModal
         visible={plansModalVisible}
         main={false}
         closeModal={() => {
           setPlansModalVisible(false);
           setStatusModalVisible(true);
-        }}
+        }
+        }
       />
       {/* <Modal visible={plansModalVisible} animationType='fade' transparent>
         <TouchableOpacity
@@ -2428,7 +2430,7 @@ export default function NewJobModal({
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal> */}
-    </KeyboardAvoidingView>
+    </KeyboardAvoidingView >
   );
 }
 

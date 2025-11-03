@@ -7,7 +7,7 @@ const WebSocketContext = createContext();
 export const useWebSocket = () => useContext(WebSocketContext);
 
 export const WebSocketProvider = ({ children }) => {
-    const { session, user, usersReveal, providersController } = useComponentContext();
+    const { session, user, usersReveal, providersController, subscription } = useComponentContext();
     const { jobsController } = useComponentContext();
 
     const wsRef = useRef(null);
@@ -45,6 +45,17 @@ export const WebSocketProvider = ({ children }) => {
                 else usersReveal.refresh();
 
                 providersController.reload();
+                break;
+            case "SUBSCRIPTION_ACTIVATED":
+            case "SUBSCRIPTION_CANCELLED":
+            case "SUBSCRIPTION_EXPIRED":
+            case "SUBSCRIPTION_DOWNGRADE_SCHEDULED":
+            case "SUBSCRIPTION_UPGRADE_INITIATED":
+            case "PLAN_CHANGE_APPROVED":
+            case "SUBSCRIPTION_PLAN_CHANGED_PENDING_PAYMENT":
+            case "SUBSCRIPTION_UPGRADE_SUCCESS":
+            case "SUBSCRIPTION_PAYMENT_SUCCESS":
+                subscription.refresh();
                 break;
             default:
                 break;

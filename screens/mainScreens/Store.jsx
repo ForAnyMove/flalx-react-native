@@ -22,6 +22,8 @@ import DoneScreen from './storeTabs/Done';
 import JobModalWrapper from '../../components/JobModalWrapper';
 import ShowJobModal from '../../components/ShowJobModal';
 import { checkHasPendingJob } from '../../src/api/jobs';
+import { useNotification } from '../../src/render';
+import { useWebView } from '../../context/webViewContext';
 
 const TAB_TITLES = ['new', 'waiting', 'in-progress', 'done'];
 const TAB_TITLES_RTL = ['done', 'in-progress', 'waiting', 'new'];
@@ -37,6 +39,9 @@ const badgeCountsExample = {
 export default function Store() {
   const { themeController, appTabController, languageController, jobsController, session } =
     useComponentContext();
+  const { showWarning } = useNotification();
+  const { openWebView } = useWebView();
+
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
   const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
@@ -404,7 +409,24 @@ export default function Store() {
             setActiveKey(null);
             setNewJobModalVisible(true);
           } else {
-            alert(`You have a pending job. Please complete it before creating a new one.\n Payment URL: ${pendingJobRequest.payment?.paymentMetadata?.paypalApproval?.href || 'N/A'}. The payment URL has been copied to your clipboard.`);
+            const url = pendingJobRequest.payment?.paymentMetadata?.paypalApproval?.href;
+            const message = [
+              "### You have a pending job. Please complete it before creating a new one.",
+              "",
+              `Payment URL: [${url}](${url})`,
+              "",
+              "_You can cancel the pending job from the payment page._"
+            ].join('\n');
+
+            showWarning(message,
+              [
+                {
+                  title: "Move to Payment",
+                  backgroundColor: "#3B82F6",
+                  textColor: "#FFFFFF",
+                  onPress: () => openWebView(url)
+                }
+              ]);
           }
         }}
       >

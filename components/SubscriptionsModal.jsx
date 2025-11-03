@@ -15,39 +15,103 @@ import { icons } from '../constants/icons';
 import { scaleByHeight } from '../utils/resizeFuncs';
 import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
-
-const SUBSCRIPTIONS_TEMPLATE = {
-  default: {
-    name: 'subscriptions.subscription.default.name',
-    price: 10,
-    description: 'subscriptions.subscription.default.description',
-  },
-  top: {
-    name: 'subscriptions.subscription.top.name',
-    price: 25,
-    description: 'subscriptions.subscription.top.description',
-  },
-  plus: {
-    name: 'subscriptions.subscription.plus.name',
-    price: 50,
-    description: 'subscriptions.subscription.plus.description',
-  },
-  forPro: {
-    name: 'subscriptions.subscription.forPro.name',
-    price: 100,
-    description: 'subscriptions.subscription.forPro.description',
-  },
-};
+import { createSubscription, downgradeSubscription, payForPlanUpgrade, upgradeSubscription } from '../src/api/subscriptions';
+import { useWebView } from '../context/webViewContext';
+import { useNotification } from '../src/render';
 
 function SubscriptionsModalContent({ closeModal }) {
-  const { themeController, languageController } = useComponentContext();
+  const { themeController, languageController, subscriptionPlans, subscription, session, setAppLoading } = useComponentContext();
+  const { showWarning, showInfo } = useNotification()
+  const { openWebView } = useWebView();
   const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
-  const [subscriptions, setSubscriptions] = useState(SUBSCRIPTIONS_TEMPLATE);
+  const tryPurchaseSubscription = async (planId) => {
+    try {
+      const findPlan = (planId) => {
+        return subscriptionPlans.find((plan) => plan.id === planId);
+      }
+
+      const currentPlanId = subscription.current?.subscription_plans_id;
+      if (currentPlanId != null) {
+
+        if (findPlan(currentPlanId)?.level > findPlan(planId)?.level) {
+          showInfo("You are about to downgrade your subscription.\n\nAre you sure?", [{
+            title: 'Yes',
+            backgroundColor: '#45bb33ff',
+            textColor: '#FFFFFF',
+            onPress: async () => {
+              setAppLoading(true);
+              const result = await downgradeSubscription(session, subscription.current.id, planId);
+              if (result.success) {
+                const message = '### Subscription successfully downgraded';
+                showInfo(message);
+              }
+              setAppLoading(false);
+            }
+          }, {
+            title: 'No',
+            backgroundColor: '#f65454ff',
+            textColor: '#FFFFFF',
+          }]);
+        } else if (findPlan(currentPlanId)?.level < findPlan(planId)?.level) {
+          showInfo("You are about to upgrade your subscription.\n\nAfter accepting the agreement you will be requested to pay difference between your current plan and the new plan to change it immediately.\n\nAre you sure?", [{
+            title: 'Yes',
+            backgroundColor: '#45bb33ff',
+            textColor: '#FFFFFF',
+            onPress: async () => {
+              setAppLoading(true);
+              const result = await upgradeSubscription(session, subscription.current.id, planId);
+              console.log('upgradeSubscription result:', result);
+
+              if (result.success && result.payment_url) {
+                openWebView(result.payment_url);
+              }
+              setAppLoading(false);
+            }
+          }, {
+            title: 'No',
+            backgroundColor: '#f65454ff',
+            textColor: '#FFFFFF',
+          }]);
+        }
+
+        return;
+      }
+
+      setAppLoading(true);
+
+      const result = await createSubscription(session, planId);
+      if (result.success && result.approvalUrl) {
+        openWebView(result.approvalUrl);
+      } else if (result.success == false && result.subscription) {
+        const message = '### Subscription already exists.';
+
+        showWarning(message);
+      }
+
+    } catch (error) {
+      console.error("Error creating subscription:", error);
+    } finally {
+      setAppLoading(false);
+    }
+  };
+
+  const tryUpgradeSubscription = async (subscription) => {
+    try {
+      setAppLoading(true);
+      const result = await payForPlanUpgrade(session, subscription.id);
+      if (result.success && result.approval_url) {
+        openWebView(result.approval_url);
+      }
+    } catch (error) {
+      console.error("Error upgrading subscription:", error);
+    } finally {
+      setAppLoading(false);
+    }
+  };
 
   const sizes = {
     headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
@@ -84,6 +148,9 @@ function SubscriptionsModalContent({ closeModal }) {
     subscriptionsDescriptionFont: isWebLandscape
       ? scaleByHeight(16, height)
       : RFValue(16),
+    subscriptionsFeaturesFont: isWebLandscape
+      ? scaleByHeight(12, height)
+      : RFValue(12),
     priceMarginBottom: isWebLandscape ? scaleByHeight(23, height) : RFValue(15),
     subscriptionButtonFont: isWebLandscape
       ? scaleByHeight(20, height)
@@ -172,14 +239,18 @@ function SubscriptionsModalContent({ closeModal }) {
               alignSelf: isRTL ? 'flex-end' : 'flex-start',
             }}
           >
-            {Object.keys(subscriptions).map((key) => (
-              <View
-                key={key}
+            {subscriptionPlans.map((value) => {
+              const isActive = subscription.current?.subscription_plans_id === value.id;
+              const changes = subscription.current?.changes?.find((change) => change.target_paypal_plan_id == value.paypal_plan_id);
+              const isPendingOnUpgrade = changes != null && changes.status != 'completed';
+
+              return <View
+                key={value.id}
                 style={[
                   {
                     borderRadius: sizes.borderRadius,
                     width: sizes.subscriptionWidth,
-                    height: sizes.subscriptionHeight,
+                    // height: sizes.subscriptionHeight,
                     padding: sizes.subscriptionPadding,
                     marginBottom: sizes.subscriptionMarginBottom,
                     backgroundColor:
@@ -187,7 +258,7 @@ function SubscriptionsModalContent({ closeModal }) {
                     boxSizing: 'border-box',
                     alignItems: isRTL ? 'flex-end' : 'flex-start',
                   },
-                  key === 'forPro' && {
+                  value.id === 'pro' && {
                     borderColor:
                       themeController.current?.buttonColorSecondaryDefault,
                     borderWidth: 2,
@@ -202,7 +273,7 @@ function SubscriptionsModalContent({ closeModal }) {
                     fontFamily: 'Rubik-Bold',
                   }}
                 >
-                  {t(subscriptions[key].name)}
+                  {value.name}
                 </Text>
                 <Text
                   style={{
@@ -211,8 +282,20 @@ function SubscriptionsModalContent({ closeModal }) {
                     color: themeController.current?.unactiveTextColor,
                   }}
                 >
-                  {t(subscriptions[key].description)}
+                  {value.description}
                 </Text>
+                {value.features.map((feature, index) => (
+                  <Text
+                    key={index}
+                    style={{
+                      fontSize: sizes.subscriptionsFeaturesFont,
+                      color: themeController.current?.textColor,
+                    }}
+                  >
+                    {`• ${feature}`}
+                  </Text>
+                ))}
+                <View style={{ marginBottom: sizes.priceMarginBottom / 2 }} />
                 <Text
                   style={{
                     fontSize: sizes.subscriptionsDescriptionFont,
@@ -221,15 +304,22 @@ function SubscriptionsModalContent({ closeModal }) {
                     marginBottom: sizes.priceMarginBottom,
                   }}
                 >
-                  {subscriptions[key].price}$/{t('subscriptions.month')}
+                  {value.price}$/{t('subscriptions.month')}
                 </Text>
+                {isPendingOnUpgrade ? <Text style={{ color: '#ff8800ff' }}>{`${changes.notes}\n\n${changes.prorated_amount}$ for ${changes.prorated_remaining_days} days remaining`}</Text> : null}
+                <View style={{ marginBottom: sizes.priceMarginBottom }} />
                 <TouchableOpacity
                   onPress={() => {
-                    // Handle subscription selection
+                    if (isPendingOnUpgrade) {
+                      tryUpgradeSubscription(subscription.current);
+                    }
+                    else if (!isActive) {
+                      tryPurchaseSubscription(value.id);
+                    }
                   }}
                   style={{
                     backgroundColor:
-                      key === 'forPro'
+                      value.id === 'pro'
                         ? themeController.current?.buttonColorSecondaryDefault
                         : themeController.current?.buttonColorPrimaryDefault,
                     alignSelf: 'center',
@@ -238,24 +328,27 @@ function SubscriptionsModalContent({ closeModal }) {
                     borderRadius: sizes.borderRadius,
                     width: sizes.btnWidth,
                     height: sizes.btnHeight,
+                    opacity: isActive ? 0.5 : 1,
+                    pointerEvents: isActive ? 'none' : 'auto',
                   }}
+                  accessible={!isActive}
                 >
                   <Text
                     style={{
                       fontSize: sizes.subscriptionButtonFont,
                       color:
-                        key === 'forPro'
+                        value.id === 'pro'
                           ? themeController.current?.buttonTextColorSecondary
                           : themeController.current?.buttonTextColorPrimary,
                       textAlign: 'center',
                       textAlignVertical: 'center',
                     }}
                   >
-                    {t('subscriptions.choose')}
+                    {isActive ? t('subscriptions.active') : (isPendingOnUpgrade ? `Pay ${changes.prorated_amount}$` : t('subscriptions.choose'))}
                   </Text>
                 </TouchableOpacity>
-              </View>
-            ))}
+              </View>;
+            })}
           </View>
         </ScrollView>
       </TouchableOpacity>

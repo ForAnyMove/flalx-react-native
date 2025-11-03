@@ -180,6 +180,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
       },
       subscriptions: {
         choose: 'Choose',
+        active: 'Active',
         month: 'month',
         subscription: {
           default: {
@@ -416,6 +417,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
       },
       subscriptions: {
         choose: 'בחר',
+        active: 'פעיל',
         month: 'חודש',
         subscription: {
           default: {

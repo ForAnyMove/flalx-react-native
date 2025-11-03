@@ -1,6 +1,8 @@
 import axios from 'axios';
 
 async function createJob(jobData, session) {
+    console.log(jobData);
+
     try {
         const token = session?.token?.access_token;
         const url = session?.serverURL || 'http://localhost:3000';

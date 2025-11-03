@@ -17,6 +17,7 @@ import { useFonts } from 'expo-font';
 import { WebViewProvider } from './context/webViewContext';
 import { GlobalWebScreen } from './screens/GlobalWebScreen';
 import { WebSocketProvider } from './context/webSocketContext';
+import { GlobalNotificationHandler, NotificationProvider } from './src/render';
 
 // --- Глобальное применение шрифта ---
 const originalTextRender = Text.render;
@@ -35,9 +36,12 @@ Text.render = function render(props, ref) {
 export default function AppWrapper() {
   return (
     <ComponentProvider>
-      <WindowProvider>
-        <App />
-      </WindowProvider>
+      <NotificationProvider>
+        <WindowProvider>
+          <App />
+        </WindowProvider>
+        <GlobalNotificationHandler />
+      </NotificationProvider>
     </ComponentProvider>
   );
 }

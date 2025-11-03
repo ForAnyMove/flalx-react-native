@@ -15,6 +15,8 @@ import { JOB_TYPES } from '../../../constants/jobTypes';
 import { useComponentContext } from '../../../context/globalAppContext';
 import { useWindowInfo } from '../../../context/windowContext';
 import { checkHasPendingJob } from '../../../src/api/jobs';
+import { useNotification } from '../../../src/render';
+import { useWebView } from '../../../context/webViewContext';
 // import JobModalWrapper from '../../../components/JobModalWrapper';
 
 export default function NewScreen({
@@ -23,6 +25,8 @@ export default function NewScreen({
   setActiveKey,
 }) {
   const { themeController, languageController, session } = useComponentContext();
+  const { showWarning } = useNotification();
+  const { openWebView } = useWebView();
   const isRTL = languageController.isRTL;
   const { isLandscape } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
@@ -72,17 +76,24 @@ export default function NewScreen({
                       setActiveKey(null);
                       setNewJobModalVisible(true);
                     } else {
-                      if (pendingJobRequest.payment?.paymentMetadata?.paypalApproval?.href) {
-                        if (Platform.OS === 'web') {
-                          navigator.clipboard.writeText(pendingJobRequest.payment.paymentMetadata.paypalApproval.href);
-                        } else {
-                          // For mobile, you can use 'expo-clipboard'
-                          // import('expo-clipboard').then(Clipboard => {
-                          //   Clipboard.setStringAsync(pendingJobRequest.payment.paymentMetadata.paypalApproval.href);
-                          // });
-                        }
-                      }
-                      alert(`You have a pending job. Please complete it before creating a new one.\n Payment URL: ${pendingJobRequest.payment?.paymentMetadata?.paypalApproval?.href || 'N/A'}. The payment URL has been copied to your clipboard.`);
+                      const url = pendingJobRequest.payment?.paymentMetadata?.paypalApproval?.href;
+                      const message = [
+                        "### You have a pending job. Please complete it before creating a new one.",
+                        "",
+                        `Payment URL: [${url}](${url})`,
+                        "",
+                        "_You can cancel the pending job from the payment page._"
+                      ].join('\n');
+
+                      showWarning(message,
+                        [
+                          {
+                            title: "Move to Payment",
+                            backgroundColor: "#3B82F6",
+                            textColor: "#FFFFFF",
+                            onPress: () => openWebView(url)
+                          }
+                        ]);
                     }
                   }}
                 >

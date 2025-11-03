@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './../utils/supabase/supabase';
 import { API_BASE_URL } from '../utils/config';
 import { getRevealedUsers, revealUser } from '../src/api/users';
+import { getUserSubscription } from '../src/api/subscriptions';
 
 // ⚠️ Замени этот IP на свой (или 10.0.2.2 для Android эмулятора)
 // const SERVER_URL =
@@ -203,11 +204,21 @@ export default function sessionManager() {
 
   async function refreshRevealedUsers(sessionProps = null) {
     try {
-      const revealed = await getRevealedUsers(sessionProps || session);
+      const revealed = await getRevealedUsers(sessionProps || { token: { access_token: session.access_token }, serverURL: API_BASE_URL });
       setRevealedUsers(revealed.map((user) => user.id));
     }
     catch (error) {
       console.error('Error refreshing revealed users:', error);
+    }
+  }
+
+  async function refreshUserSubscription(sessionProps = null) {
+    try {
+      const { subscription } = await getUserSubscription(sessionProps || { token: { access_token: session.access_token }, serverURL: API_BASE_URL });
+
+      setSubscription(subscription);
+    } catch (error) {
+      console.error('Error refreshing user subscription:', error);
     }
   }
 
@@ -263,6 +274,7 @@ export default function sessionManager() {
     subscription: {
       current: subscription,
       isActive: isHasSubscription(),
+      refresh: () => refreshUserSubscription(),
     },
     usersReveal: {
       list: revealedUsers,

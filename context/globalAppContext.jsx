@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { JOB_SUB_TYPES } from '../constants/jobSubTypes';
 import { JOB_TYPES } from '../constants/jobTypes';
 import { LICENSES } from '../constants/licenses';
@@ -10,6 +10,7 @@ import tabsManager from '../managers/tabsManager';
 import jobsManager from '../managers/jobsManager';
 import providersManager from '../managers/providersManager';
 import { View, ActivityIndicator } from 'react-native';
+import { getSubscriptionPlans } from '../src/api/subscriptions';
 
 const ComponentContext = createContext();
 
@@ -43,6 +44,25 @@ export const ComponentProvider = ({ children }) => {
   const jobsController = jobsManager({ session, user });
   const providersController = providersManager({ session });
   const [loadingCounter, setLoadingCounter] = useState(0);
+  const [subscriptionPlans, setSubscriptionPlans] = useState(null);
+
+  useEffect(() => {
+    if (session.token == null || subscriptionPlans != null) return;
+
+
+    const fetchPlans = async () => {
+      try {
+        const { plans } = await getSubscriptionPlans(session);
+        console.log(plans);
+        setSubscriptionPlans(plans);
+
+      } catch (error) {
+        console.error('Error fetching subscription plans:', error);
+      }
+    }
+    fetchPlans();
+
+  }, [session.token, subscriptionPlans]);
 
   const setAppLoading = (isLoading) => {
     setLoadingCounter(prev => {
@@ -64,7 +84,8 @@ export const ComponentProvider = ({ children }) => {
         profileTabController,
         jobsController,
         providersController,
-        setAppLoading
+        setAppLoading,
+        subscriptionPlans
       }}
     >
       {children}
