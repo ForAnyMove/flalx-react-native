@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { scaleByHeight } from '../../../utils/resizeFuncs';
 import { RFValue } from 'react-native-responsive-fontsize';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
+import { sendFeedback, sendMessage } from '../../../src/api/support';
 
 // getResponsiveSize helper was unused and removed
 
@@ -552,7 +553,7 @@ function ModalContent({
   isRTL,
   height,
 }) {
-  const { themeController } = useComponentContext();
+  const { themeController, setAppLoading, session } = useComponentContext();
   const { t } = useTranslation();
 
   const [accepted, setAccepted] = useState(false);
@@ -562,6 +563,7 @@ function ModalContent({
     email: '',
     name: '',
     reason: '',
+    phoneNumber: '',
   });
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -590,6 +592,59 @@ function ModalContent({
     }
     return sizes.regulationsModalPaddingHorizontal;
   };
+
+  const confirmContactUs = async () => {
+    try {
+      setAppLoading(true);
+
+      const success = await sendMessage(session, {
+        name: contactUsForm.name,
+        email: contactUsForm.email,
+        topic: contactUsForm.topic,
+        reason: contactUsForm.reason,
+        message: contactUsForm.message,
+      })
+
+      setAppLoading(false);
+
+      if (success) {
+        setShowSuccessModal(true);
+        setTimeout(() => {
+          onClose();
+          setShowSuccessModal(false);
+        }, 2000);
+      }
+    }
+    catch (error) {
+      console.error('Error in confirmContactUs:', error);
+    }
+    finally {
+      setAppLoading(false);
+    }
+  }
+
+  const confirmFeedback = async () => {
+    try {
+      setAppLoading(true);
+
+      if (contactUsForm.phoneNumber.trim() === '') {
+        throw new Error('Phone number is required for feedback');
+      }
+
+      const success = await sendFeedback(session, {
+        phoneNumber: contactUsForm.phoneNumber,
+      })
+
+      setAppLoading(false);
+      onClose();
+    }
+    catch (error) {
+      console.error('Error in confirmFeedback:', error);
+    }
+    finally {
+      setAppLoading(false);
+    }
+  }
 
   return (
     <TouchableOpacity
@@ -1125,9 +1180,9 @@ function ModalContent({
                         })}
                       </Text>
                       <TextInput
-                        value={contactUsForm.name}
+                        value={contactUsForm.phoneNumber}
                         onChangeText={(v) =>
-                          setContactUsForm((p) => ({ ...p, name: v }))
+                          setContactUsForm((p) => ({ ...p, phoneNumber: v }))
                         }
                         placeholder={t(
                           'settings.modals.feedback.phone.placeholder',
@@ -1171,12 +1226,12 @@ function ModalContent({
                       contactUsForm,
                     });
                     if (contactForm) {
-                      setShowSuccessModal(true);
-                      setTimeout(() => {
-                        onClose();
-                        setShowSuccessModal(false);
-                      }, 2000);
-                    } else {
+                      confirmContactUs();
+                    }
+                    else if (feedback) {
+                      confirmFeedback();
+                    }
+                    else {
                       onClose();
                     }
                   }}

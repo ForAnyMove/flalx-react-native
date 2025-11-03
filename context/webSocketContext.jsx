@@ -55,6 +55,8 @@ export const WebSocketProvider = ({ children }) => {
             case "SUBSCRIPTION_PLAN_CHANGED_PENDING_PAYMENT":
             case "SUBSCRIPTION_UPGRADE_SUCCESS":
             case "SUBSCRIPTION_PAYMENT_SUCCESS":
+            case "SUBSCRIPTION_PLAN_CHANGES_CANCELLED":
+            case "PLAN_UPGRADE_COMPLETED":
                 subscription.refresh();
                 break;
             default:

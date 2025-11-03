@@ -21,7 +21,7 @@ import { useNotification } from '../src/render';
 
 function SubscriptionsModalContent({ closeModal }) {
   const { themeController, languageController, subscriptionPlans, subscription, session, setAppLoading } = useComponentContext();
-  const { showWarning, showInfo } = useNotification()
+  const { showWarning, showInfo, showError } = useNotification()
   const { openWebView } = useWebView();
   const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
   const { t } = useTranslation();
@@ -44,12 +44,23 @@ function SubscriptionsModalContent({ closeModal }) {
             textColor: '#FFFFFF',
             onPress: async () => {
               setAppLoading(true);
-              const result = await downgradeSubscription(session, subscription.current.id, planId);
-              if (result.success) {
-                const message = '### Subscription successfully downgraded';
-                showInfo(message);
+              try {
+                const result = await downgradeSubscription(session, subscription.current.id, planId);
+                if (result.success && result.approval_url) {
+                  openWebView(result.approval_url);
+                }
+                else if (result.success) {
+                  const message = '### Subscription successfully downgraded';
+                  showInfo(message);
+                }
+              } catch (error) {
+                console.error("Error during upgradeSubscription:", error);
+                if (error.response && error.response.data && error.response.data.error) {
+                  showError(`### ${error.response.data.error}`);
+                }
+              } finally {
+                setAppLoading(false);
               }
-              setAppLoading(false);
             }
           }, {
             title: 'No',
@@ -63,13 +74,21 @@ function SubscriptionsModalContent({ closeModal }) {
             textColor: '#FFFFFF',
             onPress: async () => {
               setAppLoading(true);
-              const result = await upgradeSubscription(session, subscription.current.id, planId);
-              console.log('upgradeSubscription result:', result);
+              try {
+                const result = await upgradeSubscription(session, subscription.current.id, planId);
+                console.log('upgradeSubscription result:', result);
 
-              if (result.success && result.payment_url) {
-                openWebView(result.payment_url);
+                if (result.success && result.payment_url) {
+                  openWebView(result.payment_url);
+                }
+              } catch (error) {
+                console.error("Error during upgradeSubscription:", error);
+                if (error.response && error.response.data && error.response.data.error) {
+                  showError(`### ${error.response.data.error}`);
+                }
+              } finally {
+                setAppLoading(false);
               }
-              setAppLoading(false);
             }
           }, {
             title: 'No',
@@ -107,6 +126,7 @@ function SubscriptionsModalContent({ closeModal }) {
         openWebView(result.approval_url);
       }
     } catch (error) {
+      setAppLoading(false);
       console.error("Error upgrading subscription:", error);
     } finally {
       setAppLoading(false);
@@ -161,6 +181,21 @@ function SubscriptionsModalContent({ closeModal }) {
     btnWidth: isWebLandscape ? scaleByHeight(387, height) : RFValue(150),
     btnHeight: isWebLandscape ? scaleByHeight(52, height) : RFValue(40),
   };
+
+  //#region helpers
+
+  const getSubscriptionButtonLabel = (changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade) => {
+    if (isPendingOnUpgrade === true) return `Pay ${changes.prorated_amount}$`;
+    if (isPendingOnDowngrade === true) return `Waiting until ${new Date(changes.effective_date).toLocaleDateString()}`;
+    if (isActive) return t('subscriptions.active');
+    return t('subscriptions.choose');
+  }
+
+  const isSubscriptionButtonActive = (changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade) => {
+    return !isActive && (isPendingOnDowngrade === false || isPendingOnDowngrade == null);
+  }
+
+  //#endregion
 
   return (
     <TouchableOpacity
@@ -241,8 +276,9 @@ function SubscriptionsModalContent({ closeModal }) {
           >
             {subscriptionPlans.map((value) => {
               const isActive = subscription.current?.subscription_plans_id === value.id;
-              const changes = subscription.current?.changes?.find((change) => change.target_paypal_plan_id == value.paypal_plan_id);
-              const isPendingOnUpgrade = changes != null && changes.status != 'completed';
+              const changes = subscription.current?.changes?.find((change) => change.target_paypal_plan_id == value.paypal_plan_id && change.status != 'pending' && change.status != 'completed');
+              const isPendingOnUpgrade = changes == null ? null : changes.status === 'payment_required' && changes.change_type === 'upgrade';
+              const isPendingOnDowngrade = changes == null ? null : changes.status === 'automatic_payment_required' && changes.change_type === 'downgrade';
 
               return <View
                 key={value.id}
@@ -307,13 +343,14 @@ function SubscriptionsModalContent({ closeModal }) {
                   {value.price}$/{t('subscriptions.month')}
                 </Text>
                 {isPendingOnUpgrade ? <Text style={{ color: '#ff8800ff' }}>{`${changes.notes}\n\n${changes.prorated_amount}$ for ${changes.prorated_remaining_days} days remaining`}</Text> : null}
+                {isPendingOnDowngrade ? <Text style={{ color: '#ff8800ff' }}>{`Your plan is being downgraded, you can use ${subscription.current?.plan?.name} until next billing cycle`}</Text> : null}
                 <View style={{ marginBottom: sizes.priceMarginBottom }} />
                 <TouchableOpacity
                   onPress={() => {
                     if (isPendingOnUpgrade) {
                       tryUpgradeSubscription(subscription.current);
                     }
-                    else if (!isActive) {
+                    else if (!isActive && !isPendingOnDowngrade) {
                       tryPurchaseSubscription(value.id);
                     }
                   }}
@@ -328,10 +365,10 @@ function SubscriptionsModalContent({ closeModal }) {
                     borderRadius: sizes.borderRadius,
                     width: sizes.btnWidth,
                     height: sizes.btnHeight,
-                    opacity: isActive ? 0.5 : 1,
-                    pointerEvents: isActive ? 'none' : 'auto',
+                    opacity: !isSubscriptionButtonActive(changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade) ? 0.5 : 1,
+                    pointerEvents: isSubscriptionButtonActive(changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade) ? 'auto' : 'none',
                   }}
-                  accessible={!isActive}
+                  accessible={!isSubscriptionButtonActive(changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade)}
                 >
                   <Text
                     style={{
@@ -344,7 +381,7 @@ function SubscriptionsModalContent({ closeModal }) {
                       textAlignVertical: 'center',
                     }}
                   >
-                    {isActive ? t('subscriptions.active') : (isPendingOnUpgrade ? `Pay ${changes.prorated_amount}$` : t('subscriptions.choose'))}
+                    {getSubscriptionButtonLabel(changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade)}
                   </Text>
                 </TouchableOpacity>
               </View>;

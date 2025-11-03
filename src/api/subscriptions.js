@@ -136,7 +136,7 @@ async function upgradeSubscription(session, currentSubscriptionId, planId) {
             Authorization: `Bearer ${token}`
         };
 
-        const response = await axios.post(`${url}/api/subscriptions/${currentSubscriptionId}/upgrade`, { planId }, { headers });
+        const response = await axios.post(`${url}/api/subscriptions/${currentSubscriptionId}/upgrade`, { planId, force_change: true }, { headers });
 
         const status = response.status;
         const returnData = {};
@@ -172,14 +172,15 @@ async function downgradeSubscription(session, currentSubscriptionId, planId) {
             Authorization: `Bearer ${token}`
         };
 
-        const response = await axios.post(`${url}/api/subscriptions/${currentSubscriptionId}/downgrade`, { planId }, { headers });
+        const response = await axios.post(`${url}/api/subscriptions/${currentSubscriptionId}/downgrade`, { planId, force_change: true }, { headers });
 
         const status = response.status;
         const returnData = {};
 
         if (status == 200) {
-            const { success } = response.data;
+            const { success, approval_url } = response.data;
             returnData.success = success;
+            returnData.approval_url = approval_url;
         }
 
         return returnData;
