@@ -46,9 +46,10 @@ export default function DoneScreen({
     scrollContainerWidth: isWebLandscape ? '60%' : '100%',
   };
 
-  const filteredJobsList = jobsController.executor.done.filter((job) =>
+  const filteredJobsList = jobsController.creator.done.filter((job) =>
     filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
   );
+
 
   return (
     <View
@@ -115,22 +116,22 @@ export default function DoneScreen({
                           themeController.current?.defaultBlocksMockBackground,
                         ...(isRTL
                           ? {
-                              marginLeft: RFValue(10),
-                              marginRight: 0,
-                            }
+                            marginLeft: RFValue(10),
+                            marginRight: 0,
+                          }
                           : {
-                              marginRight: RFValue(10),
-                              marginLeft: 0,
-                            }),
+                            marginRight: RFValue(10),
+                            marginLeft: 0,
+                          }),
                         ...(isRTL && Platform.OS === 'web'
                           ? {
-                              borderTopRightRadius: sizes.cardRadius,
-                              borderBottomRightRadius: sizes.cardRadius,
-                            }
+                            borderTopRightRadius: sizes.cardRadius,
+                            borderBottomRightRadius: sizes.cardRadius,
+                          }
                           : {
-                              borderTopLeftRadius: sizes.cardRadius,
-                              borderBottomLeftRadius: sizes.cardRadius,
-                            }),
+                            borderTopLeftRadius: sizes.cardRadius,
+                            borderBottomLeftRadius: sizes.cardRadius,
+                          }),
                       },
                     ]}
                   >
