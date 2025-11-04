@@ -184,14 +184,16 @@ function SubscriptionsModalContent({ closeModal }) {
 
   //#region helpers
 
-  const getSubscriptionButtonLabel = (changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade) => {
+  const getSubscriptionButtonLabel = (changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade, isPendingApproval) => {
     if (isPendingOnUpgrade === true) return `Pay ${changes.prorated_amount}$`;
     if (isPendingOnDowngrade === true) return `Waiting until ${new Date(changes.effective_date).toLocaleDateString()}`;
+    if (isPendingApproval === true) return `Approve on PayPal`;
     if (isActive) return t('subscriptions.active');
     return t('subscriptions.choose');
   }
 
-  const isSubscriptionButtonActive = (changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade) => {
+  const isSubscriptionButtonActive = (changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade, isPendingApproval) => {
+    if (isPendingApproval === true) return true;
     return !isActive && (isPendingOnDowngrade === false || isPendingOnDowngrade == null);
   }
 
@@ -280,6 +282,8 @@ function SubscriptionsModalContent({ closeModal }) {
               const isPendingOnUpgrade = changes == null ? null : changes.status === 'payment_required' && changes.change_type === 'upgrade';
               const isPendingOnDowngrade = changes == null ? null : changes.status === 'automatic_payment_required' && changes.change_type === 'downgrade';
 
+              const isPendingApproval = subscription.current?.status === 'pending_approval' && isActive;
+
               return <View
                 key={value.id}
                 style={[
@@ -344,6 +348,7 @@ function SubscriptionsModalContent({ closeModal }) {
                 </Text>
                 {isPendingOnUpgrade ? <Text style={{ color: '#ff8800ff' }}>{`${changes.notes}\n\n${changes.prorated_amount}$ for ${changes.prorated_remaining_days} days remaining`}</Text> : null}
                 {isPendingOnDowngrade ? <Text style={{ color: '#ff8800ff' }}>{`Your plan is being downgraded, you can use ${subscription.current?.plan?.name} until next billing cycle`}</Text> : null}
+                {isPendingApproval && <Text style={{ color: '#ff8800ff' }}>{`Your subscription is pending approval. Please confirm it on paypal.`}</Text>}
                 <View style={{ marginBottom: sizes.priceMarginBottom }} />
                 <TouchableOpacity
                   onPress={() => {
@@ -365,10 +370,10 @@ function SubscriptionsModalContent({ closeModal }) {
                     borderRadius: sizes.borderRadius,
                     width: sizes.btnWidth,
                     height: sizes.btnHeight,
-                    opacity: !isSubscriptionButtonActive(changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade) ? 0.5 : 1,
-                    pointerEvents: isSubscriptionButtonActive(changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade) ? 'auto' : 'none',
+                    opacity: !isSubscriptionButtonActive(changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade, isPendingApproval) ? 0.5 : 1,
+                    pointerEvents: isSubscriptionButtonActive(changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade, isPendingApproval) ? 'auto' : 'none',
                   }}
-                  accessible={!isSubscriptionButtonActive(changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade)}
+                  accessible={!isSubscriptionButtonActive(changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade, isPendingApproval)}
                 >
                   <Text
                     style={{
@@ -381,7 +386,7 @@ function SubscriptionsModalContent({ closeModal }) {
                       textAlignVertical: 'center',
                     }}
                   >
-                    {getSubscriptionButtonLabel(changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade)}
+                    {getSubscriptionButtonLabel(changes, isActive, isPendingOnUpgrade, isPendingOnDowngrade, isPendingApproval)}
                   </Text>
                 </TouchableOpacity>
               </View>;

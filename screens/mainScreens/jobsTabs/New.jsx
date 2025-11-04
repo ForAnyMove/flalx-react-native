@@ -95,145 +95,148 @@ export default function NewScreen({
             },
           ]}
         >
-          {filteredJobsList.map((job, index) => {
-            const hasImage = job.images && job.images.length > 0;
-            let extraMarkerStyle = {};
-            let isMarkerExist = false;
-            let extraMarkerColor;
-            let extraMarkerText;
-            if (job?.status) {
-              switch (job.status) {
-                case 'top':
-                  isMarkerExist = true;
-                  extraMarkerColor = themeController.current?.topMarkerColor;
-                  extraMarkerText = 'Top';
-                  extraMarkerStyle = {
-                    borderWidth: sizes.personalMarkerBorderWidth,
-                    borderColor: themeController.current?.topMarkerColor,
-                  };
-                  break;
-                case 'verified':
-                  isMarkerExist = true;
-                  extraMarkerColor =
-                    themeController.current?.verifiedMarkerColor;
-                  extraMarkerText = 'Verified';
-                  extraMarkerStyle = {
-                    borderWidth: sizes.personalMarkerBorderWidth,
-                    borderColor: themeController.current?.verifiedMarkerColor,
-                  };
-                  break;
+          {filteredJobsList
+            .slice()
+            .sort((a, b) => (a.jobType === 'top' ? -1 : b.jobType === 'top' ? 1 : 0))
+            .map((job, index) => {
+              const hasImage = job.images && job.images.length > 0;
+              let extraMarkerStyle = {};
+              let isMarkerExist = false;
+              let extraMarkerColor;
+              let extraMarkerText;
+              if (job?.jobType) {
+                switch (job.jobType) {
+                  case 'top':
+                    isMarkerExist = true;
+                    extraMarkerColor = themeController.current?.topMarkerColor;
+                    extraMarkerText = 'Top';
+                    extraMarkerStyle = {
+                      borderWidth: sizes.personalMarkerBorderWidth,
+                      borderColor: themeController.current?.topMarkerColor,
+                    };
+                    break;
+                  case 'verified':
+                    isMarkerExist = true;
+                    extraMarkerColor =
+                      themeController.current?.verifiedMarkerColor;
+                    extraMarkerText = 'Verified';
+                    extraMarkerStyle = {
+                      borderWidth: sizes.personalMarkerBorderWidth,
+                      borderColor: themeController.current?.verifiedMarkerColor,
+                    };
+                    break;
 
-                default:
-                  break;
+                  default:
+                    break;
+                }
               }
-            }
-            return (
-              <TouchableOpacity
-                key={index}
-                style={styles.cardContainer}
-                onPress={() => {
-                  setCurrentJobId(job.id);
-                  setShowJobModalVisible(true);
-                  setJobModalStatus('jobs-new');
-                }}
-              >
-                <View
-                  style={[
-                    styles.cardContent,
-                    {
-                      backgroundColor:
-                        themeController.current?.formInputBackground,
-                      borderRadius: sizes.cardRadius,
-                    },
-                    extraMarkerStyle,
-                  ]}
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.cardContainer}
+                  onPress={() => {
+                    setCurrentJobId(job.id);
+                    setShowJobModalVisible(true);
+                    setJobModalStatus('jobs-new');
+                  }}
                 >
                   <View
                     style={[
-                      styles.imageContainer,
+                      styles.cardContent,
                       {
-                        width: sizes.imageWidth,
-                        height: sizes.imageHeight,
                         backgroundColor:
-                          themeController.current?.defaultBlocksMockBackground,
-                        ...(isRTL
-                          ? {
+                          themeController.current?.formInputBackground,
+                        borderRadius: sizes.cardRadius,
+                      },
+                      extraMarkerStyle,
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.imageContainer,
+                        {
+                          width: sizes.imageWidth,
+                          height: sizes.imageHeight,
+                          backgroundColor:
+                            themeController.current?.defaultBlocksMockBackground,
+                          ...(isRTL
+                            ? {
                               marginLeft: RFValue(10),
                               marginRight: 0,
                             }
-                          : {
+                            : {
                               marginRight: RFValue(10),
                               marginLeft: 0,
                             }),
-                        ...(isRTL && Platform.OS === 'web'
-                          ? {
+                          ...(isRTL && Platform.OS === 'web'
+                            ? {
                               borderTopRightRadius: sizes.cardRadius * 0.6,
                               borderBottomRightRadius: sizes.cardRadius * 0.6,
                             }
-                          : {
+                            : {
                               borderTopLeftRadius: sizes.cardRadius * 0.6,
                               borderBottomLeftRadius: sizes.cardRadius * 0.6,
                             }),
-                      },
-                    ]}
-                  >
-                    {hasImage ? (
-                      <Image
-                        source={{ uri: job.images[0] }}
-                        style={styles.image}
-                        resizeMode='cover'
-                      />
-                    ) : (
-                      <View style={styles.placeholderImage}>
-                        <FontAwesome6
-                          name='image'
-                          size={sizes.fontTitle}
-                          color={
-                            themeController.current?.defaultBlocksMockColor
-                          }
-                        />
-                      </View>
-                    )}
-                  </View>
-                  <View style={styles.textContent}>
-                    <Text
-                      style={[
-                        styles.title,
-                        {
-                          color: themeController.current?.primaryColor,
-                          fontSize: sizes.fontTitle,
                         },
                       ]}
                     >
-                      {t(`jobTypes.${job.type}`)}
-                    </Text>
-                    {job.description ? (
+                      {hasImage ? (
+                        <Image
+                          source={{ uri: job.images[0] }}
+                          style={styles.image}
+                          resizeMode='cover'
+                        />
+                      ) : (
+                        <View style={styles.placeholderImage}>
+                          <FontAwesome6
+                            name='image'
+                            size={sizes.fontTitle}
+                            color={
+                              themeController.current?.defaultBlocksMockColor
+                            }
+                          />
+                        </View>
+                      )}
+                    </View>
+                    <View style={styles.textContent}>
                       <Text
                         style={[
-                          styles.description,
+                          styles.title,
                           {
-                            color: themeController.current?.unactiveTextColor,
-                            textAlign:
-                              isRTL && Platform.OS === 'web' ? 'right' : 'left',
-                            fontSize: sizes.fontDescription,
+                            color: themeController.current?.primaryColor,
+                            fontSize: sizes.fontTitle,
                           },
                         ]}
                       >
-                        {job.description}
+                        {t(`jobTypes.${job.type}`)}
                       </Text>
-                    ) : null}
-                  </View>
-                  {job?.status !== 'default' && (
-                    <View
-                      style={[
-                        styles.specialMarkerContainer,
-                        {
-                          backgroundColor: extraMarkerColor,
-                          paddingVertical: sizes.personalMarkerVP,
-                          paddingHorizontal: sizes.personalMarkerHP,
-                        },
-                        isRTL
-                          ? {
+                      {job.description ? (
+                        <Text
+                          style={[
+                            styles.description,
+                            {
+                              color: themeController.current?.unactiveTextColor,
+                              textAlign:
+                                isRTL && Platform.OS === 'web' ? 'right' : 'left',
+                              fontSize: sizes.fontDescription,
+                            },
+                          ]}
+                        >
+                          {job.description}
+                        </Text>
+                      ) : null}
+                    </View>
+                    {job?.status !== 'default' && (
+                      <View
+                        style={[
+                          styles.specialMarkerContainer,
+                          {
+                            backgroundColor: extraMarkerColor,
+                            paddingVertical: sizes.personalMarkerVP,
+                            paddingHorizontal: sizes.personalMarkerHP,
+                          },
+                          isRTL
+                            ? {
                               left: 0,
                               borderBottomRightRadius: isWebLandscape
                                 ? sizes.personalMarkerBottomAngleRadius
@@ -242,30 +245,30 @@ export default function NewScreen({
                                 ? 0
                                 : sizes.personalMarkerBottomAngleRadius,
                             }
-                          : {
+                            : {
                               right: 0,
                               borderBottomLeftRadius:
                                 sizes.personalMarkerBottomAngleRadius,
                             },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          {
-                            color: '#fff',
-                            // fontWeight: 'bold',
-                            fontSize: sizes.personalMarkerFontSize,
-                          },
                         ]}
                       >
-                        {extraMarkerText}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
+                        <Text
+                          style={[
+                            {
+                              color: '#fff',
+                              // fontWeight: 'bold',
+                              fontSize: sizes.personalMarkerFontSize,
+                            },
+                          ]}
+                        >
+                          {extraMarkerText}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
         </ScrollView>
       )}
     </View>

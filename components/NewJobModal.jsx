@@ -464,7 +464,7 @@ export default function NewJobModal({
     const newErrors = {
       type: !type,
       subType: !subType,
-      profession: !profession,
+      // profession: !profession,
     };
 
     setFieldErrors(newErrors);

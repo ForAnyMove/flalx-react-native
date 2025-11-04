@@ -27,7 +27,7 @@ const UserSummaryBlock = ({
   currentJobId,
   closeAllModal,
 }) => {
-  const { themeController, jobsController, languageController } =
+  const { themeController, jobsController, languageController, usersReveal, setAppLoading } =
     useComponentContext();
   const { t } = useTranslation();
   const isRTL = languageController?.isRTL;
@@ -99,6 +99,21 @@ const UserSummaryBlock = ({
     email,
     phoneNumber,
   } = user.id ? user : user._j;
+
+  const handleUserRevealTry = async () => {
+    try {
+      setAppLoading(true);
+
+      const result = await usersReveal.tryReveal(user.id);
+      if (result.paymentUrl) {
+        openWebView(result.paymentUrl);
+      }
+
+      setAppLoading(false);
+    } catch (error) {
+      console.error('Error revealing user:', error);
+    }
+  };
 
   return (
     <>
@@ -538,7 +553,7 @@ const UserSummaryBlock = ({
                           defaultValue: 'Contact information',
                         })}
                       </Text>
-                      {!showContactInfo && status === 'store-waiting' ? (
+                      {!usersReveal.contains(user.id) && status === 'store-waiting' ? (
                         <TouchableOpacity
                           style={[
                             styles.primaryBtn,
@@ -555,7 +570,7 @@ const UserSummaryBlock = ({
                                 sizes.unlockContactBtnPaddingHorizontal,
                             },
                           ]}
-                          onPress={() => setShowContactInfo(true)}
+                          onPress={handleUserRevealTry}
                         >
                           <Text
                             style={[
@@ -654,7 +669,7 @@ const UserSummaryBlock = ({
 
                 {status === 'store-waiting' && (
                   <View>
-                    {!showContactInfo && (
+                    {!usersReveal.contains(user.id) && (
                       <Text
                         style={[
                           {
@@ -678,10 +693,10 @@ const UserSummaryBlock = ({
                       style={[
                         styles.primaryBtn,
                         {
-                          backgroundColor: showContactInfo
+                          backgroundColor: usersReveal.contains(user.id)
                             ? themeController.current?.buttonColorPrimaryDefault
                             : themeController.current
-                                ?.buttonColorPrimaryDisabled,
+                              ?.buttonColorPrimaryDisabled,
                           borderRadius: sizes.borderRadius,
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -695,13 +710,15 @@ const UserSummaryBlock = ({
                         },
                       ]}
                       onPress={() => {
-                        if (showContactInfo) {
+                        if (usersReveal.contains(user.id)) {
+                          setAppLoading(true);
                           jobsController.actions
                             .approveProvider(currentJobId, userId)
                             .then(() => {
                               setModalVisible(false);
                               setShowContactInfo(false);
                               closeAllModal();
+                              setAppLoading(false);
                             });
                         }
                       }}

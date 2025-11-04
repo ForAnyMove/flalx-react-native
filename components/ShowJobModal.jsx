@@ -29,6 +29,9 @@ import { useWindowInfo } from '../context/windowContext';
 import { icons } from '../constants/icons';
 import { scaleByHeight } from '../utils/resizeFuncs';
 import JobModalWrapper from './JobModalWrapper';
+import { addSelfToJobProviders } from '../src/api/jobs';
+import { useWebView } from '../context/webViewContext';
+import SubscriptionsModal from './SubscriptionsModal';
 
 const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
   if (Platform.OS === 'web') {
@@ -39,10 +42,11 @@ const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
 
 export default function ShowJobModal({ closeModal, status, currentJobId }) {
   // const router = useRouter();
-  const { themeController, session, jobsController, languageController } =
+  const { themeController, session, jobsController, languageController, setAppLoading, subscription } =
     useComponentContext();
   const { t } = useTranslation();
   const { width, height, isLandscape } = useWindowInfo();
+  const { openWebView } = useWebView();
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
@@ -118,8 +122,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
-    () => {}
+    () => { }
   );
+
+  const [plansModalVisible, setPlansModalVisible] = useState(false);
 
   const [currentJobInfo, setCurrentJobInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -136,11 +142,16 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
           currentJobId,
           session
         );
+        console.log(job);
+
         if (cancelled) return;
         setCurrentJobInfo(job);
         if (job.doneComment) {
           setEditableCommentValue(job.doneComment);
         }
+
+        const isProvider = await jobsController.actions.checkIsProviderInJob(currentJobId);
+        setInterestedRequest(isProvider);
       } catch (e) {
         console.error('Failed to load job:', e);
       } finally {
@@ -155,6 +166,41 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
 
   const [editableCommentState, setEditableCommentState] = useState(false);
   const [editableCommentValue, setEditableCommentValue] = useState('');
+
+  const handleAddingSelfToJobProviders = async () => {
+    try {
+      setAppLoading(true);
+      const { success, payment } = await addSelfToJobProviders(currentJobId, session);
+      if (success == true) {
+        if (payment != null) {
+          openWebView(payment?.paymentMetadata?.paypalApproval?.href);
+        } else {
+          jobsController.reloadAll();
+        }
+      }
+    } catch (e) {
+      console.error('Error adding self to job providers:', e);
+
+      setAppLoading(false);
+      setConfirmInterestModal(false);
+      // setInterestedRequest(true);
+
+      throw e;
+    } finally {
+      setAppLoading(false);
+      setConfirmInterestModal(false);
+      // setInterestedRequest(true);
+    }
+  }
+
+  const handleInterestRequest = async () => {
+    if (subscription.current == null) {
+      setConfirmInterestModal(true);
+    } else {
+      handleAddingSelfToJobProviders();
+      setInterestedRequest(true);
+    }
+  }
 
   function extraUiByStatus(status) {
     switch (status) {
@@ -432,7 +478,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   height: sizes.saveBtnHeight,
                 },
               ]}
-              onPress={() => setConfirmInterestModal(true)}
+              onPress={handleInterestRequest}
             >
               <Text
                 style={{
@@ -522,7 +568,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   height: sizes.saveBtnHeight,
                 },
               ]}
-              onPress={() => setConfirmInterestModal(true)}
+              onPress={handleInterestRequest}
             >
               <Text
                 style={{
@@ -1485,18 +1531,18 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
         <JobModalWrapper visible={newJobModalVisible} main={false}>
           <NewJobModal
             closeModal={() => setNewJobModalVisible(false)}
-          editMode={true}
-          currentJobId={currentJobId}
-          initialJob={currentJobInfo}
+            editMode={true}
+            currentJobId={currentJobId}
+            initialJob={currentJobInfo}
           />
         </JobModalWrapper>
       ) : (
         <Modal visible={newJobModalVisible} animationType='slide' transparent>
           <NewJobModal
             closeModal={() => setNewJobModalVisible(false)}
-          editMode={true}
-          currentJobId={currentJobId}
-          initialJob={currentJobInfo}
+            editMode={true}
+            currentJobId={currentJobId}
+            initialJob={currentJobInfo}
           />
         </Modal>
       )}
@@ -1596,11 +1642,14 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   },
                 ]}
                 onPress={() => {
+                  setAppLoading(true);
                   jobsController.actions
                     .removeProvider(currentJobId)
                     .then(() => {
                       setCancelRequestModal(false);
                       setInterestedRequest(false);
+
+                      setAppLoading(false);
                     });
                 }}
               >
@@ -1690,12 +1739,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                     borderWidth: 1,
                   },
                 ]}
-                onPress={() => {
-                  jobsController.actions.addProvider(currentJobId).then(() => {
-                    setConfirmInterestModal(false);
-                    setInterestedRequest(true);
-                  });
-                }}
+                onPress={handleAddingSelfToJobProviders}
               >
                 <Text
                   style={[
@@ -1721,10 +1765,14 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                     borderRadius: sizes.modalBtnBorderRadius,
                   },
                 ]}
-                // onPress={() => {
-                //   setConfirmInterestModal(false);
-                //   setInterestedRequest(true);
-                // }}
+                onPress={() => {
+                  setPlansModalVisible(true);
+                  setConfirmInterestModal(false);
+                }}
+              // onPress={() => {
+              //   setConfirmInterestModal(false);
+              //   setInterestedRequest(true);
+              // }}
               >
                 <Text
                   style={{
@@ -1873,6 +1921,14 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
         visible={showHistoryModal}
         onClose={() => setHistoryModal(false)}
         history={currentJobInfo?.changes_history}
+      />
+      < SubscriptionsModal
+        visible={plansModalVisible}
+        main={false}
+        closeModal={() => {
+          setPlansModalVisible(false);
+          if (subscription.current == null) setConfirmInterestModal(true);
+        }}
       />
     </KeyboardAvoidingView>
   );

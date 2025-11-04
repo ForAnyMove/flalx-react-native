@@ -23,7 +23,7 @@ async function createSubscription(session, planId) {
         const status = response.status;
         const returnData = {};
 
-        if (status == 201) {
+        if (status == 201 || status == 200) {
             // subscription created successfully
             const { success, subscription, approvalUrl } = response.data;
             returnData.success = success;

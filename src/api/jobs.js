@@ -119,4 +119,88 @@ async function getJobProducts(session) {
     }
 }
 
-export { createJob, checkHasPendingJob, getJobProducts };
+async function addSelfToJobProviders(jobId, session) {
+    try {
+        const token = session?.token?.access_token;
+        const url = session?.serverURL || 'http://localhost:3000';
+
+        if (!token) {
+            throw new Error('No valid session token found');
+        }
+
+        if (!url) {
+            throw new Error('No valid server URL found in session');
+        }
+
+        const headers = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+        };
+
+        const response = await axios.post(`${url}/api/jobs/${jobId}/providers`, { paymentMethod: 'paypal' }, { headers });
+
+        return response.data;
+
+    } catch (error) {
+        console.error('Error adding self to job providers:', error);
+        throw error;
+    }
+}
+
+async function removeSelfFromJobProviders(jobId, session) {
+    try {
+        const token = session?.token?.access_token;
+        const url = session?.serverURL || 'http://localhost:3000';
+
+        if (!token) {
+            throw new Error('No valid session token found');
+        }
+
+        if (!url) {
+            throw new Error('No valid server URL found in session');
+        }
+
+        const headers = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+        };
+
+        const response = await axios.delete(`${url}/api/jobs/${jobId}/providers`, { headers });
+
+        return response.data;
+
+    } catch (error) {
+        console.error('Error removing self from job providers:', error);
+        throw error;
+    }
+}
+
+async function isProviderInJob(jobId, session) {
+    try {
+        const token = session?.token?.access_token;
+        const url = session?.serverURL || 'http://localhost:3000';
+
+        if (!token) {
+            throw new Error('No valid session token found');
+        }
+
+        if (!url) {
+            throw new Error('No valid server URL found in session');
+        }
+
+        const headers = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+        };
+
+        const response = await axios.get(`${url}/api/jobs/${jobId}/is-provider`, { headers });
+
+        return response.data?.isProvider == true;
+    }
+    catch (error) {
+        console.error('Error checking if provider is in job:', error);
+        throw error;
+    }
+}
+
+export { createJob, checkHasPendingJob, getJobProducts, addSelfToJobProviders, removeSelfFromJobProviders, isProviderInJob };

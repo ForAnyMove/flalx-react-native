@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getJobProducts } from "../src/api/jobs";
+import { addSelfToJobProviders, getJobProducts, isProviderInJob, removeSelfFromJobProviders } from "../src/api/jobs";
 
 /**
  * jobsManager — агрегирует все списки заявок для вкладок:
@@ -126,6 +126,8 @@ export default function jobsManager({ session, user }) {
         loadExecDone(),
       ]);
       if (!alive.current) return;
+      console.log(n);
+
       setExecNew(n);
       setExecWaiting(waiting);
       setExecInProgress(inProgress);
@@ -184,19 +186,27 @@ export default function jobsManager({ session, user }) {
   }
 
   async function addProvider(jobId) {
-    await safeFetch(`${serverURL}/jobs/${jobId}/providers`, {
-      method: "POST",
-      headers: authHeaders,
-    });
-    await reloadAll();
+    // try {
+    //   const { success, payment } = await addSelfToJobProviders(jobId, session);
+    // } catch (e) {
+    //   console.error('Error adding self to job providers:', e);
+    //   throw e;
+    // }
   }
 
   async function removeProvider(jobId) {
-    await safeFetch(`${serverURL}/jobs/${jobId}/providers`, {
-      method: "DELETE",
-      headers: authHeaders,
-    });
-    await reloadAll();
+    try {
+      const result = await removeSelfFromJobProviders(jobId, session);
+      await reloadAll();
+    } catch (e) {
+      console.error('Error removing self from job providers:', e);
+      throw e;
+    }
+    // await safeFetch(`${serverURL}/jobs/${jobId}/providers`, {
+    //   method: "DELETE",
+    //   headers: authHeaders,
+    // });
+    // await reloadAll();
   }
 
   async function getJobById(jobId) {
@@ -208,6 +218,17 @@ export default function jobsManager({ session, user }) {
       throw new Error(err.error || 'Failed to fetch job');
     }
     return res.json();
+  }
+
+  async function checkIsProviderInJob(jobId) {
+    try {
+      const success = await isProviderInJob(jobId, session);
+      return success;
+    }
+    catch (e) {
+      console.error('Error checking provider in job:', e);
+      return false;
+    }
   }
 
   // авто-загрузка, как только есть сессия и юзер
@@ -247,7 +268,8 @@ export default function jobsManager({ session, user }) {
       removeExecutor,
       addProvider,
       removeProvider,
-      getJobById
+      getJobById,
+      checkIsProviderInJob
     },
     products
   };
