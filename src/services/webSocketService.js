@@ -1,7 +1,8 @@
 export function connectWebSocket(userId, serverUrl, onMessage) {
+    const isSecure = /^https:\/\//.test(serverUrl) || /^wss:\/\//.test(serverUrl);
     serverUrl = serverUrl.replace(/^https?:\/\//, '').replace(/^ws?:\/\//, '');
 
-    const wsUrl = `ws://${serverUrl}/?userId=${userId}`;
+    const wsUrl = `${(isSecure ? 'wss' : 'ws')}://${serverUrl}/?userId=${userId}`;
     console.log(`Connecting to WebSocket at ${wsUrl}`);
 
     const ws = new WebSocket(wsUrl);
