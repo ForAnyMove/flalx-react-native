@@ -73,7 +73,8 @@ async function getSubscriptionPlans(session) {
             const { plans } = response.data;
             returnData.plans = plans;
         }
-
+        console.log('Check plans translations code: ',returnData.plans);
+        
         return returnData;
     } catch (error) {
         console.error('Error fetching subscription plans:', error);

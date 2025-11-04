@@ -144,7 +144,7 @@ export default function sessionManager() {
 
       setUser(profile);
       setSubscription(subscription);
-
+      
     } catch (err) {
       // console.error('Ошибка запроса профиля:', err.message);
     }

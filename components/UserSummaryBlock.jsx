@@ -114,6 +114,7 @@ const UserSummaryBlock = ({
       console.error('Error revealing user:', error);
     }
   };
+  console.log('User data:', { user });
 
   return (
     <>
