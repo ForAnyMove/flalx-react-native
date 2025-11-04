@@ -2321,7 +2321,7 @@ export default function NewJobModal({
                     {t('newJob.statusModal.buttons.confirmWithPrice', {
                       defaultValue: 'Publish for {{price}}',
                       price:
-                        subscription != null && selectedOption.type == 'normal'
+                        subscription.current != null && selectedOption.type == 'normal'
                           ? t('newJob.statusModal.free', {
                             defaultValue: 'Free',
                           })
@@ -2331,7 +2331,7 @@ export default function NewJobModal({
                 </TouchableOpacity>
 
                 {/* кнопка тарифов */}
-                {(subscription == null && selectedOption.type == 'normal') && < TouchableOpacity
+                {(subscription.current == null && selectedOption.type == 'normal') && < TouchableOpacity
                   onPress={() => {
                     setPlansModalVisible(true);
                     setStatusModalVisible(false);
