@@ -89,6 +89,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
     email,
     phoneNumber,
   } = user;
+  console.log('User data:', user);
 
   const handleUserRevealTry = async () => {
     try {
@@ -329,7 +330,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                     ]}
                   >
                     {/* Job Types */}
-                    {jobTypes && (
+                    {jobTypes && jobTypes?.length > 0 && (
                       <View
                         style={[
                           isWebLandscape && {
@@ -380,7 +381,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                     )}
 
                     {/* Professions */}
-                    {professions && (
+                    {professions && professions?.length > 0 && (
                       <View
                         style={[
                           isWebLandscape && {

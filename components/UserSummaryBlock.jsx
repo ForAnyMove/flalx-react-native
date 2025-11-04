@@ -100,6 +100,8 @@ const UserSummaryBlock = ({
     phoneNumber,
   } = user.id ? user : user._j;
 
+  console.log('User data:', {user});
+
   return (
     <>
       {/* Summary Block */}

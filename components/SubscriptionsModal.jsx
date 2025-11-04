@@ -272,6 +272,7 @@ function SubscriptionsModalContent({ closeModal }) {
               flexWrap: 'wrap',
               flexDirection: 'row',
               alignSelf: isRTL ? 'flex-end' : 'flex-start',
+              justifyContent: isRTL ? 'flex-end' : 'flex-start',
             }}
           >
             {subscriptionPlans.map((value) => {
