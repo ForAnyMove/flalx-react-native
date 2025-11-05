@@ -27,8 +27,13 @@ const UserSummaryBlock = ({
   currentJobId,
   closeAllModal,
 }) => {
-  const { themeController, jobsController, languageController, usersReveal, setAppLoading } =
-    useComponentContext();
+  const {
+    themeController,
+    jobsController,
+    languageController,
+    usersReveal,
+    setAppLoading,
+  } = useComponentContext();
   const { t } = useTranslation();
   const isRTL = languageController?.isRTL;
   const [modalVisible, setModalVisible] = useState(false);
@@ -46,6 +51,8 @@ const UserSummaryBlock = ({
   const sizes = {
     font: isWebLandscape ? scaleByHeight(16, height) : RFValue(12),
     smallFont: isWebLandscape ? scaleByHeight(14, height) : RFValue(10),
+    sectionTitleSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(14),
+    small: isWebLandscape ? scaleByHeight(14, height) : RFValue(10),
     inputFont: isWebLandscape ? height * 0.013 : RFValue(10),
     padding: isWebLandscape ? height * 0.009 : RFValue(8),
     paddingHorizontal: isWebLandscape ? scaleByHeight(17, height) : RFValue(12),
@@ -80,10 +87,23 @@ const UserSummaryBlock = ({
       ? scaleByHeight(10, height)
       : RFValue(5),
     modalAvatar: isWebLandscape ? scaleByHeight(112, height) : RFValue(70),
-    avatarVerticalMargin: isWebLandscape ? scaleByHeight(12, height) : RFValue(8),
-    contactInfoHeight: isWebLandscape
-      ? scaleByHeight(50, height)
-      : RFValue(30),
+    avatarMarginTop: isWebLandscape
+      ? scaleByHeight(24, height)
+      : RFValue(8),
+    avatarMarginBottom: isWebLandscape
+      ? scaleByHeight(8, height)
+      : RFValue(8),
+    contactInfoHeight: isWebLandscape ? scaleByHeight(50, height) : RFValue(30),
+    badgeHeight: isWebLandscape ? scaleByHeight(34, height) : RFValue(20),
+    badgeGap: isWebLandscape ? scaleByHeight(8, height) : RFValue(6),
+    badgePaddingHorizontal: isWebLandscape
+      ? scaleByHeight(12, height)
+      : RFValue(10),
+    providerInfoGap: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
+    titleMarginBottom: isWebLandscape ? scaleByHeight(4, height) : RFValue(2),
+    professionMarginBottom: isWebLandscape
+      ? scaleByHeight(32, height)
+      : RFValue(20),
   };
 
   const userId = user.id || user?._j?.id;
@@ -93,6 +113,7 @@ const UserSummaryBlock = ({
     name,
     surname,
     professions,
+    experience,
     jobTypes,
     jobSubTypes,
     about,
@@ -136,7 +157,10 @@ const UserSummaryBlock = ({
         <View
           style={[
             styles.avatarNameContainer,
-            { flexDirection: isRTL ? 'row-reverse' : 'row' },
+            {
+              flexDirection: isRTL ? 'row-reverse' : 'row',
+              gap: sizes.providerInfoGap,
+            },
           ]}
         >
           {avatar ? (
@@ -172,9 +196,8 @@ const UserSummaryBlock = ({
             <Text
               style={{
                 fontSize: sizes.font,
-                fontWeight: '600', // 👈 вернул жирность
                 color: themeController.current?.textColor,
-                marginHorizontal: RFValue(8),
+                fontFamily: 'Rubik-SemiBold',
               }}
             >
               {name} {surname}
@@ -182,9 +205,7 @@ const UserSummaryBlock = ({
             <Text
               style={{
                 fontSize: sizes.smallFont,
-                fontWeight: '600', // 👈 вернул жирность
                 color: themeController.current?.unactiveTextColor,
-                marginHorizontal: RFValue(8),
               }}
             >
               {LICENSES[professions?.[0]]}
@@ -296,7 +317,8 @@ const UserSummaryBlock = ({
                         height: sizes.modalAvatar,
                         borderRadius: sizes.modalAvatar / 2,
                         alignSelf: 'center',
-                        marginVertical: sizes.avatarVerticalMargin,
+                        marginTop: sizes.avatarMarginTop,
+                        marginBottom: sizes.avatarMarginBottom,
                       },
                     ]}
                   />
@@ -305,26 +327,31 @@ const UserSummaryBlock = ({
                       styles.modalName,
                       {
                         fontSize: sizes.nameSize,
-                        fontWeight: '600',
+                        fontFamily: 'Rubik-Bold',
                         textAlign: 'center',
-                        marginBottom: RFValue(6),
                         color: themeController.current?.textColor,
+                        marginBottom: professions?.[0]
+                          ? sizes.titleMarginBottom
+                          : sizes.professionMarginBottom,
                       },
                     ]}
                   >
                     {name} {surname}
                   </Text>
-                  <Text
-                    style={{
-                      fontSize: sizes.professionSize,
-                      fontWeight: '600',
-                      color: themeController.current?.unactiveTextColor,
-                      marginHorizontal: RFValue(8),
-                      textAlign: 'center',
-                    }}
-                  >
-                    {LICENSES[professions?.[0]]}
-                  </Text>
+                  {professions?.[0] && (
+                    <Text
+                      style={{
+                        fontSize: sizes.professionSize,
+                        color: themeController.current?.unactiveTextColor,
+                        textAlign: 'center',
+                        marginBottom: sizes.professionMarginBottom,
+                      }}
+                    >
+                      {LICENSES[professions?.[0]]}{' '}
+                      {experience &&
+                        '- ' + t(`register.experience.${experience}`)}
+                    </Text>
+                  )}
 
                   {/* Контейнер для сетки 2x2 */}
                   <View
@@ -339,7 +366,7 @@ const UserSummaryBlock = ({
                     ]}
                   >
                     {/* Job Types */}
-                    {jobTypes && (
+                    {jobTypes && jobTypes?.length > 0 && (
                       <View
                         style={[
                           isWebLandscape && {
@@ -359,7 +386,14 @@ const UserSummaryBlock = ({
                         >
                           {t('profile.job_types')}
                         </Text>
-                        <View style={[styles.wrapRow]}>
+                        <View
+                          style={[
+                            styles.wrapRow,
+                            ,
+                            { gap: sizes.badgeGap },
+                            isRTL && { justifyContent: 'flex-end' },
+                          ]}
+                        >
                           {jobTypes?.map((type, index) => (
                             <View
                               key={index}
@@ -367,9 +401,12 @@ const UserSummaryBlock = ({
                                 styles.typeBadge,
                                 {
                                   borderRadius: sizes.borderRadius / 2,
-                                  paddingHorizontal: sizes.padding * 0.75,
-                                  paddingVertical: sizes.padding * 0.45,
-                                  margin: sizes.padding * 0.25,
+                                  borderColor:
+                                    themeController.current
+                                      ?.formInputLabelColor,
+                                  paddingHorizontal:
+                                    sizes.badgePaddingHorizontal,
+                                  height: sizes.badgeHeight,
                                 },
                               ]}
                             >
@@ -392,7 +429,7 @@ const UserSummaryBlock = ({
                       </View>
                     )}
                     {/* Professions */}
-                    {professions && (
+                    {professions && professions?.length > 0 && (
                       <View
                         style={[
                           isWebLandscape && {
@@ -412,24 +449,31 @@ const UserSummaryBlock = ({
                         >
                           {t('profile.professions')}
                         </Text>
-                        <View style={[styles.centerRow]}>
+                        <View
+                          style={[
+                            styles.centerRow,
+                            { gap: sizes.badgeGap },
+                            isRTL && { justifyContent: 'flex-end' },
+                          ]}
+                        >
                           {professions?.map((p, index) => (
                             <View
                               key={index}
                               style={[
                                 styles.professionBadge,
                                 {
-                                  paddingHorizontal: sizes.padding * 0.75,
-                                  paddingVertical: sizes.padding * 0.5,
-                                  borderRadius: sizes.borderRadius,
-                                  marginHorizontal: sizes.padding * 0.5,
-                                  marginVertical: sizes.padding * 0.15,
+                                  borderRadius: sizes.borderRadius / 2,
+                                  borderColor:
+                                    themeController.current
+                                      ?.formInputLabelColor,
+                                  paddingHorizontal:
+                                    sizes.badgePaddingHorizontal,
+                                  height: sizes.badgeHeight,
                                 },
                               ]}
                             >
                               <Text
                                 style={[
-                                  styles.professionText,
                                   {
                                     fontSize: sizes.small,
                                     color:
@@ -554,7 +598,8 @@ const UserSummaryBlock = ({
                           defaultValue: 'Contact information',
                         })}
                       </Text>
-                      {!usersReveal.contains(user.id) && status === 'store-waiting' ? (
+                      {!usersReveal.contains(user.id) &&
+                      status === 'store-waiting' ? (
                         <TouchableOpacity
                           style={[
                             styles.primaryBtn,
@@ -697,7 +742,7 @@ const UserSummaryBlock = ({
                           backgroundColor: usersReveal.contains(user.id)
                             ? themeController.current?.buttonColorPrimaryDefault
                             : themeController.current
-                              ?.buttonColorPrimaryDisabled,
+                                ?.buttonColorPrimaryDisabled,
                           borderRadius: sizes.borderRadius,
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -797,28 +842,21 @@ export default UserSummaryBlock;
 
 const styles = StyleSheet.create({
   summaryContainer: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   avatarNameContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
   },
   avatar: {
-    width: RFValue(30),
-    height: RFValue(30),
-    borderRadius: RFValue(21),
-    marginRight: RFValue(10),
-  },
-  avatarPlaceholder: {
-    width: RFValue(30),
-    height: RFValue(30),
-    borderRadius: RFValue(21),
     backgroundColor: '#ddd',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: RFValue(10),
+  },
+  avatarPlaceholder: {
+    backgroundColor: '#ddd',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   nameText: {
     fontSize: RFValue(12),
@@ -854,16 +892,11 @@ const styles = StyleSheet.create({
     marginBottom: RFValue(8),
   },
   modalName: {
-    fontSize: RFValue(16),
-    fontWeight: '600',
     textAlign: 'center',
-    marginBottom: RFValue(6),
   },
   centerRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
     flexWrap: 'wrap',
-    marginBottom: RFValue(10),
   },
   wrapRow: {
     flexDirection: 'row',
@@ -871,24 +904,14 @@ const styles = StyleSheet.create({
     marginBottom: RFValue(10),
   },
   professionBadge: {
-    backgroundColor: '#eee',
-    paddingHorizontal: RFValue(6),
-    paddingVertical: RFValue(4),
-    borderRadius: RFValue(5),
-    marginHorizontal: RFValue(4),
-    marginVertical: RFValue(1),
-  },
-  professionText: {
-    fontSize: RFValue(10),
-    color: '#444',
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   typeBadge: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: RFValue(6),
-    paddingHorizontal: RFValue(6),
-    paddingVertical: RFValue(4),
-    margin: RFValue(2),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   typeText: {
     fontSize: RFValue(10),
@@ -913,7 +936,6 @@ const styles = StyleSheet.create({
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: RFValue(10),
     borderBottomWidth: 1,
     borderColor: '#ccc',
     justifyContent: 'space-between',
@@ -924,15 +946,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Rubik-Bold',
   },
   primaryBtn: {
-    padding: RFValue(12),
     // marginHorizontal: RFValue(12),
-    borderRadius: RFValue(6),
     alignItems: 'center',
     // marginVertical: RFValue(5),
   },
   primaryText: {
-    fontSize: RFValue(12),
-    fontWeight: 'bold',
+    // fontSize: RFValue(12),
   },
 
   // фон модалки (перехватчик кликов)

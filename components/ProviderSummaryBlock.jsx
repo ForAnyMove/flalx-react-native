@@ -38,7 +38,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
     font: isWebLandscape ? scaleByHeight(16, height) : RFValue(12),
     smallFont: isWebLandscape ? scaleByHeight(14, height) : RFValue(10),
     sectionTitleSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(14),
-    small: isWebLandscape ? height * 0.014 : RFValue(10),
+    small: isWebLandscape ? scaleByHeight(14, height) : RFValue(10),
     avatar: isWebLandscape ? scaleByHeight(48, height) : RFValue(33),
     modalAvatar: isWebLandscape ? scaleByHeight(112, height) : RFValue(75),
     icon: isWebLandscape ? scaleByHeight(24, height) : RFValue(28),
@@ -57,8 +57,11 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
     modalHeaderPaddingTop: isWebLandscape
       ? scaleByHeight(32, height)
       : RFValue(5),
-    avatarVerticalMargin: isWebLandscape
-      ? scaleByHeight(12, height)
+    avatarMarginTop: isWebLandscape
+      ? scaleByHeight(24, height)
+      : RFValue(8),
+    avatarMarginBottom: isWebLandscape
+      ? scaleByHeight(8, height)
       : RFValue(8),
     nameSize: isWebLandscape ? scaleByHeight(28, height) : RFValue(14),
     professionSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(12),
@@ -76,6 +79,16 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
     headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
     headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
     contactInfoHeight: isWebLandscape ? scaleByHeight(50, height) : RFValue(30),
+    badgeHeight: isWebLandscape ? scaleByHeight(34, height) : RFValue(20),
+    badgeGap: isWebLandscape ? scaleByHeight(8, height) : RFValue(6),
+    badgePaddingHorizontal: isWebLandscape
+      ? scaleByHeight(12, height)
+      : RFValue(10),
+    providerInfoGap: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
+    titleMarginBottom: isWebLandscape ? scaleByHeight(4, height) : RFValue(2),
+    professionMarginBottom: isWebLandscape
+      ? scaleByHeight(32, height)
+      : RFValue(20),
   };
 
   const {
@@ -83,13 +96,13 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
     name,
     surname,
     professions,
+    experience,
     jobTypes,
     jobSubTypes,
     about,
     email,
     phoneNumber,
   } = user;
-  console.log('User data:', user);
 
   const handleUserRevealTry = async () => {
     try {
@@ -136,17 +149,23 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
           <View
             style={[
               styles.avatarNameContainer,
-              { flexDirection: isRTL ? 'row-reverse' : 'row' },
+              {
+                flexDirection: isRTL ? 'row-reverse' : 'row',
+                gap: sizes.providerInfoGap,
+              },
             ]}
           >
             {avatar ? (
               <Image
                 source={{ uri: avatar }}
-                style={{
-                  width: sizes.avatar,
-                  height: sizes.avatar,
-                  borderRadius: sizes.avatar / 2,
-                }}
+                style={[
+                  styles.avatar,
+                  {
+                    width: sizes.avatar,
+                    height: sizes.avatar,
+                    borderRadius: sizes.avatar / 2,
+                  },
+                ]}
               />
             ) : (
               <View
@@ -170,7 +189,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                 style={{
                   fontSize: sizes.font,
                   color: themeController.current?.textColor,
-                  marginHorizontal: RFValue(8),
+                  fontFamily: 'Rubik-SemiBold',
                 }}
               >
                 {name} {surname}
@@ -179,7 +198,6 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                 style={{
                   fontSize: sizes.smallFont,
                   color: themeController.current?.unactiveTextColor,
-                  marginHorizontal: RFValue(8),
                 }}
               >
                 {LICENSES[professions?.[0]]}
@@ -273,7 +291,8 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         height: sizes.modalAvatar,
                         borderRadius: sizes.modalAvatar / 2,
                         alignSelf: 'center',
-                        marginVertical: sizes.avatarVerticalMargin,
+                        marginTop: sizes.avatarMarginTop,
+                        marginBottom: sizes.avatarMarginBottom,
                       }}
                     />
                   ) : (
@@ -284,7 +303,8 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                           height: sizes.modalAvatar,
                           borderRadius: sizes.modalAvatar / 2,
                           alignSelf: 'center',
-                          marginVertical: sizes.avatarVerticalMargin,
+                          marginTop: sizes.avatarMarginTop,
+                          marginBottom: sizes.avatarMarginBottom,
                         },
                       ]}
                     >
@@ -297,25 +317,30 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                   <Text
                     style={{
                       fontSize: sizes.nameSize,
-                      // fontWeight: '600',
                       textAlign: 'center',
-                      marginBottom: RFValue(6),
+                      fontFamily: 'Rubik-Bold',
                       color: themeController.current?.textColor,
+                      marginBottom: professions?.[0]
+                        ? sizes.titleMarginBottom
+                        : sizes.professionMarginBottom,
                     }}
                   >
                     {name} {surname}
                   </Text>
-                  <Text
-                    style={{
-                      fontSize: sizes.professionSize,
-                      // fontWeight: '600',
-                      color: themeController.current?.unactiveTextColor,
-                      marginHorizontal: RFValue(8),
-                      textAlign: 'center',
-                    }}
-                  >
-                    {LICENSES[professions?.[0]]}
-                  </Text>
+                  {professions?.[0] && (
+                    <Text
+                      style={{
+                        fontSize: sizes.professionSize,
+                        color: themeController.current?.unactiveTextColor,
+                        textAlign: 'center',
+                        marginBottom: sizes.professionMarginBottom,
+                      }}
+                    >
+                      {LICENSES[professions?.[0]]}{' '}
+                      {experience &&
+                        '- ' + t(`register.experience.${experience}`)}
+                    </Text>
+                  )}
 
                   {/* Контейнер для сетки 2x2 */}
                   <View
@@ -350,7 +375,13 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         >
                           {t('profile.job_types')}
                         </Text>
-                        <View style={styles.wrapRow}>
+                        <View
+                          style={[
+                            styles.wrapRow,
+                            { gap: sizes.badgeGap },
+                            isRTL && { justifyContent: 'flex-end' },
+                          ]}
+                        >
                           {jobTypes?.map((type, i) => (
                             <View
                               key={i}
@@ -358,9 +389,12 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                                 styles.typeBadge,
                                 {
                                   borderRadius: sizes.borderRadius / 2,
-                                  paddingHorizontal: sizes.padding * 0.75,
-                                  paddingVertical: sizes.padding * 0.45,
-                                  margin: sizes.padding * 0.25,
+                                  borderColor:
+                                    themeController.current
+                                      ?.formInputLabelColor,
+                                  paddingHorizontal:
+                                    sizes.badgePaddingHorizontal,
+                                  height: sizes.badgeHeight,
                                 },
                               ]}
                             >
@@ -401,18 +435,26 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         >
                           {t('profile.professions')}
                         </Text>
-                        <View style={styles.centerRow}>
+                        <View
+                          style={[
+                            styles.centerRow,
+                            { gap: sizes.badgeGap },
+                            isRTL && { justifyContent: 'flex-end' },
+                          ]}
+                        >
                           {professions?.map((p, i) => (
                             <View
                               key={i}
                               style={[
                                 styles.professionBadge,
                                 {
-                                  paddingHorizontal: sizes.padding * 0.75,
-                                  paddingVertical: sizes.padding * 0.5,
-                                  borderRadius: sizes.borderRadius,
-                                  marginHorizontal: sizes.padding * 0.5,
-                                  marginVertical: sizes.padding * 0.15,
+                                  borderRadius: sizes.borderRadius / 2,
+                                  borderColor:
+                                    themeController.current
+                                      ?.formInputLabelColor,
+                                  paddingHorizontal:
+                                    sizes.badgePaddingHorizontal,
+                                  height: sizes.badgeHeight,
                                 },
                               ]}
                             >
@@ -643,9 +685,13 @@ const styles = StyleSheet.create({
   summaryContainer: {
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: RFValue(8),
   },
   avatarNameContainer: { alignItems: 'center' },
+  avatar: {
+    backgroundColor: '#ddd',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   avatarPlaceholder: {
     backgroundColor: '#ddd',
     justifyContent: 'center',
@@ -667,31 +713,23 @@ const styles = StyleSheet.create({
   sectionTitle: { marginBottom: RFValue(5) },
   centerRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
     flexWrap: 'wrap',
-    marginBottom: RFValue(10),
   },
   wrapRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: RFValue(10),
   },
   professionBadge: {
-    backgroundColor: '#eee',
-    padding: RFValue(4),
-    borderRadius: RFValue(5),
-    margin: RFValue(2),
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   typeBadge: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: RFValue(6),
-    padding: RFValue(4),
-    margin: RFValue(2),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   primaryBtn: {
-    padding: RFValue(10),
-    borderRadius: RFValue(6),
     alignItems: 'center',
   },
   backdrop: {

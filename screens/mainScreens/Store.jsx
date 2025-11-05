@@ -24,6 +24,7 @@ import ShowJobModal from '../../components/ShowJobModal';
 import { checkHasPendingJob } from '../../src/api/jobs';
 import { useNotification } from '../../src/render';
 import { useWebView } from '../../context/webViewContext';
+import { scaleByHeight } from '../../utils/resizeFuncs';
 
 const TAB_TITLES = ['new', 'waiting', 'in-progress', 'done'];
 const TAB_TITLES_RTL = ['done', 'in-progress', 'waiting', 'new'];
@@ -385,9 +386,9 @@ export default function Store() {
       <TouchableOpacity
         style={{
           backgroundColor: themeController.current?.mainBadgeBackground,
-          width: isWebLandscape ? height * 0.05 : RFPercentage(5),
-          height: isWebLandscape ? height * 0.05 : RFPercentage(5),
-          borderRadius: isWebLandscape ? height * 0.05 : RFPercentage(5),
+          width: isWebLandscape ? scaleByHeight(64, height) : RFPercentage(5),
+          height: isWebLandscape ? scaleByHeight(64, height) : RFPercentage(5),
+          borderRadius: isWebLandscape ? scaleByHeight(64, height) : RFPercentage(5),
           justifyContent: 'center',
           alignItems: 'center',
           position: 'absolute',
@@ -411,17 +412,17 @@ export default function Store() {
           } else {
             const url = pendingJobRequest.payment?.paymentMetadata?.paypalApproval?.href;
             const message = [
-              "### You have a pending job. Please complete it before creating a new one.",
+              t('subscriptions.messages.pendingJob'),
               "",
-              `Payment URL: [${url}](${url})`,
+              t('subscriptions.messages.paymentURL', { url: url }),
               "",
-              "_You can cancel the pending job from the payment page._"
+              t('subscriptions.messages.cancelPendingJob')
             ].join('\n');
 
             showWarning(message,
               [
                 {
-                  title: "Move to Payment",
+                  title: t('subscriptions.messages.moveToPayment'),
                   backgroundColor: "#3B82F6",
                   textColor: "#FFFFFF",
                   onPress: () => openWebView(url)
@@ -433,8 +434,8 @@ export default function Store() {
         <Image
           source={icons.plus}
           style={{
-            width: isWebLandscape ? height * 0.03 : RFPercentage(3),
-            height: isWebLandscape ? height * 0.03 : RFPercentage(3),
+            width: isWebLandscape ? scaleByHeight(24, height) : RFPercentage(3),
+            height: isWebLandscape ? scaleByHeight(24, height) : RFPercentage(3),
             tintColor: themeController.current?.buttonTextColorPrimary,
           }}
           resizeMode='contain'

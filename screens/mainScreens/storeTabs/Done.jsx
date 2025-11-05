@@ -46,7 +46,7 @@ export default function DoneScreen({
     scrollContainerWidth: isWebLandscape ? '60%' : '100%',
   };
 
-  const filteredJobsList = jobsController.executor.done.filter((job) =>
+  const filteredJobsList = jobsController.creator.done.filter((job) =>
     filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
   );
 

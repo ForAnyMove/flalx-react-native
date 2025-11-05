@@ -428,6 +428,7 @@ export default function NewJobModal({
   const [type, setType] = useState(
     initialJob ? initialJob.type || '' : activeKey || ''
   );
+  
   const [subType, setSubType] = useState(initialJob?.subType || '');
   const [profession, setProfession] = useState(initialJob?.profession || '');
   const [description, setDescription] = useState(initialJob?.description || '');
@@ -585,6 +586,7 @@ export default function NewJobModal({
   const formContent = [
     <AutocompletePicker
       label={t('newJob.type', { defaultValue: 'Type' })}
+      selectedValue={type}
       value={type}
       setValue={(text) => {
         setType(text);
@@ -610,7 +612,7 @@ export default function NewJobModal({
     />,
     <AutocompletePicker
       label={t('newJob.subType', { defaultValue: 'Sub type' })}
-      value={subType}
+      selectedValue={subType}
       setValue={(text) => {
         setSubType(text);
         if (fieldErrors.subType && text) {
@@ -637,7 +639,7 @@ export default function NewJobModal({
       label={t('newJob.profession', {
         defaultValue: 'Profession (optional)',
       })}
-      value={profession}
+      selectedValue={profession}
       setValue={(text) => {
         setProfession(text);
         if (fieldErrors.profession && text) {

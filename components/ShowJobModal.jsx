@@ -42,8 +42,14 @@ const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
 
 export default function ShowJobModal({ closeModal, status, currentJobId }) {
   // const router = useRouter();
-  const { themeController, session, jobsController, languageController, setAppLoading, subscription } =
-    useComponentContext();
+  const {
+    themeController,
+    session,
+    jobsController,
+    languageController,
+    setAppLoading,
+    subscription,
+  } = useComponentContext();
   const { t } = useTranslation();
   const { width, height, isLandscape } = useWindowInfo();
   const { openWebView } = useWebView();
@@ -99,7 +105,9 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
     modalBtnWidth: isWebLandscape ? scaleByHeight(153, height) : '40%',
     modalLongBtnWidth: isWebLandscape ? scaleByHeight(300, height) : '80%',
     modalBtnFont: isWebLandscape ? scaleByHeight(20, height) : baseFont,
-    modalBtnBorderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(6),
+    modalBtnBorderRadius: isWebLandscape
+      ? scaleByHeight(8, height)
+      : RFValue(6),
     modalBtnsGap: isWebLandscape ? scaleByHeight(24, height) : RFValue(12),
     modalPadding: isWebLandscape ? scaleByHeight(32, height) : RFValue(16),
     modalLineHeight: isWebLandscape ? scaleByHeight(32, height) : 1,
@@ -107,6 +115,11 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
       ? scaleByHeight(7, height)
       : RFValue(5),
     btnsColumnGap: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
+    noPhotosMessageSize: isWebLandscape ? scaleByHeight(24) : RFValue(24),
+    noPhotosMessageHeight: isWebLandscape
+      ? scaleByHeight(128, height)
+      : RFValue(75),
+    noPhotosMessageWidth: isWebLandscape ? scaleByHeight(685, height) : '100%',
   };
 
   const [newJobModalVisible, setNewJobModalVisible] = useState(false);
@@ -122,7 +135,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
-    () => { }
+    () => {}
   );
 
   const [plansModalVisible, setPlansModalVisible] = useState(false);
@@ -150,7 +163,9 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
           setEditableCommentValue(job.doneComment);
         }
 
-        const isProvider = await jobsController.actions.checkIsProviderInJob(currentJobId);
+        const isProvider = await jobsController.actions.checkIsProviderInJob(
+          currentJobId
+        );
         setInterestedRequest(isProvider);
       } catch (e) {
         console.error('Failed to load job:', e);
@@ -170,7 +185,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
   const handleAddingSelfToJobProviders = async () => {
     try {
       setAppLoading(true);
-      const { success, payment } = await addSelfToJobProviders(currentJobId, session);
+      const { success, payment } = await addSelfToJobProviders(
+        currentJobId,
+        session
+      );
       if (success == true) {
         if (payment != null) {
           openWebView(payment?.paymentMetadata?.paypalApproval?.href);
@@ -191,7 +209,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
       setConfirmInterestModal(false);
       // setInterestedRequest(true);
     }
-  }
+  };
 
   const handleInterestRequest = async () => {
     if (subscription.current == null) {
@@ -200,7 +218,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
       handleAddingSelfToJobProviders();
       setInterestedRequest(true);
     }
-  }
+  };
 
   function extraUiByStatus(status) {
     switch (status) {
@@ -855,17 +873,41 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
             isRTL && { flexDirection: 'row-reverse' },
           ]}
         >
-          {currentJobInfo?.images.map((uri, index) => (
+          {currentJobInfo?.images.length > 0 ? (
+            <>
+              {currentJobInfo?.images.map((uri, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.imageWrapper,
+                    isRTL && { marginRight: 0, marginLeft: 8 },
+                  ]}
+                >
+                  <Image source={{ uri }} style={styles.imageThumbnail} />
+                </View>
+              ))}
+            </>
+          ) : (
             <View
-              key={index}
-              style={[
-                styles.imageWrapper,
-                isRTL && { marginRight: 0, marginLeft: 8 },
-              ]}
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: sizes.noPhotosMessageHeight,
+                width: sizes.noPhotosMessageWidth,
+              }}
             >
-              <Image source={{ uri }} style={styles.imageThumbnail} />
+              <Text
+                style={{
+                  color: themeController?.current.formInputPlaceholderColor,
+                  fontSize: sizes.noPhotosMessageSize,
+                  opacity: 0.5,
+                }}
+              >
+                {t('showJob.messages.noPhotosMessage')}
+              </Text>
             </View>
-          ))}
+          )}
         </ScrollView>
       </View>
     </View>,
@@ -1350,29 +1392,55 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                           isRTL && { flexDirection: 'row-reverse' },
                         ]}
                       >
-                        {currentJobInfo?.images.map((uri, index) => (
+                        {currentJobInfo?.images.length > 0 ? (
+                          <>
+                            {currentJobInfo?.images.map((uri, index) => (
+                              <View
+                                key={index}
+                                style={[
+                                  styles.imageWrapper,
+                                  {
+                                    backgroundColor:
+                                      themeController.current
+                                        ?.formInputBackground,
+                                    marginRight: isRTL ? 0 : sizes.margin / 2,
+                                    marginLeft: isRTL ? sizes.margin / 2 : 0,
+                                  },
+                                ]}
+                              >
+                                <Image
+                                  source={{ uri }}
+                                  style={{
+                                    width: sizes.thumb,
+                                    height: sizes.thumb,
+                                    borderRadius: sizes.borderRadius,
+                                  }}
+                                />
+                              </View>
+                            ))}
+                          </>
+                        ) : (
                           <View
-                            key={index}
-                            style={[
-                              styles.imageWrapper,
-                              {
-                                backgroundColor:
-                                  themeController.current?.formInputBackground,
-                                marginRight: isRTL ? 0 : sizes.margin / 2,
-                                marginLeft: isRTL ? sizes.margin / 2 : 0,
-                              },
-                            ]}
+                            style={{
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              height: sizes.noPhotosMessageHeight,
+                              width: sizes.noPhotosMessageWidth,
+                            }}
                           >
-                            <Image
-                              source={{ uri }}
+                            <Text
                               style={{
-                                width: sizes.thumb,
-                                height: sizes.thumb,
-                                borderRadius: sizes.borderRadius,
+                                color:
+                                  themeController?.current
+                                    .formInputPlaceholderColor,
+                                fontSize: sizes.noPhotosMessageSize,
+                                opacity: 0.5,
                               }}
-                            />
+                            >
+                              {t('showJob.messages.noPhotosMessage')}
+                            </Text>
                           </View>
-                        ))}
+                        )}
                       </ScrollView>
                     </View>
                   </View>
@@ -1769,10 +1837,10 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                   setPlansModalVisible(true);
                   setConfirmInterestModal(false);
                 }}
-              // onPress={() => {
-              //   setConfirmInterestModal(false);
-              //   setInterestedRequest(true);
-              // }}
+                // onPress={() => {
+                //   setConfirmInterestModal(false);
+                //   setInterestedRequest(true);
+                // }}
               >
                 <Text
                   style={{
@@ -1922,7 +1990,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
         onClose={() => setHistoryModal(false)}
         history={currentJobInfo?.changes_history}
       />
-      < SubscriptionsModal
+      <SubscriptionsModal
         visible={plansModalVisible}
         main={false}
         closeModal={() => {

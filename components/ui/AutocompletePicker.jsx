@@ -23,6 +23,7 @@ const AutocompletePicker = ({
   isRTL,
   error,
   containerStyle = {},
+  value,
 }) => {
   const { themeController } = useComponentContext();
   const { height, isLandscape } = useWindowInfo();
@@ -43,7 +44,7 @@ const AutocompletePicker = ({
   // --- Состояния ---
   const [isFocused, setIsFocused] = useState(false);
   const [layout, setLayout] = useState(null);
-  const [inputText, setInputText] = useState(options[selectedValue] || '');
+  const [inputText, setInputText] = useState(value ? options[value] : '');
   const [filteredOptions, setFilteredOptions] = useState(options);
   const [hoveredValue, setHoveredValue] = useState(null);
 
@@ -85,8 +86,8 @@ const AutocompletePicker = ({
 
   // Синхронизация текста в инпуте, если он меняется извне
   useEffect(() => {
-    setInputText(options[selectedValue] || '');
-  }, [selectedValue, options]);
+    setInputText(options[value] || '');
+  }, [value, options]);
 
   // Фильтрация списка
   useEffect(() => {

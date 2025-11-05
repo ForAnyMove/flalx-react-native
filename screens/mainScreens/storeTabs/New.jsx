@@ -73,22 +73,22 @@ export default function NewScreen({
                     const pendingJobRequest = await checkHasPendingJob(session);
 
                     if (!pendingJobRequest.job) {
-                      setActiveKey(null);
+                      setActiveKey(key);
                       setNewJobModalVisible(true);
                     } else {
                       const url = pendingJobRequest.payment?.paymentMetadata?.paypalApproval?.href;
                       const message = [
-                        "### You have a pending job. Please complete it before creating a new one.",
+                        t('subscriptions.messages.pendingJob'),
                         "",
-                        `Payment URL: [${url}](${url})`,
+                        t('subscriptions.messages.paymentURL', { url: url }),
                         "",
-                        "_You can cancel the pending job from the payment page._"
+                        t('subscriptions.messages.cancelPendingJob')
                       ].join('\n');
 
                       showWarning(message,
                         [
                           {
-                            title: "Move to Payment",
+                            title: t('subscriptions.messages.moveToPayment'),
                             backgroundColor: "#3B82F6",
                             textColor: "#FFFFFF",
                             onPress: () => openWebView(url)

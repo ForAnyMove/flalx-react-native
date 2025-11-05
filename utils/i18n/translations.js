@@ -275,6 +275,16 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
             description: 'Maximum features, priority support.',
           },
         },
+        messages: {
+          subscriptionAlreadyExist: '### Subscription already exists.',
+          pendingJob: '### You have a pending job. Please complete it before creating a new one.',
+          paymentURL: 'Payment URL: [{{url}}]({{url}})',
+          cancelPendingJob: '_You can cancel the pending job from the payment page._',
+          moveToPayment: 'Move to Payment',
+          downgradeSubscription: 'You are about to downgrade your subscription.\n\nAre you sure?',
+          downgradeSuccess: '### Subscription successfully downgraded',
+          upgradeSubscriptionText: 'You are about to upgrade your subscription.\n\nAfter accepting the agreement you will be requested to pay difference between your current plan and the new plan to change it immediately.\n\nAre you sure?',
+        }
       },
       showJob: {
         fields: {
@@ -307,6 +317,7 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
           waitForCall: 'Wait for a call from the customer...',
           confirmCancelTitle: 'Are you sure to cancel the request?',
           closeJobTitle: 'Are you sure you want to close the job?',
+          noPhotosMessage: 'No uploaded photos',
         },
         paywall: {
           notice: 'To continue this action, you need to pay or subscribe',
@@ -591,6 +602,17 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
             description: 'תכונות מקסימליות, תמיכה עדיפות.',
           },
         },
+        messages: {
+          subscriptionAlreadyExist: '### מנוי כבר קיים.',
+          pendingJob: '### יש לך משימה ממתינה. אנא השלם אותה לפני יצירת משימה חדשה.',
+          paymentURL: 'כתובת תשלום: [{{url}}]({{url}})',
+          cancelPendingJob: '_באפשרותך לבטל את המשימה הממתינה מדף התשלום._',
+          moveToPayment: 'עבור לתשלום',
+          downgradeSubscription: 'אתה עומד להוריד את רמת המנוי שלך.\n\nהאם אתה בטוח?',
+          downgradeSuccess: '### המנוי הורד בהצלחה',
+          upgradeSubscriptionText:
+            'אתה עומד לשדרג את המנוי שלך.\n\nלאחר אישור ההסכם תתבקש לשלם את ההפרש בין התוכנית הנוכחית שלך לתוכנית החדשה כדי לשנות אותה מיד.\n\nהאם אתה בטוח?',
+        },
       },
       showJob: {
         fields: {
@@ -623,6 +645,7 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
           waitForCall: 'המתן לשיחת טלפון מהלקוח...',
           confirmCancelTitle: 'האם אתה בטוח/ה שברצונך לבטל את הבקשה?',
           closeJobTitle: 'האם אתה בטוח שברצונך לסגור את העבודה?',
+          noPhotosMessage: 'אין תמונות שהועלו',
         },
         paywall: {
           notice: 'כדי להמשיך, יש לשלם או להירשם כמנוי',

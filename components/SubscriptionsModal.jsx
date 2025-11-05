@@ -38,8 +38,8 @@ function SubscriptionsModalContent({ closeModal }) {
       if (currentPlanId != null) {
 
         if (findPlan(currentPlanId)?.level > findPlan(planId)?.level) {
-          showInfo("You are about to downgrade your subscription.\n\nAre you sure?", [{
-            title: 'Yes',
+          showInfo(t('subscriptions.messages.downgradeSubscription'), [{
+            title: t('common.yes'),
             backgroundColor: '#45bb33ff',
             textColor: '#FFFFFF',
             onPress: async () => {
@@ -50,7 +50,7 @@ function SubscriptionsModalContent({ closeModal }) {
                   openWebView(result.approval_url);
                 }
                 else if (result.success) {
-                  const message = '### Subscription successfully downgraded';
+                  const message = t('subscriptions.messages.downgradeSuccess');
                   showInfo(message);
                 }
               } catch (error) {
@@ -63,13 +63,13 @@ function SubscriptionsModalContent({ closeModal }) {
               }
             }
           }, {
-            title: 'No',
+            title: t('common.no'),
             backgroundColor: '#f65454ff',
             textColor: '#FFFFFF',
           }]);
         } else if (findPlan(currentPlanId)?.level < findPlan(planId)?.level) {
-          showInfo("You are about to upgrade your subscription.\n\nAfter accepting the agreement you will be requested to pay difference between your current plan and the new plan to change it immediately.\n\nAre you sure?", [{
-            title: 'Yes',
+          showInfo(t('subscriptions.messages.upgradeSubscriptionText'), [{
+            title: t('common.yes'),
             backgroundColor: '#45bb33ff',
             textColor: '#FFFFFF',
             onPress: async () => {
@@ -106,7 +106,7 @@ function SubscriptionsModalContent({ closeModal }) {
       if (result.success && result.approvalUrl) {
         openWebView(result.approvalUrl);
       } else if (result.success == false && result.subscription) {
-        const message = '### Subscription already exists.';
+        const message = t('subscriptionAlreadyExist');
 
         showWarning(message);
       }
