@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import {
   Modal,
   Platform,
@@ -30,6 +30,7 @@ export default function NewScreen({
   const isRTL = languageController.isRTL;
   const { isLandscape } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
+  const { t } = useTransition();
 
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');
