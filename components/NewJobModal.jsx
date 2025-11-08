@@ -82,9 +82,9 @@ const SuggestionItem = ({
   const webHoverProps =
     Platform.OS === 'web'
       ? {
-        onMouseEnter: () => setIsHovered(true),
-        onMouseLeave: () => setIsHovered(false),
-      }
+          onMouseEnter: () => setIsHovered(true),
+          onMouseLeave: () => setIsHovered(false),
+        }
       : {};
 
   return (
@@ -175,13 +175,13 @@ const renderAutocomplete = ({
             return newFocusStates;
           })
         }
-      // onBlur={() =>
-      //   setFocusStates((prev) => {
-      //     const newFocusStates = Array(3).fill(false);
-      //     newFocusStates[stateFocusIndex] = false;
-      //     return newFocusStates;
-      //   })
-      // }
+        // onBlur={() =>
+        //   setFocusStates((prev) => {
+        //     const newFocusStates = Array(3).fill(false);
+        //     newFocusStates[stateFocusIndex] = false;
+        //     return newFocusStates;
+        //   })
+        // }
       >
         {/* <-- Web-specific override */}
         <TextInput
@@ -215,8 +215,9 @@ const renderAutocomplete = ({
               isWebLandscape && {
                 maxHeight: sizeOverrides.thumb,
                 borderRadius: sizeOverrides.borderRadius,
-                width: `calc(100% + ${sizeOverrides.inputContainerPaddingHorizontal * 2
-                  }px)`,
+                width: `calc(100% + ${
+                  sizeOverrides.inputContainerPaddingHorizontal * 2
+                }px)`,
                 left: `-${sizeOverrides.inputContainerPaddingHorizontal}px`,
               }
             }
@@ -309,8 +310,7 @@ async function createNewJob(jobData, session, openWebView, updateJobsList) {
       openWebView(data.paymentUrl, () => {
         // reload jobs after closing webview
       });
-    }
-    else if (data.job) {
+    } else if (data.job) {
       updateJobsList?.();
     }
   } catch (error) {
@@ -359,8 +359,15 @@ export default function NewJobModal({
   initialJob = null,
   executorId,
 }) {
-  const { themeController, session, user, jobsController, languageController, setAppLoading, subscription } =
-    useComponentContext();
+  const {
+    themeController,
+    session,
+    user,
+    jobsController,
+    languageController,
+    setAppLoading,
+    subscription,
+  } = useComponentContext();
   const { width, height, isLandscape, sidebarWidth = 0 } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
@@ -419,6 +426,10 @@ export default function NewJobModal({
     saveBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(40),
     saveBtnFont: isWebLandscape ? scaleByHeight(20, height) : RFValue(14),
     iconSize: isWebLandscape ? scaleByHeight(24, height) : RFValue(20),
+    removeIconSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(20),
+    removeIconPosition: isWebLandscape ? scaleByHeight(3, height) : RFValue(4),
+    imageSize: isWebLandscape ? scaleByHeight(32, height) : RFPercentage(3),
+    crossIconSize: isWebLandscape ? scaleByHeight(16, height) : RFValue(20),
   };
 
   const [filteredTypes, setFilteredTypes] = useState(JOB_TYPES);
@@ -428,7 +439,7 @@ export default function NewJobModal({
   const [type, setType] = useState(
     initialJob ? initialJob.type || '' : activeKey || ''
   );
-  
+
   const [subType, setSubType] = useState(initialJob?.subType || '');
   const [profession, setProfession] = useState(initialJob?.profession || '');
   const [description, setDescription] = useState(initialJob?.description || '');
@@ -443,7 +454,8 @@ export default function NewJobModal({
   );
   const [jobType, setJobType] = useState('normal');
   const selectedOption =
-    jobsController.products.find((o) => o.type === jobType) || jobsController.products[0];
+    jobsController.products.find((o) => o.type === jobType) ||
+    jobsController.products[0];
 
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [plansModalVisible, setPlansModalVisible] = useState(false);
@@ -745,8 +757,8 @@ export default function NewJobModal({
           { marginBottom: RFValue(8) },
           isRTL && { textAlign: 'right' },
           isWebLandscape && {
-            fontSize: sizes.font,
-            marginBottom: sizes.margin / 2,
+            fontSize: sizes.photosLabelSize,
+            marginBottom: sizes.photosLabelMarginBottom,
           },
         ]}
       >
@@ -772,8 +784,8 @@ export default function NewJobModal({
           <Image
             source={icons.plus}
             style={{
-              width: RFPercentage(3), // 14
-              height: RFPercentage(3),
+              width: sizes.imageSize,
+              height: sizes.imageSize,
               tintColor: themeController.current?.buttonTextColorPrimary,
             }}
             resizeMode='contain'
@@ -812,10 +824,11 @@ export default function NewJobModal({
                 style={[
                   styles.removeIcon,
                   {
-                    top: RFValue(4),
-                    right: RFValue(4),
-                    width: sizes.iconSize,
-                    height: sizes.iconSize,
+                    borderRadius: sizes.removeIconSize,
+                    top: sizes.removeIconPosition,
+                    right: sizes.removeIconPosition,
+                    width: sizes.removeIconSize,
+                    height: sizes.removeIconSize,
                   },
                   isRTL && { right: 'auto', left: RFValue(4) },
                 ]}
@@ -824,8 +837,8 @@ export default function NewJobModal({
                 <Image
                   source={icons.cross}
                   style={{
-                    width: sizes.iconSize,
-                    height: sizes.iconSize,
+                    width: sizes.crossIconSize,
+                    height: sizes.crossIconSize,
                     tintColor: themeController.current?.formInputLabelColor,
                   }}
                   resizeMode='contain'
@@ -1809,8 +1822,8 @@ export default function NewJobModal({
                         <Image
                           source={icons.plus}
                           style={{
-                            width: scaleByHeight(32, height),
-                            height: scaleByHeight(32, height),
+                            width: sizes.imageSize,
+                            height: sizes.imageSize,
                             tintColor: themeController.current?.primaryColor,
                           }}
                           resizeMode='contain'
@@ -1850,11 +1863,11 @@ export default function NewJobModal({
                               style={[
                                 styles.removeIcon,
                                 {
-                                  borderRadius: sizes.iconSize,
-                                  top: scaleByHeight(3, height),
-                                  right: scaleByHeight(3, height),
-                                  width: scaleByHeight(20, height),
-                                  height: scaleByHeight(20, height),
+                                  borderRadius: sizes.removeIconSize,
+                                  top: sizes.removeIconPosition,
+                                  right: sizes.removeIconPosition,
+                                  width: sizes.removeIconSize,
+                                  height: sizes.removeIconSize,
                                 },
                               ]}
                               onPress={() => removeImage(index)}
@@ -1862,8 +1875,8 @@ export default function NewJobModal({
                               <Image
                                 source={icons.cross}
                                 style={{
-                                  width: scaleByHeight(16, height),
-                                  height: scaleByHeight(16, height),
+                                  width: sizes.crossIconSize,
+                                  height: sizes.crossIconSize,
                                   tintColor: themeController.current?.textColor,
                                 }}
                                 resizeMode='contain'
@@ -2239,12 +2252,12 @@ export default function NewJobModal({
                             borderWidth: 1,
                             borderColor: active
                               ? themeController.current
-                                ?.buttonColorPrimaryDefault
+                                  ?.buttonColorPrimaryDefault
                               : themeController.current
-                                ?.formInputPlaceholderColor,
+                                  ?.formInputPlaceholderColor,
                             backgroundColor: active
                               ? themeController.current
-                                ?.buttonColorPrimaryDefault
+                                  ?.buttonColorPrimaryDefault
                               : 'transparent',
                             flexDirection: isRTL ? 'row-reverse' : 'row',
                             alignItems: 'center',
@@ -2258,12 +2271,15 @@ export default function NewJobModal({
                             color: active
                               ? themeController.current?.buttonTextColorPrimary
                               : themeController.current
-                                ?.formInputPlaceholderColor,
+                                  ?.formInputPlaceholderColor,
                           }}
                         >
-                          {t(`newJob.statusModal.option.${STATUS_OPTIONS[productType].i18n}`, {
-                            defaultValue: STATUS_OPTIONS[productType].default,
-                          })}
+                          {t(
+                            `newJob.statusModal.option.${STATUS_OPTIONS[productType].i18n}`,
+                            {
+                              defaultValue: STATUS_OPTIONS[productType].default,
+                            }
+                          )}
                         </Text>
 
                         {/* маленький PRO-бейдж для некоторых опций */}
@@ -2323,57 +2339,61 @@ export default function NewJobModal({
                     {t('newJob.statusModal.buttons.confirmWithPrice', {
                       defaultValue: 'Publish for {{price}}',
                       price:
-                        subscription.current != null && selectedOption.type == 'normal'
+                        subscription.current != null &&
+                        selectedOption.type == 'normal'
                           ? t('newJob.statusModal.free', {
-                            defaultValue: 'Free',
-                          })
+                              defaultValue: 'Free',
+                            })
                           : `$${selectedOption?.price.toFixed(2)}`,
                     })}
                   </Text>
                 </TouchableOpacity>
 
                 {/* кнопка тарифов */}
-                {(subscription.current == null && selectedOption.type == 'normal') && < TouchableOpacity
-                  onPress={() => {
-                    setPlansModalVisible(true);
-                    setStatusModalVisible(false);
-                  }}
-                  style={{
-                    height: sizes.btnH,
-                    width: sizes.btnW,
-                    borderRadius: sizes.modalRadius,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor:
-                      themeController.current?.buttonColorPrimaryDefault,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: sizes.modalSub,
-                      color: themeController.current?.buttonTextColorPrimary,
-                    }}
-                  >
-                    {t('newJob.statusModal.buttons.viewPlans', {
-                      defaultValue: 'See pricing plans',
-                    })}
-                  </Text>
-                </TouchableOpacity>}
+                {subscription.current == null &&
+                  selectedOption.type == 'normal' && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setPlansModalVisible(true);
+                        setStatusModalVisible(false);
+                      }}
+                      style={{
+                        height: sizes.btnH,
+                        width: sizes.btnW,
+                        borderRadius: sizes.modalRadius,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor:
+                          themeController.current?.buttonColorPrimaryDefault,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: sizes.modalSub,
+                          color:
+                            themeController.current?.buttonTextColorPrimary,
+                        }}
+                      >
+                        {t('newJob.statusModal.buttons.viewPlans', {
+                          defaultValue: 'See pricing plans',
+                        })}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
         </View>
-      </Modal >
+      </Modal>
 
       {/* PLANS MODAL (простая заглушка, такой же фон/центрирование) */}
-      < SubscriptionsModal
+      <SubscriptionsModal
         visible={plansModalVisible}
         main={false}
         closeModal={() => {
           setPlansModalVisible(false);
           setStatusModalVisible(true);
-        }
-        }
+        }}
       />
       {/* <Modal visible={plansModalVisible} animationType='fade' transparent>
         <TouchableOpacity
@@ -2433,7 +2453,7 @@ export default function NewJobModal({
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal> */}
-    </KeyboardAvoidingView >
+    </KeyboardAvoidingView>
   );
 }
 
@@ -2506,13 +2526,8 @@ const styles = StyleSheet.create({
     borderBottomColor: '#eee',
   },
   addImageButton: {
-    width: RFValue(80),
-    height: RFValue(80),
-    backgroundColor: '#84B0F4',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: RFValue(6),
-    marginRight: RFValue(6),
   },
   imageRow: {
     flexDirection: 'row',
@@ -2530,16 +2545,10 @@ const styles = StyleSheet.create({
   },
   imageWrapper: {
     position: 'relative',
-    marginRight: RFValue(6), // отступ между картинками
   },
   removeIcon: {
     position: 'absolute',
-    top: RFValue(4),
-    right: RFValue(4),
-    backgroundColor: 'rgba(255,255,255,0.7)', // чуть прозрачный белый фон, чтобы крестик был читаемым
-    borderRadius: RFValue(12),
-    width: RFValue(20),
-    height: RFValue(20),
+    backgroundColor: 'rgba(255,255,255,0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,

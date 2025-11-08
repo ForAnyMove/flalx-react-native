@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { icons } from '../constants/icons';
 import { scaleByHeight } from '../utils/resizeFuncs';
 import CommentsSection from './CommentsSection';
+import { useWebView } from '../context/webViewContext';
 
 const UserSummaryBlock = ({
   user,
@@ -35,6 +36,7 @@ const UserSummaryBlock = ({
     setAppLoading,
   } = useComponentContext();
   const { t } = useTranslation();
+    const { openWebView } = useWebView();
   const isRTL = languageController?.isRTL;
   const [modalVisible, setModalVisible] = useState(false);
   const [showContactInfo, setShowContactInfo] = useState(false);
@@ -60,6 +62,7 @@ const UserSummaryBlock = ({
     borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
     thumb: isWebLandscape ? height * 0.11 : RFValue(80),
     headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
+    headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
     avatar: isWebLandscape ? scaleByHeight(48, height) : RFValue(33),
     icon: isWebLandscape ? scaleByHeight(24, height) : RFValue(24),
     iconSmall: isWebLandscape ? height * 0.025 : RFValue(20),

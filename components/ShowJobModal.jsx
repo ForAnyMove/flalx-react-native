@@ -32,6 +32,8 @@ import JobModalWrapper from './JobModalWrapper';
 import { addSelfToJobProviders } from '../src/api/jobs';
 import { useWebView } from '../context/webViewContext';
 import SubscriptionsModal from './SubscriptionsModal';
+import CommentsSection from './CommentsSection';
+import CompleteJobModal from './CompleteJobModal';
 
 const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
   if (Platform.OS === 'web') {
@@ -40,7 +42,33 @@ const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
   return RFValue(mobileSize);
 };
 
-export default function ShowJobModal({ closeModal, status, currentJobId }) {
+async function editJobById(jobId, updates, session) {
+  try {
+    const token = session?.token?.access_token;
+
+    const response = await fetch(`${session.serverURL}/jobs/${jobId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(updates),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Ошибка при обновлении заявки');
+    }
+
+    const updatedJob = await response.json();
+    return updatedJob;
+  } catch (error) {
+    console.error('Ошибка обновления job:', error.message);
+    throw error;
+  }
+}
+
+export default function ShowJobModal({ closeModal, status: initialStatus, currentJobId }) {
   // const router = useRouter();
   const {
     themeController,
@@ -55,6 +83,8 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
   const { openWebView } = useWebView();
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  const [status, setStatus] = useState(initialStatus || 'store-waiting');
 
   // размеры (только для веб-альбомной — иначе RFValue как было)
   const sizes = {
@@ -120,6 +150,9 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
       ? scaleByHeight(128, height)
       : RFValue(75),
     noPhotosMessageWidth: isWebLandscape ? scaleByHeight(685, height) : '100%',
+    commentFieldHeight: isWebLandscape
+      ? scaleByHeight(131, height)
+      : RFValue(70),
   };
 
   const [newJobModalVisible, setNewJobModalVisible] = useState(false);
@@ -129,6 +162,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
 
   const [showCancelRequestModal, setCancelRequestModal] = useState(false);
   const [showConfirmInterestModal, setConfirmInterestModal] = useState(false);
+  const [completeJobModalVisible, setCompleteJobModalVisible] = useState(false);
 
   const [showHistoryModal, setHistoryModal] = useState(false);
 
@@ -180,7 +214,9 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
   }, [currentJobId, session]);
 
   const [editableCommentState, setEditableCommentState] = useState(false);
-  const [editableCommentValue, setEditableCommentValue] = useState('');
+  const [editableCommentValue, setEditableCommentValue] = useState(
+    currentJobInfo?.doneComment || ''
+  );
 
   const handleAddingSelfToJobProviders = async () => {
     try {
@@ -388,40 +424,48 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
               />
             </View>
           </View>,
-          !currentJobInfo?.isClosed && (
-            <TouchableOpacity
-              key='confirmButton'
-              style={[
-                styles.createButton,
-                {
-                  backgroundColor:
-                    themeController.current?.buttonColorPrimaryDefault,
-                  borderRadius: sizes.borderRadius,
-                  ...(isWebLandscape && {
-                    paddingVertical: sizes.padding * 1.2,
+          !currentJobInfo?.isClosed &&
+            ((
+              <TouchableOpacity
+                key='confirmButton'
+                style={[
+                  styles.createButton,
+                  {
+                    backgroundColor:
+                      themeController.current?.buttonColorPrimaryDefault,
                     borderRadius: sizes.borderRadius,
-                  }),
-                },
-                isWebLandscape && {
-                  width: sizes.saveBtnWidth,
-                  height: sizes.saveBtnHeight,
-                },
-              ]}
-              onPress={() => jobsController.actions.confirmJob(currentJobId)}
-            >
-              <Text
-                style={{
-                  color: 'white',
-                  textAlign: 'center',
-                  ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
-                }}
+                    ...(isWebLandscape && {
+                      paddingVertical: sizes.padding * 1.2,
+                      borderRadius: sizes.borderRadius,
+                    }),
+                  },
+                  isWebLandscape && {
+                    width: sizes.saveBtnWidth,
+                    height: sizes.saveBtnHeight,
+                  },
+                ]}
+                onPress={() => jobsController.actions.confirmJob(currentJobId)}
               >
-                {t('showJob.buttons.confirmCompletion', {
-                  defaultValue: 'Confirm job completion',
-                })}
-              </Text>
-            </TouchableOpacity>
-          ),
+                <Text
+                  style={{
+                    color: 'white',
+                    textAlign: 'center',
+                    ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
+                  }}
+                >
+                  {t('showJob.buttons.confirmCompletion', {
+                    defaultValue: 'Confirm job completion',
+                  })}
+                </Text>
+              </TouchableOpacity>
+            ),
+            (
+              <CommentsSection
+                userId={currentJobInfo?.executor}
+                allowAdd={true}
+                allowAddOnly={true}
+              />
+            )),
         ];
       case 'jobs-new':
         return [
@@ -628,11 +672,7 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 height: sizes.saveBtnHeight,
               },
             ]}
-            onPress={() =>
-              jobsController.actions
-                .markJobDone(currentJobId)
-                .then(closeModal())
-            }
+            onPress={() => setCompleteJobModalVisible(true)}
           >
             <Text
               style={{
@@ -721,7 +761,13 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                     <TouchableOpacity
                       onPress={() => {
                         setEditableCommentState(false);
+                        const jobChanges = {
+                          doneComment: editableCommentValue,
+                        };
                         // currentJobInfo.doneComment = editableCommentValue;
+                        editJobById(currentJobId, jobChanges, session).then(
+                          () => jobsController.reloadCreator()
+                        );
                       }}
                     >
                       <MaterialIcons
@@ -744,7 +790,11 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 )}
               </View>
               <TextInput
-                value={editableCommentValue}
+                value={
+                  editableCommentState
+                    ? editableCommentValue
+                    : currentJobInfo?.doneComment
+                }
                 placeholder={t('showJob.fields.myCommentsPlaceholder', {
                   defaultValue: 'Write a comment on the completed work...',
                 })}
@@ -754,11 +804,11 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
                 style={[
                   styles.input,
                   {
-                    height: RFValue(70),
+                    height: sizes.commentFieldHeight,
                     color: themeController.current?.textColor,
                     fontSize: sizes.inputFont,
                   },
-                  isWebLandscape && { height: '100%', padding: 0 },
+                  isWebLandscape && { padding: 0 },
                   isRTL && { textAlign: 'right' },
                 ]}
                 onChangeText={setEditableCommentValue}
@@ -1996,6 +2046,24 @@ export default function ShowJobModal({ closeModal, status, currentJobId }) {
         closeModal={() => {
           setPlansModalVisible(false);
           if (subscription.current == null) setConfirmInterestModal(true);
+        }}
+      />
+      <CompleteJobModal
+        visible={completeJobModalVisible}
+        main={false}
+        closeModal={() => {
+          setCompleteJobModalVisible(false);
+        }}
+        completeFunc={(options) => {
+          const jobChanges = {
+            doneComment: options.description,
+          };
+          editJobById(currentJobId, jobChanges, session).then(() =>
+            jobsController.reloadCreator()
+          );
+          jobsController.actions
+            .markJobDone(currentJobId, options)
+            .then(closeModal());
         }}
       />
     </KeyboardAvoidingView>

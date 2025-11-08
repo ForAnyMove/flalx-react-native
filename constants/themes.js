@@ -34,7 +34,7 @@ export const LIGHT_THEME = {
   borderColor: '#E0E0E0',
   profileDefaultBackground: '#DAE2FF',
   selectedItemBackground: '#cdd7ff',
-  breakLineColor: '#0A62EA80',
+  breakLineColor: '#DAE2FF',
   textColorSecondary: '#885588',
   switchTrackColor: '#DFDFFF',
   switchThumbColor: '#FE8A01',

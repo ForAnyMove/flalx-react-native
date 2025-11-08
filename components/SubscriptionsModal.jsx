@@ -298,6 +298,7 @@ function SubscriptionsModalContent({ closeModal }) {
                       themeController.current?.formInputBackground,
                     boxSizing: 'border-box',
                     alignItems: isRTL ? 'flex-end' : 'flex-start',
+                    justifyContent: 'space-between'
                   },
                   value.id === 'pro' && {
                     borderColor:

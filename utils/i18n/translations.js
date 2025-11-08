@@ -47,7 +47,8 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         profile_avatar_recommended: `We recommend putting a clear profile picture of you smiling to increase the number of leads you receive.`,
         job_types_title: 'What types of jobs are you looking for?',
         job_types_subtitle: 'You can choose more than one.',
-        license_types_title: 'What types of license jobs would you like to get?',
+        license_types_title:
+          'What types of license jobs would you like to get?',
         license_types_subtitle: 'You can choose more than one.',
         qualification_label: 'License level',
         experience_label: 'Practical experience in the field',
@@ -85,8 +86,10 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         invalid_code: 'Invalid code',
         email_description:
           'Search for already sent me a verification code.\nYou agree to the terms of use and privacy.',
-        sent_code_timer_standard_text: 'Code sent. Check your email {{count}} sec...',
-        sent_code_timer_error_text: 'Can\'t send code. Try again in {{count}} sec.',
+        sent_code_timer_standard_text:
+          'Code sent. Check your email {{count}} sec...',
+        sent_code_timer_error_text:
+          "Can't send code. Try again in {{count}} sec.",
         sent_code_timer_ready_text: 'Code still not received? Resend',
         resent_code_text: 'Sent code again',
         sending: 'Sending...',
@@ -206,7 +209,7 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         all: 'All',
         positive: 'Positive',
         negative: 'Negative',
-        add: 'Add comment',
+        add: 'Rate',
         placeholder: 'Write your comment...',
         submit: 'Submit',
       },
@@ -277,14 +280,18 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         },
         messages: {
           subscriptionAlreadyExist: '### Subscription already exists.',
-          pendingJob: '### You have a pending job. Please complete it before creating a new one.',
+          pendingJob:
+            '### You have a pending job. Please complete it before creating a new one.',
           paymentURL: 'Payment URL: [{{url}}]({{url}})',
-          cancelPendingJob: '_You can cancel the pending job from the payment page._',
+          cancelPendingJob:
+            '_You can cancel the pending job from the payment page._',
           moveToPayment: 'Move to Payment',
-          downgradeSubscription: 'You are about to downgrade your subscription.\n\nAre you sure?',
+          downgradeSubscription:
+            'You are about to downgrade your subscription.\n\nAre you sure?',
           downgradeSuccess: '### Subscription successfully downgraded',
-          upgradeSubscriptionText: 'You are about to upgrade your subscription.\n\nAfter accepting the agreement you will be requested to pay difference between your current plan and the new plan to change it immediately.\n\nAre you sure?',
-        }
+          upgradeSubscriptionText:
+            'You are about to upgrade your subscription.\n\nAfter accepting the agreement you will be requested to pay difference between your current plan and the new plan to change it immediately.\n\nAre you sure?',
+        },
       },
       showJob: {
         fields: {
@@ -309,6 +316,7 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
           cancelRequest: 'Deny request',
           interested: 'I am interested in the job',
           markCompleted: 'Mark as completed',
+          complete: 'Complete',
           buy099: 'Buy for 0.99$',
           getSubscription: 'Get a subscription',
         },
@@ -321,6 +329,10 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         },
         paywall: {
           notice: 'To continue this action, you need to pay or subscribe',
+        },
+        completeModal: {
+          title: 'Closure of request',
+          sub_title: 'To close the request, upload the work you have done.',
         },
       },
     },
@@ -411,7 +423,8 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
           'חפש כבר שלח לי קוד אימות.\nאתה מסכים לתנאי השימוש והפרטיות.',
         sent_code_timer_standard_text:
           'הקוד נשלח. בדוק את האימייל שלך בעוד {{count}} שניות...',
-        sent_code_timer_error_text: 'לא ניתן לשלוח קוד. נסה שוב בעוד {{count}} שניות.',
+        sent_code_timer_error_text:
+          'לא ניתן לשלוח קוד. נסה שוב בעוד {{count}} שניות.',
         sent_code_timer_ready_text: 'הקוד עדיין לא התקבל? שלח שוב',
         resent_code_text: 'שלח קוד שוב',
         sending: 'שולח...',
@@ -533,7 +546,7 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         all: 'הכל',
         positive: 'חיוביות',
         negative: 'שליליות',
-        add: 'הוסף תגובה',
+        add: 'דרג',
         placeholder: 'כתוב את התגובה שלך...',
         submit: 'שלח',
       },
@@ -604,11 +617,13 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         },
         messages: {
           subscriptionAlreadyExist: '### מנוי כבר קיים.',
-          pendingJob: '### יש לך משימה ממתינה. אנא השלם אותה לפני יצירת משימה חדשה.',
+          pendingJob:
+            '### יש לך משימה ממתינה. אנא השלם אותה לפני יצירת משימה חדשה.',
           paymentURL: 'כתובת תשלום: [{{url}}]({{url}})',
           cancelPendingJob: '_באפשרותך לבטל את המשימה הממתינה מדף התשלום._',
           moveToPayment: 'עבור לתשלום',
-          downgradeSubscription: 'אתה עומד להוריד את רמת המנוי שלך.\n\nהאם אתה בטוח?',
+          downgradeSubscription:
+            'אתה עומד להוריד את רמת המנוי שלך.\n\nהאם אתה בטוח?',
           downgradeSuccess: '### המנוי הורד בהצלחה',
           upgradeSubscriptionText:
             'אתה עומד לשדרג את המנוי שלך.\n\nלאחר אישור ההסכם תתבקש לשלם את ההפרש בין התוכנית הנוכחית שלך לתוכנית החדשה כדי לשנות אותה מיד.\n\nהאם אתה בטוח?',
@@ -637,6 +652,7 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
           cancelRequest: 'דחה בקשה',
           interested: 'אני מעוניין/ת בעבודה',
           markCompleted: 'סמן כהושלם',
+          complete: 'השלם',
           buy099: 'קנה ב־0.99$',
           getSubscription: 'קבל/י מנוי',
         },
@@ -649,6 +665,10 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         },
         paywall: {
           notice: 'כדי להמשיך, יש לשלם או להירשם כמנוי',
+        },
+        completeModal: {
+          title: 'סגירת הבקשה',
+          sub_title: 'כדי לסגור את הבקשה, העלה את העבודה שביצעת.',
         },
       },
     },

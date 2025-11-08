@@ -160,10 +160,11 @@ export default function jobsManager({ session, user }) {
     await reloadAll();
   }
 
-  async function markJobDone(jobId) {
+  async function markJobDone(jobId, options) {
     await safeFetch(`${serverURL}/jobs/${jobId}/done`, {
       method: "PATCH",
       headers: authHeaders,
+      body: options,
     });
     await reloadAll();
   }
