@@ -106,6 +106,7 @@ export default function jobsManager({ session, user }) {
       setCreatorInProgress(inProgress);
       setCreatorDone(done);
       setProducts(products);
+
     } catch (e) {
       if (!alive.current) return;
       setError(e.message || "Creator lists load error");

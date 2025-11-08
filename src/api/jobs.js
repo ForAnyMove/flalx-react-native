@@ -203,4 +203,57 @@ async function isProviderInJob(jobId, session) {
     }
 }
 
-export { createJob, checkHasPendingJob, getJobProducts, addSelfToJobProviders, removeSelfFromJobProviders, isProviderInJob };
+async function completeJob(jobId, options, session) {
+    try {
+        const token = session?.token?.access_token;
+        const url = session?.serverURL || 'http://localhost:3000';
+
+        if (!token) {
+            throw new Error('No valid session token found');
+        }
+
+        if (!url) {
+            throw new Error('No valid server URL found in session');
+        }
+
+        const headers = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+        };
+
+        const response = await axios.patch(`${url}/jobs/${jobId}/done`, { images: options.images, comment: options.description }, { headers });
+
+        return response.data;
+    } catch (error) {
+        console.error('Error completing job:', error);
+        throw error;
+    }
+}
+
+async function updateJobComment(jobId, comment, session) {
+    try {
+        const token = session?.token?.access_token;
+        const url = session?.serverURL || 'http://localhost:3000';
+
+        if (!token) {
+            throw new Error('No valid session token found');
+        }
+
+        if (!url) {
+            throw new Error('No valid server URL found in session');
+        }
+
+        const headers = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+        };
+
+        const response = await axios.patch(`${url}/jobs/${jobId}/job-comment`, { comment }, { headers });
+        return response.data;
+    } catch (error) {
+        console.error('Error updating job comment:', error);
+        throw error;
+    }
+}
+
+export { createJob, checkHasPendingJob, getJobProducts, addSelfToJobProviders, removeSelfFromJobProviders, isProviderInJob, completeJob, updateJobComment };
