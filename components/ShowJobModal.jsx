@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -68,7 +68,11 @@ async function editJobById(jobId, updates, session) {
   }
 }
 
-export default function ShowJobModal({ closeModal, status: initialStatus, currentJobId }) {
+export default function ShowJobModal({
+  closeModal,
+  status: initialStatus,
+  currentJobId,
+}) {
   // const router = useRouter();
   const {
     themeController,
@@ -85,6 +89,76 @@ export default function ShowJobModal({ closeModal, status: initialStatus, curren
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const [status, setStatus] = useState(initialStatus || 'store-waiting');
+
+  const prevJobLocation = useRef(null);
+
+  useEffect(() => {
+    if (!currentJobId) return;
+
+    // Определяем, к какой группе относится заявка
+    const isCreator = status.startsWith('store');
+    const isExecutor = status.startsWith('jobs');
+
+    // Определяем, какие массивы отслеживать
+    const jobGroups = isCreator
+      ? {
+          waiting: jobsController.creator.waiting,
+          inProgress: jobsController.creator.inProgress,
+          done: jobsController.creator.done,
+        }
+      : {
+          new: jobsController.executor.new,
+          waiting: jobsController.executor.waiting,
+          inProgress: jobsController.executor.inProgress,
+          done: jobsController.executor.done,
+        };
+
+    // Поиск текущего местоположения заявки
+    let currentLocation = null;
+
+    for (const key of Object.keys(jobGroups)) {
+      const found = jobGroups[key].find((j) => j.id === currentJobId);
+      if (found) {
+        currentLocation = key;
+        break;
+      }
+    }
+
+    // Проверка изменения положения
+    if (currentLocation) {
+      const prev = prevJobLocation.current;
+      if (prev && prev !== currentLocation) {
+        const fromStatus = `${isCreator ? 'store' : 'jobs'}-${prev}`;
+        const toStatus = `${isCreator ? 'store' : 'jobs'}-${currentLocation}`;
+        console.log(
+          `Заявка ${currentJobId} переместилась: ${fromStatus} → ${toStatus}`
+        );
+        setStatus(toStatus);
+      }
+
+      prevJobLocation.current = currentLocation;
+    } else {
+      // если заявка пропала из списка (например, удалена)
+      if (prevJobLocation.current) {
+        console.log(`Заявка ${currentJobId} больше не найдена`);
+        prevJobLocation.current = null;
+      }
+    }
+  }, [
+    status,
+    ...(status.startsWith('store')
+      ? [
+          jobsController.creator.waiting,
+          jobsController.creator.inProgress,
+          jobsController.creator.done,
+        ]
+      : [
+          jobsController.executor.new,
+          jobsController.executor.waiting,
+          jobsController.executor.inProgress,
+          jobsController.executor.done,
+        ]),
+  ]);
 
   // размеры (только для веб-альбомной — иначе RFValue как было)
   const sizes = {
