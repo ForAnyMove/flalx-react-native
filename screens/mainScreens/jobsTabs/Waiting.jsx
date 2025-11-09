@@ -91,7 +91,6 @@ export default function WaitingScreen({
         >
           {filteredJobsList.map((job, index) => {
             const hasImage = job.images && job.images.length > 0;
-            console.log(job);
             
             return (
               <TouchableOpacity

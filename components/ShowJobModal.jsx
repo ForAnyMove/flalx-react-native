@@ -103,13 +103,13 @@ export default function ShowJobModal({
     const jobGroups = isCreator
       ? {
         waiting: jobsController.creator.waiting,
-        inProgress: jobsController.creator.inProgress,
+        'in-progress': jobsController.creator.inProgress,
         done: jobsController.creator.done,
       }
       : {
         new: jobsController.executor.new,
         waiting: jobsController.executor.waiting,
-        inProgress: jobsController.executor.inProgress,
+        'in-progress': jobsController.executor.inProgress,
         done: jobsController.executor.done,
       };
 
@@ -263,7 +263,6 @@ export default function ShowJobModal({
           currentJobId,
           session
         );
-        console.log(job);
 
         if (cancelled) return;
         setCurrentJobInfo(job);

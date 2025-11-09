@@ -115,7 +115,6 @@ export default function NewScreen({
               let isMarkerExist = false;
               let extraMarkerColor;
               let extraMarkerText;
-              console.log(job?.jobType, t(`jobTypes.${job.type}`));
               
               if (job?.jobType) {
                 switch (job.jobType) {

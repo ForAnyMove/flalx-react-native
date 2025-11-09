@@ -22,7 +22,6 @@ export default function CommentsSection({
   userId,
   allowAdd = false,
   allowAddOnly = false,
-  markAsRated,
 }) {
   const { height, isLandscape } = useWindowInfo();
   const { themeController, providersController, languageController } =
@@ -111,9 +110,6 @@ export default function CommentsSection({
       setNewText('');
       setRating(1);
       setAddModal(false);
-      // markAsRated?.()
-      console.log('comment sent');
-      
     }
   };
 
