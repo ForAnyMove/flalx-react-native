@@ -46,7 +46,7 @@ export default function providersManager({ session }) {
       try {
         const body = await res.json();
         msg = body?.error || msg;
-      } catch {}
+      } catch { }
       throw new Error(msg);
     }
     return res.json();
@@ -102,13 +102,13 @@ export default function providersManager({ session }) {
   }
 
   // добавить комментарий
-  async function setComment(userId, { text, status }) {
-    if (!userId || !text || !status) return null;
+  async function setComment(userId, { text, rating, jobId }) {
+    if (!userId || !text || !rating || !jobId) return null;
 
     const res = await safeFetch(`${serverURL}/users/${userId}/comments`, {
       method: "POST",
       headers: { ...authHeaders, "Content-Type": "application/json" },
-      body: JSON.stringify({ text, status }),
+      body: JSON.stringify({ text, rating, jobId }),
     });
 
     // обновим кэш

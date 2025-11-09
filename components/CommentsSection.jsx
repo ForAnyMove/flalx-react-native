@@ -18,6 +18,7 @@ import { icons } from '../constants/icons';
 import { scaleByHeight } from '../utils/resizeFuncs';
 
 export default function CommentsSection({
+  jobId,
   userId,
   allowAdd = false,
   allowAddOnly = false,
@@ -33,7 +34,7 @@ export default function CommentsSection({
   const [activeTab, setActiveTab] = useState('all'); // all | positive | negative
   const [addModal, setAddModal] = useState(false);
   const [newText, setNewText] = useState('');
-  const [newStatus, setNewStatus] = useState('positive'); // positive | negative
+  const [rating, setRating] = useState(1); // 1 - positive, -1 - negative
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const sizes = {
@@ -83,31 +84,32 @@ export default function CommentsSection({
     }
   }, [userId]);
 
-  const positiveCount = comments.filter((c) => c.status === 'positive').length;
-  const negativeCount = comments.filter((c) => c.status === 'negative').length;
+  const positiveCount = comments.filter((c) => c.rating > 0).length;
+  const negativeCount = comments.filter((c) => c.rating < 0).length;
+
   const ratio = comments.length
     ? Math.round((positiveCount / comments.length) * 100)
     : 0;
 
   const filtered = comments.filter((c) => {
-    if (activeTab === 'positive') return c.status === 'positive';
-    if (activeTab === 'negative') return c.status === 'negative';
+    if (activeTab === 'positive') return c.rating > 0;
+    if (activeTab === 'negative') return c.rating < 0;
     return true;
   });
 
   const handleAdd = async () => {
     if (!newText.trim()) return;
-    console.log('comment - ', newStatus, newText.trim());
+    console.log('comment - ', rating, newText.trim());
 
     const res = await providersController.setComment(userId, {
       text: newText.trim(),
-      // status: newStatus,
-      rating: 1,
+      rating,
+      jobId
     });
     if (res) {
       setComments((prev) => [res, ...prev]);
       setNewText('');
-      setNewStatus('positive');
+      setRating(1);
       setAddModal(false);
       // markAsRated?.()
       console.log('comment sent');
@@ -193,7 +195,7 @@ export default function CommentsSection({
                 >
                   {t(`comments.${tab}`)}{' '}
                   {tab !== 'all' &&
-                    `(${comments.filter((c) => c.status === tab).length})`}
+                    `(${comments.filter((c) => tab === 'positive' ? c.rating > 0 : c.rating < 0).length})`}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -236,13 +238,13 @@ export default function CommentsSection({
                   </Text>
                   <Image
                     source={
-                      c.status === 'positive' ? icons.thumbUp : icons.thumbDown
+                      c.rating > 0 ? icons.thumbUp : icons.thumbDown
                     }
                     style={{
                       width: sizes.icon,
                       height: sizes.icon,
                       tintColor:
-                        newStatus === 'positive'
+                        rating > 0
                           ? themeController?.current.primaryColor
                           : themeController?.current.errorTextColor,
                     }}
@@ -326,14 +328,13 @@ export default function CommentsSection({
             </TouchableOpacity>
             <View style={[styles.statusRow, { gap: sizes.modalIconsGap }]}>
               <TouchableOpacity
-                onPress={() => setNewStatus('positive')}
+                onPress={() => setRating(1)}
                 style={{
                   borderRadius: sizes.icon + sizes.modalIconPadding,
                   borderWidth: 1,
-                  borderColor:
-                    newStatus === 'positive'
-                      ? themeController?.current.primaryColor
-                      : themeController?.current.unactiveTextColor,
+                  borderColor: rating > 0
+                    ? themeController?.current.primaryColor
+                    : themeController?.current.unactiveTextColor,
                   padding: sizes.modalIconPadding,
                 }}
               >
@@ -342,22 +343,20 @@ export default function CommentsSection({
                   style={{
                     width: sizes.icon * 1.5,
                     height: sizes.icon * 1.5,
-                    tintColor:
-                      newStatus === 'positive'
-                        ? themeController?.current.primaryColor
-                        : themeController?.current.unactiveTextColor,
+                    tintColor: rating > 0
+                      ? themeController?.current.primaryColor
+                      : themeController?.current.unactiveTextColor,
                   }}
                 />
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => setNewStatus('negative')}
+                onPress={() => setRating(-1)}
                 style={{
                   borderRadius: sizes.icon + sizes.modalIconPadding,
                   borderWidth: 1,
-                  borderColor:
-                    newStatus === 'negative'
-                      ? themeController?.current.errorTextColor
-                      : themeController?.current.unactiveTextColor,
+                  borderColor: rating < 0
+                    ? themeController?.current.errorTextColor
+                    : themeController?.current.unactiveTextColor,
                   padding: sizes.modalIconPadding,
                 }}
               >
@@ -366,10 +365,9 @@ export default function CommentsSection({
                   style={{
                     width: sizes.icon * 1.5,
                     height: sizes.icon * 1.5,
-                    tintColor:
-                      newStatus === 'negative'
-                        ? themeController?.current.errorTextColor
-                        : themeController?.current.unactiveTextColor,
+                    tintColor: rating < 0
+                      ? themeController?.current.errorTextColor
+                      : themeController?.current.unactiveTextColor,
                   }}
                 />
               </TouchableOpacity>

@@ -71,4 +71,41 @@ async function revealUser(userId, session) {
     }
 }
 
-export { getRevealedUsers, revealUser };
+async function addCommentToUserByJob(userId, jobId, comment, rating, session) {
+    try {
+        const token = session?.token?.access_token;
+        const url = session?.serverURL || 'http://localhost:3000';
+
+        if (!token) {
+            throw new Error('No valid session token found');
+        }
+
+        if (!url) {
+            throw new Error('No valid server URL found in session');
+        }
+
+        const headers = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+        };
+
+        const body = {
+            jobId,
+            text: comment,
+            rating
+        };
+
+        const response = await axios.post(`${url}/users/${userId}/comments`, body, { headers });
+
+        if (response.status === 200) {
+            return response.data.comment;
+        } else {
+            throw new Error('Failed to add comment to user');
+        }
+    } catch (error) {
+        console.error('Error adding comment to user:', error);
+        throw error;
+    }
+}
+
+export { getRevealedUsers, revealUser, addCommentToUserByJob };
