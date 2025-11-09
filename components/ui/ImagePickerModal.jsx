@@ -11,6 +11,7 @@ import {
 import { scaleByHeight } from '../../utils/resizeFuncs';
 import { useWindowInfo } from '../../context/windowContext';
 import { RFValue } from 'react-native-responsive-fontsize';
+import { normalizeImageUri } from '../../utils/supabase/uriHelpers';
 
 export default function ImagePickerModal({ visible, onClose, onAdd }) {
   const [url, setUrl] = useState('');
@@ -21,10 +22,23 @@ export default function ImagePickerModal({ visible, onClose, onAdd }) {
   const pickImageFromDevice = async () => {
     try {
       ImagePicker.getMediaLibraryPermissionsAsync();
-      const result = await ImagePicker.launchImageLibraryAsync({});
+      const result = await ImagePicker.launchImageLibraryAsync({
+        base64: null,
+        quality: 1,
+      });
+
+      console.log('Added image object: ', result);
 
       if (!result.canceled) {
-        onAdd(result.assets.map((asset) => asset.uri));
+        const normalized = await Promise.all(
+          result.assets.map(async (asset) => {
+            const n = await normalizeImageUri(asset.uri);
+            return n; // объект { uri } для mobile или { blob, ext } для web
+          })
+        );
+        console.log(normalized);
+
+        onAdd(normalized);
         onClose();
       }
     } catch (error) {
@@ -43,7 +57,10 @@ export default function ImagePickerModal({ visible, onClose, onAdd }) {
         return;
       }
       // Открытие камеры
-      const result = await ImagePicker.launchCameraAsync({});
+      const result = await ImagePicker.launchCameraAsync({
+        base64: null,
+        quality: 1,
+      });
 
       // Обработка результата
       if (!result.canceled) {
