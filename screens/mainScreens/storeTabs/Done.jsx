@@ -44,12 +44,22 @@ export default function DoneScreen({
     badgeSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(16),
     badgeFont: isWebLandscape ? scaleByHeight(12, height) : RFValue(10),
     scrollContainerWidth: isWebLandscape ? '60%' : '100%',
+    badgePosition: isWebLandscape ? height * 0.005 : RFValue(5),
+    personalMarkerBorderWidth: isWebLandscape ? height * 0.003 : RFValue(2),
+    personalMarkerVP: isWebLandscape ? height * 0.003 : RFValue(2),
+    personalMarkerHP: isWebLandscape ? height * 0.012 : RFValue(6),
+    personalMarkerBottomAngleRadius: isWebLandscape
+      ? height * 0.01
+      : RFValue(8),
+    personalMarkerFontSize: isWebLandscape ? height * 0.015 : RFValue(10),
+    containerMarginTop: isWebLandscape
+      ? scaleByHeight(24, height)
+      : RFValue(14),
   };
 
   const filteredJobsList = jobsController.creator.done.filter((job) =>
     filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
   );
-
 
   return (
     <View
@@ -86,6 +96,20 @@ export default function DoneScreen({
         >
           {filteredJobsList.map((job, index) => {
             const hasImage = job.images && job.images.length > 0;
+
+            let extraMarkerStyle = {};
+            let isMarkerExist = false;
+            let extraMarkerColor;
+            let extraMarkerText;
+            if (!job.isRated) {
+              isMarkerExist = true;
+              extraMarkerColor = themeController.current?.personalMarkerColor;
+              extraMarkerText = 'Rate me';
+              extraMarkerStyle = {
+                borderWidth: sizes.personalMarkerBorderWidth,
+                borderColor: themeController.current?.personalMarkerColor,
+              };
+            }
             return (
               <TouchableOpacity
                 key={index}
@@ -104,6 +128,7 @@ export default function DoneScreen({
                         themeController.current?.formInputBackground,
                       borderRadius: sizes.cardRadius,
                     },
+                    extraMarkerStyle,
                   ]}
                 >
                   <View
@@ -116,22 +141,22 @@ export default function DoneScreen({
                           themeController.current?.defaultBlocksMockBackground,
                         ...(isRTL
                           ? {
-                            marginLeft: RFValue(10),
-                            marginRight: 0,
-                          }
+                              marginLeft: RFValue(10),
+                              marginRight: 0,
+                            }
                           : {
-                            marginRight: RFValue(10),
-                            marginLeft: 0,
-                          }),
+                              marginRight: RFValue(10),
+                              marginLeft: 0,
+                            }),
                         ...(isRTL && Platform.OS === 'web'
                           ? {
-                            borderTopRightRadius: sizes.cardRadius,
-                            borderBottomRightRadius: sizes.cardRadius,
-                          }
+                              borderTopRightRadius: sizes.cardRadius,
+                              borderBottomRightRadius: sizes.cardRadius,
+                            }
                           : {
-                            borderTopLeftRadius: sizes.cardRadius,
-                            borderBottomLeftRadius: sizes.cardRadius,
-                          }),
+                              borderTopLeftRadius: sizes.cardRadius,
+                              borderBottomLeftRadius: sizes.cardRadius,
+                            }),
                       },
                     ]}
                   >
@@ -181,6 +206,45 @@ export default function DoneScreen({
                       </Text>
                     ) : null}
                   </View>
+                  {!job?.isRated && (
+                    <View
+                      style={[
+                        styles.specialMarkerContainer,
+                        {
+                          backgroundColor: extraMarkerColor,
+                          paddingVertical: sizes.personalMarkerVP,
+                          paddingHorizontal: sizes.personalMarkerHP,
+                        },
+                        isRTL
+                          ? {
+                              left: 0,
+                              borderBottomRightRadius: isWebLandscape
+                                ? sizes.personalMarkerBottomAngleRadius
+                                : 0,
+                              borderBottomLeftRadius: isWebLandscape
+                                ? 0
+                                : sizes.personalMarkerBottomAngleRadius,
+                            }
+                          : {
+                              right: 0,
+                              borderBottomLeftRadius:
+                                sizes.personalMarkerBottomAngleRadius,
+                            },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          {
+                            color: '#fff',
+                            // fontWeight: 'bold',
+                            fontSize: sizes.personalMarkerFontSize,
+                          },
+                        ]}
+                      >
+                        {extraMarkerText}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </TouchableOpacity>
             );
@@ -242,5 +306,25 @@ const styles = {
   description: {
     fontSize: RFValue(10),
     marginTop: RFValue(2),
+  },
+  badge: {
+    position: 'absolute',
+    top: RFValue(5),
+    right: RFValue(5),
+    borderRadius: RFValue(999),
+    paddingHorizontal: RFValue(2),
+    paddingVertical: RFValue(2),
+    minWidth: RFValue(16),
+    height: RFValue(16),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    // fontWeight: 'bold',
+    fontSize: RFValue(10),
+  },
+  specialMarkerContainer: {
+    position: 'absolute',
+    top: 0,
   },
 };

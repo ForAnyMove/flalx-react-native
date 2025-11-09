@@ -533,11 +533,14 @@ export default function ShowJobModal({
                 </Text>
               </TouchableOpacity>
             ),
-            (
+            !currentJobInfo?.isRated && (
               <CommentsSection
                 userId={currentJobInfo?.executor}
                 allowAdd={true}
                 allowAddOnly={true}
+                markAsRated={() => {
+                  editJobById(currentJobId, { isRated: true }, session);
+                }}
               />
             )),
         ];

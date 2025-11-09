@@ -44,6 +44,9 @@ export const LIGHT_THEME = {
   topGradientEndColor: '#bff891',
   personalMarkerColor: '#C701FE',
   personalGradientEndColor: '#c629f2',
+  quickMarkerColor: '#42deedff',
+  forProMarkerColor: '#e25831ff',
+  rateMeMarkerColor: '#C701FE',
   errorTextColor: '#EF4F6B',
 };
 
@@ -93,5 +96,8 @@ export const DARK_THEME = {
   topGradientEndColor: '#bff891',
   personalMarkerColor: '#C701FE',
   personalGradientEndColor: '#c629f2',
+  quickMarkerColor: '#44d15f',
+  forProMarkerColor: '#44d15f',
+  rateMeMarkerColor: '#C701FE',
   errorTextColor: '#EF4F6B',
 };

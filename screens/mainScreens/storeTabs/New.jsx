@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import {
   Modal,
   Platform,
@@ -17,6 +17,7 @@ import { useWindowInfo } from '../../../context/windowContext';
 import { checkHasPendingJob } from '../../../src/api/jobs';
 import { useNotification } from '../../../src/render';
 import { useWebView } from '../../../context/webViewContext';
+import { useTranslation } from 'react-i18next';
 // import JobModalWrapper from '../../../components/JobModalWrapper';
 
 export default function NewScreen({
@@ -30,7 +31,7 @@ export default function NewScreen({
   const isRTL = languageController.isRTL;
   const { isLandscape } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
-  const { t } = useTransition();
+  const { t } = useTranslation();
 
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');
@@ -85,7 +86,7 @@ export default function NewScreen({
                         "",
                         t('subscriptions.messages.cancelPendingJob')
                       ].join('\n');
-
+                      
                       showWarning(message,
                         [
                           {

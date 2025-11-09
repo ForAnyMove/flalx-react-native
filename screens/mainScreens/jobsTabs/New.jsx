@@ -97,13 +97,26 @@ export default function NewScreen({
         >
           {filteredJobsList
             .slice()
-            .sort((a, b) => (a.jobType === 'top' ? -1 : b.jobType === 'top' ? 1 : 0))
+            .sort((a, b) => {
+              const priority = {
+                top: 1,
+                quick: 2,
+                pro: 3,
+              };
+
+              const aPriority = priority[a.jobType?.toLowerCase()] ?? 999;
+              const bPriority = priority[b.jobType?.toLowerCase()] ?? 999;
+
+              return aPriority - bPriority;
+            })
             .map((job, index) => {
               const hasImage = job.images && job.images.length > 0;
               let extraMarkerStyle = {};
               let isMarkerExist = false;
               let extraMarkerColor;
               let extraMarkerText;
+              console.log(job?.jobType, t(`jobTypes.${job.type}`));
+              
               if (job?.jobType) {
                 switch (job.jobType) {
                   case 'top':
@@ -123,6 +136,26 @@ export default function NewScreen({
                     extraMarkerStyle = {
                       borderWidth: sizes.personalMarkerBorderWidth,
                       borderColor: themeController.current?.verifiedMarkerColor,
+                    };
+                    break;
+                  case 'quick':
+                    isMarkerExist = true;
+                    extraMarkerColor =
+                      themeController.current?.quickMarkerColor;
+                    extraMarkerText = 'Quickly';
+                    extraMarkerStyle = {
+                      borderWidth: sizes.personalMarkerBorderWidth,
+                      borderColor: themeController.current?.quickMarkerColor,
+                    };
+                    break;
+                  case 'pro':
+                    isMarkerExist = true;
+                    extraMarkerColor =
+                      themeController.current?.forProMarkerColor;
+                    extraMarkerText = 'For PRO';
+                    extraMarkerStyle = {
+                      borderWidth: sizes.personalMarkerBorderWidth,
+                      borderColor: themeController.current?.forProMarkerColor,
                     };
                     break;
 

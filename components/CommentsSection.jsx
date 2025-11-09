@@ -21,6 +21,7 @@ export default function CommentsSection({
   userId,
   allowAdd = false,
   allowAddOnly = false,
+  markAsRated,
 }) {
   const { height, isLandscape } = useWindowInfo();
   const { themeController, providersController, languageController } =
@@ -33,7 +34,6 @@ export default function CommentsSection({
   const [addModal, setAddModal] = useState(false);
   const [newText, setNewText] = useState('');
   const [newStatus, setNewStatus] = useState('positive'); // positive | negative
-  console.log('user id - ', userId);
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const sizes = {
@@ -101,13 +101,17 @@ export default function CommentsSection({
 
     const res = await providersController.setComment(userId, {
       text: newText.trim(),
-      status: newStatus,
+      // status: newStatus,
+      rating: 1,
     });
     if (res) {
       setComments((prev) => [res, ...prev]);
       setNewText('');
       setNewStatus('positive');
       setAddModal(false);
+      // markAsRated?.()
+      console.log('comment sent');
+      
     }
   };
 
