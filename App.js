@@ -22,6 +22,9 @@ import { WebViewProvider } from './context/webViewContext';
 import { GlobalWebScreen } from './screens/GlobalWebScreen';
 import { WebSocketProvider } from './context/webSocketContext';
 import { GlobalNotificationHandler, NotificationProvider } from './src/render';
+import AuthScreenWithPass from './screens/AuthScreenWithPass';
+import RegisterScreenWithPass from './screens/RegisterScreenWithPass';
+import LoadingStub from './screens/LoaderScreen';
 
 // --- Глобальное применение шрифта ---
 const originalTextRender = Text.render;
@@ -51,8 +54,15 @@ export default function AppWrapper() {
 }
 
 function App() {
-  const { session, user, themeController, languageController } =
-    useComponentContext();
+  const {
+    session,
+    user,
+    themeController,
+    languageController,
+    isLoader,
+    registerControl,
+    authControl,
+  } = useComponentContext();
   const [isOnboardingShowed, setOnboardingShowed] = useState(false);
   const [onboardingStatusChecked, setOnboardingStatusChecked] = useState(false);
 
@@ -117,10 +127,11 @@ function App() {
       <SafeAreaProvider>
         <SafeAreaView style={styles.container}>
           <View style={styles.loader}>
-            <ActivityIndicator
+            {/* <ActivityIndicator
               size='large'
               color={themeController?.current?.primaryColor || 'blue'}
-            />
+            /> */}
+            <LoadingStub />
           </View>
         </SafeAreaView>
       </SafeAreaProvider>
@@ -143,7 +154,6 @@ function App() {
   };
 
   let content;
-  // console.log('!isOnboardingShowed - ', !isOnboardingShowed, '!session.status - ', !session.status, 'user?.current?.firstauth - ', user?.current?.firstauth);
 
   // 1. Онбординг
   if (!isOnboardingShowed) {
@@ -151,7 +161,12 @@ function App() {
   }
   // 2. Авторизация
   else if (!session.status) {
-    content = <AuthScreen />;
+  // Авторизация с OTP
+    if (authControl.state) {
+      content = <AuthScreen />;
+    } else {
+      content = <AuthScreenWithPass />;
+    }
   }
   // 3. Регистрация первого входа
   else if (user?.current?.firstauth) {
@@ -159,17 +174,22 @@ function App() {
   }
   // 4. Основное приложение
   else {
-    content =
-      (<WebSocketProvider>
+    content = (
+      <WebSocketProvider>
         <AppScreen />
-      </WebSocketProvider>);
+      </WebSocketProvider>
+    );
   }
 
+  // Регистрация перед входом
+  if (registerControl.state) {
+    content = <RegisterScreenWithPass />;
+  }
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
         <WebViewProvider>
-          {content}
+          {isLoader ? <LoadingStub /> : content}
           <GlobalWebScreen />
           <StatusBar style='auto' />
         </WebViewProvider>

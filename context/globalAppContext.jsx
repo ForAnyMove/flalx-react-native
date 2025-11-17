@@ -11,6 +11,7 @@ import jobsManager from '../managers/jobsManager';
 import providersManager from '../managers/providersManager';
 import { View, ActivityIndicator } from 'react-native';
 import { getSubscriptionPlans } from '../src/api/subscriptions';
+import authTabsManager from '../managers/authTabsManager';
 
 const ComponentContext = createContext();
 
@@ -36,10 +37,12 @@ const profileTabsList = ['profile', 'professions', 'settings'];
 
 export const ComponentProvider = ({ children }) => {
   const themeController = themeManager();
-  const { session, user, subscription, usersReveal } = sessionManager();
+  const { session, user, subscription, usersReveal, isLoader } = sessionManager();
   const languageController = languageManager();
   const appTabController = tabsManager({ name: 'app', defaultTab: appTabsList[0], list: appTabsList });
   const profileTabController = tabsManager({ name: 'profile', defaultTab: profileTabsList[0], list: profileTabsList });
+
+  const { registerControl, authControl } = authTabsManager();
 
   const jobsController = jobsManager({ session, user });
   const providersController = providersManager({ session });
@@ -85,7 +88,10 @@ export const ComponentProvider = ({ children }) => {
         jobsController,
         providersController,
         setAppLoading,
-        subscriptionPlans
+        subscriptionPlans,
+        isLoader,
+        registerControl,
+        authControl,
       }}
     >
       {children}

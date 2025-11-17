@@ -201,14 +201,14 @@ export default function ShowJobModal({
     doubleBtnLineModalHeight: isWebLandscape
       ? scaleByHeight(306, height)
       : RFValue(40),
-    modalFont: isWebLandscape ? scaleByHeight(24, height) : baseFont,
+    modalFont: isWebLandscape ? scaleByHeight(24, height) : RFValue(14),
     modalTextMarginBottom: isWebLandscape
       ? scaleByHeight(32, height)
       : RFValue(12),
     modalBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(50),
     modalBtnWidth: isWebLandscape ? scaleByHeight(153, height) : '40%',
     modalLongBtnWidth: isWebLandscape ? scaleByHeight(300, height) : '80%',
-    modalBtnFont: isWebLandscape ? scaleByHeight(20, height) : baseFont,
+    modalBtnFont: isWebLandscape ? scaleByHeight(20, height) : RFValue(14),
     modalBtnBorderRadius: isWebLandscape
       ? scaleByHeight(8, height)
       : RFValue(6),

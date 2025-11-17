@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
-import { Platform } from "react-native";
+import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 
 const subTabsList = ['new', 'waiting', 'in-progress', 'done'];
 
 export default function tabsManager({ name, defaultTab, list }) {
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [activeSubTab, setActiveSubTab] = useState(subTabsList[0]);
+  const [isRegisterNewUser, setRegisterNewUser] = useState(false);
+  const [isOTPAuth, setOTPAuth] = useState(false);
 
   // Загружаем сохранённое состояние (только web)
   useEffect(() => {
@@ -16,7 +18,11 @@ export default function tabsManager({ name, defaultTab, list }) {
         if (parsed.activeTab && list.includes(parsed.activeTab)) {
           setActiveTab(parsed.activeTab);
         }
-        if (name === 'app' && parsed.activeSubTab && subTabsList.includes(parsed.activeSubTab)) {
+        if (
+          name === 'app' &&
+          parsed.activeSubTab &&
+          subTabsList.includes(parsed.activeSubTab)
+        ) {
           setActiveSubTab(parsed.activeSubTab);
         }
       }
@@ -30,17 +36,29 @@ export default function tabsManager({ name, defaultTab, list }) {
       if (name === 'app' && activeTab !== 'providers') {
         payload.activeSubTab = activeSubTab;
       }
-      localStorage.setItem(`tabs-${name}`, JSON.stringify(payload));
+      if (name !== 'profile') {
+        localStorage.setItem(`tabs-${name}`, JSON.stringify(payload));
+      }
     }
   }, [activeTab, activeSubTab]);
 
   return {
     active: activeTab,
     list,
-    activeSubTab: name === 'app' && activeTab !== 'providers' ? activeSubTab : null,
+    activeSubTab:
+      name === 'app' && activeTab !== 'providers' ? activeSubTab : null,
     subList: name === 'app' && activeTab !== 'providers' ? subTabsList : null,
     goTo: (tabName) => setActiveTab(tabName),
     goToIndex: (index) => setActiveTab(list[index]),
     goToSub: (subTab) => setActiveSubTab(subTab),
+    registerControl: {
+      state: isRegisterNewUser,
+      goToRegisterScreen: () => setRegisterNewUser(true),
+      leaveRegisterScreen: () => setRegisterNewUser(false),
+    },
+    authControl: {
+      state: isOTPAuth,
+      switch: () => setOTPAuth((prev) => !prev),
+    },
   };
 }

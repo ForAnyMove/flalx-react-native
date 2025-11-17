@@ -30,6 +30,15 @@ export default function Profile() {
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
     () => {}
   );
+  const [changePasswordModal, showPasswordModal] = useState(false);
+
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [repeatPassword, setRepeatPassword] = useState('');
+
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
   const [pickerVisible, setPickerVisible] = useState(false);
   const { height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
@@ -78,13 +87,17 @@ export default function Profile() {
     modalBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(50),
     modalBtnWidth: isWebLandscape ? scaleByHeight(153, height) : '40%',
     modalBtnFont: isWebLandscape ? scaleByHeight(20, height) : baseFont,
-    modalBtnBorderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(6),
+    modalBtnBorderRadius: isWebLandscape
+      ? scaleByHeight(8, height)
+      : RFValue(6),
     modalBtnsGap: isWebLandscape ? scaleByHeight(24, height) : RFValue(12),
     modalPadding: isWebLandscape ? scaleByHeight(32, height) : RFValue(16),
     modalLineHeight: isWebLandscape ? scaleByHeight(32, height) : 1,
     modalCloseBtnTopRightPosition: isWebLandscape
       ? scaleByHeight(7, height)
       : RFValue(5),
+    iconSize: isWebLandscape ? scaleByHeight(22, height) : RFValue(20),
+    modalFieldMargin: isWebLandscape ? scaleByHeight(18, height) : fieldMargin,
   };
 
   // Функция загрузки и обновления аватара
@@ -131,9 +144,15 @@ export default function Profile() {
             {
               backgroundColor:
                 themeController.current?.profileDefaultBackground,
-              height: isWebLandscape ? scaleByHeight(250, height) : RFPercentage(30),
-              marginBottom: isWebLandscape ? scaleByHeight(15, height) : RFValue(12),
-              borderRadius: isWebLandscape ? scaleByHeight(10, height) : RFValue(10),
+              height: isWebLandscape
+                ? scaleByHeight(250, height)
+                : RFPercentage(30),
+              marginBottom: isWebLandscape
+                ? scaleByHeight(15, height)
+                : RFValue(12),
+              borderRadius: isWebLandscape
+                ? scaleByHeight(10, height)
+                : RFValue(10),
             },
           ]}
         >
@@ -218,6 +237,7 @@ export default function Profile() {
               iconSize={sizes.iconSize}
               isLandscape={isLandscape}
               multiline={f.multiline}
+              height={height}
             />
           ))}
         </View>
@@ -255,7 +275,9 @@ export default function Profile() {
                     : sizes.btnPadding,
                   marginBottom: sizes.btnMargin,
                   width: sizes.btnWidth,
-                  borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
+                  borderRadius: isWebLandscape
+                    ? scaleByHeight(8, height)
+                    : RFValue(5),
                 },
               ]}
               onPress={() => {
@@ -304,13 +326,20 @@ export default function Profile() {
         >
           {[
             {
-              key: 'change_password',
+              key: user.current?.is_password_exist
+                ? 'change_password'
+                : 'create_password',
               style: styles.primaryReverseBtn,
               textStyle: styles.primaryText,
               bg: themeController.current?.buttonTextColorPrimary,
               color: themeController.current?.buttonColorPrimaryDefault,
               border: themeController.current?.buttonColorPrimaryDefault,
-              onPress: () => {},
+              onPress: () => {
+                setOldPassword('');
+                setNewPassword('');
+                setRepeatPassword('');
+                showPasswordModal(true);
+              },
             },
             {
               key: 'logout',
@@ -355,7 +384,9 @@ export default function Profile() {
                     : sizes.btnPadding,
                   marginBottom: sizes.btnMargin,
                   width: sizes.btnWidth,
-                  borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
+                  borderRadius: isWebLandscape
+                    ? scaleByHeight(8, height)
+                    : RFValue(5),
                 },
               ]}
             >
@@ -394,7 +425,9 @@ export default function Profile() {
                   : sizes.btnPadding,
                 marginBottom: sizes.btnMargin,
                 width: sizes.btnWidth,
-                borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
+                borderRadius: isWebLandscape
+                  ? scaleByHeight(8, height)
+                  : RFValue(5),
               },
             ]}
             onPress={() => {
@@ -534,6 +567,325 @@ export default function Profile() {
         </View>
       </Modal>
 
+      {/* Modal смены пароля */}
+      <Modal visible={changePasswordModal} transparent animationType='fade'>
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalCard,
+              {
+                backgroundColor: themeController.current?.backgroundColor,
+                width: sizes.modalWidth,
+                padding: sizes.modalPadding,
+                borderRadius: sizes.modalBtnBorderRadius,
+              },
+              // isWebLandscape && { height: sizes.modalHeight },
+            ]}
+          >
+            <TouchableOpacity
+              style={[
+                {
+                  position: 'absolute',
+                  top: sizes.modalCloseBtnTopRightPosition,
+                  right: sizes.modalCloseBtnTopRightPosition,
+                },
+              ]}
+              onPress={() => showPasswordModal(false)}
+            >
+              <Image
+                source={icons.cross}
+                style={{
+                  width: sizes.iconSize,
+                  height: sizes.iconSize,
+                  tintColor: themeController.current?.textColor,
+                }}
+              />
+            </TouchableOpacity>
+            <Text
+              style={[
+                styles.modalText,
+                {
+                  fontSize: sizes.modalFont,
+                  marginBottom: sizes.modalTextMarginBottom,
+                  textAlign: 'center',
+                  color: themeController.current?.textColor,
+                  lineHeight: sizes.modalLineHeight,
+                },
+              ]}
+            >
+              {user.current?.is_password_exist
+                ? t('my_profile.change_password')
+                : t('my_profile.create_password')}
+            </Text>
+
+            {/* Поля ввода паролей */}
+            <View style={{ width: '100%', marginBottom: sizes.fieldMargin }}>
+              {/* Старый пароль — только если пароль уже существует */}
+              {user.current?.is_password_exist && (
+                <View
+                  style={[
+                    styles.profileInfoString,
+                    {
+                      backgroundColor:
+                        themeController.current?.formInputBackground,
+                      borderRadius: isWebLandscape
+                        ? scaleByHeight(8, height)
+                        : RFValue(5),
+                      paddingVertical: sizes.fieldPadding,
+                      paddingHorizontal: sizes.containerPaddingH,
+                      marginBottom: sizes.modalFieldMargin,
+                      position: 'relative',
+                    },
+                  ]}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={[
+                        styles.profileInfoLabel,
+                        {
+                          fontSize: sizes.fieldFont * 0.9,
+                          color: themeController.current?.formInputLabelColor,
+                        },
+                      ]}
+                    >
+                      {t('my_profile.old_password')}
+                    </Text>
+
+                    <TextInput
+                      secureTextEntry={!showOldPassword}
+                      value={oldPassword}
+                      onChangeText={setOldPassword}
+                      style={[
+                        styles.profileInfoText,
+                        {
+                          fontSize: sizes.fieldFont,
+                          color: themeController.current?.formInputTextColor,
+                        },
+                      ]}
+                    />
+                  </View>
+
+                  {/* ICON */}
+                  <TouchableOpacity
+                    onPress={() => setShowOldPassword((p) => !p)}
+                    style={{
+                      position: 'absolute',
+                      right: isRTL ? undefined : sizes.iconSize / 2,
+                      left: isRTL ? sizes.iconSize / 2 : undefined,
+                      top: '56%',
+                      transform: [{ translateY: -sizes.iconSize / 2 }],
+                    }}
+                  >
+                    <Image
+                      source={showOldPassword ? icons.eyeOpen : icons.eyeClosed}
+                      style={{
+                        width: sizes.iconSize,
+                        height: sizes.iconSize,
+                        tintColor: themeController.current?.formInputLabelColor,
+                      }}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Новый пароль */}
+              <View
+                style={[
+                  styles.profileInfoString,
+                  {
+                    backgroundColor:
+                      themeController.current?.formInputBackground,
+                    borderRadius: isWebLandscape
+                      ? scaleByHeight(8, height)
+                      : RFValue(5),
+                    paddingVertical: sizes.fieldPadding,
+                    paddingHorizontal: sizes.containerPaddingH,
+                    marginBottom: sizes.modalFieldMargin,
+                    position: 'relative',
+                  },
+                ]}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={[
+                      styles.profileInfoLabel,
+                      {
+                        fontSize: sizes.fieldFont * 0.9,
+                        color: themeController.current?.formInputLabelColor,
+                      },
+                    ]}
+                  >
+                    {t('my_profile.new_password')}
+                  </Text>
+
+                  <TextInput
+                    secureTextEntry={!showNewPassword}
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    style={[
+                      styles.profileInfoText,
+                      {
+                        fontSize: sizes.fieldFont,
+                        color: themeController.current?.formInputTextColor,
+                      },
+                    ]}
+                  />
+                </View>
+
+                {/* ICON */}
+                <TouchableOpacity
+                  onPress={() => setShowNewPassword((p) => !p)}
+                  style={{
+                    position: 'absolute',
+                    right: isRTL ? undefined : sizes.iconSize / 2,
+                    left: isRTL ? sizes.iconSize / 2 : undefined,
+                    top: '56%',
+                    transform: [{ translateY: -sizes.iconSize / 2 }],
+                  }}
+                >
+                  <Image
+                    source={showNewPassword ? icons.eyeOpen : icons.eyeClosed}
+                    style={{
+                      width: sizes.iconSize,
+                      height: sizes.iconSize,
+                      tintColor: themeController.current?.formInputLabelColor,
+                    }}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* Повтор нового пароля */}
+              <View
+                style={[
+                  styles.profileInfoString,
+                  {
+                    backgroundColor:
+                      themeController.current?.formInputBackground,
+                    borderRadius: isWebLandscape
+                      ? scaleByHeight(8, height)
+                      : RFValue(5),
+                    paddingVertical: sizes.fieldPadding,
+                    paddingHorizontal: sizes.containerPaddingH,
+                    marginBottom: sizes.modalFieldMargin,
+                  },
+                ]}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={[
+                      styles.profileInfoLabel,
+                      {
+                        fontSize: sizes.fieldFont * 0.9,
+                        color: themeController.current?.formInputLabelColor,
+                      },
+                    ]}
+                  >
+                    {t('my_profile.repeat_new_password')}
+                  </Text>
+
+                  <TextInput
+                    secureTextEntry={true}
+                    value={repeatPassword}
+                    onChangeText={setRepeatPassword}
+                    style={[
+                      styles.profileInfoText,
+                      {
+                        fontSize: sizes.fieldFont,
+                        color: themeController.current?.formInputTextColor,
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
+            </View>
+
+            <View
+              style={[
+                styles.modalButtonsRow,
+                {
+                  flexDirection: isRTL ? 'row-reverse' : 'row',
+                  gap: sizes.modalBtnsGap,
+                },
+              ]}
+            >
+              <TouchableOpacity
+                style={[
+                  styles.modalBtn,
+                  {
+                    backgroundColor:
+                      themeController.current?.buttonColorPrimaryDefault,
+                    height: sizes.modalBtnHeight,
+                    width: sizes.modalBtnWidth,
+                    borderRadius: sizes.modalBtnBorderRadius,
+                  },
+                ]}
+                onPress={() => showPasswordModal(false)}
+              >
+                <Text
+                  style={{
+                    color: themeController.current?.buttonTextColorPrimary,
+                    fontSize: sizes.modalBtnFont,
+                  }}
+                >
+                  {t('common.cancel')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.modalBtn,
+                  {
+                    backgroundColor:
+                      themeController.current?.buttonTextColorPrimary,
+                    height: sizes.modalBtnHeight,
+                    width: sizes.modalBtnWidth,
+                    borderRadius: sizes.modalBtnBorderRadius,
+                    borderWidth: 1,
+                    borderColor:
+                      themeController.current?.buttonColorPrimaryDefault,
+                  },
+                ]}
+                onPress={async () => {
+                  if (newPassword !== repeatPassword) {
+                    alert(t('errors.passwords_not_match'));
+                    return;
+                  }
+
+                  if (user.current?.is_password_exist) {
+                    const res = await session.changePassword(
+                      oldPassword,
+                      newPassword
+                    );
+                    if (!res.success) {
+                      alert(res.error);
+                      return;
+                    }
+                  } else {
+                    const res = await session.createPassword(newPassword);
+                    if (!res.success) {
+                      alert(res.error);
+                      return;
+                    }
+                  }
+
+                  showPasswordModal(false);
+                }}
+              >
+                <Text
+                  style={{
+                    color: themeController.current?.buttonColorPrimaryDefault,
+                    fontSize: sizes.modalBtnFont,
+                  }}
+                >
+                  {user.current?.is_password_exist
+                    ? t('common.change')
+                    : t('common.create')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Modal выбора изображения */}
       <ImagePickerModal
         visible={pickerVisible}
@@ -568,6 +920,7 @@ function InfoField({
   iconSize,
   isLandscape,
   btnHeight,
+  height,
 }) {
   const { themeController } = useComponentContext();
   const [editMode, setEditMode] = useState(false);
@@ -585,7 +938,10 @@ function InfoField({
           backgroundColor: editMode
             ? themeController.current?.formInputBackgroundEditMode
             : themeController.current?.formInputBackground,
-          borderRadius: Platform.OS === 'web' && isLandscape ? 8 : RFValue(5),
+          borderRadius:
+            Platform.OS === 'web' && isLandscape
+              ? scaleByHeight(8, height)
+              : RFValue(5),
           paddingHorizontal:
             Platform.OS === 'web' && isLandscape ? RFValue(8) : RFValue(14),
         },

@@ -29,6 +29,7 @@ export default function OnboardingScreen({ onFinish }) {
   const { themeController, languageController } = useComponentContext();
   const { width, height, isLandscape } = useWindowInfo(); // ✅ теперь из контекста
   const isRTL = languageController.isRTL;
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const [step, setStep] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -73,11 +74,53 @@ export default function OnboardingScreen({ onFinish }) {
     }
   };
 
+  const sizes = {
+    skipBtnTop: isWebLandscape ? scaleByHeight(103, height) : RFValue(10),
+    skipSideMove: isWebLandscape ? scaleByHeight(200, height) : RFValue(16),
+    skipTextSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(14),
+    imageContainerPadding: isWebLandscape
+      ? scaleByHeight(18, height)
+      : RFValue(10),
+    textContainerPadding: isWebLandscape
+      ? scaleByHeight(0, height)
+      : RFValue(10),
+    titleTextSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(20),
+    titleMarginBottom: isWebLandscape ? scaleByHeight(13, height) : RFValue(12),
+    descriptionTextSize: isWebLandscape
+      ? scaleByHeight(16, height)
+      : RFValue(14),
+    descriptionLineHeight: isWebLandscape
+      ? scaleByHeight(17, height)
+      : RFValue(15),
+    descriptionMarginBottom: isWebLandscape
+      ? scaleByHeight(48, height)
+      : RFValue(24),
+    descriptionMarginBottom: isWebLandscape
+      ? scaleByHeight(48, height)
+      : RFValue(24),
+    indicatorContainerGap: isWebLandscape
+      ? scaleByHeight(12, height)
+      : RFValue(6),
+    indicatorContainerMarginBottom: isWebLandscape
+      ? scaleByHeight(16, height)
+      : RFValue(24),
+    indicatorWidth: isWebLandscape ? scaleByHeight(26, height) : RFValue(20),
+    indicatorHeight: isWebLandscape ? scaleByHeight(6, height) : RFValue(6),
+    indicatorBorderRadius: isWebLandscape
+      ? scaleByHeight(4, height)
+      : RFValue(3),
+    buttonPaddingVertical: isWebLandscape
+      ? scaleByHeight(4, height)
+      : RFValue(12),
+    buttonBorderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(8),
+    buttonHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(40),
+    buttonWidth: isWebLandscape ? scaleByHeight(331, height) : '100%',
+    buttonMarginBottom: isWebLandscape ? 0 : RFValue(15),
+  };
+
   const skipBtnStyle = useMemo(
     () =>
-      isRTL
-        ? { left: getResponsiveSize(16, height * 1.4 * 0.1) }
-        : { right: getResponsiveSize(10, height * 1.4 * 0.1) },
+      isRTL ? { left: sizes.skipSideMove } : { right: sizes.skipSideMove },
     [isRTL, height]
   );
 
@@ -86,7 +129,7 @@ export default function OnboardingScreen({ onFinish }) {
       style={[
         styles.container,
         { backgroundColor: themeController.current.backgroundColor },
-        Platform.OS === 'web' && isLandscape && { justifyContent: 'center' },
+        isWebLandscape && { justifyContent: 'center' },
       ]}
     >
       {/* Кнопка пропуска */}
@@ -96,7 +139,7 @@ export default function OnboardingScreen({ onFinish }) {
           styles.skipButton,
           skipBtnStyle,
           {
-            top: getResponsiveSize(10, scaleByHeight(103, height)),
+            top: sizes.skipBtnTop,
           },
         ]}
       >
@@ -105,7 +148,7 @@ export default function OnboardingScreen({ onFinish }) {
             styles.skipText,
             {
               color: themeController.current.textColor,
-              fontSize: getResponsiveSize(14, scaleByHeight(18, height)),
+              fontSize: sizes.skipTextSize,
             },
           ]}
         >
@@ -116,12 +159,10 @@ export default function OnboardingScreen({ onFinish }) {
       <Animated.View
         style={[
           styles.content,
-          isLandscape
+          isWebLandscape
             ? { flexDirection: isRTL ? 'row-reverse' : 'row' }
             : styles.contentPortrait,
-          Platform.OS === 'web' && isLandscape
-            ? styles.webLandscapeContent
-            : null,
+          isWebLandscape ? styles.webLandscapeContent : null,
           { opacity: fadeAnim },
         ]}
       >
@@ -129,7 +170,10 @@ export default function OnboardingScreen({ onFinish }) {
         <View
           style={[
             styles.imageContainer,
-            Platform.OS === 'web' && isLandscape && { flex: 0.9 },
+            {
+              paddingHorizontal: sizes.imageContainerPadding,
+            },
+            isWebLandscape && { flex: 0.9 },
           ]}
         >
           <Image
@@ -143,8 +187,12 @@ export default function OnboardingScreen({ onFinish }) {
         <View
           style={[
             styles.textContainer,
-            Platform.OS === 'web' &&
-              isLandscape && { justifyContent: 'center', flex: 1 },
+            {
+              paddingHorizontal: sizes.textContainerPadding,
+              paddingBottom: sizes.textContainerPadding,
+              paddingTop: isWebLandscape ? sizes.textContainerPadding : 0,
+            },
+            isWebLandscape && { justifyContent: 'center', flex: 1 },
           ]}
         >
           <View style={[styles.partContainer]}>
@@ -153,11 +201,8 @@ export default function OnboardingScreen({ onFinish }) {
                 styles.title,
                 {
                   color: themeController.current.primaryColor,
-                  fontSize: getResponsiveSize(20, scaleByHeight(18, height)),
-                  marginBottom: getResponsiveSize(
-                    12,
-                    scaleByHeight(13, height)
-                  ),
+                  fontSize: sizes.titleTextSize,
+                  marginBottom: sizes.titleMarginBottom,
                 },
               ]}
             >
@@ -168,16 +213,13 @@ export default function OnboardingScreen({ onFinish }) {
                 styles.description,
                 {
                   color: themeController.current.unactiveTextColor,
-                  fontSize: getResponsiveSize(14, scaleByHeight(16, height)),
+                  fontSize: sizes.descriptionTextSize,
+                  lineHeight: sizes.descriptionLineHeight,
+                  marginBottom: sizes.descriptionMarginBottom,
                 },
-                Platform.OS === 'web' &&
-                  isLandscape && {
-                    marginBottom: getResponsiveSize(
-                      30,
-                      scaleByHeight(48, height)
-                    ),
-                    width: '90%',
-                  },
+                isWebLandscape && {
+                  width: '90%',
+                },
               ]}
             >
               {slides[step].text}
@@ -185,7 +227,15 @@ export default function OnboardingScreen({ onFinish }) {
           </View>
           <View style={[styles.partContainer]}>
             {/* Индикатор */}
-            <View style={styles.indicatorContainer}>
+            <View
+              style={[
+                styles.indicatorContainer,
+                {
+                  gap: sizes.indicatorContainerGap,
+                  marginBottom: sizes.indicatorContainerMarginBottom,
+                },
+              ]}
+            >
               {slides.map((_, i) => (
                 <TouchableOpacity key={i} onPress={() => animateStepChange(i)}>
                   <View
@@ -196,6 +246,9 @@ export default function OnboardingScreen({ onFinish }) {
                           i === step
                             ? themeController.current.primaryColor
                             : themeController.current.primaryColor + '80',
+                        width: sizes.indicatorWidth,
+                        height: sizes.indicatorHeight,
+                        borderRadius: sizes.indicatorBorderRadius,
                       },
                     ]}
                   />
@@ -208,18 +261,17 @@ export default function OnboardingScreen({ onFinish }) {
               onPress={handleNext}
               style={[
                 styles.button,
-                Platform.OS === 'web' &&
-                  isLandscape && {
-                    height: scaleByHeight(62, height),
-                  },
+                isWebLandscape && {
+                  height: sizes.buttonHeight,
+                },
                 {
                   backgroundColor: themeController.current.backgroundColor,
                   borderColor:
                     themeController.current.buttonColorPrimaryDefault,
-                  width:
-                    Platform.OS === 'web' && isLandscape
-                      ? scaleByHeight(331, height)
-                      : '100%',
+                  width: sizes.buttonWidth,
+                  borderRadius: sizes.buttonBorderRadius,
+                  paddingVertical: sizes.buttonPaddingVertical,
+                  marginBottom: sizes.buttonMarginBottom,
                 },
               ]}
             >
@@ -248,9 +300,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: 10,
   },
-  skipText: {
-    fontWeight: '500',
-  },
+  skipText: {},
   content: { flex: 1 },
   contentPortrait: { flexDirection: 'column' },
   webLandscapeContent: {
@@ -265,14 +315,12 @@ const styles = StyleSheet.create({
     flex: 1.5,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    padding: RFValue(10),
   },
-  image: { width: '90%', height: '90%' },
+  image: { width: '90%', maxHeight: '90%', aspectRatio: 344 / 316 },
   textContainer: {
     flex: 1,
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: RFValue(20),
   },
   partContainer: {
     width: '100%',
@@ -280,35 +328,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontWeight: '700',
+    fontFamily: 'Rubik-SemiBold',
     textAlign: 'center',
   },
   description: {
     textAlign: 'center',
-    fontWeight: '600',
-    lineHeight: getResponsiveSize(20, 18),
-    marginBottom: getResponsiveSize(24, 16),
   },
   indicatorContainer: {
     flexDirection: 'row',
-    gap: getResponsiveSize(8, 6),
-    marginBottom: getResponsiveSize(24, 16),
   },
-  indicator: {
-    width: getResponsiveSize(20, 14),
-    height: getResponsiveSize(6, 4),
-    borderRadius: getResponsiveSize(3, 2),
-  },
+  indicator: {},
   button: {
-    paddingVertical: getResponsiveSize(12, 10),
-    borderRadius: getResponsiveSize(8, 6),
     alignItems: 'center',
     alignSelf: 'center',
-    borderWidth: 1.5,
+    borderWidth: 1,
     justifyContent: 'center',
   },
   buttonText: {
-    fontWeight: '700',
     textTransform: 'uppercase',
   },
 });

@@ -44,4 +44,6 @@ export const icons = {
   checkDefault: require('../assets/register/UserImages/check-default.png'),
   thumbUp: require('../assets/icon/thumb-up.png'),
   thumbDown: require('../assets/icon/thumb-down.png'),
+  eyeOpen: require('../assets/icon/eye-open.png'),
+  eyeClosed: require('../assets/icon/eye-closed.png'),
 };
