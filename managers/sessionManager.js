@@ -348,16 +348,16 @@ export default function sessionManager() {
       await saveSession(sessionData);
 
       // 3. Загружаем профиль с сервера
-      await fetchUserProfile(sessionData.access_token);
+      // await fetchUserProfile(sessionData.access_token);
 
       // 4. Обновляем профиль сразу данными из формы
       //   (имя, фамилия, профессии и т.д.)
-      if (Object.keys(profileData).length > 0) {
-        await updateUser(profileData, sessionData.access_token);
-      }
+      // if (Object.keys(profileData).length > 0) {
+      //   await updateUser(profileData, sessionData.access_token);
+      // }
 
       // 5. Обновить список revealedUsers (как после логина)
-      await refreshRevealedUsers(sessionData);
+      // await refreshRevealedUsers(sessionData);
 
       return { success: true, user: data.user, session: sessionData };
     } catch (e) {
@@ -446,8 +446,8 @@ export default function sessionManager() {
       checkCode: (code) => verifyOtp(code),
       signOut,
       serverURL: API_BASE_URL,
-      createUser: (email, password, profileData) =>
-        createUser(email, password, profileData),
+      createUser: (email, password) =>
+        createUser(email, password),
       changePassword: (oldPassword, newPassword) =>
         changePassword(oldPassword, newPassword),
       createPassword: (newPassword) => createPassword(newPassword),

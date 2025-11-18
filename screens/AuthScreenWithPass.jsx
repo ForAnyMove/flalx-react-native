@@ -645,7 +645,7 @@ export default function AuthScreenWithPass() {
           >
             {/* Ссылка "Назад" */}
             <TouchableOpacity
-              onPress={() => authControl.switch()}
+              // onPress={() => authControl.switch()} // !TODO Раскоментировать, когда будет готово окно смены пароля
               style={{ flexDirection: 'row', alignItems: 'center' }}
             >
               {/* <Image
@@ -663,7 +663,7 @@ export default function AuthScreenWithPass() {
                   },
                 ]}
               >
-                {t('auth.otp_sign_in')}
+                {t('auth.forgot_password')}
               </Text>
             </TouchableOpacity>
 

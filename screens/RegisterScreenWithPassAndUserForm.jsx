@@ -23,16 +23,16 @@ import { scaleByHeight } from '../utils/resizeFuncs';
 import TagSelector from '../components/TagSelector';
 import CustomPicker from '../components/ui/CustomPicker';
 
-// универсальная адаптация размеров: на мобиле RFValue, на web — уменьшенный фикс
-const getResponsiveSize = (mobileSize, webSize) => {
-  if (Platform.OS === 'web') return webSize;
-  return RFValue(mobileSize);
-};
-
-export default function RegisterScreen() {
+export default function RegisterScreenWithPass() {
   const { t } = useTranslation();
-  const { user, themeController, session, languageController } =
-    useComponentContext();
+  const {
+    user,
+    themeController,
+    session,
+    languageController,
+    authControl,
+    registerControl,
+  } = useComponentContext();
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
 
@@ -126,9 +126,11 @@ export default function RegisterScreen() {
           : RFValue(20),
       },
       inputBlock: {
-        marginBottom: isWebLandscape ? scaleByHeight(32, height) : RFValue(20),
+        marginBottom: isWebLandscape ? scaleByHeight(24, height) : RFValue(20),
         borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(7),
         paddingVertical: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
+        height: isWebLandscape ? scaleByHeight(64, height) : RFValue(40),
+        width: isWebLandscape ? scaleByHeight(330, height) : '100%',
       },
       label: {
         paddingHorizontal: isWebLandscape
@@ -187,6 +189,17 @@ export default function RegisterScreen() {
     name: '',
     surname: '',
   });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordRepeat, setPasswordRepeat] = useState('');
+
+  // ERRORS
+  const [emailError, setEmailError] = useState(null);
+  const [passwordError, setPasswordError] = useState(null);
+  const [passwordRepeatError, setPasswordRepeatError] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [generalError, setGeneralError] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [finished, setFinished] = useState(false);
 
@@ -198,6 +211,20 @@ export default function RegisterScreen() {
 
   const isNameValid = form.name.trim().length > 1;
   const isSurnameValid = form.surname.trim().length > 1;
+
+  const validateEmail = (value) => {
+    if (!value) return false;
+    const re =
+      /^(([^<>()\[\]\\.,;:\s@\"]+(\.[^<>()\[\]\\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\\.,;:\s@\"]+\.)+[^<>()[\]\\.,;:\s@\"]{2,})$/i;
+
+    return re.test(String(value).trim().toLowerCase());
+  };
+
+  const validatePassword = (pwd) => pwd && pwd.trim().length >= 6;
+  const passwordsMatch = () =>
+    password.trim() !== '' &&
+    passwordRepeat.trim() !== '' &&
+    password.trim() === passwordRepeat.trim();
 
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -212,6 +239,33 @@ export default function RegisterScreen() {
   }
 
   async function handleSubmit() {
+    setGeneralError(null);
+    setEmailError(null);
+    setPasswordError(null);
+    setPasswordRepeatError(null);
+
+    let ok = true;
+
+    if (!validateEmail(email)) {
+      setEmailError(t('register.email_invalid'));
+      ok = false;
+      setStep(2);
+    }
+    if (!validatePassword(password)) {
+      setPasswordError(t('register.password_invalid'));
+      ok = false;
+      setStep(2);
+    }
+    if (!passwordsMatch()) {
+      setPasswordRepeatError(t('register.password_mismatch'));
+      ok = false;
+      setStep(2);
+    }
+    if (!form.name.trim() || !form.surname.trim()) {
+      ok = false;
+      setStep(2);
+    }
+    if (!ok) return;
     try {
       setLoading(true);
       const updatedUser = {};
@@ -226,13 +280,36 @@ export default function RegisterScreen() {
         updatedUser.qualificationLevel = qualificationLevel;
       if (experience) updatedUser.experience = experience;
 
-      await user.update({ ...updatedUser, is_password_exist: true });
+      const res = await session.createUser(email.trim(), password, {
+        ...updatedUser,
+        is_password_exist: true,
+      });
+
+      if (!res.success) {
+        const err = String(res.error || '').toLowerCase();
+
+        if (err.includes('already') || err.includes('exists')) {
+          setEmailError(t('register.email_busy'));
+          setStep(2);
+        } else {
+          setGeneralError(res.error);
+        }
+
+        setLoading(false);
+        return;
+      }
+
       setFinished(true);
-      setTimeout(() => {
-        // navigation.replace("MainApp");
-      }, 1500);
+      registerControl.leaveRegisterScreen();
     } catch (e) {
+      const err = String(e.message || e).toLowerCase();
       console.error('❌ Ошибка при обновлении:', e);
+      if (err.includes('already') || err.includes('exists')) {
+        setEmailError(t('register.email_busy'));
+        setStep(2);
+      } else {
+        setGeneralError(String(e));
+      }
     } finally {
       setLoading(false);
     }
@@ -308,7 +385,9 @@ export default function RegisterScreen() {
   // === Навигационная стрелка ===
   const BackArrow = () => (
     <TouchableOpacity
-      onPress={() => (step > 1 ? setStep(step - 1) : session.signOut())}
+      onPress={() =>
+        step > 1 ? setStep(step - 1) : registerControl.leaveRegisterScreen()
+      }
       style={[
         styles.backArrow,
         dynamicStyles.backArrow,
@@ -421,6 +500,7 @@ export default function RegisterScreen() {
               },
           ]}
         >
+          {/* ======================= STEP 1: TERMS ======================= */}
           {step === 1 && (
             <>
               <Text
@@ -491,6 +571,7 @@ export default function RegisterScreen() {
             </>
           )}
 
+          {/* ======================= STEP 2: PROFILE (NAME/SURNAME/AVATAR) ======================= */}
           {step === 2 && (
             <>
               <Text
@@ -546,7 +627,7 @@ export default function RegisterScreen() {
                 }}
               />
 
-              {/* --- Имя и Фамилия --- */}
+              {/* --- FIELDS --- */}
               <View
                 style={[styles.inputsContainer, dynamicStyles.inputsContainer]}
               >
@@ -651,6 +732,264 @@ export default function RegisterScreen() {
                     placeholderTextColor={theme.formInputPlaceholderColor}
                   />
                 </View>
+
+                {/* --- EMAIL --- */}
+                <View
+                  style={[
+                    styles.inputBlock,
+                    dynamicStyles.inputBlock,
+                    { backgroundColor: theme.formInputBackground },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.label,
+                      dynamicStyles.label,
+                      {
+                        textAlign: isRTL ? 'right' : 'left',
+                        color: theme.textColor,
+                      },
+                    ]}
+                  >
+                    {t('register.email')} ({t('register.required')})
+                  </Text>
+
+                  <TextInput
+                    value={email}
+                    onChangeText={(txt) => {
+                      setEmail(txt);
+                      setEmailError(null);
+                    }}
+                    placeholder={t('register.email')}
+                    style={[
+                      styles.input,
+                      dynamicStyles.input,
+                      {
+                        textAlign: isRTL ? 'right' : 'left',
+                        color: theme.textColor,
+                        backgroundColor: theme.defaultBlocksBackground,
+                        borderColor: theme.borderColor,
+                        borderWidth: 1,
+                        // прозрачный инпут внутри окрашенного fieldBlock
+                        backgroundColor: 'transparent',
+                        borderWidth: 0,
+                        marginBottom: sizes.inputMarginBottom,
+                      },
+                      isWebLandscape
+                        ? {
+                            // убираем чёрную обводку (RN Web)
+                            outlineStyle: 'none',
+                            outlineWidth: 0,
+                            outlineColor: 'transparent',
+                            boxShadow: 'none',
+                          }
+                        : null,
+                    ]}
+                    placeholderTextColor={theme.formInputPlaceholderColor}
+                  />
+
+                  {emailError && (
+                    <Text
+                      style={{
+                        color: theme.errorTextColor,
+                        marginTop: sizes.multilineInputMarginBottom,
+                        fontSize: dynamicStyles.label.fontSize,
+                      }}
+                    >
+                      {emailError}
+                    </Text>
+                  )}
+                </View>
+
+                {/* --- PASSWORD --- */}
+                <View
+                  style={[
+                    styles.inputBlock,
+                    dynamicStyles.inputBlock,
+                    {
+                      backgroundColor: theme.formInputBackground,
+                      position: 'relative',
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.label,
+                      dynamicStyles.label,
+                      {
+                        textAlign: isRTL ? 'right' : 'left',
+                        color: theme.textColor,
+                      },
+                    ]}
+                  >
+                    {t('register.password')} ({t('register.required')})
+                  </Text>
+
+                  <TextInput
+                    secureTextEntry={!showPassword}
+                    value={password}
+                    onChangeText={(txt) => {
+                      setPassword(txt);
+                      setPasswordError(null);
+                    }}
+                    placeholder={t('register.password')}
+                    style={[
+                      styles.input,
+                      dynamicStyles.input,
+                      {
+                        textAlign: isRTL ? 'right' : 'left',
+                        color: theme.textColor,
+                        backgroundColor: theme.defaultBlocksBackground,
+                        borderColor: theme.borderColor,
+                        borderWidth: 1,
+                        // прозрачный инпут внутри окрашенного fieldBlock
+                        backgroundColor: 'transparent',
+                        borderWidth: 0,
+                        marginBottom: sizes.inputMarginBottom,
+                      },
+                      isWebLandscape
+                        ? {
+                            // убираем чёрную обводку (RN Web)
+                            outlineStyle: 'none',
+                            outlineWidth: 0,
+                            outlineColor: 'transparent',
+                            boxShadow: 'none',
+                          }
+                        : null,
+                    ]}
+                    placeholderTextColor={theme.formInputPlaceholderColor}
+                  />
+
+                  {passwordError && (
+                    <Text style={{ color: 'red', marginTop: RFValue(4) }}>
+                      {passwordError}
+                    </Text>
+                  )}
+                  <TouchableOpacity
+                    onPress={() => setShowPassword((prev) => !prev)}
+                    style={{
+                      position: 'absolute',
+                      right: isRTL
+                        ? undefined
+                        : isWebLandscape
+                        ? scaleByHeight(14, height)
+                        : RFValue(12),
+                      left: isRTL
+                        ? isWebLandscape
+                          ? scaleByHeight(14, height)
+                          : RFValue(12)
+                        : undefined,
+                      top: isWebLandscape
+                        ? scaleByHeight(20, height)
+                        : RFValue(38),
+                      width: isWebLandscape
+                        ? scaleByHeight(24, height)
+                        : RFValue(22),
+                      height: isWebLandscape
+                        ? scaleByHeight(24, height)
+                        : RFValue(22),
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Image
+                      source={showPassword ? icons.eyeOpen : icons.eyeClosed}
+                      style={{
+                        width: isWebLandscape
+                          ? scaleByHeight(24, height)
+                          : RFValue(22),
+                        height: isWebLandscape
+                          ? scaleByHeight(24, height)
+                          : RFValue(22),
+                        tintColor: theme.formInputLabelColor,
+                      }}
+                      resizeMode='contain'
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                {/* --- PASSWORD REPEAT --- */}
+                <View
+                  style={[
+                    styles.inputBlock,
+                    dynamicStyles.inputBlock,
+                    { backgroundColor: theme.formInputBackground },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.label,
+                      dynamicStyles.label,
+                      {
+                        textAlign: isRTL ? 'right' : 'left',
+                        color: theme.textColor,
+                      },
+                    ]}
+                  >
+                    {t('register.repeat_password')} ({t('register.required')})
+                  </Text>
+
+                  <TextInput
+                    secureTextEntry={true}
+                    value={passwordRepeat}
+                    onChangeText={(txt) => {
+                      setPasswordRepeat(txt);
+                      setPasswordRepeatError(null);
+                    }}
+                    placeholder={t('register.repeat_password')}
+                    style={[
+                      styles.input,
+                      dynamicStyles.input,
+                      {
+                        textAlign: isRTL ? 'right' : 'left',
+                        color: theme.textColor,
+                        backgroundColor: theme.defaultBlocksBackground,
+                        borderColor: theme.borderColor,
+                        borderWidth: 1,
+                        // прозрачный инпут внутри окрашенного fieldBlock
+                        backgroundColor: 'transparent',
+                        borderWidth: 0,
+                        marginBottom: sizes.inputMarginBottom,
+                      },
+                      isWebLandscape
+                        ? {
+                            // убираем чёрную обводку (RN Web)
+                            outlineStyle: 'none',
+                            outlineWidth: 0,
+                            outlineColor: 'transparent',
+                            boxShadow: 'none',
+                          }
+                        : null,
+                    ]}
+                    placeholderTextColor={theme.formInputPlaceholderColor}
+                  />
+
+                  {passwordRepeatError && (
+                    <Text
+                      style={{
+                        color: theme.errorTextColor,
+                        marginTop: sizes.multilineInputMarginBottom,
+                        fontSize: dynamicStyles.label.fontSize,
+                      }}
+                    >
+                      {passwordRepeatError}
+                    </Text>
+                  )}
+                </View>
+
+                {/* ERROR under form */}
+                {generalError && (
+                  <Text
+                    style={{
+                      textAlign: 'center',
+                      color: theme.errorTextColor,
+                      marginTop: sizes.multilineInputMarginBottom,
+                      fontSize: dynamicStyles.label.fontSize,
+                    }}
+                  >
+                    {generalError}
+                  </Text>
+                )}
               </View>
 
               <ProgressDots />
@@ -679,7 +1018,13 @@ export default function RegisterScreen() {
                 <PrimaryButton
                   title={t('register.next')}
                   onPress={() => setStep(3)}
-                  disabled={!isNameValid || !isSurnameValid}
+                  disabled={
+                    !isNameValid ||
+                    !isSurnameValid ||
+                    !validateEmail(email) ||
+                    !validatePassword(password) ||
+                    !passwordsMatch()
+                  }
                   customStyle={{ btn: { flex: 1 } }}
                 />
               </View>

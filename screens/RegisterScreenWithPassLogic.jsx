@@ -1,38 +1,31 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   ScrollView,
-  I18nManager,
   Image,
   StyleSheet,
   Platform,
   useWindowDimensions,
-  ActivityIndicator,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { RFValue, RFPercentage } from 'react-native-responsive-fontsize';
-import BouncyCheckbox from 'react-native-bouncy-checkbox';
+import { RFValue } from 'react-native-responsive-fontsize';
 import { useComponentContext } from '../context/globalAppContext';
-import ImagePickerModal from '../components/ui/ImagePickerModal';
-import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
 import { icons } from '../constants/icons';
 import { scaleByHeight } from '../utils/resizeFuncs';
-import TagSelector from '../components/TagSelector';
-import CustomPicker from '../components/ui/CustomPicker';
 
-// универсальная адаптация размеров: на мобиле RFValue, на web — уменьшенный фикс
-const getResponsiveSize = (mobileSize, webSize) => {
-  if (Platform.OS === 'web') return webSize;
-  return RFValue(mobileSize);
-};
-
-export default function RegisterScreen() {
+export default function RegisterScreenWithPass() {
   const { t } = useTranslation();
-  const { user, themeController, session, languageController } =
-    useComponentContext();
+  const {
+    user,
+    themeController,
+    session,
+    languageController,
+    authControl,
+    registerControl,
+  } = useComponentContext();
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
 
@@ -126,9 +119,11 @@ export default function RegisterScreen() {
           : RFValue(20),
       },
       inputBlock: {
-        marginBottom: isWebLandscape ? scaleByHeight(32, height) : RFValue(20),
+        marginBottom: isWebLandscape ? scaleByHeight(24, height) : RFValue(20),
         borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(7),
         paddingVertical: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
+        height: isWebLandscape ? scaleByHeight(64, height) : RFValue(40),
+        width: isWebLandscape ? scaleByHeight(330, height) : '100%',
       },
       label: {
         paddingHorizontal: isWebLandscape
@@ -182,11 +177,21 @@ export default function RegisterScreen() {
   };
 
   const [step, setStep] = useState(1);
-  const [accepted, setAccepted] = useState(false);
   const [form, setForm] = useState({
     name: '',
     surname: '',
   });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordRepeat, setPasswordRepeat] = useState('');
+
+  // ERRORS
+  const [emailError, setEmailError] = useState(null);
+  const [passwordError, setPasswordError] = useState(null);
+  const [passwordRepeatError, setPasswordRepeatError] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [generalError, setGeneralError] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [finished, setFinished] = useState(false);
 
@@ -199,19 +204,45 @@ export default function RegisterScreen() {
   const isNameValid = form.name.trim().length > 1;
   const isSurnameValid = form.surname.trim().length > 1;
 
+  const validateEmail = (value) => {
+    if (!value) return false;
+    const re =
+      /^(([^<>()\[\]\\.,;:\s@\"]+(\.[^<>()\[\]\\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\\.,;:\s@\"]+\.)+[^<>()[\]\\.,;:\s@\"]{2,})$/i;
+
+    return re.test(String(value).trim().toLowerCase());
+  };
+
+  const validatePassword = (pwd) => pwd && pwd.trim().length >= 6;
+  const passwordsMatch = () =>
+    password.trim() !== '' &&
+    passwordRepeat.trim() !== '' &&
+    password.trim() === passwordRepeat.trim();
+
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [pickerVisible, setPickerVisible] = useState(false);
 
-  // загрузка в supabase
-  async function uploadImage(uri) {
-    const res = await uploadImageToSupabase(uri, user?.current?.id, {
-      bucket: 'avatars',
-      isAvatar: true,
-    });
-    setAvatarUrl(res.publicUrl);
-  }
 
   async function handleSubmit() {
+    setGeneralError(null);
+    setEmailError(null);
+    setPasswordError(null);
+    setPasswordRepeatError(null);
+
+    let ok = true;
+
+    if (!validateEmail(email)) {
+      setEmailError(t('register.email_invalid'));
+      ok = false;
+    }
+    if (!validatePassword(password)) {
+      setPasswordError(t('register.password_invalid'));
+      ok = false;
+    }
+    if (!passwordsMatch()) {
+      setPasswordRepeatError(t('register.password_mismatch'));
+      ok = false;
+    }
+    if (!ok) return;
     try {
       setLoading(true);
       const updatedUser = {};
@@ -226,51 +257,37 @@ export default function RegisterScreen() {
         updatedUser.qualificationLevel = qualificationLevel;
       if (experience) updatedUser.experience = experience;
 
-      await user.update({ ...updatedUser, is_password_exist: true });
+      const res = await session.createUser(email.trim(), password);
+
+      if (!res.success) {
+        const err = String(res.error || '').toLowerCase();
+
+        if (err.includes('already') || err.includes('exists')) {
+          setEmailError(t('register.email_busy'));
+          setStep(2);
+        } else {
+          setGeneralError(res.error);
+        }
+
+        setLoading(false);
+        return;
+      }
+
       setFinished(true);
-      setTimeout(() => {
-        // navigation.replace("MainApp");
-      }, 1500);
+      registerControl.leaveRegisterScreen();
     } catch (e) {
+      const err = String(e.message || e).toLowerCase();
       console.error('❌ Ошибка при обновлении:', e);
+      if (err.includes('already') || err.includes('exists')) {
+        setEmailError(t('register.email_busy'));
+        setStep(2);
+      } else {
+        setGeneralError(String(e));
+      }
     } finally {
       setLoading(false);
     }
   }
-
-  // === Прогресс (точки) ===
-  // const totalSteps = 4;
-  const totalSteps = 3;
-  const ProgressDots = () => (
-    <View style={[styles.progressContainer, dynamicStyles.progressContainer]}>
-      {Array.from({ length: totalSteps }).map((_, i) => {
-        const active = step === i + 1;
-        const distance = Math.abs(step - (i + 1));
-        const size = active
-          ? sizes.activeDotSize
-          : distance === 1
-          ? sizes.secondDotSize
-          : sizes.smallDotSize;
-        return (
-          <View
-            key={i}
-            style={[
-              styles.dot,
-              dynamicStyles.dot,
-              {
-                width: size,
-                height: size,
-                borderRadius: size / 2,
-                backgroundColor: active
-                  ? theme.primaryColor
-                  : theme.buttonColorPrimaryDisabled,
-              },
-            ]}
-          />
-        );
-      })}
-    </View>
-  );
 
   // === Кнопка ===
   const PrimaryButton = ({ title, onPress, disabled, customStyle }) => (
@@ -308,7 +325,9 @@ export default function RegisterScreen() {
   // === Навигационная стрелка ===
   const BackArrow = () => (
     <TouchableOpacity
-      onPress={() => (step > 1 ? setStep(step - 1) : session.signOut())}
+      onPress={() =>
+        step > 1 ? setStep(step - 1) : registerControl.leaveRegisterScreen()
+      }
       style={[
         styles.backArrow,
         dynamicStyles.backArrow,
@@ -340,7 +359,7 @@ export default function RegisterScreen() {
 
   // ограничитель ширины контента на web/landscape — не шире половины высоты окна
   const contentWidthStyle = isWebLandscape
-    ? { width: step === 1 ? height * 0.7 : height * 0.4 }
+    ? { width: height * 0.4 }
     : { width: '100%' };
 
   const jobTypes = t('jobTypes', { returnObjects: true });
@@ -384,12 +403,8 @@ export default function RegisterScreen() {
           dynamicStyles.scrollContent,
           !isWebLandscape && { height: '100%' },
           !isWebLandscape &&
-            step === 2 && {
+            step === 1 && {
               paddingHorizontal: 0,
-            },
-          !isWebLandscape &&
-            step === 3 && {
-              paddingHorizontal: RFValue(10),
             },
           isWebLandscape
             ? {
@@ -410,88 +425,14 @@ export default function RegisterScreen() {
             contentWidthStyle,
             { height: '100%', justifyContent: 'space-between' },
             isWebLandscape &&
-              step === 2 && {
+              step === 1 && {
                 height: scaleByHeight(741, height),
                 width: scaleByHeight(354, height),
               },
-            isWebLandscape &&
-              step === 3 && {
-                height: scaleByHeight(741, height),
-                width: scaleByHeight(951, height),
-              },
           ]}
         >
+          {/* ======================= STEP 2: PROFILE (NAME/SURNAME/AVATAR) ======================= */}
           {step === 1 && (
-            <>
-              <Text
-                style={[
-                  styles.title,
-                  dynamicStyles.title,
-                  { color: theme.primaryColor },
-                ]}
-              >
-                {t('register.terms_title')}
-              </Text>
-
-              <ScrollView
-                style={[
-                  styles.termsBox,
-                  dynamicStyles.termsBox,
-                  isWebLandscape
-                    ? { height: '40vh', maxHeight: '40vh' } // компактнее на web-экранах
-                    : null,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.termsBoxText,
-                    dynamicStyles.termsBoxText,
-                    { color: theme.formInputLabelColor },
-                  ]}
-                >
-                  {t('register.terms_text')}
-                </Text>
-              </ScrollView>
-
-              <BouncyCheckbox
-                size={sizes.checkboxSize}
-                isChecked={accepted}
-                onPress={setAccepted}
-                text={t('register.terms_accept')}
-                textStyle={[
-                  styles.termsCheckboxText,
-                  dynamicStyles.termsCheckboxText,
-                  {
-                    textAlign: isRTL ? 'right' : 'left',
-                    color: theme.unactiveTextColor,
-                    textDecorationLine: 'none',
-                  },
-                ]}
-                textContainerStyle={{
-                  [isRTL ? 'marginRight' : 'marginLeft']:
-                    sizes.checkboxTextSize,
-                }}
-                fillColor={theme.primaryColor}
-                innerIconStyle={{
-                  borderWidth: 2,
-                  borderRadius: sizes.checkboxRadius,
-                }}
-                iconStyle={{
-                  borderRadius: sizes.checkboxRadius,
-                }}
-              />
-
-              <ProgressDots />
-
-              <PrimaryButton
-                title={t('register.next')}
-                onPress={() => setStep(2)}
-                disabled={!accepted}
-              />
-            </>
-          )}
-
-          {step === 2 && (
             <>
               <Text
                 style={[
@@ -504,52 +445,11 @@ export default function RegisterScreen() {
                 {t('register.profile_create')}
               </Text>
 
-              {/* --- Аватар --- */}
-              <View
-                style={[styles.avatarContainer, dynamicStyles.avatarContainer]}
-              >
-                <View
-                  style={[styles.avatarWrapper, dynamicStyles.avatarWrapper]}
-                >
-                  <Image
-                    source={
-                      avatarUrl ? { uri: avatarUrl } : icons.defaultAvatar
-                    }
-                    style={[styles.avatarImage, dynamicStyles.avatarImage]}
-                  />
-                  <TouchableOpacity
-                    style={[styles.cameraButton, dynamicStyles.cameraButton]}
-                    onPress={() => setPickerVisible(true)}
-                  >
-                    <Image source={icons.camera} style={styles.cameraIcon} />
-                  </TouchableOpacity>
-                </View>
-                <Text
-                  style={[
-                    styles.avatarRecommendsText,
-                    dynamicStyles.avatarRecommendsText,
-                    { color: theme.textColor },
-                  ]}
-                >
-                  {t('register.profile_avatar_recommended')}
-                </Text>
-              </View>
-
-              {/* --- Модалка выбора изображения --- */}
-              <ImagePickerModal
-                visible={pickerVisible}
-                onClose={() => setPickerVisible(false)}
-                onAdd={async (uris) => {
-                  if (uris?.length > 0) {
-                    await uploadImage(uris[0]);
-                  }
-                }}
-              />
-
-              {/* --- Имя и Фамилия --- */}
+              {/* --- FIELDS --- */}
               <View
                 style={[styles.inputsContainer, dynamicStyles.inputsContainer]}
               >
+                {/* --- EMAIL --- */}
                 <View
                   style={[
                     styles.inputBlock,
@@ -567,12 +467,16 @@ export default function RegisterScreen() {
                       },
                     ]}
                   >
-                    {t('register.name')} ({t('register.required')})
+                    {t('register.email')} ({t('register.required')})
                   </Text>
+
                   <TextInput
-                    placeholder={t('register.name')}
-                    value={form.name}
-                    onChangeText={(txt) => setForm({ ...form, name: txt })}
+                    value={email}
+                    onChangeText={(txt) => {
+                      setEmail(txt);
+                      setEmailError(null);
+                    }}
+                    placeholder={t('register.email')}
                     style={[
                       styles.input,
                       dynamicStyles.input,
@@ -599,13 +503,29 @@ export default function RegisterScreen() {
                     ]}
                     placeholderTextColor={theme.formInputPlaceholderColor}
                   />
+
+                  {emailError && (
+                    <Text
+                      style={{
+                        color: theme.errorTextColor,
+                        marginTop: sizes.multilineInputMarginBottom,
+                        fontSize: dynamicStyles.label.fontSize,
+                      }}
+                    >
+                      {emailError}
+                    </Text>
+                  )}
                 </View>
 
+                {/* --- PASSWORD --- */}
                 <View
                   style={[
                     styles.inputBlock,
                     dynamicStyles.inputBlock,
-                    { backgroundColor: theme.formInputBackground },
+                    {
+                      backgroundColor: theme.formInputBackground,
+                      position: 'relative',
+                    },
                   ]}
                 >
                   <Text
@@ -618,12 +538,17 @@ export default function RegisterScreen() {
                       },
                     ]}
                   >
-                    {t('register.surname')} ({t('register.required')})
+                    {t('register.password')} ({t('register.required')})
                   </Text>
+
                   <TextInput
-                    placeholder={t('register.surname')}
-                    value={form.surname}
-                    onChangeText={(txt) => setForm({ ...form, surname: txt })}
+                    secureTextEntry={!showPassword}
+                    value={password}
+                    onChangeText={(txt) => {
+                      setPassword(txt);
+                      setPasswordError(null);
+                    }}
+                    placeholder={t('register.password')}
                     style={[
                       styles.input,
                       dynamicStyles.input,
@@ -650,10 +575,138 @@ export default function RegisterScreen() {
                     ]}
                     placeholderTextColor={theme.formInputPlaceholderColor}
                   />
+
+                  {passwordError && (
+                    <Text style={{ color: 'red', marginTop: RFValue(4) }}>
+                      {passwordError}
+                    </Text>
+                  )}
+                  <TouchableOpacity
+                    onPress={() => setShowPassword((prev) => !prev)}
+                    style={{
+                      position: 'absolute',
+                      right: isRTL
+                        ? undefined
+                        : isWebLandscape
+                        ? scaleByHeight(14, height)
+                        : RFValue(12),
+                      left: isRTL
+                        ? isWebLandscape
+                          ? scaleByHeight(14, height)
+                          : RFValue(12)
+                        : undefined,
+                      top: isWebLandscape
+                        ? scaleByHeight(20, height)
+                        : RFValue(38),
+                      width: isWebLandscape
+                        ? scaleByHeight(24, height)
+                        : RFValue(22),
+                      height: isWebLandscape
+                        ? scaleByHeight(24, height)
+                        : RFValue(22),
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Image
+                      source={showPassword ? icons.eyeOpen : icons.eyeClosed}
+                      style={{
+                        width: isWebLandscape
+                          ? scaleByHeight(24, height)
+                          : RFValue(22),
+                        height: isWebLandscape
+                          ? scaleByHeight(24, height)
+                          : RFValue(22),
+                        tintColor: theme.formInputLabelColor,
+                      }}
+                      resizeMode='contain'
+                    />
+                  </TouchableOpacity>
                 </View>
+
+                {/* --- PASSWORD REPEAT --- */}
+                <View
+                  style={[
+                    styles.inputBlock,
+                    dynamicStyles.inputBlock,
+                    { backgroundColor: theme.formInputBackground },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.label,
+                      dynamicStyles.label,
+                      {
+                        textAlign: isRTL ? 'right' : 'left',
+                        color: theme.textColor,
+                      },
+                    ]}
+                  >
+                    {t('register.repeat_password')} ({t('register.required')})
+                  </Text>
+
+                  <TextInput
+                    secureTextEntry={true}
+                    value={passwordRepeat}
+                    onChangeText={(txt) => {
+                      setPasswordRepeat(txt);
+                      setPasswordRepeatError(null);
+                    }}
+                    placeholder={t('register.repeat_password')}
+                    style={[
+                      styles.input,
+                      dynamicStyles.input,
+                      {
+                        textAlign: isRTL ? 'right' : 'left',
+                        color: theme.textColor,
+                        backgroundColor: theme.defaultBlocksBackground,
+                        borderColor: theme.borderColor,
+                        borderWidth: 1,
+                        // прозрачный инпут внутри окрашенного fieldBlock
+                        backgroundColor: 'transparent',
+                        borderWidth: 0,
+                        marginBottom: sizes.inputMarginBottom,
+                      },
+                      isWebLandscape
+                        ? {
+                            // убираем чёрную обводку (RN Web)
+                            outlineStyle: 'none',
+                            outlineWidth: 0,
+                            outlineColor: 'transparent',
+                            boxShadow: 'none',
+                          }
+                        : null,
+                    ]}
+                    placeholderTextColor={theme.formInputPlaceholderColor}
+                  />
+
+                  {passwordRepeatError && (
+                    <Text
+                      style={{
+                        color: theme.errorTextColor,
+                        marginTop: sizes.multilineInputMarginBottom,
+                        fontSize: dynamicStyles.label.fontSize,
+                      }}
+                    >
+                      {passwordRepeatError}
+                    </Text>
+                  )}
+                </View>
+
+                {/* ERROR under form */}
+                {generalError && (
+                  <Text
+                    style={{
+                      textAlign: 'center',
+                      color: theme.errorTextColor,
+                      marginTop: sizes.multilineInputMarginBottom,
+                      fontSize: dynamicStyles.label.fontSize,
+                    }}
+                  >
+                    {generalError}
+                  </Text>
+                )}
               </View>
-
-              <ProgressDots />
 
               <View
                 style={{
@@ -664,8 +717,8 @@ export default function RegisterScreen() {
                 }}
               >
                 <PrimaryButton
-                  title={t('register.previous')}
-                  onPress={() => setStep(1)}
+                  title={t('common.cancel')}
+                  onPress={() => registerControl.leaveRegisterScreen()}
                   customStyle={{
                     btn: {
                       flex: 1,
@@ -677,238 +730,15 @@ export default function RegisterScreen() {
                   }}
                 />
                 <PrimaryButton
-                  title={t('register.next')}
-                  onPress={() => setStep(3)}
-                  disabled={!isNameValid || !isSurnameValid}
-                  customStyle={{ btn: { flex: 1 } }}
-                />
-              </View>
-            </>
-          )}
-
-          {/* {step === 3 && (
-            <>
-              <Text style={[styles.title, { color: theme.textColor }]}>
-                {t('register.profile_profession')}
-              </Text>
-
-              <TextInput
-                placeholder={t('register.profession_placeholder')}
-                value={form.profession}
-                onChangeText={(txt) => setForm({ ...form, profession: txt })}
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: theme.defaultBlocksBackground,
-                    borderColor: theme.borderColor,
-                    borderWidth: 1,
-                    textAlign: isRTL ? 'right' : 'left',
-                    color: theme.textColor,
-                  },
-                ]}
-                placeholderTextColor={theme.formInputPlaceholderColor}
-              />
-
-              <ProgressDots />
-
-              <View
-                style={{
-                  flexDirection: isRTL ? 'row-reverse' : 'row',
-                  justifyContent: 'space-between',
-                  gap: getResponsiveSize(10, 8),
-                }}
-              >
-                <PrimaryButton
-                  title={t('register.previous')}
-                  onPress={() => setStep(2)}
-                  customStyle={{
-                    btn: {
-                      flex: 1,
-                      backgroundColor: 'transparent',
-                      borderWidth: 1,
-                      borderColor: theme.primaryColor,
-                    },
-                    btnText: { color: theme.primaryColor },
-                  }}
-                />
-                <PrimaryButton
-                  title={t('register.next')}
-                  onPress={() => setStep(4)}
-                  disabled={!isNameValid || !isSurnameValid}
-                  customStyle={{ btn: { flex: 1 } }}
-                />
-              </View>
-            </>
-          )} */}
-
-          {step === 3 && (
-            <>
-              <Text
-                style={[
-                  styles.title,
-                  dynamicStyles.title,
-                  {
-                    color: theme.textColor,
-                  },
-                ]}
-              >
-                {t('register.profile_create')}
-              </Text>
-
-              <View
-                style={
-                  isWebLandscape
-                    ? { flexDirection: 'row', gap: scaleByHeight(108, height) }
-                    : {}
-                }
-              >
-                {/* Left Column */}
-                <View style={isWebLandscape ? { flex: 1.5 } : {}}>
-                  <TagSelector
-                    title={t('register.job_types_title')}
-                    subtitle={t('register.job_types_subtitle')}
-                    options={jobTypes}
-                    selectedItems={selectedJobTypes}
-                    setSelectedItems={setSelectedJobTypes}
-                    containerStyle={dynamicStyles.typeTagsSelector}
-                    numberOfRows={6}
-                  />
-                  <TagSelector
-                    title={t('register.license_types_title')}
-                    subtitle={t('register.license_types_subtitle')}
-                    options={licenses}
-                    selectedItems={selectedLicenseTypes}
-                    setSelectedItems={setSelectedLicenseTypes}
-                    numberOfRows={2}
-                  />
-                </View>
-
-                {/* Right Column */}
-                <View
-                  style={
-                    isLandscape && Platform.OS === 'web' ? { flex: 1 } : {}
+                  title={t('common.create')}
+                  onPress={handleSubmit}
+                  disabled={
+                    !validateEmail(email) ||
+                    !validatePassword(password) ||
+                    !passwordsMatch()
                   }
-                >
-                  <CustomPicker
-                    label={t('register.qualification_label')}
-                    options={qualificationLevels}
-                    selectedValue={qualificationLevel}
-                    onValueChange={setQualificationLevel}
-                    isRTL={isRTL}
-                    containerStyle={dynamicStyles.typeTagsSelector}
-                  />
-                  <CustomPicker
-                    label={t('register.experience_label')}
-                    options={experienceLevels}
-                    selectedValue={experience}
-                    onValueChange={setExperience}
-                    isRTL={isRTL}
-                    containerStyle={dynamicStyles.typeTagsSelector}
-                  />
-                  <View
-                    style={[
-                      styles.inputBlock,
-                      dynamicStyles.inputBlock,
-                      { backgroundColor: theme.formInputBackground },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.label,
-                        dynamicStyles.label,
-                        {
-                          textAlign: isRTL ? 'right' : 'left',
-                          color: theme.textColor,
-                        },
-                      ]}
-                    >
-                      {t('register.profile_description')}
-                    </Text>
-                    <TextInput
-                      placeholder={t('register.description_placeholder')}
-                      value={form.description}
-                      onChangeText={(txt) =>
-                        setForm({ ...form, description: txt })
-                      }
-                      multiline
-                      style={[
-                        styles.input,
-                        dynamicStyles.input,
-                        dynamicStyles.multilineInput,
-                        {
-                          height: sizes.multilineInputHeight,
-                          textAlign: isRTL ? 'right' : 'left',
-                          color: theme.textColor,
-                          backgroundColor: theme.defaultBlocksBackground,
-                          borderColor: theme.borderColor,
-                          borderWidth: 1,
-                          // прозрачный инпут внутри окрашенного fieldBlock
-                          backgroundColor: 'transparent',
-                          borderWidth: 0,
-                          marginBottom: sizes.multilineInputMarginBottom,
-                        },
-                        isWebLandscape
-                          ? {
-                              // убираем чёрную обводку (RN Web)
-                              outlineStyle: 'none',
-                              outlineWidth: 0,
-                              outlineColor: 'transparent',
-                              boxShadow: 'none',
-                            }
-                          : null,
-                      ]}
-                      placeholderTextColor={theme.formInputPlaceholderColor}
-                    />
-                  </View>
-                </View>
-              </View>
-              <View>
-                <ProgressDots />
-
-                <View
-                  style={[
-                    {
-                      flexDirection: isRTL ? 'row-reverse' : 'row',
-                      justifyContent: 'center',
-                      gap: sizes.containerGap,
-                    },
-                    !isWebLandscape && { marginBottom: RFValue(20) },
-                  ]}
-                >
-                  <PrimaryButton
-                    title={t('register.previous')}
-                    onPress={() => setStep(2)}
-                    customStyle={{
-                      btn: {
-                        backgroundColor: 'transparent',
-                        borderWidth: 1,
-                        borderColor: theme.primaryColor,
-                        width: sizes.primaryButtonWidth,
-                        flex: isWebLandscape ? null : 1,
-                      },
-                      btnText: { color: theme.primaryColor },
-                    }}
-                  />
-                  <PrimaryButton
-                    title={
-                      loading ? (
-                        <ActivityIndicator
-                          color={theme.buttonTextColorPrimary}
-                        />
-                      ) : (
-                        t('register.create')
-                      )
-                    }
-                    onPress={handleSubmit}
-                    disabled={loading}
-                    customStyle={{
-                      btn: {
-                        width: sizes.primaryButtonWidth,
-                        flex: isWebLandscape ? null : 1,
-                      },
-                    }}
-                  />
-                </View>
+                  customStyle={{ btn: { flex: 1 } }}
+                />
               </View>
             </>
           )}
