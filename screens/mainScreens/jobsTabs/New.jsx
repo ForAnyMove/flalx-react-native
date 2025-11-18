@@ -55,9 +55,15 @@ export default function NewScreen({
       : RFValue(14),
   };
 
-  const filteredJobsList = jobsController.executor.new.filter((job) =>
-    filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
-  );
+  const filteredJobsList = jobsController.executor.new
+    .filter((job) =>
+      filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
+    )
+    .filter((job) =>
+      [t(`jobTypes.${job.type}`), job.description].some((field) =>
+        field.toLowerCase().includes(searchValue.toLowerCase())
+      )
+    );
 
   return (
     <View
@@ -69,12 +75,12 @@ export default function NewScreen({
         },
       ]}
     >
-      {/* <View>
+      <View>
         <SearchPanel
           searchValue={searchValue}
           setSearchValue={setSearchValue}
         />
-      </View> */}
+      </View>
       <View>
         <JobTypeSelector
           selectedTypes={filteredJobs}
@@ -115,7 +121,7 @@ export default function NewScreen({
               let isMarkerExist = false;
               let extraMarkerColor;
               let extraMarkerText;
-              
+
               if (job?.jobType) {
                 switch (job.jobType) {
                   case 'top':
@@ -190,25 +196,26 @@ export default function NewScreen({
                           width: sizes.imageWidth,
                           height: sizes.imageHeight,
                           backgroundColor:
-                            themeController.current?.defaultBlocksMockBackground,
+                            themeController.current
+                              ?.defaultBlocksMockBackground,
                           ...(isRTL
                             ? {
-                              marginLeft: RFValue(10),
-                              marginRight: 0,
-                            }
+                                marginLeft: RFValue(10),
+                                marginRight: 0,
+                              }
                             : {
-                              marginRight: RFValue(10),
-                              marginLeft: 0,
-                            }),
+                                marginRight: RFValue(10),
+                                marginLeft: 0,
+                              }),
                           ...(isRTL && Platform.OS === 'web'
                             ? {
-                              borderTopRightRadius: sizes.cardRadius * 0.6,
-                              borderBottomRightRadius: sizes.cardRadius * 0.6,
-                            }
+                                borderTopRightRadius: sizes.cardRadius * 0.6,
+                                borderBottomRightRadius: sizes.cardRadius * 0.6,
+                              }
                             : {
-                              borderTopLeftRadius: sizes.cardRadius * 0.6,
-                              borderBottomLeftRadius: sizes.cardRadius * 0.6,
-                            }),
+                                borderTopLeftRadius: sizes.cardRadius * 0.6,
+                                borderBottomLeftRadius: sizes.cardRadius * 0.6,
+                              }),
                         },
                       ]}
                     >
@@ -249,7 +256,9 @@ export default function NewScreen({
                             {
                               color: themeController.current?.unactiveTextColor,
                               textAlign:
-                                isRTL && Platform.OS === 'web' ? 'right' : 'left',
+                                isRTL && Platform.OS === 'web'
+                                  ? 'right'
+                                  : 'left',
                               fontSize: sizes.fontDescription,
                             },
                           ]}
@@ -269,19 +278,19 @@ export default function NewScreen({
                           },
                           isRTL
                             ? {
-                              left: 0,
-                              borderBottomRightRadius: isWebLandscape
-                                ? sizes.personalMarkerBottomAngleRadius
-                                : 0,
-                              borderBottomLeftRadius: isWebLandscape
-                                ? 0
-                                : sizes.personalMarkerBottomAngleRadius,
-                            }
+                                left: 0,
+                                borderBottomRightRadius: isWebLandscape
+                                  ? sizes.personalMarkerBottomAngleRadius
+                                  : 0,
+                                borderBottomLeftRadius: isWebLandscape
+                                  ? 0
+                                  : sizes.personalMarkerBottomAngleRadius,
+                              }
                             : {
-                              right: 0,
-                              borderBottomLeftRadius:
-                                sizes.personalMarkerBottomAngleRadius,
-                            },
+                                right: 0,
+                                borderBottomLeftRadius:
+                                  sizes.personalMarkerBottomAngleRadius,
+                              },
                         ]}
                       >
                         <Text

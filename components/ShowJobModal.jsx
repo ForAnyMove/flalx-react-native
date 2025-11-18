@@ -103,13 +103,13 @@ export default function ShowJobModal({
     const jobGroups = isCreator
       ? {
         waiting: jobsController.creator.waiting,
-        'in-progress': jobsController.creator.inProgress,
+        'in_progress': jobsController.creator.inProgress,
         done: jobsController.creator.done,
       }
       : {
         new: jobsController.executor.new,
         waiting: jobsController.executor.waiting,
-        'in-progress': jobsController.executor.inProgress,
+        'in_progress': jobsController.executor.inProgress,
         done: jobsController.executor.done,
       };
 
@@ -128,8 +128,8 @@ export default function ShowJobModal({
     if (currentLocation) {
       const prev = prevJobLocation.current;
       if (prev && prev !== currentLocation) {
-        const fromStatus = `${isCreator ? 'store' : 'jobs'}-${prev}`;
-        const toStatus = `${isCreator ? 'store' : 'jobs'}-${currentLocation}`;
+        const fromStatus = `${isCreator ? 'client' : 'business'}-${prev}`;
+        const toStatus = `${isCreator ? 'client' : 'business'}-${currentLocation}`;
         console.log(
           `Заявка ${currentJobId} переместилась: ${fromStatus} → ${toStatus}`
         );
@@ -146,7 +146,7 @@ export default function ShowJobModal({
     }
   }, [
     status,
-    ...(status.startsWith('store')
+    ...(status.startsWith('client')
       ? [
         jobsController.creator.waiting,
         jobsController.creator.inProgress,

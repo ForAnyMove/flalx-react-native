@@ -50,9 +50,15 @@ export default function WaitingScreen({
     badgePosition: isWebLandscape ? height * 0.005 : RFValue(5),
   };
 
-  const filteredJobsList = jobsController.creator.waiting.filter((job) =>
-    filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
-  );
+  const filteredJobsList = jobsController.creator.waiting
+    .filter((job) =>
+      filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
+    )
+    .filter((job) =>
+      [t(`jobTypes.${job.type}`), job.description].some((field) =>
+        field.toLowerCase().includes(searchValue.toLowerCase())
+      )
+    );
 
   return (
     <View
@@ -64,12 +70,12 @@ export default function WaitingScreen({
         },
       ]}
     >
-      {/* <View>
+      <View>
         <SearchPanel
           searchValue={searchValue}
           setSearchValue={setSearchValue}
         />
-      </View> */}
+      </View>
 
       <View style={{ width: isWebLandscape ? '70%' : '100%' }}>
         <JobTypeSelector

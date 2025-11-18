@@ -32,7 +32,7 @@ const myProfileMock = {
     'https://www.muchbetteradventures.com/magazine/content/images/2024/04/mount-everest-at-sunset.jpg',
 };
 
-const appTabsList = ['store', 'providers', 'jobs'];
+const appTabsList = ['client', 'providers', 'business'];
 const profileTabsList = ['profile', 'professions', 'settings'];
 
 export const ComponentProvider = ({ children }) => {

@@ -57,9 +57,15 @@ export default function DoneScreen({
       : RFValue(14),
   };
 
-  const filteredJobsList = jobsController.creator.done.filter((job) =>
-    filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
-  );
+  const filteredJobsList = jobsController.creator.done
+    .filter((job) =>
+      filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
+    )
+    .filter((job) =>
+      [t(`jobTypes.${job.type}`), job.description].some((field) =>
+        field.toLowerCase().includes(searchValue.toLowerCase())
+      )
+    );
 
   return (
     <View
@@ -71,12 +77,12 @@ export default function DoneScreen({
         },
       ]}
     >
-      {/* <View>
+      <View>
         <SearchPanel
           searchValue={searchValue}
           setSearchValue={setSearchValue}
         />
-      </View> */}
+      </View>
       <View>
         <JobTypeSelector
           selectedTypes={filteredJobs}

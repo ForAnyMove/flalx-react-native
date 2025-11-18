@@ -10,14 +10,14 @@ export default function AppMainScreen({ switchToProfile, sidebarWidth }) {
 
   function renderScreen() {
     switch (appTabController.active) {
-      case 'store':
+      case 'client':
         return <Store sidebarWidth={sidebarWidth} />;
       case 'providers':
         return <Providers />;
-      case 'jobs':
+      case 'business':
         return <Jobs sidebarWidth={sidebarWidth} />;
       default:
-        <Button title='Выйти' onPress={() => session?.signOut()} />;
+        <Button title='Sign Out' onPress={() => session?.signOut()} />;
     }
   }
   return (

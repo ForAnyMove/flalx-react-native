@@ -45,9 +45,15 @@ export default function DoneScreen({
     badgePosition: isWebLandscape ? height * 0.005 : RFValue(5),
   };
 
-  const filteredJobsList = jobsController.executor.done.filter((job) =>
-    filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
-  );
+  const filteredJobsList = jobsController.executor.done
+    .filter((job) =>
+      filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
+    )
+    .filter((job) =>
+      [t(`jobTypes.${job.type}`), job.description].some((field) =>
+        field.toLowerCase().includes(searchValue.toLowerCase())
+      )
+    );
 
   return (
     <View
@@ -59,12 +65,12 @@ export default function DoneScreen({
         },
       ]}
     >
-      {/* <View>
+      <View>
         <SearchPanel
           searchValue={searchValue}
           setSearchValue={setSearchValue}
         />
-      </View> */}
+      </View>
       <View>
         <JobTypeSelector
           selectedTypes={filteredJobs}
@@ -114,22 +120,22 @@ export default function DoneScreen({
                           themeController.current?.defaultBlocksMockBackground,
                         ...(isRTL
                           ? {
-                            marginLeft: RFValue(10),
-                            marginRight: 0,
-                          }
+                              marginLeft: RFValue(10),
+                              marginRight: 0,
+                            }
                           : {
-                            marginRight: RFValue(10),
-                            marginLeft: 0,
-                          }),
+                              marginRight: RFValue(10),
+                              marginLeft: 0,
+                            }),
                         ...(isRTL && Platform.OS === 'web'
                           ? {
-                            borderTopRightRadius: sizes.cardRadius,
-                            borderBottomRightRadius: sizes.cardRadius,
-                          }
+                              borderTopRightRadius: sizes.cardRadius,
+                              borderBottomRightRadius: sizes.cardRadius,
+                            }
                           : {
-                            borderTopLeftRadius: sizes.cardRadius,
-                            borderBottomLeftRadius: sizes.cardRadius,
-                          }),
+                              borderTopLeftRadius: sizes.cardRadius,
+                              borderBottomLeftRadius: sizes.cardRadius,
+                            }),
                       },
                     ]}
                   >

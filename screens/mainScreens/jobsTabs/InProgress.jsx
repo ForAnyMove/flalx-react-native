@@ -45,9 +45,15 @@ export default function InProgressScreen({
     badgePosition: isWebLandscape ? height * 0.005 : RFValue(5),
   };
 
-  const filteredJobsList = jobsController.executor.inProgress.filter((job) =>
-    filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
-  );
+  const filteredJobsList = jobsController.executor.inProgress
+    .filter((job) =>
+      filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
+    )
+    .filter((job) =>
+      [t(`jobTypes.${job.type}`), job.description].some((field) =>
+        field.toLowerCase().includes(searchValue.toLowerCase())
+      )
+    );
 
   return (
     <View
@@ -59,12 +65,12 @@ export default function InProgressScreen({
         },
       ]}
     >
-      {/* <View>
+      <View>
         <SearchPanel
           searchValue={searchValue}
           setSearchValue={setSearchValue}
         />
-      </View> */}
+      </View>
       <View>
         <JobTypeSelector
           selectedTypes={filteredJobs}

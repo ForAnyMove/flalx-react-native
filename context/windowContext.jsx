@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Dimensions, Platform } from "react-native";
+import { scaleByHeight } from "../utils/resizeFuncs";
 
 const WindowContext = createContext(null);
 
@@ -11,7 +12,7 @@ export function WindowProvider({ children }) {
     // 👇 вычисляем sidebarWidth сразу тут
     const sidebarWidth =
       Platform.OS === "web" && isLandscape
-        ? Math.max(90, Math.min(280, height * 0.22))
+        ? scaleByHeight(220, height)
         : 0;
 
     return { width, height, isLandscape, sidebarWidth };

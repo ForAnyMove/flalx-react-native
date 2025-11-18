@@ -21,9 +21,10 @@ import InProgressScreen from './jobsTabs/InProgress';
 import DoneScreen from './jobsTabs/Done';
 import ShowJobModal from '../../components/ShowJobModal';
 import JobModalWrapper from '../../components/JobModalWrapper';
+import { scaleByHeight } from '../../utils/resizeFuncs';
 
-const TAB_TITLES = ['new', 'waiting', 'in-progress', 'done'];
-const TAB_TITLES_RTL = ['done', 'in-progress', 'waiting', 'new'];
+const TAB_TITLES = ['new', 'waiting', 'in_progress', 'done'];
+const TAB_TITLES_RTL = ['done', 'in_progress', 'waiting', 'new'];
 
 const badgeCountsExample = {
   new: 0,
@@ -237,6 +238,14 @@ export default function Jobs() {
     }
   }, [isRTL, orderedTabs]);
 
+  const sizes = {
+    iconSize: isWebLandscape ? scaleByHeight(24, height) : panelHeight * 0.35,
+    fontSize: isWebLandscape ? scaleByHeight(12, height) : panelHeight * 0.2,
+    badgeSize: isWebLandscape ? scaleByHeight(20, height) : panelHeight * 0.25,
+    underlineHeight: isWebLandscape
+      ? scaleByHeight(2, height)
+      : panelHeight * 0.05,
+  };
   return (
     <View style={{ flex: 1, userSelect: 'none' }}>
       {/* Заголовки вкладок */}
@@ -249,9 +258,9 @@ export default function Jobs() {
         }}
       >
         {orderedTabs.map((title, idx) => {
-          const iconSize = panelHeight * 0.35;
-          const fontSize = panelHeight * 0.2;
-          const badgeSize = panelHeight * 0.25;
+          const iconSize = sizes.iconSize;
+          const fontSize = sizes.fontSize;
+          const badgeSize = sizes.badgeSize;
 
           return (
             <TouchableOpacity
@@ -280,7 +289,7 @@ export default function Jobs() {
                     style={{
                       position: 'absolute',
                       top: -badgeSize * 0.3,
-                      right: -badgeSize * 0.5,
+                      right: -badgeSize * 0.8,
                       minWidth: badgeSize,
                       height: badgeSize,
                       borderRadius: badgeSize / 2,
@@ -322,7 +331,7 @@ export default function Jobs() {
                   numberOfLines={2}
                   ellipsizeMode='tail'
                 >
-                  {t(`tabs.${title}`)}
+                  {t(`tabs.business_${title}`)}
                 </Animated.Text>
               </View>
             </TouchableOpacity>
@@ -335,7 +344,7 @@ export default function Jobs() {
             bottom: 0,
             left: underlineTranslateX,
             width: underlineAnimatedWidth,
-            height: panelHeight * 0.05,
+            height: sizes.underlineHeight,
             backgroundColor: themeController.current?.primaryColor,
             borderRadius: RFValue(2),
             zIndex: 2,

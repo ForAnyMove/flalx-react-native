@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
-const subTabsList = ['new', 'waiting', 'in-progress', 'done'];
+const subTabsList = ['new', 'waiting', 'in_progress', 'done'];
 
 export default function tabsManager({ name, defaultTab, list }) {
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [activeSubTab, setActiveSubTab] = useState(subTabsList[0]);
   const [isRegisterNewUser, setRegisterNewUser] = useState(false);
   const [isOTPAuth, setOTPAuth] = useState(false);
-
+  
   // Загружаем сохранённое состояние (только web)
   useEffect(() => {
     if (Platform.OS === 'web') {

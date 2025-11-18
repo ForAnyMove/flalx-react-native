@@ -45,9 +45,15 @@ export default function InProgressScreen({
     scrollContainerWidth: isWebLandscape ? '60%' : '100%',
   };
 
-  const filteredJobsList = jobsController.creator.inProgress.filter((job) =>
-    filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
-  );
+  const filteredJobsList = jobsController.creator.inProgress
+    .filter((job) =>
+      filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
+    )
+    .filter((job) =>
+      [t(`jobTypes.${job.type}`), job.description].some((field) =>
+        field.toLowerCase().includes(searchValue.toLowerCase())
+      )
+    );
 
   return (
     <View
@@ -59,12 +65,12 @@ export default function InProgressScreen({
         },
       ]}
     >
-      {/* <View>
+      <View>
         <SearchPanel
           searchValue={searchValue}
           setSearchValue={setSearchValue}
         />
-      </View> */}
+      </View>
       <View>
         <JobTypeSelector
           selectedTypes={filteredJobs}

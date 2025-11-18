@@ -52,9 +52,15 @@ export default function WaitingScreen({
     personalMarkerFontSize: isWebLandscape ? height * 0.015 : RFValue(10),
   };
 
-  const filteredJobsList = jobsController.executor.waiting.filter((job) =>
-    filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
-  );
+  const filteredJobsList = jobsController.executor.waiting
+    .filter((job) =>
+      filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
+    )
+    .filter((job) =>
+      [t(`jobTypes.${job.type}`), job.description].some((field) =>
+        field.toLowerCase().includes(searchValue.toLowerCase())
+      )
+    );
 
   return (
     <View
@@ -66,12 +72,12 @@ export default function WaitingScreen({
         },
       ]}
     >
-      {/* <View>
+      <View>
         <SearchPanel
           searchValue={searchValue}
           setSearchValue={setSearchValue}
         />
-      </View> */}
+      </View>
       <View>
         <JobTypeSelector
           selectedTypes={filteredJobs}
@@ -91,7 +97,7 @@ export default function WaitingScreen({
         >
           {filteredJobsList.map((job, index) => {
             const hasImage = job.images && job.images.length > 0;
-            
+
             return (
               <TouchableOpacity
                 key={index}
