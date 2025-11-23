@@ -28,16 +28,10 @@ const getResponsiveSize = (mobileSize, webSize) => {
   return RFValue(mobileSize);
 };
 
-export default function AuthScreenWithPass() {
+export default function ForgottenPasswordScreen() {
   const { t } = useTranslation();
-  const {
-    session,
-    themeController,
-    languageController,
-    registerControl,
-    authControl,
-    forgotPassControl,
-  } = useComponentContext();
+  const { session, themeController, languageController, forgotPassControl } =
+    useComponentContext();
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
 
@@ -47,10 +41,8 @@ export default function AuthScreenWithPass() {
 
   const [step, setStep] = useState('email');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState(null);
   const [sending, setSending] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   const [otp, setOtp] = useState(Array.from({ length: OTP_LENGTH }, () => ''));
   const inputsRef = useRef([]);
@@ -133,16 +125,11 @@ export default function AuthScreenWithPass() {
         width: isWebLandscape ? scaleByHeight(314, height) : '100%',
       },
       linkIcon: {
-        width: isWebLandscape ? scaleByHeight(16, height) : RFValue(22),
-        height: isWebLandscape ? scaleByHeight(16, height) : RFValue(22),
+        width: isWebLandscape ? scaleByHeight(24, height) : RFValue(22),
+        height: isWebLandscape ? scaleByHeight(24, height) : RFValue(22),
       },
       link: {
         fontSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(13),
-      },
-      linkWithIcon: {
-        paddingHorizontal: isWebLandscape
-          ? scaleByHeight(3, height)
-          : RFValue(3),
       },
       error: {
         fontSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(13),
@@ -275,29 +262,30 @@ export default function AuthScreenWithPass() {
     setCooldownMode(mode);
   };
 
-  // Авторизация с паролем
-  const onPasswordSignIn = async () => {
+  // Отправка кода (первичная)
+  const onSendCode = async () => {
     if (!isValidEmail) {
       setEmailError(t('auth.invalid_email'));
       return;
     }
-
-    if (!password || password.length < 6) {
-      setEmailError(t('auth.invalid_password'));
-      return;
-    }
-
+    setEmailError(null);
     setSending(true);
-    const { success, error } = await session.signInWithPassword(
-      email,
-      password
-    );
-
-    if (!success) {
-      setEmailError(error || t('auth.login_error'));
+    try {
+      await session?.resetPasswordWithEmail(email.trim());
+      startTimer(60, 'standard');
+      setShowResendButton(false); // Начинаем с ссылки "Не получил код"
+      animateStepChange('otp');
+    } catch (e) {
+      console.error('Ошибка при отправке кода:', e.message);
+      if (e.message && e.message.includes('after')) {
+        handleCooldownError(e);
+        animateStepChange('otp'); // Все равно переходим на экран OTP
+      } else {
+        setEmailError(e.message || t('auth.send_code_error'));
+      }
+    } finally {
+      setSending(false);
     }
-
-    setSending(false);
   };
 
   // Переотправка кода
@@ -306,7 +294,9 @@ export default function AuthScreenWithPass() {
     setSending(true);
     setOtpError(null); // Сбрасываем ошибку OTP при переотправке
     try {
-      const { success, error } = await session?.sendCode(email.trim());
+      const { success, error } = await session?.resetPasswordWithEmail(
+        email.trim()
+      );
       if (!success) {
         throw new Error(error);
       }
@@ -356,8 +346,9 @@ export default function AuthScreenWithPass() {
     if (!canConfirm) return;
     try {
       setVerifying(true);
-      await session?.checkCode(joinedCode);
+      await session?.checkCodeForPaswordReset(joinedCode);
       // успешный вход → навигация во внешней логике
+      await forgotPassControl?.switch();
     } catch (e) {
       // например: 403 Forbidden / Token has expired or is invalid
       console.error('Ошибка проверки кода:', e);
@@ -410,284 +401,152 @@ export default function AuthScreenWithPass() {
           </Text>
 
           {/* Шаг EMAIL */}
-          <Text
-            style={[
-              styles.title,
-              dynamicStyles.title,
-              { color: theme.unactiveTextColor, textAlign: 'center' },
-            ]}
-          >
-            {t('auth.email_title')}
-          </Text>
-          <Text
-            style={[
-              styles.subtitle,
-              dynamicStyles.subtitle,
-              { color: theme.unactiveTextColor, textAlign: 'center' },
-            ]}
-          >
-            {t('auth.email_password_subtitle')}
-          </Text>
-          {/* EMAIL FIELD */}
-          <View
-            style={[
-              styles.fieldBlock,
-              dynamicStyles.fieldBlock,
-              {
-                backgroundColor: theme.formInputBackground,
-              },
-              isWebLandscape
-                ? {
-                    borderRadius: getResponsiveSize(
-                      12,
-                      scaleByHeight(8, height)
-                    ),
-                    paddingHorizontal: getResponsiveSize(12, 0),
-                    paddingTop: getResponsiveSize(10, scaleByHeight(8, height)),
-                    width: scaleByHeight(330, height),
-                    height: scaleByHeight(76, height),
-                  }
-                : null,
-            ]}
-          >
-            <Text
-              style={[
-                styles.label,
-                dynamicStyles.label,
-                {
-                  color: theme.formInputLabelColor,
-                  textAlign: isRTL ? 'right' : 'left',
-                },
-                isWebLandscape
-                  ? {
-                      paddingLeft: isRTL
-                        ? 0
-                        : getResponsiveSize(12, scaleByHeight(14, height)),
-                      paddingRight: isRTL
-                        ? getResponsiveSize(12, scaleByHeight(14, height))
-                        : 0,
-                      marginBottom: getResponsiveSize(
-                        4,
-                        scaleByHeight(7, height)
-                      ),
-                    }
-                  : null,
-              ]}
-            >
-              {t('auth.email_label')}
-            </Text>
-            <TextInput
-              ref={emailInputRef}
-              style={[
-                styles.input,
-                dynamicStyles.input,
-                {
-                  backgroundColor: theme.defaultBlocksBackground,
-                  borderColor: theme.borderColor,
-                  color: theme.formInputTextColor,
-                  textAlign: isRTL ? 'right' : 'left',
-                  // прозрачный инпут внутри окрашенного fieldBlock
-                  backgroundColor: 'transparent',
-                  borderWidth: 0,
-                  marginBottom: getResponsiveSize(4, scaleByHeight(3, height)),
-                },
-                Platform.OS === 'web' && isLandscape
-                  ? {
-                      // убираем чёрную обводку (RN Web)
-                      outlineStyle: 'none',
-                      outlineWidth: 0,
-                      outlineColor: 'transparent',
-                      boxShadow: 'none',
-                    }
-                  : null,
-              ]}
-              placeholder='name@example.com'
-              placeholderTextColor={theme.formInputPlaceholderColor}
-              keyboardType='email-address'
-              autoCapitalize='none'
-              autoCorrect={false}
-              value={email}
-              onChangeText={setEmail}
-              returnKeyType='done'
-            />
-          </View>
-          {/* PASSWORD FIELD */}
-          <View
-            style={[
-              styles.fieldBlock,
-              dynamicStyles.fieldBlock,
-              {
-                backgroundColor: theme.formInputBackground,
-                position: 'relative',
-              },
-              isWebLandscape
-                ? {
-                    borderRadius: getResponsiveSize(
-                      12,
-                      scaleByHeight(8, height)
-                    ),
-                    paddingHorizontal: getResponsiveSize(12, 0),
-                    paddingTop: getResponsiveSize(10, scaleByHeight(8, height)),
-                    width: scaleByHeight(330, height),
-                    height: scaleByHeight(76, height),
-                  }
-                : null,
-            ]}
-          >
-            <Text
-              style={[
-                styles.label,
-                dynamicStyles.label,
-                {
-                  color: theme.formInputLabelColor,
-                  textAlign: isRTL ? 'right' : 'left',
-                },
-                isWebLandscape
-                  ? {
-                      paddingLeft: isRTL
-                        ? 0
-                        : getResponsiveSize(12, scaleByHeight(14, height)),
-                      paddingRight: isRTL
-                        ? getResponsiveSize(12, scaleByHeight(14, height))
-                        : 0,
-                      marginBottom: getResponsiveSize(
-                        4,
-                        scaleByHeight(7, height)
-                      ),
-                    }
-                  : null,
-              ]}
-            >
-              {t('auth.password_label')}
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                dynamicStyles.input,
-                {
-                  backgroundColor: theme.defaultBlocksBackground,
-                  borderColor: theme.borderColor,
-                  color: theme.formInputTextColor,
-                  textAlign: isRTL ? 'right' : 'left',
-                  // прозрачный инпут внутри окрашенного fieldBlock
-                  backgroundColor: 'transparent',
-                  borderWidth: 0,
-                  marginBottom: getResponsiveSize(4, scaleByHeight(3, height)),
-                },
-                Platform.OS === 'web' && isLandscape
-                  ? {
-                      // убираем чёрную обводку (RN Web)
-                      outlineStyle: 'none',
-                      outlineWidth: 0,
-                      outlineColor: 'transparent',
-                      boxShadow: 'none',
-                    }
-                  : null,
-              ]}
-              placeholder='******'
-              placeholderTextColor={theme.formInputPlaceholderColor}
-              secureTextEntry={!showPassword}
-              autoCapitalize='none'
-              autoCorrect={false}
-              value={password}
-              onChangeText={setPassword}
-              returnKeyType='done'
-            />
-            {/* ICON EYE */}
-            <TouchableOpacity
-              onPress={() => setShowPassword((prev) => !prev)}
-              style={{
-                position: 'absolute',
-                right: isRTL
-                  ? undefined
-                  : isWebLandscape
-                  ? scaleByHeight(14, height)
-                  : RFValue(12),
-                left: isRTL
-                  ? isWebLandscape
-                    ? scaleByHeight(14, height)
-                    : RFValue(12)
-                  : undefined,
-                top: isWebLandscape ? scaleByHeight(26, height) : RFValue(38),
-                width: isWebLandscape ? scaleByHeight(24, height) : RFValue(22),
-                height: isWebLandscape
-                  ? scaleByHeight(24, height)
-                  : RFValue(22),
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
-              <Image
-                source={showPassword ? icons.eyeOpen : icons.eyeClosed}
-                style={{
-                  width: isWebLandscape
-                    ? scaleByHeight(24, height)
-                    : RFValue(22),
-                  height: isWebLandscape
-                    ? scaleByHeight(24, height)
-                    : RFValue(22),
-                  tintColor: theme.formInputLabelColor,
-                }}
-                resizeMode='contain'
-              />
-            </TouchableOpacity>
-          </View>
-          {/* Линки и таймер */}
-          <View
-            style={[
-              styles.linksRow,
-              dynamicStyles.linksRow,
-              {
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              },
-            ]}
-          >
-            {/* Ссылка "Назад" */}
-            <TouchableOpacity
-              onPress={() => forgotPassControl.switch()} // !TODO Раскоментировать, когда будет готово окно смены пароля
-              style={{ flexDirection: 'row', alignItems: 'center' }}
-            >
-              {/* <Image
-                              source={icons.emailClear}
-                              style={[dynamicStyles.linkIcon, {tintColor: theme.formInputLabelColor}]}
-                            /> */}
+          {step === 'email' ? (
+            <>
               <Text
                 style={[
-                  styles.link,
-                  dynamicStyles.link,
-                  // dynamicStyles.linkWithIcon,
+                  styles.title,
+                  dynamicStyles.title,
+                  { color: theme.unactiveTextColor, textAlign: 'center' },
+                ]}
+              >
+                {t('auth.forgot_pass_title')}
+              </Text>
+              <Text
+                style={[
+                  styles.subtitle,
+                  dynamicStyles.subtitle,
+                  { color: theme.unactiveTextColor, textAlign: 'center' },
+                ]}
+              >
+                {t('auth.forgot_pass_subtitle')}
+              </Text>
+
+              <View
+                style={[
+                  styles.fieldBlock,
+                  dynamicStyles.fieldBlock,
                   {
-                    color: theme.formInputLabelColor,
-                    textDecorationLine: 'none',
+                    backgroundColor: theme.formInputBackground,
+                  },
+                  isWebLandscape
+                    ? {
+                        borderRadius: getResponsiveSize(
+                          12,
+                          scaleByHeight(8, height)
+                        ),
+                        paddingHorizontal: getResponsiveSize(12, 0),
+                        paddingTop: getResponsiveSize(
+                          10,
+                          scaleByHeight(8, height)
+                        ),
+                        width: scaleByHeight(330, height),
+                        height: scaleByHeight(76, height),
+                      }
+                    : null,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.label,
+                    dynamicStyles.label,
+                    {
+                      color: theme.formInputLabelColor,
+                      textAlign: isRTL ? 'right' : 'left',
+                    },
+                    isWebLandscape
+                      ? {
+                          paddingLeft: isRTL
+                            ? 0
+                            : getResponsiveSize(12, scaleByHeight(14, height)),
+                          paddingRight: isRTL
+                            ? getResponsiveSize(12, scaleByHeight(14, height))
+                            : 0,
+                          marginBottom: getResponsiveSize(
+                            4,
+                            scaleByHeight(7, height)
+                          ),
+                        }
+                      : null,
+                  ]}
+                >
+                  {t('auth.email_label')}
+                </Text>
+                <TextInput
+                  ref={emailInputRef}
+                  style={[
+                    styles.input,
+                    dynamicStyles.input,
+                    {
+                      backgroundColor: theme.defaultBlocksBackground,
+                      borderColor: theme.borderColor,
+                      color: theme.formInputTextColor,
+                      textAlign: isRTL ? 'right' : 'left',
+                      // прозрачный инпут внутри окрашенного fieldBlock
+                      backgroundColor: 'transparent',
+                      borderWidth: 0,
+                      marginBottom: getResponsiveSize(
+                        4,
+                        scaleByHeight(3, height)
+                      ),
+                    },
+                    Platform.OS === 'web' && isLandscape
+                      ? {
+                          // убираем чёрную обводку (RN Web)
+                          outlineStyle: 'none',
+                          outlineWidth: 0,
+                          outlineColor: 'transparent',
+                          boxShadow: 'none',
+                        }
+                      : null,
+                  ]}
+                  placeholder='name@example.com'
+                  placeholderTextColor={theme.formInputPlaceholderColor}
+                  keyboardType='email-address'
+                  autoCapitalize='none'
+                  autoCorrect={false}
+                  value={email}
+                  onChangeText={setEmail}
+                  returnKeyType='done'
+                />
+              </View>
+              <View
+                style={[
+                  styles.linksRow,
+                  dynamicStyles.linksRow,
+                  {
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                   },
                 ]}
               >
-                {t('auth.forgot_password')}
-              </Text>
-            </TouchableOpacity>
+                {/* Ссылка "Назад" */}
+                <TouchableOpacity
+                  onPress={() => forgotPassControl.switch()}
+                  style={{ flexDirection: 'row', alignItems: 'center' }}
+                >
+                  {/* <Image
+                                            source={icons.emailClear}
+                                            style={[dynamicStyles.linkIcon, {tintColor: theme.formInputLabelColor}]}
+                                          /> */}
+                  <Text
+                    style={[
+                      styles.link,
+                      dynamicStyles.link,
+                      // dynamicStyles.linkWithIcon,
+                      {
+                        color: theme.formInputLabelColor,
+                        textDecorationLine: 'none',
+                      },
+                    ]}
+                  >
+                    {t('auth.back_to_sign_in')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
-            {/* Блок переотправки: при нажатии показывается кнопка */}
-            <TouchableOpacity
-              onPress={() => registerControl.goToRegisterScreen()}
-            >
               <Text
-                style={[
-                  styles.link,
-                  dynamicStyles.link,
-                  {
-                    color: theme.formInputLabelColor,
-                    // textDecorationLine: 'underline',
-                  },
-                ]}
-              >
-                {t('auth.create_user')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* <Text
                 style={[
                   styles.emailDescription,
                   dynamicStyles.emailDescription,
@@ -695,32 +554,249 @@ export default function AuthScreenWithPass() {
                 ]}
               >
                 {t('auth.email_description')}
-              </Text> */}
-          {!!emailError && (
-            <Text
-              style={[
-                styles.error,
-                dynamicStyles.error,
-                { color: theme.errorTextColor },
-              ]}
-            >
-              {emailError}
-            </Text>
-          )}
-          <PrimaryOutlineButton
-            isLandscape={isLandscape}
-            height={height}
-            theme={theme}
-            title={
-              sending ? (
-                <ActivityIndicator color={theme.primaryColor} />
+              </Text>
+              {!!emailError && (
+                <Text
+                  style={[
+                    styles.error,
+                    dynamicStyles.error,
+                    { color: theme.errorTextColor },
+                  ]}
+                >
+                  {emailError}
+                </Text>
+              )}
+              <PrimaryOutlineButton
+                isLandscape={isLandscape}
+                height={height}
+                theme={theme}
+                title={
+                  sending ? (
+                    <ActivityIndicator color={theme.primaryColor} />
+                  ) : (
+                    t('auth.send_reset_code')
+                  )
+                }
+                onPress={onSendCode}
+                disabled={sending}
+              />
+            </>
+          ) : (
+            /* Шаг OTP */
+            <>
+              <Text
+                style={[
+                  styles.title,
+                  dynamicStyles.title,
+                  { color: theme.unactiveTextColor, textAlign: 'center' },
+                ]}
+              >
+                {t('auth.otp_title')} {email}
+              </Text>
+              <Text
+                style={[
+                  styles.subtitle,
+                  dynamicStyles.subtitle,
+                  { color: theme.unactiveTextColor, textAlign: 'center' },
+                ]}
+              >
+                {t('auth.otp_subtitle')}
+              </Text>
+
+              <Text
+                style={[
+                  styles.label,
+                  dynamicStyles.label,
+                  {
+                    color: theme.unactiveTextColor,
+                    textAlign: 'center',
+                    // alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                  },
+                ]}
+              >
+                {t('auth.otp_label')}
+              </Text>
+
+              <Animated.View
+                style={[
+                  styles.otpRow,
+                  dynamicStyles.otpRow,
+                  {
+                    transform: [{ translateX: shakeAnim }],
+                    flexDirection: 'row',
+                  },
+                ]}
+              >
+                {Array.from({ length: OTP_LENGTH }).map((_, i) => (
+                  <TextInput
+                    key={i}
+                    ref={(el) => (inputsRef.current[i] = el)}
+                    style={[
+                      styles.otpCell,
+                      dynamicStyles.otpCell,
+                      {
+                        backgroundColor: theme.formInputBackground,
+                        borderColor:
+                          focusedOtpIndex === i
+                            ? theme.primaryColor
+                            : theme.formInputBackground,
+                        color: theme.textColor,
+                      },
+                    ]}
+                    value={otp[i]}
+                    onChangeText={(txt) => onChangeOtpCell(txt, i)}
+                    onKeyPress={(e) => onKeyPressOtp(e, i)}
+                    onFocus={() => setFocusedOtpIndex(i)}
+                    onBlur={() => setFocusedOtpIndex(null)}
+                    keyboardType={
+                      Platform.OS === 'web' ? 'default' : 'number-pad'
+                    }
+                    maxLength={1}
+                    textContentType='oneTimeCode'
+                  />
+                ))}
+              </Animated.View>
+
+              {!!otpError && (
+                <Text
+                  style={[
+                    styles.error,
+                    dynamicStyles.error,
+                    { color: theme.errorTextColor, textAlign: 'center' },
+                  ]}
+                >
+                  {otpError}
+                </Text>
+              )}
+
+              {/* Линки и таймер */}
+              <View
+                style={[
+                  styles.linksRow,
+                  dynamicStyles.linksRow,
+                  {
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  },
+                ]}
+              >
+                {/* Ссылка "Назад" */}
+                <TouchableOpacity
+                  onPress={backToEmail}
+                  style={{ flexDirection: 'row', alignItems: 'center' }}
+                >
+                  <Image
+                    source={icons.arrowLeft}
+                    style={dynamicStyles.linkIcon}
+                  />
+                  <Text
+                    style={[
+                      styles.link,
+                      dynamicStyles.link,
+                      {
+                        color: theme.formInputLabelColor,
+                        textDecorationLine: 'none',
+                      },
+                    ]}
+                  >
+                    {t('auth.back_to_email')}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Блок переотправки: при нажатии показывается кнопка */}
+                {!showResendButton && cooldownMode !== 'ready' && (
+                  <TouchableOpacity onPress={() => setShowResendButton(true)}>
+                    <Text
+                      style={[
+                        styles.link,
+                        dynamicStyles.link,
+                        {
+                          color: theme.formInputLabelColor,
+                          textDecorationLine: 'underline',
+                        },
+                      ]}
+                    >
+                      {t('auth.resend_code')}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Таймер */}
+              <View style={{ justifyContent: 'center' }}>
+                <Text
+                  style={[
+                    styles.sentCodeTimer,
+                    dynamicStyles.sentCodeTimer,
+                    {
+                      color:
+                        cooldownMode === 'error'
+                          ? theme.errorTextColor
+                          : theme.textColor,
+                      textAlign: 'center',
+                    },
+                  ]}
+                >
+                  {t(
+                    cooldown > 0
+                      ? `auth.sent_code_timer_${cooldownMode}_text`
+                      : 'auth.sent_code_timer_ready_text',
+                    { count: cooldown }
+                  )}
+                </Text>
+              </View>
+
+              {/* Кнопка переотправки - УДАЛЕНА */}
+              {(showResendButton || cooldownMode === 'ready') && (
+                <PrimaryOutlineButton
+                  isLandscape={isLandscape}
+                  height={height}
+                  theme={theme}
+                  title={
+                    sending ? t('auth.sending') : t('auth.resent_code_text')
+                  }
+                  onPress={handleResend}
+                  disabled={cooldown > 0 && cooldownMode === 'error'}
+                  containerStyle={{
+                    marginTop: getResponsiveSize(8, scaleByHeight(16, height)),
+                  }}
+                />
+              )}
+
+              {/* Кнопка подтверждения/очистки */}
+              {otpError ? (
+                <PrimaryOutlineButton
+                  isLandscape={isLandscape}
+                  height={height}
+                  theme={theme}
+                  title={t('auth.clear_code')}
+                  onPress={clearOtp}
+                  containerStyle={{
+                    marginTop: getResponsiveSize(8, scaleByHeight(16, height)),
+                  }}
+                />
               ) : (
-                t('auth.sign_in')
-              )
-            }
-            onPress={onPasswordSignIn}
-            disabled={sending}
-          />
+                <PrimaryOutlineButton
+                  isLandscape={isLandscape}
+                  height={height}
+                  theme={theme}
+                  title={
+                    verifying ? (
+                      <ActivityIndicator color={theme.primaryColor} />
+                    ) : (
+                      t('auth.confirm')
+                    )
+                  }
+                  onPress={onConfirm}
+                  disabled={!canConfirm || verifying}
+                  containerStyle={{
+                    marginTop: getResponsiveSize(8, scaleByHeight(16, height)),
+                  }}
+                />
+              )}
+            </>
+          )}
         </Animated.View>
       </ScrollView>
 
@@ -880,7 +956,7 @@ const styles = StyleSheet.create({
   },
   link: {
     // fontSize: getResponsiveSize(13, scaleByHeight(12)),
-    // textDecorationLine: 'underline',
+    textDecorationLine: 'underline',
   },
   error: {
     // fontSize: getResponsiveSize(13, scaleByHeight(12)),

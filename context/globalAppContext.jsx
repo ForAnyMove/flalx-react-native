@@ -42,7 +42,7 @@ export const ComponentProvider = ({ children }) => {
   const appTabController = tabsManager({ name: 'app', defaultTab: appTabsList[0], list: appTabsList });
   const profileTabController = tabsManager({ name: 'profile', defaultTab: profileTabsList[0], list: profileTabsList });
 
-  const { registerControl, authControl } = authTabsManager();
+  const { registerControl, authControl, forgotPassControl } = authTabsManager();
 
   const jobsController = jobsManager({ session, user });
   const providersController = providersManager({ session });
@@ -92,6 +92,7 @@ export const ComponentProvider = ({ children }) => {
         isLoader,
         registerControl,
         authControl,
+        forgotPassControl,
       }}
     >
       {children}
