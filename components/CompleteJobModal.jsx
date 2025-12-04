@@ -14,7 +14,6 @@ import JobModalWrapper from './JobModalWrapper';
 import { useWindowInfo } from '../context/windowContext';
 import { icons } from '../constants/icons';
 import { scaleByHeight } from '../utils/resizeFuncs';
-import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
 import { useTranslation } from 'react-i18next';
 import {
   createSubscription,
@@ -24,15 +23,18 @@ import {
 } from '../src/api/subscriptions';
 import { useWebView } from '../context/webViewContext';
 import { useNotification } from '../src/render';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import ImagePickerModal from './ui/ImagePickerModal';
+import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
+import { scaleByHeightMobile } from '../utils/resizeFuncs';
 
 function CompleteJobModalContent({ closeModal, completeFunc }) {
   const {
     themeController,
     languageController,
-    subscriptionPlans,
-    subscription,
+    user,
+    // subscriptionPlans,
+    // subscription,
   } = useComponentContext();
   const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
   const { t } = useTranslation();
@@ -44,49 +46,221 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
 
   const [imageModalVisible, setImageModalVisible] = useState(false);
 
-  const sizes = {
-    headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
-    headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(0),
-    icon: isWebLandscape ? scaleByHeight(24, height) : RFValue(24),
-    logoFont: isWebLandscape ? scaleByHeight(24, height) : RFValue(20),
-    modalHeaderPadding: isWebLandscape ? scaleByHeight(7, height) : RFValue(10),
-    modalHeaderPaddingTop: isWebLandscape
-      ? scaleByHeight(32, height)
-      : RFValue(15),
-    containerPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(23, height)
-      : RFValue(15),
-    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-    saveBtnWidth: isWebLandscape ? scaleByHeight(380, height) : RFValue(120),
-    saveBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(40),
-    saveBtnFont: isWebLandscape ? scaleByHeight(20, height) : RFValue(14),
-    padding: isWebLandscape ? scaleByHeight(4, height) : RFValue(8),
-    descriptionHeight: isWebLandscape
-      ? scaleByHeight(120, height)
-      : RFValue(40),
-    inputContainerPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(16, height)
-      : RFValue(8),
-    inputContainerPaddingVertical: isWebLandscape
-      ? scaleByHeight(10, height)
-      : RFValue(6),
-    font: isWebLandscape ? scaleByHeight(12, height) : RFValue(12),
-    inputFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
-    padding: isWebLandscape ? scaleByHeight(4, height) : RFValue(8),
-    photosLabelSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(12),
-    photosLabelMarginBottom: isWebLandscape
-      ? scaleByHeight(14, height)
-      : RFValue(6),
-    thumb: isWebLandscape ? scaleByHeight(128, height) : RFValue(80),
-    imageSize: isWebLandscape ? scaleByHeight(32, height) : RFPercentage(3),
-    margin: isWebLandscape ? scaleByHeight(18, height) : RFValue(10),
-    removeIconSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(20),
-    removeIconPosition: isWebLandscape ? scaleByHeight(3, height) : RFValue(4),
-    crossIconSize: isWebLandscape ? scaleByHeight(16, height) : RFValue(20),
-    titleMarginBottom: isWebLandscape ? scaleByHeight(8, height) : RFValue(8),
-    subtitleMarginBottom: isWebLandscape ? scaleByHeight(24, height) : RFValue(16),
-    fieldMarginBottom: isWebLandscape ? scaleByHeight(16, height) : RFValue(8),
-  };
+  const sizes = useMemo(
+    () => ({
+      headerHeight: isWebLandscape
+        ? scaleByHeight(50, height)
+        : scaleByHeightMobile(50, height),
+      headerMargin: isWebLandscape
+        ? scaleByHeight(30, height)
+        : scaleByHeightMobile(0, height),
+      icon: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(24, height),
+      logoFont: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(20, height),
+      modalHeaderPadding: isWebLandscape
+        ? scaleByHeight(7, height)
+        : scaleByHeightMobile(10, height),
+      modalHeaderPaddingTop: isWebLandscape
+        ? scaleByHeight(32, height)
+        : scaleByHeightMobile(15, height),
+      containerPaddingHorizontal: isWebLandscape
+        ? scaleByHeight(23, height)
+        : scaleByHeightMobile(15, height),
+      borderRadius: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(5, height),
+      saveBtnWidth: isWebLandscape
+        ? scaleByHeight(380, height)
+        : scaleByHeightMobile(120, height),
+      saveBtnHeight: isWebLandscape
+        ? scaleByHeight(62, height)
+        : scaleByHeightMobile(40, height),
+      saveBtnFont: isWebLandscape
+        ? scaleByHeight(20, height)
+        : scaleByHeightMobile(14, height),
+      padding: isWebLandscape
+        ? scaleByHeight(4, height)
+        : scaleByHeightMobile(8, height),
+      descriptionHeight: isWebLandscape
+        ? scaleByHeight(120, height)
+        : scaleByHeightMobile(120, height),
+      inputContainerPaddingHorizontal: isWebLandscape
+        ? scaleByHeight(16, height)
+        : scaleByHeightMobile(8, height),
+      inputContainerPaddingVertical: isWebLandscape
+        ? scaleByHeight(10, height)
+        : scaleByHeightMobile(6, height),
+      font: isWebLandscape
+        ? scaleByHeight(12, height)
+        : scaleByHeightMobile(12, height),
+      inputFont: isWebLandscape
+        ? scaleByHeight(16, height)
+        : scaleByHeightMobile(14, height),
+      photosLabelSize: isWebLandscape
+        ? scaleByHeight(18, height)
+        : scaleByHeightMobile(16, height),
+      photosLabelMarginBottom: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(6, height),
+      thumb: isWebLandscape
+        ? scaleByHeight(128, height)
+        : scaleByHeightMobile(80, height),
+      imageSize: isWebLandscape
+        ? scaleByHeight(32, height)
+        : scaleByHeightMobile(30, height),
+      margin: isWebLandscape
+        ? scaleByHeight(18, height)
+        : scaleByHeightMobile(10, height),
+      removeIconSize: isWebLandscape
+        ? scaleByHeight(20, height)
+        : scaleByHeightMobile(20, height),
+      removeIconPosition: isWebLandscape
+        ? scaleByHeight(3, height)
+        : scaleByHeightMobile(4, height),
+      crossIconSize: isWebLandscape
+        ? scaleByHeight(16, height)
+        : scaleByHeightMobile(16, height),
+      titleMarginBottom: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(8, height),
+      subtitleMarginBottom: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(16, height),
+      fieldMarginBottom: isWebLandscape
+        ? scaleByHeight(16, height)
+        : scaleByHeightMobile(8, height),
+    }),
+    [isWebLandscape, height]
+  );
+
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        modalHeader: {
+          flexDirection: isRTL ? 'row-reverse' : 'row',
+          paddingHorizontal: sizes.modalHeaderPadding,
+          paddingVertical: sizes.modalHeaderPaddingTop,
+          backgroundColor: themeController.current?.backgroundColor,
+          borderBottomColor: themeController.current?.profileDefaultBackground,
+          height: sizes.headerHeight,
+          marginVertical: sizes.headerMargin,
+          borderBottomWidth: 2,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        },
+        modalTitle: {
+          fontWeight: 'bold',
+          color: themeController.current?.primaryColor,
+          fontFamily: 'Rubik-Bold',
+          fontSize: sizes.logoFont,
+        },
+        backButtonImage: {
+          width: sizes.icon,
+          height: sizes.icon,
+          tintColor: themeController.current?.textColor,
+        },
+        titleText: {
+          textAlign: 'center',
+          fontSize: sizes.photosLabelSize,
+          color: themeController?.current.textColor,
+          marginBottom: sizes.titleMarginBottom,
+        },
+        subtitleText: {
+          textAlign: 'center',
+          fontSize: sizes.inputFont,
+          color: themeController?.current.unactiveTextColor,
+          marginBottom: sizes.subtitleMarginBottom,
+        },
+        uploadLabel: {
+          fontSize: sizes.photosLabelSize,
+          marginBottom: sizes.photosLabelMarginBottom,
+          color: themeController.current?.textColor,
+        },
+        addImageButton: {
+          backgroundColor: themeController.current?.profileDefaultBackground,
+          width: sizes.thumb,
+          height: sizes.thumb,
+          borderRadius: sizes.borderRadius,
+          marginRight: isRTL ? 0 : sizes.margin / 2,
+          marginLeft: isRTL ? sizes.margin / 2 : 0,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        plusIcon: {
+          width: sizes.imageSize,
+          height: sizes.imageSize,
+          tintColor: themeController.current?.primaryColor,
+        },
+        imageWrapper: {
+          backgroundColor: themeController.current?.formInputBackground,
+          marginRight: isRTL ? 0 : sizes.margin / 2,
+          marginLeft: isRTL ? sizes.margin / 2 : 0,
+          position: 'relative',
+        },
+        image: {
+          width: sizes.thumb,
+          height: sizes.thumb,
+          borderRadius: sizes.borderRadius,
+        },
+        removeIconContainer: {
+          position: 'absolute',
+          borderRadius: sizes.removeIconSize,
+          top: sizes.removeIconPosition,
+          right: sizes.removeIconPosition,
+          width: sizes.removeIconSize,
+          height: sizes.removeIconSize,
+          backgroundColor: 'rgba(255,255,255,0.7)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 10,
+        },
+        crossIcon: {
+          width: sizes.crossIconSize,
+          height: sizes.crossIconSize,
+          tintColor: themeController.current?.textColor,
+        },
+        descriptionInputContainer: {
+          backgroundColor: themeController.current?.formInputBackground,
+          paddingVertical: sizes.inputContainerPaddingVertical,
+          paddingHorizontal: sizes.inputContainerPaddingHorizontal,
+          borderRadius: sizes.borderRadius,
+          marginBottom: sizes.fieldMarginBottom * 2,
+          height: sizes.descriptionHeight,
+        },
+        descriptionLabel: {
+          color: themeController.current?.unactiveTextColor,
+          fontSize: sizes.font,
+        },
+        descriptionInput: {
+          fontWeight: '500',
+          padding: 0,
+          paddingVertical: sizes.padding,
+          color: themeController.current?.textColor,
+          fontSize: sizes.inputFont,
+          borderRadius: sizes.borderRadius,
+          backgroundColor: 'transparent',
+          textAlign: isRTL ? 'right' : 'left',
+        },
+        completeButton: {
+          backgroundColor: themeController.current?.buttonColorPrimaryDefault,
+          borderRadius: sizes.borderRadius,
+          paddingVertical: isWebLandscape ? sizes.padding * 1.2 : null,
+          width: isWebLandscape ? sizes.saveBtnWidth : null,
+          height: isWebLandscape ? sizes.saveBtnHeight : null,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        completeButtonText: {
+          color: 'white',
+          textAlign: 'center',
+          fontSize: isWebLandscape ? sizes.saveBtnFont : null,
+        },
+      }),
+    [isRTL, sizes, themeController, isWebLandscape]
+  );
 
   const handleImageAdd = async (uris) => {
     try {
@@ -116,8 +290,6 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
     );
   };
 
-  const bg = themeController.current?.formInputBackground;
-
   return (
     <TouchableOpacity
       activeOpacity={1}
@@ -142,22 +314,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
         }}
       >
         {/* Header */}
-        <View
-          style={[
-            styles.modalHeader,
-            {
-              flexDirection: isRTL ? 'row-reverse' : 'row',
-              paddingHorizontal: sizes.modalHeaderPadding,
-              paddingVertical: sizes.modalHeaderPaddingTop,
-              backgroundColor: themeController.current?.backgroundColor,
-              borderBottomColor:
-                themeController.current?.profileDefaultBackground,
-              height: sizes.headerHeight,
-              marginVertical: sizes.headerMargin,
-              borderBottomWidth: 2,
-            },
-          ]}
-        >
+        <View style={dynamicStyles.modalHeader}>
           <TouchableOpacity
             onPress={() => {
               closeModal(false);
@@ -165,24 +322,10 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
           >
             <Image
               source={isRTL ? icons.forward : icons.back}
-              style={{
-                width: sizes.icon,
-                height: sizes.icon,
-                tintColor: themeController.current?.textColor,
-              }}
+              style={dynamicStyles.backButtonImage}
             />
           </TouchableOpacity>
-          <Text
-            style={[
-              styles.modalTitle,
-              {
-                fontSize: sizes.logoFont,
-                color: themeController.current?.primaryColor,
-              },
-            ]}
-          >
-            FLALX
-          </Text>
+          <Text style={dynamicStyles.modalTitle}>FLALX</Text>
         </View>
 
         <ScrollView contentContainerStyle={{}}>
@@ -191,24 +334,10 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
               alignSelf: 'center',
             }}
           >
-            <Text
-              style={{
-                textAlign: 'center',
-                fontSize: sizes.photosLabelSize,
-                color: themeController?.current.textColor,
-                marginBottom: sizes.titleMarginBottom,
-              }}
-            >
+            <Text style={dynamicStyles.titleText}>
               {t('showJob.completeModal.title')}
             </Text>
-            <Text
-              style={{
-                textAlign: 'center',
-                fontSize: sizes.inputFont,
-                color: themeController?.current.unactiveTextColor,
-                marginBottom: sizes.subtitleMarginBottom,
-              }}
-            >
+            <Text style={dynamicStyles.subtitleText}>
               {t('showJob.completeModal.sub_title')}
             </Text>
           </View>
@@ -221,7 +350,6 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
               style={[
                 styles.gridFull,
                 {
-                  // marginBottom: sizes.margin,
                   zIndex: 5,
                   marginBottom: sizes.fieldMarginBottom,
                 },
@@ -229,12 +357,8 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
             >
               <Text
                 style={[
+                  dynamicStyles.uploadLabel,
                   isRTL && { textAlign: 'right' },
-                  {
-                    fontSize: sizes.photosLabelSize,
-                    marginBottom: sizes.photosLabelMarginBottom,
-                    color: themeController.current?.textColor,
-                  },
                 ]}
               >
                 {t('newJob.uploadingPhotos', {
@@ -250,26 +374,11 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
               >
                 <TouchableOpacity
                   onPress={() => setImageModalVisible(true)}
-                  style={[
-                    styles.addImageButton,
-                    {
-                      backgroundColor:
-                        themeController.current?.profileDefaultBackground,
-                      width: sizes.thumb,
-                      height: sizes.thumb,
-                      borderRadius: sizes.borderRadius,
-                      marginRight: isRTL ? 0 : sizes.margin / 2,
-                      marginLeft: isRTL ? sizes.margin / 2 : 0,
-                    },
-                  ]}
+                  style={dynamicStyles.addImageButton}
                 >
                   <Image
                     source={icons.plus}
-                    style={{
-                      width: sizes.imageSize,
-                      height: sizes.imageSize,
-                      tintColor: themeController.current?.primaryColor,
-                    }}
+                    style={dynamicStyles.plusIcon}
                     resizeMode='contain'
                   />
                 </TouchableOpacity>
@@ -283,46 +392,15 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
                   ]}
                 >
                   {images.map((uri, index) => (
-                    <View
-                      key={index}
-                      style={[
-                        styles.imageWrapper,
-                        {
-                          backgroundColor:
-                            themeController.current?.formInputBackground,
-                          marginRight: isRTL ? 0 : sizes.margin / 2,
-                          marginLeft: isRTL ? sizes.margin / 2 : 0,
-                        },
-                      ]}
-                    >
-                      <Image
-                        source={{ uri }}
-                        style={{
-                          width: sizes.thumb,
-                          height: sizes.thumb,
-                          borderRadius: sizes.borderRadius,
-                        }}
-                      />
+                    <View key={index} style={dynamicStyles.imageWrapper}>
+                      <Image source={{ uri }} style={dynamicStyles.image} />
                       <TouchableOpacity
-                        style={[
-                          styles.removeIcon,
-                          {
-                            borderRadius: sizes.removeIconSize,
-                            top: sizes.removeIconPosition,
-                            right: sizes.removeIconPosition,
-                            width: sizes.removeIconSize,
-                            height: sizes.removeIconSize,
-                          },
-                        ]}
+                        style={dynamicStyles.removeIconContainer}
                         onPress={() => removeImage(index)}
                       >
                         <Image
                           source={icons.cross}
-                          style={{
-                            width: sizes.crossIconSize,
-                            height: sizes.crossIconSize,
-                            tintColor: themeController.current?.textColor,
-                          }}
+                          style={dynamicStyles.crossIcon}
                           resizeMode='contain'
                         />
                       </TouchableOpacity>
@@ -331,26 +409,11 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
                 </ScrollView>
               </View>
             </View>
-            <View
-              style={[
-                styles.inputBlock,
-                { backgroundColor: bg },
-                {
-                  paddingVertical: sizes.inputContainerPaddingVertical,
-                  paddingHorizontal: sizes.inputContainerPaddingHorizontal,
-                  borderRadius: sizes.borderRadius,
-                  marginBottom: sizes.fieldMarginBottom * 2,
-                  height: sizes.descriptionHeight,
-                },
-              ]}
-            >
+            <View style={[styles.inputBlock, dynamicStyles.descriptionInputContainer]}>
               <Text
                 style={[
-                  {
-                    color: themeController.current?.unactiveTextColor,
-                  },
+                  dynamicStyles.descriptionLabel,
                   isRTL && { textAlign: 'right' },
-                  { fontSize: sizes.font },
                 ]}
               >
                 {t('newJob.description', {
@@ -366,36 +429,13 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
                 placeholderTextColor={
                   themeController.current?.formInputLabelColor
                 }
-                style={{
-                  fontWeight: '500',
-                  padding: 0,
-                  paddingVertical: sizes.padding,
-                  color: themeController.current?.textColor,
-                  fontSize: sizes.inputFont,
-                  borderRadius: sizes.borderRadius,
-                  backgroundColor: 'transparent',
-                  textAlign: isRTL ? 'right' : 'left',
-                }}
+                style={dynamicStyles.descriptionInput}
                 multiline
               />
             </View>
             <TouchableOpacity
               key='completeBtn'
-              style={[
-                styles.createButton,
-                {
-                  backgroundColor:
-                    themeController.current?.buttonColorPrimaryDefault,
-                  borderRadius: sizes.borderRadius,
-                  ...(isWebLandscape && {
-                    paddingVertical: sizes.padding * 1.2,
-                  }),
-                },
-                isWebLandscape && {
-                  width: sizes.saveBtnWidth,
-                  height: sizes.saveBtnHeight,
-                },
-              ]}
+              style={[styles.createButton, dynamicStyles.completeButton]}
               onPress={() => {
                 completeFunc({
                   description: description,
@@ -404,13 +444,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
                 console.log('completed');
               }}
             >
-              <Text
-                style={{
-                  color: 'white',
-                  textAlign: 'center',
-                  ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
-                }}
-              >
+              <Text style={dynamicStyles.completeButtonText}>
                 {t('showJob.buttons.complete', {
                   defaultValue: 'Complete',
                 })}
@@ -458,24 +492,24 @@ export default function CompleteJobModal({
 
 const styles = StyleSheet.create({
   modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: RFValue(10),
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-    justifyContent: 'space-between',
+    // flexDirection: 'row',
+    // alignItems: 'center',
+    // padding: RFValue(10),
+    // borderBottomWidth: 1,
+    // borderColor: '#ccc',
+    // justifyContent: 'space-between',
   },
   modalTitle: {
-    fontWeight: 'bold',
-    color: '#0A62EA',
-    fontFamily: 'Rubik-Bold',
+    // fontWeight: 'bold',
+    // color: '#0A62EA',
+    // fontFamily: 'Rubik-Bold',
   },
   createButton: {
     // paddingVertical: RFValue(12),
-    borderRadius: RFValue(5),
+    // borderRadius: RFValue(5),
     // marginBottom: RFValue(10),
-    alignItems: 'center',
-    justifyContent: 'center',
+    // alignItems: 'center',
+    // justifyContent: 'center',
   },
   inputBlock: {
     ...Platform.select({
@@ -485,20 +519,20 @@ const styles = StyleSheet.create({
     }),
   },
   addImageButton: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    // justifyContent: 'center',
+    // alignItems: 'center',
   },
   imageScrollContainer: {
     flexDirection: 'row',
   },
   imageWrapper: {
-    position: 'relative',
+    // position: 'relative',
   },
   removeIcon: {
-    position: 'absolute',
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
+    // position: 'absolute',
+    // backgroundColor: 'rgba(255,255,255,0.7)',
+    // justifyContent: 'center',
+    // alignItems: 'center',
+    // zIndex: 10,
   },
 });

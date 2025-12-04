@@ -1,5 +1,5 @@
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Image,
   Modal,
@@ -8,15 +8,15 @@ import {
   TouchableOpacity,
   View,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
+import JobTypeSelector from '../../../components/JobTypeSelector';
 import SearchPanel from '../../../components/SearchPanel';
 import ShowJobModal from '../../../components/ShowJobModal';
 import { useComponentContext } from '../../../context/globalAppContext';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
-import { scaleByHeight } from '../../../utils/resizeFuncs';
-import JobTypeSelector from '../../../components/JobTypeSelector';
+import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 
 export default function WaitingScreen({
   setShowJobModalVisible,
@@ -25,7 +25,8 @@ export default function WaitingScreen({
 }) {
   const { themeController, jobsController, languageController } =
     useComponentContext();
-  const { height, isLandscape } = useWindowInfo();
+  const { height } = useWindowDimensions();
+  const { isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 
@@ -36,19 +37,29 @@ export default function WaitingScreen({
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
-  // размеры для web-landscape
-  const sizes = {
-    cardRadius: isWebLandscape ? height * 0.007 : RFValue(5),
-    cardShadow: isWebLandscape ? height * 0.001 : RFValue(3),
-    imageHeight: isWebLandscape ? scaleByHeight(120, height) : RFValue(45),
-    imageWidth: isWebLandscape ? scaleByHeight(153, height) : RFValue(55),
-    fontTitle: isWebLandscape ? scaleByHeight(18, height) : RFValue(12),
-    fontDescription: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
-    badgeSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(16),
-    badgeFont: isWebLandscape ? scaleByHeight(12, height) : RFValue(10),
-    scrollContainerWidth: isWebLandscape ? '60%' : '100%',
-    badgePosition: isWebLandscape ? height * 0.005 : RFValue(5),
-  };
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+
+    return {
+      cardRadius: isWebLandscape ? web(8) : mobile(5),
+      cardShadow: isWebLandscape ? web(1) : mobile(3),
+      imageHeight: isWebLandscape ? web(120) : mobile(45),
+      imageWidth: isWebLandscape ? web(153) : mobile(55),
+      fontTitle: isWebLandscape ? web(18) : mobile(12),
+      fontDescription: isWebLandscape ? web(16) : mobile(10),
+      badgeSize: isWebLandscape ? web(20) : mobile(16),
+      badgeFont: isWebLandscape ? web(12) : mobile(10),
+      scrollContainerWidth: isWebLandscape ? '60%' : '100%',
+      badgePosition: isWebLandscape ? web(5) : mobile(5),
+      imageMargin: isWebLandscape ? web(10) : mobile(10),
+      containerPaddingH: isWebLandscape ? web(10) : mobile(10),
+      containerPaddingV: isWebLandscape ? web(14) : mobile(14),
+      cardMarginBottom: isWebLandscape ? web(8) : mobile(8),
+      descriptionMarginTop: isWebLandscape ? web(2) : mobile(2),
+      badgePadding: isWebLandscape ? web(2) : mobile(2),
+    };
+  }, [height, isWebLandscape]);
 
   const filteredJobsList = jobsController.creator.waiting
     .filter((job) =>
@@ -67,6 +78,8 @@ export default function WaitingScreen({
         {
           backgroundColor: themeController.current?.backgroundColor,
           direction: isRTL ? 'rtl' : 'ltr',
+          paddingHorizontal: sizes.containerPaddingH,
+          paddingVertical: sizes.containerPaddingV,
         },
       ]}
     >
@@ -99,7 +112,7 @@ export default function WaitingScreen({
             return (
               <TouchableOpacity
                 key={index}
-                style={styles.cardContainer}
+                style={[styles.cardContainer, { marginBottom: sizes.cardMarginBottom }]}
                 onPress={() => {
                   setCurrentJobId(job.id);
                   setShowJobModalVisible(true);
@@ -126,11 +139,11 @@ export default function WaitingScreen({
                           themeController.current?.defaultBlocksMockBackground,
                         ...(isRTL
                           ? {
-                              marginLeft: RFValue(10),
+                              marginLeft: sizes.imageMargin,
                               marginRight: 0,
                             }
                           : {
-                              marginRight: RFValue(10),
+                              marginRight: sizes.imageMargin,
                               marginLeft: 0,
                             }),
                         ...(isRTL && Platform.OS === 'web'
@@ -184,6 +197,7 @@ export default function WaitingScreen({
                             textAlign:
                               isRTL && Platform.OS === 'web' ? 'right' : 'left',
                             fontSize: sizes.fontDescription,
+                            marginTop: sizes.descriptionMarginTop,
                           },
                         ]}
                       >
@@ -202,6 +216,8 @@ export default function WaitingScreen({
                           height: sizes.badgeSize,
                           borderRadius: sizes.badgeSize / 2,
                           top: sizes.badgePosition,
+                          paddingHorizontal: sizes.badgePadding,
+                          paddingVertical: sizes.badgePadding,
                           ...(isRTL
                             ? { left: sizes.badgePosition }
                             : { right: sizes.badgePosition }),
@@ -234,16 +250,12 @@ export default function WaitingScreen({
 const styles = {
   container: {
     flex: 1,
-    paddingHorizontal: RFValue(10),
-    paddingVertical: RFValue(14),
     paddingBottom: 0,
   },
   scrollContainer: {
     paddingBottom: 0,
   },
-  cardContainer: {
-    marginBottom: RFValue(8),
-  },
+  cardContainer: {},
   cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -252,7 +264,6 @@ const styles = {
   imageContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: RFValue(10),
     overflow: 'hidden',
   },
   image: {
@@ -273,13 +284,9 @@ const styles = {
   title: {
     // fontWeight: '600',
   },
-  description: {
-    marginTop: RFValue(2),
-  },
+  description: {},
   badge: {
     position: 'absolute',
-    paddingHorizontal: RFValue(2),
-    paddingVertical: RFValue(2),
     alignItems: 'center',
     justifyContent: 'center',
   },

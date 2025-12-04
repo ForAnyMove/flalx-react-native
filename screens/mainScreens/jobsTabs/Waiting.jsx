@@ -1,21 +1,20 @@
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Image,
-  Modal,
   Platform,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import JobTypeSelector from '../../../components/JobTypeSelector';
-import { RFValue } from 'react-native-responsive-fontsize';
 import SearchPanel from '../../../components/SearchPanel';
 import { useComponentContext } from '../../../context/globalAppContext';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
-import { scaleByHeight } from '../../../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 
 export default function WaitingScreen({
   setShowJobModalVisible,
@@ -24,7 +23,8 @@ export default function WaitingScreen({
 }) {
   const { themeController, jobsController, languageController } =
     useComponentContext();
-  const { height, isLandscape } = useWindowInfo();
+  const { height } = useWindowDimensions();
+  const { isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
   const [filteredJobs, setFilteredJobs] = useState([]);
@@ -32,25 +32,29 @@ export default function WaitingScreen({
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
-  // размеры для web-landscape
-  const sizes = {
-    cardRadius: isWebLandscape ? height * 0.007 : RFValue(5),
-    imageHeight: isWebLandscape ? scaleByHeight(120, height) : RFValue(45),
-    imageWidth: isWebLandscape ? scaleByHeight(153, height) : RFValue(55),
-    fontTitle: isWebLandscape ? scaleByHeight(18, height) : RFValue(12),
-    fontDescription: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
-    badgeSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(16),
-    badgeFont: isWebLandscape ? scaleByHeight(12, height) : RFValue(10),
-    scrollContainerWidth: isWebLandscape ? '60%' : '100%',
-    badgePosition: isWebLandscape ? height * 0.005 : RFValue(5),
-    personalMarkerBorderWidth: isWebLandscape ? height * 0.003 : RFValue(2),
-    personalMarkerVP: isWebLandscape ? height * 0.003 : RFValue(2),
-    personalMarkerHP: isWebLandscape ? height * 0.012 : RFValue(6),
-    personalMarkerBottomAngleRadius: isWebLandscape
-      ? height * 0.01
-      : RFValue(8),
-    personalMarkerFontSize: isWebLandscape ? height * 0.015 : RFValue(10),
-  };
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+
+    return {
+      cardRadius: isWebLandscape ? web(5) : mobile(5),
+      imageHeight: isWebLandscape ? web(120) : mobile(45),
+      imageWidth: isWebLandscape ? web(153) : mobile(55),
+      fontTitle: isWebLandscape ? web(18) : mobile(12),
+      fontDescription: isWebLandscape ? web(16) : mobile(10),
+      scrollContainerWidth: isWebLandscape ? '60%' : '100%',
+      personalMarkerBorderWidth: isWebLandscape ? web(2) : mobile(2),
+      personalMarkerVP: isWebLandscape ? web(2) : mobile(2),
+      personalMarkerHP: isWebLandscape ? web(6) : mobile(6),
+      personalMarkerBottomAngleRadius: isWebLandscape ? web(8) : mobile(8),
+      personalMarkerFontSize: isWebLandscape ? web(10) : mobile(10),
+      containerPaddingHorizontal: mobile(10),
+      containerPaddingVertical: mobile(14),
+      cardMarginBottom: mobile(8),
+      imageMargin: mobile(10),
+      descriptionMarginTop: mobile(2),
+    };
+  }, [height, isWebLandscape]);
 
   const filteredJobsList = jobsController.executor.waiting
     .filter((job) =>
@@ -69,6 +73,8 @@ export default function WaitingScreen({
         {
           backgroundColor: themeController.current?.backgroundColor,
           direction: isRTL ? 'rtl' : 'ltr',
+          paddingHorizontal: sizes.containerPaddingHorizontal,
+          paddingVertical: sizes.containerPaddingVertical,
         },
       ]}
     >
@@ -101,7 +107,10 @@ export default function WaitingScreen({
             return (
               <TouchableOpacity
                 key={index}
-                style={styles.cardContainer}
+                style={[
+                  styles.cardContainer,
+                  { marginBottom: sizes.cardMarginBottom },
+                ]}
                 onPress={() => {
                   setCurrentJobId(job.id);
                   setShowJobModalVisible(true);
@@ -132,11 +141,11 @@ export default function WaitingScreen({
                           themeController.current?.defaultBlocksMockBackground,
                         ...(isRTL
                           ? {
-                              marginLeft: RFValue(10),
+                              marginLeft: sizes.imageMargin,
                               marginRight: 0,
                             }
                           : {
-                              marginRight: RFValue(10),
+                              marginRight: sizes.imageMargin,
                               marginLeft: 0,
                             }),
                         ...(isRTL && Platform.OS === 'web'
@@ -190,6 +199,7 @@ export default function WaitingScreen({
                             textAlign:
                               isRTL && Platform.OS === 'web' ? 'right' : 'left',
                             fontSize: sizes.fontDescription,
+                            marginTop: sizes.descriptionMarginTop,
                           },
                         ]}
                       >
@@ -250,30 +260,20 @@ export default function WaitingScreen({
 const styles = {
   container: {
     flex: 1,
-    paddingHorizontal: RFValue(10),
-    paddingVertical: RFValue(14),
     paddingBottom: 0,
   },
   scrollContainer: {
     paddingBottom: 0,
   },
-  cardContainer: {
-    marginBottom: RFValue(8),
-  },
+  cardContainer: {},
   cardContent: {
     flexDirection: 'row',
-    borderRadius: RFValue(5),
     alignItems: 'center',
     position: 'relative',
   },
   imageContainer: {
-    width: RFValue(55),
-    height: RFValue(55),
-    borderTopLeftRadius: RFValue(5),
-    borderBottomLeftRadius: RFValue(5),
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: RFValue(10),
     overflow: 'hidden',
   },
   image: {
@@ -292,28 +292,21 @@ const styles = {
     justifyContent: 'center',
   },
   title: {
-    fontSize: RFValue(12),
     // fontWeight: '600',
   },
-  description: {
-    fontSize: RFValue(10),
-    marginTop: RFValue(2),
-  },
+  description: {},
   badge: {
     position: 'absolute',
-    top: RFValue(5),
-    right: RFValue(5),
-    borderRadius: RFValue(999),
-    paddingHorizontal: RFValue(2),
-    paddingVertical: RFValue(2),
-    minWidth: RFValue(16),
-    height: RFValue(16),
+    borderRadius: 999,
+    paddingHorizontal: 2,
+    paddingVertical: 2,
+    minWidth: 16,
+    height: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badgeText: {
     // fontWeight: 'bold',
-    fontSize: RFValue(10),
   },
   specialMarkerContainer: {
     position: 'absolute',

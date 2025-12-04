@@ -9,15 +9,15 @@ import {
   View,
   Platform,
   TextInput,
+  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
 import CustomPicker from '../../../components/ui/CustomPicker';
 import { icons } from '../../../constants/icons';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
-import { scaleByHeight } from '../../../utils/resizeFuncs';
-import { RFValue } from 'react-native-responsive-fontsize';
+import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import { sendFeedback, sendMessage } from '../../../src/api/support';
 
@@ -25,9 +25,10 @@ import { sendFeedback, sendMessage } from '../../../src/api/support';
 
 export default function Settings() {
   const { themeController, languageController } = useComponentContext();
-  const { height, isLandscape } = useWindowInfo();
+  const { height } = useWindowDimensions();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
+  const { isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   // Toggles
@@ -40,106 +41,81 @@ export default function Settings() {
   const [contactUsVisible, setContactUsVisible] = useState(false);
   const [feedbackVisible, setFeedbackVisible] = useState(false);
 
-  // размеры/отступы
-  const sizes = {
-    baseFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(12),
-    font: isWebLandscape ? scaleByHeight(12, height) : RFValue(12),
-    questionsFont: isWebLandscape ? scaleByHeight(18, height) : RFValue(10),
-    iconCircleSize: isWebLandscape ? scaleByHeight(40, height) : RFValue(22),
-    iconSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(18),
-    containerPadding: isWebLandscape ? height * 0.02 : RFValue(10),
-    pickerHeight: isWebLandscape ? height * 0.06 : RFValue(50),
-    rowGap: isWebLandscape ? height * 0.015 : RFValue(10),
-    colGap: isWebLandscape ? height * 0.02 : 0,
-    switchMargin: isWebLandscape ? height * 0.02 : RFValue(16),
-    btnPadding: isWebLandscape ? height * 0.015 : RFValue(12),
-    btnFont: isWebLandscape ? scaleByHeight(20, height) : RFValue(12),
-    rowsWidth: isWebLandscape ? '65%' : '100%',
-    rowsAlign: isWebLandscape ? (isRTL ? 'flex-end' : 'flex-start') : 'stretch',
-    bottomInset: isWebLandscape ? height * 0.02 : 0,
-    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-    regulationsModalWidth: isWebLandscape ? scaleByHeight(480, height) : '100%',
-    regulationsModalHeight: isWebLandscape
-      ? scaleByHeight(600, height)
-      : '100%',
-    aboutModalHeight: isWebLandscape ? scaleByHeight(650, height) : '100%',
-    modalIconSize: isWebLandscape ? scaleByHeight(24, height) : RFValue(15),
-    modalCloseBtnTopRightPosition: isWebLandscape
-      ? scaleByHeight(7, height)
-      : RFValue(5),
-    regulationsModalPaddingVertical: isWebLandscape
-      ? scaleByHeight(36, height)
-      : RFValue(10),
-    regulationsModalPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(44, height)
-      : RFValue(10),
-    contactUsModalPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(74.5, height)
-      : RFValue(10),
-    feedbackModalPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(62.5, height)
-      : RFValue(10),
-    regulationsModalTitle: isWebLandscape
-      ? scaleByHeight(24, height)
-      : RFValue(18),
-    modalContentHeight: isWebLandscape
-      ? scaleByHeight(440, height)
-      : RFValue(400),
-    avatarModalMarginBottom: isWebLandscape
-      ? scaleByHeight(16, height)
-      : RFValue(16),
-    nonAvatarModalMarginBottom: isWebLandscape
-      ? scaleByHeight(24, height)
-      : RFValue(20),
-    avatarSize: isWebLandscape ? scaleByHeight(80, height) : RFValue(65),
-    contactUsModalHeight: isWebLandscape ? scaleByHeight(790, height) : '100%',
-    feedbackModalHeight: isWebLandscape ? scaleByHeight(480, height) : '100%',
-    sendContactFormModalHeight: isWebLandscape
-      ? scaleByHeight(450, height)
-      : '100%',
-    inputContainerPaddingVertical: isWebLandscape
-      ? scaleByHeight(10, height)
-      : RFValue(6),
-    inputContainerPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(16, height)
-      : RFValue(8),
-    inputHeight: isWebLandscape ? scaleByHeight(64, height) : RFValue(40),
-    inputWidth: isWebLandscape ? scaleByHeight(330, height) : RFValue(150),
-    textAreaHeight: isWebLandscape ? scaleByHeight(144, height) : RFValue(40),
-    textInputPadding: isWebLandscape ? scaleByHeight(4, height) : RFValue(8),
-    inputFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
-    modalInputMarginBottom: isWebLandscape
-      ? scaleByHeight(16, height)
-      : RFValue(8),
-    contactUsDescriptionPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(18, height)
-      : RFValue(12),
-    checkboxContainerHeight: isWebLandscape
-      ? scaleByHeight(36, height)
-      : RFValue(20),
-    checkboxIconSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(13),
-    checkboxTextSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(10),
-    checkboxMarginBottom: isWebLandscape
-      ? scaleByHeight(24, height)
-      : RFValue(8),
-    checkboxPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(4, height)
-      : RFValue(4),
-    btnHeight: isWebLandscape ? scaleByHeight(62, height) : undefined,
-    successModalHeight: isWebLandscape ? scaleByHeight(450, height) : '100%',
-    successModalPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(24, height)
-      : RFValue(16),
-    successModalIconSize: isWebLandscape
-      ? scaleByHeight(112, height)
-      : RFValue(40),
-    successModalDescriptionFont: isWebLandscape
-      ? scaleByHeight(18, height)
-      : RFValue(14),
-    successModalDescriptionWidth: isWebLandscape
-      ? scaleByHeight(246, height)
-      : RFValue(150),
-  };
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+
+    return {
+      baseFont: isWebLandscape ? web(16) : mobile(12),
+      font: isWebLandscape ? web(12) : mobile(12),
+      questionsFont: isWebLandscape ? web(18) : mobile(10),
+      iconCircleSize: isWebLandscape ? web(40) : mobile(22),
+      iconSize: isWebLandscape ? web(18) : mobile(18),
+      containerPadding: isWebLandscape ? height * 0.02 : mobile(10),
+      pickerHeight: isWebLandscape ? height * 0.06 : mobile(50),
+      rowGap: isWebLandscape ? height * 0.015 : mobile(10),
+      colGap: isWebLandscape ? height * 0.02 : 0,
+      switchMargin: isWebLandscape ? height * 0.02 : mobile(16),
+      btnPadding: isWebLandscape ? height * 0.015 : mobile(12),
+      btnFont: isWebLandscape ? web(20) : mobile(12),
+      rowsWidth: isWebLandscape ? '65%' : '100%',
+      rowsAlign: isWebLandscape
+        ? isRTL
+          ? 'flex-end'
+          : 'flex-start'
+        : 'stretch',
+      bottomInset: isWebLandscape ? height * 0.02 : 0,
+      borderRadius: isWebLandscape ? web(8) : mobile(5),
+      regulationsModalWidth: isWebLandscape ? web(480) : '100%',
+      regulationsModalHeight: isWebLandscape ? web(600) : '100%',
+      aboutModalHeight: isWebLandscape ? web(650) : '100%',
+      modalIconSize: isWebLandscape ? web(24) : mobile(15),
+      modalCloseBtnTopRightPosition: isWebLandscape ? web(7) : mobile(5),
+      regulationsModalPaddingVertical: isWebLandscape ? web(36) : mobile(10),
+      regulationsModalPaddingHorizontal: isWebLandscape ? web(44) : mobile(10),
+      contactUsModalPaddingHorizontal: isWebLandscape ? web(74.5) : mobile(10),
+      feedbackModalPaddingHorizontal: isWebLandscape ? web(62.5) : mobile(10),
+      regulationsModalTitle: isWebLandscape ? web(24) : mobile(18),
+      modalContentHeight: isWebLandscape ? web(440) : mobile(400),
+      avatarModalMarginBottom: isWebLandscape ? web(16) : mobile(16),
+      nonAvatarModalMarginBottom: isWebLandscape ? web(24) : mobile(20),
+      avatarSize: isWebLandscape ? web(80) : mobile(65),
+      contactUsModalHeight: isWebLandscape ? web(790) : '100%',
+      feedbackModalHeight: isWebLandscape ? web(480) : '100%',
+      sendContactFormModalHeight: isWebLandscape ? web(450) : '100%',
+      inputContainerPaddingVertical: isWebLandscape ? web(10) : mobile(6),
+      inputContainerPaddingHorizontal: isWebLandscape ? web(16) : mobile(8),
+      inputHeight: isWebLandscape ? web(64) : mobile(40),
+      inputWidth: isWebLandscape ? web(330) : mobile(150),
+      textAreaHeight: isWebLandscape ? web(144) : mobile(40),
+      textInputPadding: isWebLandscape ? web(4) : mobile(8),
+      inputFont: isWebLandscape ? web(16) : mobile(10),
+      modalInputMarginBottom: isWebLandscape ? web(16) : mobile(8),
+      contactUsDescriptionPaddingHorizontal: isWebLandscape
+        ? web(18)
+        : mobile(12),
+      checkboxContainerHeight: isWebLandscape ? web(36) : mobile(20),
+      checkboxIconSize: isWebLandscape ? web(14) : mobile(13),
+      checkboxTextSize: isWebLandscape ? web(14) : mobile(10),
+      checkboxMarginBottom: isWebLandscape ? web(24) : mobile(8),
+      checkboxPaddingHorizontal: isWebLandscape ? web(4) : mobile(4),
+      btnHeight: isWebLandscape ? web(62) : undefined,
+      successModalHeight: isWebLandscape ? web(450) : '100%',
+      successModalPaddingHorizontal: isWebLandscape ? web(24) : mobile(16),
+      successModalIconSize: isWebLandscape ? web(112) : mobile(40),
+      successModalDescriptionFont: isWebLandscape ? web(18) : mobile(14),
+      successModalDescriptionWidth: isWebLandscape ? web(246) : mobile(150),
+      connectBtnsGap: isWebLandscape ? web(10) : mobile(10),
+      bottomMb: isWebLandscape ? web(55) : 0,
+      bottomMr: isWebLandscape ? web(93) : 0,
+      scrollPaddingBottom: isWebLandscape ? height * 0.18 : mobile(40),
+      btnHeightWeb: isWebLandscape ? web(62) : undefined,
+      checkboxSize: isWebLandscape ? web(18) : mobile(18),
+      checkboxTextMargin: isWebLandscape ? web(10) : mobile(10),
+      checkboxIconBorderWidth: isWebLandscape ? web(2) : mobile(2),
+      checkboxIconBorderRadius: isWebLandscape ? web(3) : mobile(3),
+    };
+  }, [height, isWebLandscape, isRTL]);
 
   // помощник для контейнеров-строк
   const rowStyle = {
@@ -163,23 +139,21 @@ export default function Settings() {
     >
       <ScrollView
         contentContainerStyle={{
-          paddingBottom: isWebLandscape ? height * 0.18 : RFValue(40),
+          paddingBottom: sizes.scrollPaddingBottom,
         }}
       >
         {/* Break Line */}
         <View
           style={[
             styles.breakLine,
-            { backgroundColor: themeController.current?.breakLineColor },
+            {
+              backgroundColor: themeController.current?.breakLineColor,
+              marginVertical: sizes.rowGap,
+            },
           ]}
         />
         {/* Language + Theme */}
-        <View
-          style={[
-            rowStyle,
-            isWebLandscape && { height: scaleByHeight(64, height) },
-          ]}
-        >
+        <View style={[rowStyle, isWebLandscape && { height: sizes.inputHeight }]}>
           <CustomPicker
             label={t('settings.language')}
             options={[
@@ -209,7 +183,10 @@ export default function Settings() {
         <View
           style={[
             styles.breakLine,
-            { backgroundColor: themeController.current?.breakLineColor },
+            {
+              backgroundColor: themeController.current?.breakLineColor,
+              marginVertical: sizes.rowGap,
+            },
           ]}
         />
 
@@ -286,7 +263,10 @@ export default function Settings() {
         <View
           style={[
             styles.breakLine,
-            { backgroundColor: themeController.current?.breakLineColor },
+            {
+              backgroundColor: themeController.current?.breakLineColor,
+              marginVertical: sizes.rowGap,
+            },
           ]}
         />
 
@@ -303,7 +283,7 @@ export default function Settings() {
                 borderRadius: sizes.borderRadius,
               },
               isWebLandscape && {
-                height: scaleByHeight(62, height),
+                height: sizes.btnHeightWeb,
                 alignItems: 'center',
                 justifyContent: 'center',
               },
@@ -334,7 +314,7 @@ export default function Settings() {
                 flex: isWebLandscape ? 1 : undefined,
               },
               isWebLandscape && {
-                height: scaleByHeight(62, height),
+                height: sizes.btnHeightWeb,
                 alignItems: 'center',
                 justifyContent: 'center',
               },
@@ -366,6 +346,7 @@ export default function Settings() {
             bottom: sizes.bottomInset,
             left: sizes.containerPadding,
             right: sizes.containerPadding,
+            marginTop: sizes.rowGap,
           },
           isWebLandscape && { justifyContent: 'flex-start' },
         ]}
@@ -373,8 +354,8 @@ export default function Settings() {
         <View
           style={
             isWebLandscape && {
-              [isRTL ? 'marginLeft' : 'marginRight']: scaleByHeight(93, height),
-              marginBottom: scaleByHeight(55, height),
+              [isRTL ? 'marginLeft' : 'marginRight']: sizes.bottomMr,
+              marginBottom: sizes.bottomMb,
             }
           }
         >
@@ -418,13 +399,14 @@ export default function Settings() {
         <View
           style={[
             styles.connectBtnsContainer,
-            { flexDirection: isRTL ? 'row-reverse' : 'row' },
+            {
+              flexDirection: isRTL ? 'row-reverse' : 'row',
+              gap: sizes.connectBtnsGap,
+            },
           ]}
         >
           <TouchableOpacity
             style={{
-              marginRight: isRTL ? 0 : RFValue(10),
-              marginLeft: isRTL ? RFValue(10) : 0,
               height: sizes.iconCircleSize,
               width: sizes.iconCircleSize,
               borderRadius: sizes.iconCircleSize / 2,
@@ -440,13 +422,11 @@ export default function Settings() {
                 width: sizes.iconSize,
                 height: sizes.iconSize,
               }}
-              resizeMode='contain'
+              resizeMode="contain"
             />
           </TouchableOpacity>
           <TouchableOpacity
             style={{
-              marginRight: isRTL ? 0 : RFValue(10),
-              marginLeft: isRTL ? RFValue(10) : 0,
               height: sizes.iconCircleSize,
               width: sizes.iconCircleSize,
               borderRadius: sizes.iconCircleSize / 2,
@@ -459,7 +439,7 @@ export default function Settings() {
             <Image
               source={icons.phoneClear}
               style={{ width: sizes.iconSize, height: sizes.iconSize }}
-              resizeMode='contain'
+              resizeMode="contain"
             />
           </TouchableOpacity>
         </View>
@@ -468,7 +448,7 @@ export default function Settings() {
       {/* About Modal */}
       <Modal
         visible={aboutVisible}
-        animationType='slide'
+        animationType="slide"
         transparent={isWebLandscape}
       >
         <ModalContent
@@ -486,7 +466,7 @@ export default function Settings() {
       {/* Regulations Modal */}
       <Modal
         visible={regulationsVisible}
-        animationType='slide'
+        animationType="slide"
         transparent={isWebLandscape}
       >
         <ModalContent
@@ -503,7 +483,7 @@ export default function Settings() {
       {/* Contact Us Modal */}
       <Modal
         visible={contactUsVisible}
-        animationType='slide'
+        animationType="slide"
         transparent={isWebLandscape}
       >
         <ModalContent
@@ -521,7 +501,7 @@ export default function Settings() {
       {/* Feedback Modal */}
       <Modal
         visible={feedbackVisible}
-        animationType='slide'
+        animationType="slide"
         transparent={isWebLandscape}
       >
         <ModalContent
@@ -551,10 +531,10 @@ function ModalContent({
   contactForm = false,
   feedback = false,
   isRTL,
-  height,
 }) {
   const { themeController, setAppLoading, session } = useComponentContext();
   const { t } = useTranslation();
+  const { height } = useWindowDimensions();
 
   const [accepted, setAccepted] = useState(false);
   const [contactUsForm, setContactUsForm] = useState({
@@ -603,7 +583,7 @@ function ModalContent({
         topic: contactUsForm.topic,
         reason: contactUsForm.reason,
         message: contactUsForm.message,
-      })
+      });
 
       setAppLoading(false);
 
@@ -614,14 +594,12 @@ function ModalContent({
           setShowSuccessModal(false);
         }, 2000);
       }
-    }
-    catch (error) {
+    } catch (error) {
       console.error('Error in confirmContactUs:', error);
-    }
-    finally {
+    } finally {
       setAppLoading(false);
     }
-  }
+  };
 
   const confirmFeedback = async () => {
     try {
@@ -633,18 +611,16 @@ function ModalContent({
 
       const success = await sendFeedback(session, {
         phoneNumber: contactUsForm.phoneNumber,
-      })
+      });
 
       setAppLoading(false);
       onClose();
-    }
-    catch (error) {
+    } catch (error) {
       console.error('Error in confirmFeedback:', error);
-    }
-    finally {
+    } finally {
       setAppLoading(false);
     }
-  }
+  };
 
   return (
     <TouchableOpacity
@@ -1067,7 +1043,7 @@ function ModalContent({
                       }}
                     >
                       <BouncyCheckbox
-                        size={scaleByHeight(18, height)}
+                        size={sizes.checkboxSize}
                         isChecked={accepted}
                         onPress={setAccepted}
                         textStyle={[
@@ -1079,18 +1055,16 @@ function ModalContent({
                           },
                         ]}
                         textContainerStyle={{
-                          [isRTL ? 'marginRight' : 'marginLeft']: scaleByHeight(
-                            10,
-                            height
-                          ),
+                          [isRTL ? 'marginRight' : 'marginLeft']:
+                            sizes.checkboxTextMargin,
                         }}
                         fillColor={themeController.current?.primaryColor}
                         innerIconStyle={{
-                          borderWidth: scaleByHeight(2, height),
-                          borderRadius: scaleByHeight(3, height),
+                          borderWidth: sizes.checkboxIconBorderWidth,
+                          borderRadius: sizes.checkboxIconBorderRadius,
                         }}
                         iconStyle={{
-                          borderRadius: scaleByHeight(3, height),
+                          borderRadius: sizes.checkboxIconBorderRadius,
                           fontSize: sizes.checkboxIconSize,
                         }}
                       />
@@ -1227,11 +1201,9 @@ function ModalContent({
                     });
                     if (contactForm) {
                       confirmContactUs();
-                    }
-                    else if (feedback) {
+                    } else if (feedback) {
                       confirmFeedback();
-                    }
-                    else {
+                    } else {
                       onClose();
                     }
                   }}
@@ -1274,19 +1246,15 @@ function ModalContent({
 const styles = StyleSheet.create({
   container: { flex: 1 },
   pickerContainer: {
-    marginBottom: RFValue(8),
-    borderRadius: RFValue(6),
-    paddingBottom: RFValue(6),
     justifyContent: 'space-between',
     position: 'relative',
   },
   picker: { backgroundColor: 'transparent', borderWidth: 0 },
   label: {
     // position: 'absolute',
-    top: RFValue(5),
   },
   switchName: { fontWeight: 'bold' },
-  breakLine: { height: 1, marginVertical: RFValue(8) },
+  breakLine: { height: 1 },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1300,30 +1268,21 @@ const styles = StyleSheet.create({
   bottomRow: {
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginTop: RFValue(20),
   },
-  connectBtnsContainer: { gap: RFValue(5) },
-  bottomText: { fontSize: RFValue(10) },
-  versionText: { fontSize: RFValue(10) },
+  connectBtnsContainer: {},
+  bottomText: {},
+  versionText: {},
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: RFValue(10),
     borderBottomWidth: 1,
     borderColor: '#ccc',
     justifyContent: 'space-between',
   },
-  modalTitle: { fontSize: RFValue(20), color: '#0A62EA' },
-  modalContent: { padding: RFValue(10) },
-  modalText: {
-    fontSize: RFValue(12),
-    marginBottom: RFValue(8),
-    lineHeight: RFValue(16),
-  },
+  modalTitle: { color: '#0A62EA' },
+  modalContent: {},
+  modalText: {},
   inputBlock: {
-    marginBottom: RFValue(10),
-    borderRadius: RFValue(5),
-    padding: RFValue(8),
     ...Platform.select({
       web: {
         zIndex: 1,
@@ -1331,7 +1290,6 @@ const styles = StyleSheet.create({
     }),
   },
   termsCheckboxText: {
-    // fontSize: getResponsiveSize(14, 13),
     opacity: 0.8,
     fontWeight: 'bold',
   },

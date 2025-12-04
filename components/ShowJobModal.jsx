@@ -12,8 +12,9 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
-import { RFValue, RFPercentage } from 'react-native-responsive-fontsize';
+// import { RFValue, RFPercentage } from 'react-native-responsive-fontsize';
 import { JOB_SUB_TYPES } from '../constants/jobSubTypes';
 import { JOB_TYPES } from '../constants/jobTypes';
 import { LICENSES } from '../constants/licenses';
@@ -25,9 +26,9 @@ import CustomFlatList from './ui/CustomFlatList';
 import DateTimeInput from './ui/DateTimeInput';
 import DateTimeInputDouble from './ui/DateTimeInputDouble';
 import { useTranslation } from 'react-i18next';
-import { useWindowInfo } from '../context/windowContext';
+// import { useWindowInfo } from '../context/windowContext';
 import { icons } from '../constants/icons';
-import { scaleByHeight } from '../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import JobModalWrapper from './JobModalWrapper';
 import { addSelfToJobProviders, completeJob, updateJobComment } from '../src/api/jobs';
 import { useWebView } from '../context/webViewContext';
@@ -83,7 +84,8 @@ export default function ShowJobModal({
     subscription,
   } = useComponentContext();
   const { t } = useTranslation();
-  const { width, height, isLandscape } = useWindowInfo();
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
   const { openWebView } = useWebView();
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -160,74 +162,339 @@ export default function ShowJobModal({
       ]),
   ]);
 
+  const sizes = useMemo(
+    () => ({
+      font: isWebLandscape
+        ? scaleByHeight(12, height)
+        : scaleByHeightMobile(12, height),
+      inputFont: isWebLandscape
+        ? scaleByHeight(16, height)
+        : scaleByHeightMobile(10, height),
+      padding: isWebLandscape
+        ? scaleByHeight(4, height)
+        : scaleByHeightMobile(8, height),
+      inputContainerPaddingHorizontal: isWebLandscape
+        ? scaleByHeight(16, height)
+        : scaleByHeightMobile(8, height),
+      inputContainerPaddingVertical: isWebLandscape
+        ? scaleByHeight(10, height)
+        : scaleByHeightMobile(6, height),
+      margin: isWebLandscape
+        ? scaleByHeight(18, height)
+        : scaleByHeightMobile(10, height),
+      borderRadius: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(5, height),
+      thumb: isWebLandscape
+        ? scaleByHeight(128, height)
+        : scaleByHeightMobile(80, height),
+      headerMargin: isWebLandscape
+        ? scaleByHeight(30, height)
+        : scaleByHeightMobile(5, height),
+      headerHeight: isWebLandscape
+        ? scaleByHeight(50, height)
+        : height * 0.07,
+      icon: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(16, height),
+      iconSize: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(15, height),
+      horizontalGap: isWebLandscape ? width * 0.01 : 0,
+      headerPaddingHorizontal: isWebLandscape
+        ? scaleByHeight(7, height)
+        : scaleByHeightMobile(3, height),
+      containerPaddingHorizontal: isWebLandscape
+        ? scaleByHeight(20, height)
+        : scaleByHeightMobile(14, height),
+      inputHeight: isWebLandscape
+        ? scaleByHeight(64, height)
+        : scaleByHeightMobile(40, height),
+      photosLabelSize: isWebLandscape
+        ? scaleByHeight(18, height)
+        : scaleByHeightMobile(12, height),
+      photosLabelMarginBottom: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(6, height),
+      saveBtnWidth: isWebLandscape
+        ? scaleByHeight(380, height)
+        : scaleByHeightMobile(120, height),
+      saveBtnHeight: isWebLandscape
+        ? scaleByHeight(62, height)
+        : scaleByHeightMobile(40, height),
+      saveBtnFont: isWebLandscape
+        ? scaleByHeight(20, height)
+        : scaleByHeightMobile(14, height),
+      underBtnTextMarginTop: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(10, height),
+      modalWidth: isWebLandscape ? scaleByHeight(450, height) : '80%',
+      modalHeight: isWebLandscape ? scaleByHeight(230, height) : '60%',
+      doubleBtnLineModalHeight: isWebLandscape
+        ? scaleByHeight(306, height)
+        : scaleByHeightMobile(40, height),
+      modalFont: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(14, height),
+      modalTextMarginBottom: isWebLandscape
+        ? scaleByHeight(32, height)
+        : scaleByHeightMobile(12, height),
+      modalBtnHeight: isWebLandscape
+        ? scaleByHeight(62, height)
+        : scaleByHeightMobile(50, height),
+      modalBtnWidth: isWebLandscape ? scaleByHeight(153, height) : '40%',
+      modalLongBtnWidth: isWebLandscape ? scaleByHeight(300, height) : '80%',
+      modalBtnFont: isWebLandscape
+        ? scaleByHeight(20, height)
+        : scaleByHeightMobile(14, height),
+      modalBtnBorderRadius: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(6, height),
+      modalBtnsGap: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(12, height),
+      modalPadding: isWebLandscape
+        ? scaleByHeight(32, height)
+        : scaleByHeightMobile(16, height),
+      modalLineHeight: isWebLandscape ? scaleByHeight(32, height) : 1,
+      modalCloseBtnTopRightPosition: isWebLandscape
+        ? scaleByHeight(7, height)
+        : scaleByHeightMobile(5, height),
+      btnsColumnGap: isWebLandscape
+        ? scaleByHeight(16, height)
+        : scaleByHeightMobile(10, height),
+      noPhotosMessageSize: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(24, height),
+      noPhotosMessageHeight: isWebLandscape
+        ? scaleByHeight(128, height)
+        : scaleByHeightMobile(75, height),
+      noPhotosMessageWidth: isWebLandscape
+        ? scaleByHeight(685, height)
+        : '100%',
+      commentFieldHeight: isWebLandscape
+        ? scaleByHeight(131, height)
+        : scaleByHeightMobile(70, height),
+      descriptionInputHeight: isWebLandscape
+        ? 'auto'
+        : scaleByHeightMobile(70, height),
+      logoFontSize: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(18, height),
+      crossIconSize: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(20, height),
+      historyIconSize: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(20, height),
+    }),
+    [isWebLandscape, height, width]
+  );
+
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        inputBlock: {
+          marginBottom: sizes.margin,
+          borderRadius: sizes.borderRadius,
+          padding: sizes.padding,
+          backgroundColor: themeController.current?.formInputBackground,
+          ...Platform.select({
+            web: {
+              zIndex: 1,
+            },
+          }),
+        },
+        label: {
+          color: themeController.current?.unactiveTextColor,
+          fontSize: sizes.font,
+        },
+        input: {
+          padding: sizes.padding,
+          width: '100%',
+          fontFamily: 'Rubik-Medium',
+          fontWeight: '500',
+          color: themeController.current?.textColor,
+          fontSize: sizes.inputFont,
+        },
+        imageInputBlock: {
+          marginBottom: sizes.margin,
+          ...Platform.select({
+            web: {
+              zIndex: 1,
+            },
+          }),
+        },
+        imageRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+        },
+        imageScrollContainer: {
+          flexDirection: 'row',
+        },
+        imageThumbnail: {
+          width: sizes.thumb,
+          height: sizes.thumb,
+          borderRadius: sizes.borderRadius,
+        },
+        imageWrapper: {
+          position: 'relative',
+          marginRight: sizes.margin / 2,
+        },
+        createButton: {
+          borderRadius: sizes.borderRadius,
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: sizes.saveBtnHeight,
+          width: '100%',
+        },
+        buttonText: {
+          color: 'white',
+          textAlign: 'center',
+          fontSize: sizes.saveBtnFont,
+        },
+        waitText: {
+          fontSize: sizes.inputFont,
+          textAlign: 'center',
+          marginBottom: sizes.margin / 2,
+          color: themeController.current?.unactiveTextColor,
+          marginTop: sizes.underBtnTextMarginTop,
+        },
+        modalOverlay: {
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+        },
+        modalCard: {
+          position: 'relative',
+          width: sizes.modalWidth,
+          padding: sizes.modalPadding,
+          borderRadius: sizes.modalBtnBorderRadius,
+          alignItems: 'center',
+          backgroundColor: themeController.current?.backgroundColor,
+        },
+        modalText: {
+          fontFamily: 'Rubik-Bold',
+          fontSize: sizes.modalFont,
+          marginBottom: sizes.modalTextMarginBottom,
+          textAlign: 'center',
+          color: themeController.current?.textColor,
+          lineHeight: sizes.modalLineHeight,
+        },
+        modalButtonsRow: {
+          flexDirection: 'row',
+          justifyContent: 'center',
+          gap: sizes.modalBtnsGap,
+        },
+        modalBtn: {
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: sizes.modalBtnHeight,
+          borderRadius: sizes.modalBtnBorderRadius,
+          ...Platform.select({
+            web: {
+              boxSizing: 'border-box',
+            },
+          }),
+        },
+        modalBtnText: {
+          fontSize: sizes.modalBtnFont,
+        },
+        buttonColumn: {
+          flexDirection: 'column',
+          alignItems: 'center',
+          width: '100%',
+          gap: sizes.btnsColumnGap,
+        },
+        header: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderBottomWidth: 1,
+          backgroundColor: themeController.current?.backgroundColor,
+          borderBottomColor: themeController.current?.profileDefaultBackground,
+          height: sizes.headerHeight,
+          paddingHorizontal: sizes.headerPaddingHorizontal,
+          marginVertical: sizes.headerMargin,
+        },
+        logo: {
+          fontSize: sizes.logoFontSize,
+          fontFamily: 'Rubik-Bold',
+          color: themeController.current?.primaryColor,
+        },
+      }),
+    [sizes, themeController]
+  );
+
   // размеры (только для веб-альбомной — иначе RFValue как было)
-  const sizes = {
-    font: isWebLandscape ? scaleByHeight(12, height) : RFValue(12),
-    inputFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
-    padding: isWebLandscape ? scaleByHeight(4, height) : RFValue(8),
-    inputContainerPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(16, height)
-      : RFValue(8),
-    inputContainerPaddingVertical: isWebLandscape
-      ? scaleByHeight(10, height)
-      : RFValue(6),
-    margin: isWebLandscape ? scaleByHeight(18, height) : RFValue(10),
-    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-    thumb: isWebLandscape ? scaleByHeight(128, height) : RFValue(80),
-    headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
-    headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
-    icon: isWebLandscape ? scaleByHeight(24, height) : RFValue(16),
-    iconSize: isWebLandscape ? scaleByHeight(24, height) : RFValue(15),
-    horizontalGap: isWebLandscape ? width * 0.01 : 0,
-    headerPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(7, height)
-      : RFValue(3),
-    containerPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(20, height)
-      : RFValue(14),
-    inputHeight: isWebLandscape ? scaleByHeight(64, height) : RFValue(40),
-    photosLabelSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(12),
-    photosLabelMarginBottom: isWebLandscape
-      ? scaleByHeight(14, height)
-      : RFValue(6),
-    saveBtnWidth: isWebLandscape ? scaleByHeight(380, height) : RFValue(120),
-    saveBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(40),
-    saveBtnFont: isWebLandscape ? scaleByHeight(20, height) : RFValue(14),
-    underBtnTextMarginTop: isWebLandscape
-      ? scaleByHeight(14, height)
-      : RFValue(10),
-    modalWidth: isWebLandscape ? scaleByHeight(450, height) : '80%',
-    modalHeight: isWebLandscape ? scaleByHeight(230, height) : '60%',
-    doubleBtnLineModalHeight: isWebLandscape
-      ? scaleByHeight(306, height)
-      : RFValue(40),
-    modalFont: isWebLandscape ? scaleByHeight(24, height) : RFValue(14),
-    modalTextMarginBottom: isWebLandscape
-      ? scaleByHeight(32, height)
-      : RFValue(12),
-    modalBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(50),
-    modalBtnWidth: isWebLandscape ? scaleByHeight(153, height) : '40%',
-    modalLongBtnWidth: isWebLandscape ? scaleByHeight(300, height) : '80%',
-    modalBtnFont: isWebLandscape ? scaleByHeight(20, height) : RFValue(14),
-    modalBtnBorderRadius: isWebLandscape
-      ? scaleByHeight(8, height)
-      : RFValue(6),
-    modalBtnsGap: isWebLandscape ? scaleByHeight(24, height) : RFValue(12),
-    modalPadding: isWebLandscape ? scaleByHeight(32, height) : RFValue(16),
-    modalLineHeight: isWebLandscape ? scaleByHeight(32, height) : 1,
-    modalCloseBtnTopRightPosition: isWebLandscape
-      ? scaleByHeight(7, height)
-      : RFValue(5),
-    btnsColumnGap: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
-    noPhotosMessageSize: isWebLandscape ? scaleByHeight(24) : RFValue(24),
-    noPhotosMessageHeight: isWebLandscape
-      ? scaleByHeight(128, height)
-      : RFValue(75),
-    noPhotosMessageWidth: isWebLandscape ? scaleByHeight(685, height) : '100%',
-    commentFieldHeight: isWebLandscape
-      ? scaleByHeight(131, height)
-      : RFValue(70),
-  };
+  // const sizes = {
+  //   font: isWebLandscape ? scaleByHeight(12, height) : RFValue(12),
+  //   inputFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
+  //   padding: isWebLandscape ? scaleByHeight(4, height) : RFValue(8),
+  //   inputContainerPaddingHorizontal: isWebLandscape
+  //     ? scaleByHeight(16, height)
+  //     : RFValue(8),
+  //   inputContainerPaddingVertical: isWebLandscape
+  //     ? scaleByHeight(10, height)
+  //     : RFValue(6),
+  //   margin: isWebLandscape ? scaleByHeight(18, height) : RFValue(10),
+  //   borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
+  //   thumb: isWebLandscape ? scaleByHeight(128, height) : RFValue(80),
+  //   headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
+  //   headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
+  //   icon: isWebLandscape ? scaleByHeight(24, height) : RFValue(16),
+  //   iconSize: isWebLandscape ? scaleByHeight(24, height) : RFValue(15),
+  //   horizontalGap: isWebLandscape ? width * 0.01 : 0,
+  //   headerPaddingHorizontal: isWebLandscape
+  //     ? scaleByHeight(7, height)
+  //     : RFValue(3),
+  //   containerPaddingHorizontal: isWebLandscape
+  //     ? scaleByHeight(20, height)
+  //     : RFValue(14),
+  //   inputHeight: isWebLandscape ? scaleByHeight(64, height) : RFValue(40),
+  //   photosLabelSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(12),
+  //   photosLabelMarginBottom: isWebLandscape
+  //     ? scaleByHeight(14, height)
+  //     : RFValue(6),
+  //   saveBtnWidth: isWebLandscape ? scaleByHeight(380, height) : RFValue(120),
+  //   saveBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(40),
+  //   saveBtnFont: isWebLandscape ? scaleByHeight(20, height) : RFValue(14),
+  //   underBtnTextMarginTop: isWebLandscape
+  //     ? scaleByHeight(14, height)
+  //     : RFValue(10),
+  //   modalWidth: isWebLandscape ? scaleByHeight(450, height) : '80%',
+  //   modalHeight: isWebLandscape ? scaleByHeight(230, height) : '60%',
+  //   doubleBtnLineModalHeight: isWebLandscape
+  //     ? scaleByHeight(306, height)
+  //     : RFValue(40),
+  //   modalFont: isWebLandscape ? scaleByHeight(24, height) : RFValue(14),
+  //   modalTextMarginBottom: isWebLandscape
+  //     ? scaleByHeight(32, height)
+  //     : RFValue(12),
+  //   modalBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(50),
+  //   modalBtnWidth: isWebLandscape ? scaleByHeight(153, height) : '40%',
+  //   modalLongBtnWidth: isWebLandscape ? scaleByHeight(300, height) : '80%',
+  //   modalBtnFont: isWebLandscape ? scaleByHeight(20, height) : RFValue(14),
+  //   modalBtnBorderRadius: isWebLandscape
+  //     ? scaleByHeight(8, height)
+  //     : RFValue(6),
+  //   modalBtnsGap: isWebLandscape ? scaleByHeight(24, height) : RFValue(12),
+  //   modalPadding: isWebLandscape ? scaleByHeight(32, height) : RFValue(16),
+  //   modalLineHeight: isWebLandscape ? scaleByHeight(32, height) : 1,
+  //   modalCloseBtnTopRightPosition: isWebLandscape
+  //     ? scaleByHeight(7, height)
+  //     : RFValue(5),
+  //   btnsColumnGap: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
+  //   noPhotosMessageSize: isWebLandscape ? scaleByHeight(24) : RFValue(24),
+  //   noPhotosMessageHeight: isWebLandscape
+  //     ? scaleByHeight(128, height)
+  //     : RFValue(75),
+  //   noPhotosMessageWidth: isWebLandscape ? scaleByHeight(685, height) : '100%',
+  //   commentFieldHeight: isWebLandscape
+  //     ? scaleByHeight(131, height)
+  //     : RFValue(70),
+  // };
 
   const [newJobModalVisible, setNewJobModalVisible] = useState(false);
   const [isInterestedRequest, setInterestedRequest] = useState(
@@ -902,66 +1169,79 @@ export default function ShowJobModal({
     <View
       style={[
         styles.inputBlock,
+        dynamicStyles.inputBlock,
         { backgroundColor: themeController.current?.formInputBackground },
       ]}
       key='type'
     >
-      <Text style={[styles.label, isRTL && { textAlign: 'right' }]}>
+      <Text
+        style={[styles.label, dynamicStyles.label, isRTL && { textAlign: 'right' }]}
+      >
         {t('showJob.fields.type', { defaultValue: 'Type' })}
       </Text>
       <TextInput
         value={JOB_TYPES[currentJobInfo?.type] || '-'}
-        style={[styles.input, isRTL && { textAlign: 'right' }]}
+        style={[styles.input, dynamicStyles.input, isRTL && { textAlign: 'right' }]}
         readOnly
       />
     </View>,
     <View
       style={[
         styles.inputBlock,
+        dynamicStyles.inputBlock,
         { backgroundColor: themeController.current?.formInputBackground },
       ]}
       key='subType'
     >
-      <Text style={[styles.label, isRTL && { textAlign: 'right' }]}>
+      <Text
+        style={[styles.label, dynamicStyles.label, isRTL && { textAlign: 'right' }]}
+      >
         {t('showJob.fields.subType', { defaultValue: 'Sub type' })}
       </Text>
       <TextInput
         value={JOB_SUB_TYPES[currentJobInfo?.subType] || '-'}
-        style={[styles.input, isRTL && { textAlign: 'right' }]}
+        style={[styles.input, dynamicStyles.input, isRTL && { textAlign: 'right' }]}
         readOnly
       />
     </View>,
     <View
       style={[
         styles.inputBlock,
+        dynamicStyles.inputBlock,
         { backgroundColor: themeController.current?.formInputBackground },
       ]}
       key='profession'
     >
-      <Text style={[styles.label, isRTL && { textAlign: 'right' }]}>
+      <Text
+        style={[styles.label, dynamicStyles.label, isRTL && { textAlign: 'right' }]}
+      >
         {t('showJob.fields.profession', { defaultValue: 'Profession' })}
       </Text>
       <TextInput
         value={LICENSES[currentJobInfo?.profession] || '-'}
-        style={[styles.input, isRTL && { textAlign: 'right' }]}
+        style={[styles.input, dynamicStyles.input, isRTL && { textAlign: 'right' }]}
         readOnly
       />
     </View>,
     <View
       style={[
         styles.inputBlock,
+        dynamicStyles.inputBlock,
         { backgroundColor: themeController.current?.formInputBackground },
       ]}
       key='description'
     >
-      <Text style={[styles.label, isRTL && { textAlign: 'right' }]}>
+      <Text
+        style={[styles.label, dynamicStyles.label, isRTL && { textAlign: 'right' }]}
+      >
         {t('showJob.fields.description', { defaultValue: 'Description' })}
       </Text>
       <TextInput
         value={currentJobInfo?.description || ''}
         style={[
           styles.input,
-          { height: RFValue(70) },
+          dynamicStyles.input,
+          { height: sizes.descriptionInputHeight },
           isRTL && { textAlign: 'right' },
         ]}
         multiline
@@ -971,23 +1251,26 @@ export default function ShowJobModal({
     <View
       style={[
         styles.inputBlock,
+        dynamicStyles.inputBlock,
         { backgroundColor: themeController.current?.formInputBackground },
       ]}
       key='price'
     >
-      <Text style={[styles.label, isRTL && { textAlign: 'right' }]}>
+      <Text
+        style={[styles.label, dynamicStyles.label, isRTL && { textAlign: 'right' }]}
+      >
         {t('showJob.fields.price', { defaultValue: 'Price' })}
       </Text>
       <TextInput
         value={currentJobInfo?.price || '-'}
-        style={[styles.input, isRTL && { textAlign: 'right' }]}
+        style={[styles.input, dynamicStyles.input, isRTL && { textAlign: 'right' }]}
         keyboardType='numeric'
         readOnly
       />
     </View>,
-    <View style={styles.imageInputBlock} key='images'>
+    <View style={[styles.imageInputBlock, dynamicStyles.imageInputBlock]} key='images'>
       <View
-        style={[styles.imageRow, isRTL && { flexDirection: 'row-reverse' }]}
+        style={[styles.imageRow, dynamicStyles.imageRow, isRTL && { flexDirection: 'row-reverse' }]}
       >
         {/* Скролл с картинками */}
         <ScrollView
@@ -995,6 +1278,7 @@ export default function ShowJobModal({
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={[
             styles.imageScrollContainer,
+            dynamicStyles.imageScrollContainer,
             isRTL && { flexDirection: 'row-reverse' },
           ]}
         >
@@ -1005,10 +1289,14 @@ export default function ShowJobModal({
                   key={index}
                   style={[
                     styles.imageWrapper,
+                    dynamicStyles.imageWrapper,
                     isRTL && { marginRight: 0, marginLeft: 8 },
                   ]}
                 >
-                  <Image source={{ uri }} style={styles.imageThumbnail} />
+                  <Image
+                    source={{ uri }}
+                    style={[styles.imageThumbnail, dynamicStyles.imageThumbnail]}
+                  />
                 </View>
               ))}
             </>
@@ -1039,16 +1327,19 @@ export default function ShowJobModal({
     <View
       style={[
         styles.inputBlock,
+        dynamicStyles.inputBlock,
         { backgroundColor: themeController.current?.formInputBackground },
       ]}
       key='location'
     >
-      <Text style={[styles.label, isRTL && { textAlign: 'right' }]}>
+      <Text
+        style={[styles.label, dynamicStyles.label, isRTL && { textAlign: 'right' }]}
+      >
         {t('showJob.fields.location', { defaultValue: 'Location' })}
       </Text>
       <TextInput
         value={currentJobInfo?.location || '-'}
-        style={[styles.input, isRTL && { textAlign: 'right' }]}
+        style={[styles.input, dynamicStyles.input, isRTL && { textAlign: 'right' }]}
         readOnly
       />
     </View>,
@@ -1121,14 +1412,7 @@ export default function ShowJobModal({
           <View
             style={[
               styles.header,
-              {
-                backgroundColor: themeController.current?.backgroundColor,
-                borderBottomColor:
-                  themeController.current?.profileDefaultBackground,
-                height: sizes.headerHeight,
-                paddingHorizontal: sizes.headerPaddingHorizontal,
-                marginVertical: sizes.headerMargin,
-              },
+              dynamicStyles.header,
               isRTL && { flexDirection: 'row-reverse' },
             ]}
           >
@@ -1141,16 +1425,8 @@ export default function ShowJobModal({
               <Image
                 source={icons.cross}
                 style={{
-                  width: getResponsiveSize(
-                    20,
-                    scaleByHeight(24, height),
-                    isLandscape
-                  ),
-                  height: getResponsiveSize(
-                    20,
-                    scaleByHeight(24, height),
-                    isLandscape
-                  ),
+                  width: sizes.crossIconSize,
+                  height: sizes.crossIconSize,
                   tintColor: themeController.current?.formInputLabelColor,
                 }}
                 resizeMode='contain'
@@ -1159,14 +1435,7 @@ export default function ShowJobModal({
             <Text
               style={[
                 styles.logo,
-                {
-                  color: themeController.current?.primaryColor,
-                  fontSize: getResponsiveSize(
-                    18,
-                    scaleByHeight(24, height),
-                    isLandscape
-                  ),
-                },
+                dynamicStyles.logo,
               ]}
             >
               FLALX
@@ -1180,16 +1449,8 @@ export default function ShowJobModal({
               <Image
                 source={icons.history}
                 style={{
-                  width: getResponsiveSize(
-                    20,
-                    scaleByHeight(24, height),
-                    isLandscape
-                  ),
-                  height: getResponsiveSize(
-                    20,
-                    scaleByHeight(24, height),
-                    isLandscape
-                  ),
+                  width: sizes.historyIconSize,
+                  height: sizes.historyIconSize,
                   tintColor: themeController.current?.formInputLabelColor,
                 }}
               />
@@ -2141,7 +2402,7 @@ export default function ShowJobModal({
 
 const styles = StyleSheet.create({
   container: {
-    // padding: RFValue(14),
+    /* Lines 2144-2145 omitted */
     flex: 1,
   },
   header: {
@@ -2151,23 +2412,23 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   logo: {
-    fontSize: RFValue(20),
+    // fontSize: RFValue(20),
     fontFamily: 'Rubik-Bold',
   },
   closeButton: {
-    fontSize: RFValue(18),
+    // fontSize: RFValue(18),
   },
   modalCloseTouchableArea: {
     alignSelf: 'flex-end',
-    marginBottom: RFValue(8),
+    // marginBottom: RFValue(8),
   },
   modalCloseButton: {
-    fontSize: RFValue(18),
+    // fontSize: RFValue(18),
   },
   inputBlock: {
-    marginBottom: RFValue(10),
-    borderRadius: RFValue(5),
-    padding: RFValue(8),
+    // marginBottom: RFValue(10),
+    // borderRadius: RFValue(5),
+    // padding: RFValue(8),
     ...Platform.select({
       web: {
         zIndex: 1,
@@ -2175,7 +2436,7 @@ const styles = StyleSheet.create({
     }),
   },
   imageInputBlock: {
-    marginBottom: RFValue(10),
+    // marginBottom: RFValue(10),
     ...Platform.select({
       web: {
         zIndex: 1,
@@ -2187,19 +2448,17 @@ const styles = StyleSheet.create({
     // marginBottom: RFValue(4),
   },
   input: {
-    padding: RFValue(8),
+    // padding: RFValue(8),
     width: '100%',
     fontFamily: 'Rubik-Medium',
     fontWeight: '500',
   },
   addImageButton: {
-    width: RFValue(80),
-    height: RFValue(80),
     backgroundColor: '#84B0F4',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: RFValue(6),
-    marginRight: RFValue(6),
+    // borderRadius: RFValue(6),
+    // marginRight: RFValue(6),
   },
   imageRow: {
     flexDirection: 'row',
@@ -2210,19 +2469,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   imageThumbnail: {
-    width: RFValue(80),
-    height: RFValue(80),
-    borderRadius: RFValue(6),
-    marginRight: RFValue(6),
+    // width: RFValue(80),
+    // height: RFValue(80),
+    // borderRadius: RFValue(6),
+    // marginRight: RFValue(6),
   },
   imageWrapper: {
     position: 'relative',
-    marginRight: RFValue(6), // отступ между картинками
+    // marginRight: RFValue(6), /* Lines 2220-2221 omitted */
   },
   createButton: {
-    // paddingVertical: RFValue(12),
-    borderRadius: RFValue(5),
-    // marginBottom: RFValue(10),
+    /* Lines 2223-2224 omitted */
+    // borderRadius: RFValue(5),
+    /* Lines 2225-2226 omitted */
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2251,9 +2510,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   waitText: {
-    fontSize: RFValue(10),
+    // fontSize: RFValue(10),
     textAlign: 'center',
-    marginBottom: RFValue(5),
+    // marginBottom: RFValue(5),
   },
   overlay: {
     flex: 1,
@@ -2264,15 +2523,15 @@ const styles = StyleSheet.create({
   modalContent: {
     position: 'relative',
     width: '80%',
-    padding: RFValue(18),
-    borderRadius: RFValue(8),
+    // padding: RFValue(18),
+    // borderRadius: RFValue(8),
     alignItems: 'center',
   },
   message: {
-    fontSize: RFValue(12),
+    // fontSize: RFValue(12),
     fontWeight: '500',
     textAlign: 'center',
-    marginBottom: RFValue(18),
+    // marginBottom: RFValue(18),
   },
   buttonRow: {
     flexDirection: 'row',
@@ -2286,13 +2545,13 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    paddingVertical: RFValue(9),
-    marginHorizontal: RFValue(5),
-    borderRadius: RFValue(5),
+    // paddingVertical: RFValue(9),
+    // marginHorizontal: RFValue(5),
+    // borderRadius: RFValue(5),
     alignItems: 'center',
   },
   buttonText: {
-    fontSize: RFValue(12),
+    // fontSize: RFValue(12),
     fontWeight: '600',
   },
   editableTitlePanel: {
@@ -2302,7 +2561,7 @@ const styles = StyleSheet.create({
   },
   editPanel: {
     flexDirection: 'row',
-    gap: RFValue(5),
+    // gap: RFValue(5),
   },
   gridContainer: {
     width: '100%',

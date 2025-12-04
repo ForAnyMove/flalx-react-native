@@ -6,22 +6,54 @@ import {
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
 import SearchPanel from '../../../components/SearchPanel';
-import { RFValue } from 'react-native-responsive-fontsize';
 import { icons } from '../../../constants/icons';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useWindowInfo } from '../../../context/windowContext';
+import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
+import { LICENSES } from '../../../constants/licenses';
+import { FontAwesome6 } from '@expo/vector-icons';
 
 export default function Profession() {
   const { user, themeController } = useComponentContext();
   const [searchValue, setSearchValue] = useState('');
+  const { height } = useWindowDimensions();
+  const { isLandscape } = useWindowInfo();
+
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+
+    return {
+      padding: isWebLandscape ? web(10) : mobile(10),
+      containerRadius: isWebLandscape ? web(5) : mobile(5),
+      containerPaddingV: isWebLandscape ? web(10) : mobile(10),
+      containerPaddingH: isWebLandscape ? web(14) : mobile(14),
+      containerGap: isWebLandscape ? web(8) : mobile(8),
+      containerMarginBottom: isWebLandscape ? web(8) : mobile(8),
+      iconSize: isWebLandscape ? web(14) : mobile(14),
+      titleFontSize: isWebLandscape ? web(12) : mobile(10),
+      markerFontSize: isWebLandscape ? web(12) : mobile(10),
+      plusButtonSize: isWebLandscape ? web(45) : mobile(45),
+      plusButtonRadius: isWebLandscape ? web(25) : mobile(25),
+      plusButtonBottom: isWebLandscape ? web(20) : mobile(20),
+      plusButtonRight: isWebLandscape ? web(40) : mobile(20),
+    };
+  }, [height, isWebLandscape]);
 
   return (
     <View
       style={[
         styles.professionScreen,
-        { backgroundColor: themeController.current?.backgroundColor },
+        {
+          backgroundColor: themeController.current?.backgroundColor,
+          padding: sizes.padding,
+        },
       ]}
     >
       <SearchPanel searchValue={searchValue} setSearchValue={setSearchValue} />
@@ -37,20 +69,25 @@ export default function Profession() {
                 styles.professionContainer,
                 {
                   backgroundColor: themeController.current?.formInputBackground,
+                  borderRadius: sizes.containerRadius,
+                  paddingVertical: sizes.containerPaddingV,
+                  paddingHorizontal: sizes.containerPaddingH,
+                  gap: sizes.containerGap,
+                  marginBottom: sizes.containerMarginBottom,
                 },
               ]}
             >
               <FontAwesome6
                 name='check'
-                size={RFValue(14)}
+                size={sizes.iconSize}
                 color={themeController.current?.textColor}
               />
               <Image
                 source={icons.checkCircle}
                 style={[
                   {
-                    with: RFValue(14),
-                    height: RFValue(14),
+                    width: sizes.iconSize,
+                    height: sizes.iconSize,
                     tintColor: themeController.current?.textColor,
                   },
                 ]}
@@ -59,7 +96,10 @@ export default function Profession() {
               <Text
                 style={[
                   styles.professionTitle,
-                  { color: themeController.current?.textColor },
+                  {
+                    color: themeController.current?.textColor,
+                    fontSize: sizes.titleFontSize,
+                  },
                 ]}
               >
                 {LICENSES[prof]}
@@ -68,7 +108,10 @@ export default function Profession() {
                 <Text
                   style={[
                     styles.verifiedMarker,
-                    { color: themeController.current?.unactiveTextColor },
+                    {
+                      color: themeController.current?.unactiveTextColor,
+                      fontSize: sizes.markerFontSize,
+                    },
                   ]}
                 >
                   verified
@@ -80,19 +123,14 @@ export default function Profession() {
       <TouchableOpacity
         style={{
           backgroundColor: themeController.current?.mainBadgeBackground,
-          width: 45,
-          height: 45,
-          borderRadius: 25,
+          width: sizes.plusButtonSize,
+          height: sizes.plusButtonSize,
+          borderRadius: sizes.plusButtonRadius,
           justifyContent: 'center',
           alignItems: 'center',
           position: 'absolute',
-          right: 20,
-          bottom: 20,
-          ...Platform.select({
-            web: {
-              right: 40,
-            },
-          }),
+          right: sizes.plusButtonRight,
+          bottom: sizes.plusButtonBottom,
         }}
         // onPress={() => router.push('/new-job-modal')}
       >
@@ -100,8 +138,8 @@ export default function Profession() {
           source={icons.plus}
           style={[
             {
-              with: RFValue(14),
-              height: RFValue(14),
+              width: sizes.iconSize,
+              height: sizes.iconSize,
               tintColor: themeController.current?.badgeTextColor,
             },
           ]}
@@ -115,22 +153,15 @@ export default function Profession() {
 const styles = StyleSheet.create({
   professionScreen: {
     flex: 1,
-    padding: RFValue(10),
   },
   professionContainer: {
-    borderRadius: RFValue(5),
-    paddingVertical: RFValue(10),
-    paddingHorizontal: RFValue(14),
     flexDirection: 'row',
-    gap: RFValue(8),
-    marginBottom: RFValue(8),
+    alignItems: 'center',
   },
   professionTitle: {
-    fontSize: RFValue(10),
     fontWeight: '500',
   },
   verifiedMarker: {
-    fontSize: RFValue(10),
     textAlign: 'right',
     flex: 1,
   },

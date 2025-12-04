@@ -1,5 +1,5 @@
 // AppScreen.jsx
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Text,
   View,
@@ -7,15 +7,14 @@ import {
   Image,
   StyleSheet,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
-import { useWindowInfo } from '../context/windowContext'; // 👈 добавили
 import AppMainScreen from './AppMainScreen';
 import AppProfileScreen from './AppProfileScreen';
-import { RFValue } from 'react-native-responsive-fontsize';
 import { icons } from '../constants/icons';
-import { scaleByHeight } from '../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 
 export default function AppScreen() {
   const {
@@ -29,25 +28,31 @@ export default function AppScreen() {
   const [screenName, setScreenName] = useState('app');
   const isRTL = languageController.isRTL;
 
-  // ✅ Берём размеры и ориентацию из WindowProvider
-  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const sidebarWidth = isWebLandscape ? Math.max(200, width * 0.15) : 0;
   const theme = themeController.current;
   const tabController =
     screenName === 'app' ? appTabController : profileTabController;
 
-  // размеры для боковой панели (web+landscape) зависят от высоты
-  const iconSizeSide = isWebLandscape ? scaleByHeight(24, height) : RFValue(14);
-  const fontSizeSide = isWebLandscape ? scaleByHeight(12, height) : RFValue(10);
-  const sizes = {
-    tabTitleGap: isWebLandscape ? scaleByHeight(12, height) : RFValue(5),
-    sideBarPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(18, height)
-      : RFValue(5),
-    sideBarPaddingVertical: isWebLandscape
-      ? scaleByHeight(30, height)
-      : RFValue(5),
-  };
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+
+    return {
+      iconSize: isWebLandscape ? web(24) : mobile(22),
+      fontSize: isWebLandscape ? web(12) : mobile(12),
+      tabTitleGap: isWebLandscape ? web(12) : mobile(5),
+      sideBarPaddingHorizontal: isWebLandscape ? web(18) : mobile(8),
+      sideBarPaddingVertical: isWebLandscape ? web(30) : mobile(6),
+      subTabPadding: isWebLandscape ? web(12) : 0,
+      borderRadius: mobile(6),
+      tabContainerMarginVertical: isWebLandscape ? web(6) : mobile(6),
+      bottomBarPaddingVertical: mobile(10),
+      textMarginTop: mobile(3),
+    };
+  }, [isWebLandscape, height]);
 
   const renderTab = (tabName = 'profile', isSub = false, tab = '') => {
     const icon = icons[tabName];
@@ -68,10 +73,10 @@ export default function AppScreen() {
         }
         style={[
           styles.tabContainer,
+          { marginVertical: sizes.tabContainerMarginVertical },
           isSub && styles.subTab,
           isSideMenu && {
             flexDirection: isRTL ? 'row-reverse' : 'row',
-            // justifyContent: 'center',
             alignItems: 'center',
             paddingVertical: 6,
             paddingHorizontal: 0,
@@ -80,11 +85,11 @@ export default function AppScreen() {
           },
           isSub &&
             (isRTL
-              ? { paddingRight: sizes.tabTitleGap }
-              : { paddingLeft: sizes.tabTitleGap }),
+              ? { paddingRight: sizes.subTabPadding }
+              : { paddingLeft: sizes.subTabPadding }),
           isSubActive && {
             backgroundColor: theme.buttonColorPrimaryDefault + '22',
-            borderRadius: RFValue(6),
+            borderRadius: sizes.borderRadius,
           },
           { opacity: isActive || isSubActive ? 1 : 0.6 },
         ]}
@@ -94,23 +99,30 @@ export default function AppScreen() {
           style={
             isSideMenu
               ? {
-                  width: iconSizeSide,
-                  height: iconSizeSide,
+                  width: sizes.iconSize,
+                  height: sizes.iconSize,
                   resizeMode: 'contain',
                 }
-              : styles.icon
+              : [styles.icon, { width: sizes.iconSize, height: sizes.iconSize }]
           }
         />
         <Text
           style={
             isSideMenu
               ? {
-                  fontSize: isSub ? fontSizeSide : fontSizeSide,
+                  fontSize: sizes.fontSize,
                   color: theme.tabBarTextColorActive,
                   flexShrink: 1,
                   textAlign: isRTL ? 'right' : 'left',
                 }
-              : [styles.tabTextBottom, { color: theme.tabBarTextColorActive }]
+              : [
+                  styles.tabTextBottom,
+                  {
+                    color: theme.tabBarTextColorActive,
+                    fontSize: sizes.fontSize,
+                    marginTop: sizes.textMarginTop,
+                  },
+                ]
           }
           numberOfLines={1}
           ellipsizeMode='tail'
@@ -161,6 +173,7 @@ export default function AppScreen() {
           {
             backgroundColor: theme.tabBarBackground,
             flexDirection: isRTL ? 'row-reverse' : 'row',
+            paddingVertical: sizes.bottomBarPaddingVertical,
           },
         ]}
       >
@@ -200,30 +213,19 @@ const styles = StyleSheet.create({
   bottomBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: RFValue(10), // адаптив для мобилок
   },
   sidebar: {
-    paddingVertical: RFValue(6),
-    paddingHorizontal: RFValue(8),
     justifyContent: 'flex-start',
   },
   tabContainer: {
     alignItems: 'center',
-    marginVertical: RFValue(6),
   },
   subTab: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  // иконки
   icon: {
-    width: RFValue(22),
-    height: RFValue(22),
     resizeMode: 'contain',
   },
-  // текст для нижней панели
-  tabTextBottom: {
-    fontSize: RFValue(12),
-    marginTop: RFValue(3),
-  },
+  tabTextBottom: {},
 });

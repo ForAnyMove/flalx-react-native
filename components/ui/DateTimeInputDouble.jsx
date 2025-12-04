@@ -1,14 +1,47 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
+import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 
-export default function DateTimeInputDouble({ label, value, onChange, readOnly = false }) {
-  const { activeThemeStyles } = useComponentContext();
+export default function DateTimeInputDouble({
+  label,
+  value,
+  onChange,
+  readOnly = false,
+}) {
+  const { themeController } = useComponentContext();
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const { width, height } = useWindowDimensions();
+  const isWebLandscape = Platform.OS === 'web' && width > height;
 
   const date = value ? new Date(value) : new Date();
+
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+    const scale = isWebLandscape ? web : mobile;
+
+    return {
+      font: scale(12),
+      inputFont: scale(16),
+      padding: scale(12),
+      borderRadius: scale(8),
+      marginBottom: scale(8),
+      labelMarginBottom: scale(6),
+      containerPaddingVertical: scale(12),
+      containerPaddingHorizontal: scale(18),
+      containerMarginRight: scale(8),
+    };
+  }, [isWebLandscape, height]);
 
   const handleDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
@@ -34,23 +67,60 @@ export default function DateTimeInputDouble({ label, value, onChange, readOnly =
   };
 
   return (
-    <View style={[styles.dateTimeBlock, { backgroundColor: activeThemeStyles?.formInputBackground }]}>
-      <Text style={{ fontWeight: 'bold', marginBottom: 6 }}>{label}</Text>
+    <View
+      style={[
+        styles.dateTimeBlock,
+        {
+          backgroundColor: themeController.current?.formInputBackground,
+          paddingVertical: sizes.containerPaddingVertical,
+          paddingHorizontal: sizes.containerPaddingHorizontal,
+          borderRadius: sizes.borderRadius,
+          marginRight: sizes.containerMarginRight,
+        },
+      ]}
+    >
+      <Text
+        style={{
+          fontWeight: 'bold',
+          marginBottom: sizes.labelMarginBottom,
+          color: themeController.current?.textColor,
+          fontSize: sizes.font,
+        }}
+      >
+        {label}
+      </Text>
 
       {/* Кнопка выбора даты */}
       <TouchableOpacity
         onPress={() => !readOnly && setShowDatePicker(true)}
-        style={{ backgroundColor: 'transparent', padding: 12, borderRadius: 8, marginBottom: 8 }}
+        style={{
+          backgroundColor: 'transparent',
+          padding: sizes.padding,
+          borderRadius: sizes.borderRadius,
+          marginBottom: sizes.marginBottom,
+        }}
       >
-        <Text>📅 {date.toLocaleDateString()}</Text>
+        <Text style={{ color: themeController.current?.textColor, fontSize: sizes.inputFont }}>
+          📅 {date.toLocaleDateString()}
+        </Text>
       </TouchableOpacity>
 
       {/* Кнопка выбора времени */}
       <TouchableOpacity
         onPress={() => !readOnly && setShowTimePicker(true)}
-        style={{ backgroundColor: 'transparent', padding: 12, borderRadius: 8 }}
+        style={{
+          backgroundColor: 'transparent',
+          padding: sizes.padding,
+          borderRadius: sizes.borderRadius,
+        }}
       >
-        <Text>🕒 {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+        <Text style={{ color: themeController.current?.textColor, fontSize: sizes.inputFont }}>
+          🕒{' '}
+          {date.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </Text>
       </TouchableOpacity>
 
       {/* Пикеры */}
@@ -82,21 +152,16 @@ const styles = StyleSheet.create({
   },
   dateTimeBlock: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: 8,
-    marginRight: 8,
   },
   label: {
     fontWeight: 'bold',
-    marginBottom: 6,
   },
   dateTimeText: {
-    fontSize: 16,
-    color: '#000',
+    // fontSize: 16, // now in sizes
+    // color: '#000',
   },
   dateTimePlaceholder: {
-    fontSize: 16,
-    color: '#666',
+    // fontSize: 16, // now in sizes
+    // color: '#666',
   },
 });

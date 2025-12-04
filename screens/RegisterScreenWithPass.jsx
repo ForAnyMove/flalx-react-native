@@ -14,19 +14,12 @@ import {
   Image,
   useWindowDimensions,
 } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
-import { scaleByHeight } from '../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 
 const OTP_LENGTH = 6;
-
-// Адаптив размеров (mobile => RFValue, web => уменьшенный фикс)
-const getResponsiveSize = (mobileSize, webSize) => {
-  if (Platform.OS === 'web') return webSize;
-  return RFValue(mobileSize);
-};
 
 export default function AuthScreenWithPass() {
   const { t } = useTranslation();
@@ -144,125 +137,242 @@ export default function AuthScreenWithPass() {
 
   // Анимации
   const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  const sizes = useMemo(
+    () => ({
+      brandFontSize: isWebLandscape
+        ? scaleByHeight(57, height)
+        : scaleByHeightMobile(45, height),
+      brandLetterSpacing: isWebLandscape
+        ? scaleByHeight(5, height)
+        : scaleByHeightMobile(3, height),
+      brandMarginBottom: isWebLandscape
+        ? scaleByHeight(35, height)
+        : scaleByHeightMobile(18, height),
+      titleFontSize: isWebLandscape
+        ? scaleByHeight(18, height)
+        : scaleByHeightMobile(18, height),
+      subtitleFontSize: isWebLandscape
+        ? scaleByHeight(18, height)
+        : scaleByHeightMobile(13, height),
+      subtitleMarginBottom: isWebLandscape
+        ? scaleByHeight(25, height)
+        : scaleByHeightMobile(18, height),
+      fieldBlockMarginBottom: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(16, height),
+      labelFontSize: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(12, height),
+      labelMarginBottom: isWebLandscape
+        ? scaleByHeight(4, height)
+        : scaleByHeightMobile(6, height),
+      inputPaddingHorizontal: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(12, height),
+      inputFontSize: isWebLandscape
+        ? scaleByHeight(18, height)
+        : scaleByHeightMobile(14, height),
+      inputMarginBottom: isWebLandscape
+        ? scaleByHeight(2, height)
+        : scaleByHeightMobile(8, height),
+      outlineBtnTextFontSize: isWebLandscape
+        ? scaleByHeight(20, height)
+        : scaleByHeightMobile(15, height),
+      outlineBtnTextLineHeight: isWebLandscape
+        ? scaleByHeight(20, height)
+        : scaleByHeightMobile(16, height),
+      outlineBtnBorderRadius: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(7, height),
+      otpRowMarginTop: isWebLandscape
+        ? scaleByHeight(4, height)
+        : scaleByHeightMobile(6, height),
+      otpRowMarginBottom: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(12, height),
+      otpRowWidth: isWebLandscape ? scaleByHeight(314, height) : '100%',
+      otpRowHeight: isWebLandscape
+        ? scaleByHeight(74, height)
+        : scaleByHeightMobile(52, height),
+      otpCellHeight: isWebLandscape
+        ? scaleByHeight(74, height)
+        : scaleByHeightMobile(52, height),
+      otpCellFontSize: isWebLandscape
+        ? scaleByHeight(20, height)
+        : scaleByHeightMobile(18, height),
+      otpCellLineHeight: isWebLandscape
+        ? scaleByHeight(18, height)
+        : scaleByHeightMobile(19, height),
+      otpCellBorderRadius: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(7, height),
+      linksRowMarginBottom: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(10, height),
+      linksRowWidth: isWebLandscape ? scaleByHeight(314, height) : '100%',
+      linkIconWidth: isWebLandscape
+        ? scaleByHeight(16, height)
+        : scaleByHeightMobile(22, height),
+      linkIconHeight: isWebLandscape
+        ? scaleByHeight(16, height)
+        : scaleByHeightMobile(22, height),
+      linkFontSize: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(13, height),
+      linkWithIconPaddingHorizontal: isWebLandscape
+        ? scaleByHeight(3, height)
+        : scaleByHeightMobile(3, height),
+      errorFontSize: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(13, height),
+      sentCodeTimerFontSize: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(13, height),
+      modalCardPadding: isWebLandscape
+        ? scaleByHeight(12, height)
+        : scaleByHeightMobile(18, height),
+      modalCardBorderRadius: isWebLandscape
+        ? scaleByHeight(10, height)
+        : scaleByHeightMobile(14, height),
+      modalTextFontSize: isWebLandscape
+        ? scaleByHeight(18, height)
+        : scaleByHeightMobile(13, height),
+      modalTextMarginBottom: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(10, height),
+      emailDescriptionFontSize: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(12, height),
+      emailDescriptionLineHeight: isWebLandscape
+        ? scaleByHeight(18, height)
+        : scaleByHeightMobile(16, height),
+      webLandscapeFieldBlockWidth: scaleByHeight(330, height),
+      webLandscapeFieldBlockHeight: scaleByHeight(76, height),
+      webLandscapeFieldBlockBorderRadius: scaleByHeight(8, height),
+      webLandscapeFieldBlockPaddingTop: scaleByHeight(8, height),
+      webLandscapeLabelPaddingLeft: scaleByHeight(14, height),
+      webLandscapeLabelPaddingRight: scaleByHeight(14, height),
+      webLandscapeLabelMarginBottom: scaleByHeight(7, height),
+      webLandscapeInputMarginBottom: scaleByHeight(3, height),
+      multilineInputMarginBottom: isWebLandscape
+        ? scaleByHeight(10, height)
+        : scaleByHeightMobile(25, height),
+      finishTitleMarginBottom: isWebLandscape
+        ? scaleByHeight(18, height)
+        : scaleByHeightMobile(8, height),
+      keyboardVerticalOffset: isWebLandscape ? 0 : scaleByHeightMobile(10, height),
+      eyeIconPosition: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(12, height),
+      eyeIconTop: isWebLandscape
+        ? scaleByHeight(26, height)
+        : scaleByHeightMobile(38, height),
+      eyeIconSize: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(22, height),
+    }),
+    [isWebLandscape, height]
+  );
+
   const dynamicStyles = useMemo(() => {
     return {
       brand: {
-        fontSize: isWebLandscape ? scaleByHeight(57, height) : RFValue(45),
-        letterSpacing: isWebLandscape ? scaleByHeight(5, height) : RFValue(3),
-        marginBottom: isWebLandscape ? scaleByHeight(35, height) : RFValue(18),
+        fontSize: sizes.brandFontSize,
+        letterSpacing: sizes.brandLetterSpacing,
+        marginBottom: sizes.brandMarginBottom,
       },
       title: {
-        fontSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(18),
+        fontSize: sizes.titleFontSize,
       },
       subtitle: {
-        fontSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(13),
-        marginBottom: isWebLandscape ? scaleByHeight(25, height) : RFValue(18),
+        fontSize: sizes.subtitleFontSize,
+        marginBottom: sizes.subtitleMarginBottom,
       },
       fieldBlock: {
-        marginBottom: isWebLandscape ? scaleByHeight(14, height) : RFValue(16),
+        marginBottom: sizes.fieldBlockMarginBottom,
       },
       label: {
-        fontSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(12),
-        marginBottom: isWebLandscape ? scaleByHeight(4, height) : RFValue(6),
+        fontSize: sizes.labelFontSize,
+        marginBottom: sizes.labelMarginBottom,
       },
       input: {
-        paddingHorizontal: isWebLandscape
-          ? scaleByHeight(14, height)
-          : RFValue(12),
-        fontSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(14),
-        marginBottom: isWebLandscape ? scaleByHeight(2, height) : RFValue(8),
+        paddingHorizontal: sizes.inputPaddingHorizontal,
+        fontSize: sizes.inputFontSize,
+        marginBottom: sizes.inputMarginBottom,
       },
       outlineBtnText: {
-        fontSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(15),
-        lineHeight: isWebLandscape ? scaleByHeight(20, height) : RFValue(16),
-        borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(7),
+        fontSize: sizes.outlineBtnTextFontSize,
+        lineHeight: sizes.outlineBtnTextLineHeight,
+        borderRadius: sizes.outlineBtnBorderRadius,
       },
       otpRow: {
-        marginTop: isWebLandscape ? scaleByHeight(4, height) : RFValue(6),
-        marginBottom: isWebLandscape ? scaleByHeight(8, height) : RFValue(12),
-        width: isWebLandscape ? scaleByHeight(314, height) : '100%',
-        height: isWebLandscape ? scaleByHeight(74, height) : RFValue(52),
+        marginTop: sizes.otpRowMarginTop,
+        marginBottom: sizes.otpRowMarginBottom,
+        width: sizes.otpRowWidth,
+        height: sizes.otpRowHeight,
       },
       otpCell: {
-        height: isWebLandscape ? scaleByHeight(74, height) : RFValue(52),
-        fontSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(18),
-        lineHeight: isWebLandscape ? scaleByHeight(18, height) : RFValue(19),
-        borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(7),
+        height: sizes.otpCellHeight,
+        fontSize: sizes.otpCellFontSize,
+        lineHeight: sizes.otpCellLineHeight,
+        borderRadius: sizes.otpCellBorderRadius,
       },
       linksRow: {
-        marginBottom: isWebLandscape ? scaleByHeight(8, height) : RFValue(10),
-        width: isWebLandscape ? scaleByHeight(314, height) : '100%',
+        marginBottom: sizes.linksRowMarginBottom,
+        width: sizes.linksRowWidth,
       },
       linkIcon: {
-        width: isWebLandscape ? scaleByHeight(16, height) : RFValue(22),
-        height: isWebLandscape ? scaleByHeight(16, height) : RFValue(22),
+        width: sizes.linkIconWidth,
+        height: sizes.linkIconHeight,
       },
       link: {
-        fontSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(13),
+        fontSize: sizes.linkFontSize,
       },
       linkWithIcon: {
-        paddingHorizontal: isWebLandscape
-          ? scaleByHeight(3, height)
-          : RFValue(3),
+        paddingHorizontal: sizes.linkWithIconPaddingHorizontal,
       },
       error: {
-        fontSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(13),
+        fontSize: sizes.errorFontSize,
       },
       sentCodeTimer: {
-        fontSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(13),
+        fontSize: sizes.sentCodeTimerFontSize,
       },
       modalCard: {
-        padding: isWebLandscape ? scaleByHeight(12, height) : RFValue(18),
-        borderRadius: isWebLandscape ? scaleByHeight(10, height) : RFValue(14),
+        padding: sizes.modalCardPadding,
+        borderRadius: sizes.modalCardBorderRadius,
       },
       modalText: {
-        fontSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(13),
-        marginBottom: isWebLandscape ? scaleByHeight(8, height) : RFValue(10),
+        fontSize: sizes.modalTextFontSize,
+        marginBottom: sizes.modalTextMarginBottom,
       },
       emailDescription: {
-        fontSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(12),
-        lineHeight: isWebLandscape ? scaleByHeight(18, height) : RFValue(16),
+        fontSize: sizes.emailDescriptionFontSize,
+        lineHeight: sizes.emailDescriptionLineHeight,
       },
       // Динамические стили для web-landscape
       webLandscapeFieldBlock: {
-        width: scaleByHeight(330, height),
-        height: scaleByHeight(76, height),
-        borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(7),
-        paddingTop: isWebLandscape ? scaleByHeight(8, height) : RFValue(10),
+        width: sizes.webLandscapeFieldBlockWidth,
+        height: sizes.webLandscapeFieldBlockHeight,
+        borderRadius: sizes.webLandscapeFieldBlockBorderRadius,
+        paddingTop: sizes.webLandscapeFieldBlockPaddingTop,
       },
       webLandscapeLabel: {
-        paddingLeft: isRTL
-          ? 0
-          : isWebLandscape
-          ? scaleByHeight(14, height)
-          : RFValue(12),
-        paddingRight: isRTL
-          ? isWebLandscape
-            ? scaleByHeight(14, height)
-            : RFValue(12)
-          : 0,
-        marginBottom: isWebLandscape ? scaleByHeight(7, height) : RFValue(4),
+        paddingLeft: isRTL ? 0 : sizes.webLandscapeLabelPaddingLeft,
+        paddingRight: isRTL ? sizes.webLandscapeLabelPaddingRight : 0,
+        marginBottom: sizes.webLandscapeLabelMarginBottom,
       },
       webLandscapeInput: {
-        marginBottom: isWebLandscape ? scaleByHeight(3, height) : RFValue(4),
+        marginBottom: sizes.webLandscapeInputMarginBottom,
       },
     };
-  }, [height, isRTL]);
-
-  const sizes = {
-    multilineInputMarginBottom: isWebLandscape
-      ? scaleByHeight(10, height)
-      : RFValue(25),
-    finishTitleMarginBottom: isWebLandscape
-      ? scaleByHeight(18, height)
-      : RFValue(8),
-  };
+  }, [sizes, isRTL]);
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.select({ ios: 'padding', android: undefined })}
       style={[styles.root, { backgroundColor: theme.backgroundColor }]}
-      keyboardVerticalOffset={Platform.select({ ios: RFValue(10), android: 0 })}
+      keyboardVerticalOffset={sizes.keyboardVerticalOffset}
     >
       <ScrollView
         contentContainerStyle={[
@@ -394,16 +504,11 @@ export default function AuthScreenWithPass() {
                   },
                   isWebLandscape
                     ? {
-                        paddingLeft: isRTL
-                          ? 0
-                          : getResponsiveSize(12, scaleByHeight(14, height)),
+                        paddingLeft: isRTL ? 0 : sizes.webLandscapeLabelPaddingLeft,
                         paddingRight: isRTL
-                          ? getResponsiveSize(12, scaleByHeight(14, height))
+                          ? sizes.webLandscapeLabelPaddingRight
                           : 0,
-                        marginBottom: getResponsiveSize(
-                          4,
-                          scaleByHeight(7, height)
-                        ),
+                        marginBottom: sizes.webLandscapeLabelMarginBottom,
                       }
                     : null,
                 ]}
@@ -423,10 +528,9 @@ export default function AuthScreenWithPass() {
                     // прозрачный инпут внутри окрашенного fieldBlock
                     backgroundColor: 'transparent',
                     borderWidth: 0,
-                    marginBottom: getResponsiveSize(
-                      4,
-                      scaleByHeight(3, height)
-                    ),
+                    marginBottom: isWebLandscape
+                      ? sizes.webLandscapeInputMarginBottom
+                      : sizes.inputMarginBottom,
                   },
                   Platform.OS === 'web' && isLandscape
                     ? {
@@ -499,16 +603,11 @@ export default function AuthScreenWithPass() {
                   },
                   isWebLandscape
                     ? {
-                        paddingLeft: isRTL
-                          ? 0
-                          : getResponsiveSize(12, scaleByHeight(14, height)),
+                        paddingLeft: isRTL ? 0 : sizes.webLandscapeLabelPaddingLeft,
                         paddingRight: isRTL
-                          ? getResponsiveSize(12, scaleByHeight(14, height))
+                          ? sizes.webLandscapeLabelPaddingRight
                           : 0,
-                        marginBottom: getResponsiveSize(
-                          4,
-                          scaleByHeight(7, height)
-                        ),
+                        marginBottom: sizes.webLandscapeLabelMarginBottom,
                       }
                     : null,
                 ]}
@@ -527,10 +626,9 @@ export default function AuthScreenWithPass() {
                     // прозрачный инпут внутри окрашенного fieldBlock
                     backgroundColor: 'transparent',
                     borderWidth: 0,
-                    marginBottom: getResponsiveSize(
-                      4,
-                      scaleByHeight(3, height)
-                    ),
+                    marginBottom: isWebLandscape
+                      ? sizes.webLandscapeInputMarginBottom
+                      : sizes.inputMarginBottom,
                   },
                   Platform.OS === 'web' && isLandscape
                     ? {
@@ -571,23 +669,11 @@ export default function AuthScreenWithPass() {
                 onPress={() => setShowPassword((prev) => !prev)}
                 style={{
                   position: 'absolute',
-                  right: isRTL
-                    ? undefined
-                    : isWebLandscape
-                    ? scaleByHeight(14, height)
-                    : RFValue(12),
-                  left: isRTL
-                    ? isWebLandscape
-                      ? scaleByHeight(14, height)
-                      : RFValue(12)
-                    : undefined,
-                  top: isWebLandscape ? scaleByHeight(26, height) : RFValue(38),
-                  width: isWebLandscape
-                    ? scaleByHeight(24, height)
-                    : RFValue(22),
-                  height: isWebLandscape
-                    ? scaleByHeight(24, height)
-                    : RFValue(22),
+                  right: isRTL ? undefined : sizes.eyeIconPosition,
+                  left: isRTL ? sizes.eyeIconPosition : undefined,
+                  top: sizes.eyeIconTop,
+                  width: sizes.eyeIconSize,
+                  height: sizes.eyeIconSize,
                   justifyContent: 'center',
                   alignItems: 'center',
                 }}
@@ -595,12 +681,8 @@ export default function AuthScreenWithPass() {
                 <Image
                   source={showPassword ? icons.eyeOpen : icons.eyeClosed}
                   style={{
-                    width: isWebLandscape
-                      ? scaleByHeight(24, height)
-                      : RFValue(22),
-                    height: isWebLandscape
-                      ? scaleByHeight(24, height)
-                      : RFValue(22),
+                    width: sizes.eyeIconSize,
+                    height: sizes.eyeIconSize,
                     tintColor: theme.formInputLabelColor,
                   }}
                   resizeMode='contain'
@@ -643,16 +725,11 @@ export default function AuthScreenWithPass() {
                   },
                   isWebLandscape
                     ? {
-                        paddingLeft: isRTL
-                          ? 0
-                          : getResponsiveSize(12, scaleByHeight(14, height)),
+                        paddingLeft: isRTL ? 0 : sizes.webLandscapeLabelPaddingLeft,
                         paddingRight: isRTL
-                          ? getResponsiveSize(12, scaleByHeight(14, height))
+                          ? sizes.webLandscapeLabelPaddingRight
                           : 0,
-                        marginBottom: getResponsiveSize(
-                          4,
-                          scaleByHeight(7, height)
-                        ),
+                        marginBottom: sizes.webLandscapeLabelMarginBottom,
                       }
                     : null,
                 ]}
@@ -671,10 +748,9 @@ export default function AuthScreenWithPass() {
                     // прозрачный инпут внутри окрашенного fieldBlock
                     backgroundColor: 'transparent',
                     borderWidth: 0,
-                    marginBottom: getResponsiveSize(
-                      4,
-                      scaleByHeight(3, height)
-                    ),
+                    marginBottom: isWebLandscape
+                      ? sizes.webLandscapeInputMarginBottom
+                      : sizes.inputMarginBottom,
                   },
                   Platform.OS === 'web' && isLandscape
                     ? {
@@ -798,23 +874,45 @@ function PrimaryOutlineButton({
   height,
   containerStyle = {},
 }) {
+  const { width } = useWindowDimensions();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  const buttonSizes = useMemo(
+    () => ({
+      height: isWebLandscape
+        ? scaleByHeight(62, height)
+        : scaleByHeightMobile(48, height),
+      marginTop: isWebLandscape
+        ? scaleByHeight(38, height)
+        : scaleByHeightMobile(12, height),
+      borderRadius: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(12, height),
+      fontSize: isWebLandscape
+        ? scaleByHeight(20, height)
+        : scaleByHeightMobile(15, height),
+      lineHeight: isWebLandscape
+        ? scaleByHeight(20, height)
+        : scaleByHeightMobile(17, height),
+      width: isWebLandscape ? scaleByHeight(330, height) : '100%',
+    }),
+    [isWebLandscape, height]
+  );
+
   const buttonDynamicStyles = useMemo(
     () => ({
       outlineBtn: {
-        height: getResponsiveSize(48, scaleByHeight(40, height)),
-        marginTop: getResponsiveSize(12, scaleByHeight(38, height)),
-        borderRadius: getResponsiveSize(12, scaleByHeight(8, height)),
+        height: buttonSizes.height,
+        marginTop: buttonSizes.marginTop,
+        borderRadius: buttonSizes.borderRadius,
+        width: buttonSizes.width,
       },
       outlineBtnText: {
-        fontSize: getResponsiveSize(15, scaleByHeight(20, height)),
-        lineHeight: getResponsiveSize(17, scaleByHeight(20, height)),
-      },
-      webLandscapeButton: {
-        width: scaleByHeight(330, height),
-        height: scaleByHeight(62, height),
+        fontSize: buttonSizes.fontSize,
+        lineHeight: buttonSizes.lineHeight,
       },
     }),
-    [height]
+    [buttonSizes]
   );
   return (
     <TouchableOpacity
@@ -853,77 +951,53 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: {
     paddingHorizontal: '6%',
-    paddingVertical: RFValue(24),
+    paddingVertical: 24, // Replaced RFValue(24)
   },
   contentBlock: {
     alignSelf: 'center',
     alignItems: 'center',
   },
   brand: {
-    // fontSize: getResponsiveSize(45, scaleByHeight(57)),
     fontWeight: 'bold',
-    // letterSpacing: getResponsiveSize(3, scaleByHeight(5)),
     textAlign: 'center',
-    // marginBottom: getResponsiveSize(18, scaleByHeight(35)),
     fontFamily: 'Rubik-Bold',
   },
   title: {
-    // fontSize: getResponsiveSize(18, scaleByHeight(18)),
     fontWeight: '600',
     textAlign: 'center',
     fontFamily: 'Rubik-SemiBold',
   },
   subtitle: {
-    // fontSize: getResponsiveSize(13, scaleByHeight(18)),
     textAlign: 'center',
     fontWeight: '600',
-    // marginBottom: getResponsiveSize(18, scaleByHeight(25)),
     fontFamily: 'Rubik-SemiBold',
   },
-  fieldBlock: {
-    // marginBottom: getResponsiveSize(16, scaleByHeight(14)),
-  },
+  fieldBlock: {},
   label: {
-    // fontSize: getResponsiveSize(12, scaleByHeight(14)),
-    // marginBottom: getResponsiveSize(6, scaleByHeight(4)),
     fontWeight: '500',
   },
   input: {
     borderWidth: 1,
-    borderRadius: getResponsiveSize(10, 8),
-    // paddingHorizontal: getResponsiveSize(12, scaleByHeight(14)),
-    // fontSize: getResponsiveSize(14, scaleByHeight(18)),
-    // marginBottom: getResponsiveSize(8, scaleByHeight(2)),
-    // lineHeight: getResponsiveSize(20, scaleByHeight(22)),
+    borderRadius: 8, // Replaced getResponsiveSize(10, 8)
     fontWeight: '500',
   },
   outlineBtn: {
-    // height: getResponsiveSize(48, scaleByHeight(40)),
     borderWidth: 1.5,
-    // borderRadius: getResponsiveSize(12, 8),
     alignItems: 'center',
     justifyContent: 'center',
-    // marginTop: getResponsiveSize(12, scaleByHeight(38)),
     backgroundColor: 'transparent',
   },
   outlineBtnText: {
-    // fontSize: getResponsiveSize(15, scaleByHeight(20)),
-    // lineHeight: getResponsiveSize(17, scaleByHeight(20)),
     fontFamily: 'Rubik-Medium',
   },
   otpRow: {
     width: '100%',
     justifyContent: 'space-between',
-    // marginTop: getResponsiveSize(6, scaleByHeight(4)),
-    // marginBottom: getResponsiveSize(12, scaleByHeight(8)),
   },
   otpCell: {
     width: `${100 / OTP_LENGTH - 2}%`,
-    // height: getResponsiveSize(52, scaleByHeight(42)),
     borderWidth: 1,
-    // borderRadius: getResponsiveSize(10, 8),
     textAlign: 'center',
-    // fontSize: getResponsiveSize(18, scaleByHeight(16)),
     fontWeight: '700',
     ...Platform.select({
       web: {
@@ -936,14 +1010,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     fontFamily: 'Rubik-Medium',
-    // marginBottom: getResponsiveSize(10, scaleByHeight(8)),
   },
-  link: {
-    // fontSize: getResponsiveSize(13, scaleByHeight(12)),
-    // textDecorationLine: 'underline',
-  },
+  link: {},
   error: {
-    // fontSize: getResponsiveSize(13, scaleByHeight(12)),
     marginTop: 4,
   },
   modalBackdrop: {
@@ -955,18 +1024,12 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     width: '100%',
-    // borderRadius: getResponsiveSize(14, 10),
-    // padding: getResponsiveSize(18, scaleByHeight(12)),
     alignItems: 'center',
   },
   modalText: {
-    // fontSize: getResponsiveSize(14, scaleByHeight(12)),
     textAlign: 'center',
-    // marginBottom: getResponsiveSize(10, scaleByHeight(8)),
   },
   emailDescription: {
-    // fontSize: getResponsiveSize(12, scaleByHeight(14)),
-    // lineHeight: getResponsiveSize(16, scaleByHeight(18)),
     textAlign: 'center',
     fontWeight: '500',
     fontFamily: 'Rubik-Medium',

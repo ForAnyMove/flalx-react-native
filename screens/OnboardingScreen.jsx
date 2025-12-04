@@ -9,25 +9,17 @@ import {
   Animated,
   Easing,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
-import { useWindowInfo } from '../context/windowContext'; // ✅ заменили useWindowDimensions
-import { scaleByHeight } from '../utils/resizeFuncs';
-
-// универсальная функция адаптации размеров
-const getResponsiveSize = (mobileSize, webSize) => {
-  if (Platform.OS === 'web') {
-    return webSize; // фикс/уменьшенный размер для веба
-  }
-  return RFValue(mobileSize);
-};
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 
 export default function OnboardingScreen({ onFinish }) {
   const { t } = useTranslation();
   const { themeController, languageController } = useComponentContext();
-  const { width, height, isLandscape } = useWindowInfo(); // ✅ теперь из контекста
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
   const isRTL = languageController.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
@@ -74,54 +66,39 @@ export default function OnboardingScreen({ onFinish }) {
     }
   };
 
-  const sizes = {
-    skipBtnTop: isWebLandscape ? scaleByHeight(103, height) : RFValue(10),
-    skipSideMove: isWebLandscape ? scaleByHeight(200, height) : RFValue(16),
-    skipTextSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(14),
-    imageContainerPadding: isWebLandscape
-      ? scaleByHeight(18, height)
-      : RFValue(10),
-    textContainerPadding: isWebLandscape
-      ? scaleByHeight(0, height)
-      : RFValue(10),
-    titleTextSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(20),
-    titleMarginBottom: isWebLandscape ? scaleByHeight(13, height) : RFValue(12),
-    descriptionTextSize: isWebLandscape
-      ? scaleByHeight(16, height)
-      : RFValue(14),
-    descriptionLineHeight: isWebLandscape
-      ? scaleByHeight(17, height)
-      : RFValue(15),
-    descriptionMarginBottom: isWebLandscape
-      ? scaleByHeight(48, height)
-      : RFValue(24),
-    descriptionMarginBottom: isWebLandscape
-      ? scaleByHeight(48, height)
-      : RFValue(24),
-    indicatorContainerGap: isWebLandscape
-      ? scaleByHeight(12, height)
-      : RFValue(6),
-    indicatorContainerMarginBottom: isWebLandscape
-      ? scaleByHeight(16, height)
-      : RFValue(24),
-    indicatorWidth: isWebLandscape ? scaleByHeight(26, height) : RFValue(20),
-    indicatorHeight: isWebLandscape ? scaleByHeight(6, height) : RFValue(6),
-    indicatorBorderRadius: isWebLandscape
-      ? scaleByHeight(4, height)
-      : RFValue(3),
-    buttonPaddingVertical: isWebLandscape
-      ? scaleByHeight(4, height)
-      : RFValue(12),
-    buttonBorderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(8),
-    buttonHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(40),
-    buttonWidth: isWebLandscape ? scaleByHeight(331, height) : '100%',
-    buttonMarginBottom: isWebLandscape ? 0 : RFValue(15),
-  };
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+
+    return {
+      skipBtnTop: isWebLandscape ? web(103) : mobile(10),
+      skipSideMove: isWebLandscape ? web(200) : mobile(16),
+      skipTextSize: isWebLandscape ? web(18) : mobile(14),
+      imageContainerPadding: isWebLandscape ? web(18) : mobile(10),
+      textContainerPadding: isWebLandscape ? web(0) : mobile(10),
+      titleTextSize: isWebLandscape ? web(18) : mobile(20),
+      titleMarginBottom: isWebLandscape ? web(13) : mobile(12),
+      descriptionTextSize: isWebLandscape ? web(16) : mobile(14),
+      descriptionLineHeight: isWebLandscape ? web(17) : mobile(15),
+      descriptionMarginBottom: isWebLandscape ? web(48) : mobile(24),
+      indicatorContainerGap: isWebLandscape ? web(12) : mobile(6),
+      indicatorContainerMarginBottom: isWebLandscape ? web(16) : mobile(24),
+      indicatorWidth: isWebLandscape ? web(26) : mobile(20),
+      indicatorHeight: isWebLandscape ? web(6) : mobile(6),
+      indicatorBorderRadius: isWebLandscape ? web(4) : mobile(3),
+      buttonPaddingVertical: isWebLandscape ? web(4) : mobile(12),
+      buttonBorderRadius: isWebLandscape ? web(8) : mobile(8),
+      buttonHeight: isWebLandscape ? web(62) : mobile(40),
+      buttonWidth: isWebLandscape ? web(331) : '100%',
+      buttonMarginBottom: isWebLandscape ? 0 : mobile(15),
+      buttonTextSize: isWebLandscape ? web(20) : mobile(16),
+    };
+  }, [isWebLandscape, height]);
 
   const skipBtnStyle = useMemo(
     () =>
       isRTL ? { left: sizes.skipSideMove } : { right: sizes.skipSideMove },
-    [isRTL, height]
+    [isRTL, sizes.skipSideMove]
   );
 
   return (
@@ -280,7 +257,7 @@ export default function OnboardingScreen({ onFinish }) {
                   styles.buttonText,
                   {
                     color: themeController.current.buttonColorPrimaryDefault,
-                    fontSize: getResponsiveSize(16, scaleByHeight(20, height)),
+                    fontSize: sizes.buttonTextSize,
                   },
                 ]}
               >

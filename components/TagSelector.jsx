@@ -5,11 +5,10 @@ import {
   TouchableOpacity,
   View,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
-import { useWindowInfo } from '../context/windowContext';
 import { useComponentContext } from '../context/globalAppContext';
-import { scaleByHeight } from '../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function TagSelector({
@@ -21,29 +20,30 @@ export default function TagSelector({
   containerStyle,
   numberOfRows = 1,
 }) {
-  const { height, isLandscape } = useWindowInfo();
+  const { width, height } = useWindowDimensions();
   const { themeController } = useComponentContext();
 
   const scrollRef = useRef(null);
-  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const isWebLandscape = Platform.OS === 'web' && width > height;
 
   const [containerWidth, setContainerWidth] = useState(null);
 
-  const sizes = useMemo(
-    () => ({
-      font: isWebLandscape ? scaleByHeight(14, height) : RFValue(12),
-      padH: isWebLandscape ? scaleByHeight(12, height) : RFValue(12),
-      height: isWebLandscape ? scaleByHeight(38, height) : RFValue(32),
-      radius: isWebLandscape ? scaleByHeight(4, height) : RFValue(8),
-      rowGap: isWebLandscape ? scaleByHeight(10, height) : RFValue(8),
-      colGap: isWebLandscape ? scaleByHeight(10, height) : RFValue(8),
-      titleFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(14),
-      subtitleFont: isWebLandscape ? scaleByHeight(14, height) : RFValue(12),
-      titleGap: isWebLandscape ? scaleByHeight(6, height) : RFValue(2),
-      subtitleGap: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
-    }),
-    [height, isLandscape]
-  );
+  const sizes = useMemo(() => {
+    const webScale = (size) => scaleByHeight(size, height);
+    const mobileScale = (size) => scaleByHeightMobile(size, height);
+    return {
+      font: isWebLandscape ? webScale(14) : mobileScale(12),
+      padH: isWebLandscape ? webScale(12) : mobileScale(12),
+      height: isWebLandscape ? webScale(38) : mobileScale(32),
+      radius: isWebLandscape ? webScale(4) : mobileScale(8),
+      rowGap: isWebLandscape ? webScale(10) : mobileScale(8),
+      colGap: isWebLandscape ? webScale(10) : mobileScale(8),
+      titleFont: isWebLandscape ? webScale(16) : mobileScale(14),
+      subtitleFont: isWebLandscape ? webScale(14) : mobileScale(12),
+      titleGap: isWebLandscape ? webScale(6) : mobileScale(2),
+      subtitleGap: isWebLandscape ? webScale(16) : mobileScale(10),
+    };
+  }, [height, isWebLandscape]);
 
   const wrapperHeight =
     numberOfRows * sizes.height + (numberOfRows - 1) * sizes.rowGap;

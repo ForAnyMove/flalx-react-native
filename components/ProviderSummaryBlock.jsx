@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Image,
   Modal,
@@ -9,8 +9,9 @@ import {
   View,
   Platform,
   TouchableWithoutFeedback,
+  useWindowDimensions,
 } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
+// import { RFValue } from 'react-native-responsive-fontsize';
 import { useComponentContext } from '../context/globalAppContext';
 import { JOB_TYPES } from '../constants/jobTypes';
 import { JOB_SUB_TYPES } from '../constants/jobSubTypes';
@@ -19,7 +20,7 @@ import { icons } from '../constants/icons';
 import { useWindowInfo } from '../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import CommentsSection from './CommentsSection';
-import { scaleByHeight } from '../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useWebView } from '../context/webViewContext';
 
 const ProviderSummaryBlock = ({ user, chooseUser }) => {
@@ -34,62 +35,205 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
   const [showContactInfo, setShowContactInfo] = useState(false);
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
-  const sizes = {
-    font: isWebLandscape ? scaleByHeight(16, height) : RFValue(12),
-    smallFont: isWebLandscape ? scaleByHeight(14, height) : RFValue(10),
-    sectionTitleSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(14),
-    small: isWebLandscape ? scaleByHeight(14, height) : RFValue(10),
-    avatar: isWebLandscape ? scaleByHeight(48, height) : RFValue(33),
-    modalAvatar: isWebLandscape ? scaleByHeight(112, height) : RFValue(75),
-    icon: isWebLandscape ? scaleByHeight(24, height) : RFValue(28),
-    padding: isWebLandscape ? height * 0.01 : RFValue(10),
-    paddingHorizontal: isWebLandscape ? scaleByHeight(17, height) : RFValue(12),
-    cardWidth: isWebLandscape ? '32%' : '100%', // 👈 3 в ряд для web-landscape
-    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-    padding: isWebLandscape ? height * 0.009 : RFValue(8),
-    containerHeight: isWebLandscape ? scaleByHeight(80, height) : RFValue(70),
-    containerWidth: isWebLandscape ? '32%' : '100%',
-    logoFont: isWebLandscape ? scaleByHeight(24, height) : RFValue(18),
-    pagePaddingHorizontal: isWebLandscape
-      ? scaleByHeight(24, height)
-      : RFValue(15),
-    modalHeaderPadding: isWebLandscape ? scaleByHeight(7, height) : RFValue(10),
-    modalHeaderPaddingTop: isWebLandscape
-      ? scaleByHeight(32, height)
-      : RFValue(5),
-    avatarMarginTop: isWebLandscape
-      ? scaleByHeight(24, height)
-      : RFValue(8),
-    avatarMarginBottom: isWebLandscape
-      ? scaleByHeight(8, height)
-      : RFValue(8),
-    nameSize: isWebLandscape ? scaleByHeight(28, height) : RFValue(14),
-    professionSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(12),
-    unlockContactBtnHeight: isWebLandscape
-      ? scaleByHeight(38, height)
-      : RFValue(40),
-    btnRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(6),
-    infoSectionMarginBottom: isWebLandscape
-      ? scaleByHeight(23, height)
-      : RFValue(15),
-    unlockContactBtnPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(24, height)
-      : RFValue(15),
-    iconMargin: isWebLandscape ? scaleByHeight(7, height) : RFValue(3),
-    headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
-    headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
-    contactInfoHeight: isWebLandscape ? scaleByHeight(50, height) : RFValue(30),
-    badgeHeight: isWebLandscape ? scaleByHeight(34, height) : RFValue(20),
-    badgeGap: isWebLandscape ? scaleByHeight(8, height) : RFValue(6),
-    badgePaddingHorizontal: isWebLandscape
-      ? scaleByHeight(12, height)
-      : RFValue(10),
-    providerInfoGap: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-    titleMarginBottom: isWebLandscape ? scaleByHeight(4, height) : RFValue(2),
-    professionMarginBottom: isWebLandscape
-      ? scaleByHeight(32, height)
-      : RFValue(20),
-  };
+
+  const sizes = useMemo(
+    () => ({
+      font: isWebLandscape
+        ? scaleByHeight(16, height)
+        : scaleByHeightMobile(12, height),
+      smallFont: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(10, height),
+      sectionTitleSize: isWebLandscape
+        ? scaleByHeight(18, height)
+        : scaleByHeightMobile(14, height),
+      small: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(10, height),
+      avatar: isWebLandscape
+        ? scaleByHeight(48, height)
+        : scaleByHeightMobile(33, height),
+      modalAvatar: isWebLandscape
+        ? scaleByHeight(112, height)
+        : scaleByHeightMobile(75, height),
+      icon: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(28, height),
+      padding: isWebLandscape
+        ? height * 0.01
+        : scaleByHeightMobile(10, height),
+      paddingHorizontal: isWebLandscape
+        ? scaleByHeight(17, height)
+        : scaleByHeightMobile(12, height),
+      cardWidth: isWebLandscape ? '32%' : '100%', // 👈 3 в ряд для web-landscape
+      borderRadius: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(5, height),
+      containerHeight: isWebLandscape
+        ? scaleByHeight(80, height)
+        : scaleByHeightMobile(70, height),
+      containerWidth: isWebLandscape ? '32%' : '100%',
+      logoFont: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(18, height),
+      pagePaddingHorizontal: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(15, height),
+      modalHeaderPadding: isWebLandscape
+        ? scaleByHeight(7, height)
+        : scaleByHeightMobile(10, height),
+      modalHeaderPaddingTop: isWebLandscape
+        ? scaleByHeight(32, height)
+        : scaleByHeightMobile(5, height),
+      avatarMarginTop: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(8, height),
+      avatarMarginBottom: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(8, height),
+      nameSize: isWebLandscape
+        ? scaleByHeight(28, height)
+        : scaleByHeightMobile(14, height),
+      professionSize: isWebLandscape
+        ? scaleByHeight(20, height)
+        : scaleByHeightMobile(12, height),
+      unlockContactBtnHeight: isWebLandscape
+        ? scaleByHeight(38, height)
+        : scaleByHeightMobile(40, height),
+      btnRadius: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(6, height),
+      infoSectionMarginBottom: isWebLandscape
+        ? scaleByHeight(23, height)
+        : scaleByHeightMobile(15, height),
+      unlockContactBtnPaddingHorizontal: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(15, height),
+      iconMargin: isWebLandscape
+        ? scaleByHeight(7, height)
+        : scaleByHeightMobile(3, height),
+      headerHeight: isWebLandscape ? scaleByHeight(50, height) : height * 0.07,
+      headerMargin: isWebLandscape
+        ? scaleByHeight(30, height)
+        : scaleByHeightMobile(5, height),
+      contactInfoHeight: isWebLandscape
+        ? scaleByHeight(50, height)
+        : scaleByHeightMobile(30, height),
+      badgeHeight: isWebLandscape
+        ? scaleByHeight(34, height)
+        : scaleByHeightMobile(20, height),
+      badgeGap: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(6, height),
+      badgePaddingHorizontal: isWebLandscape
+        ? scaleByHeight(12, height)
+        : scaleByHeightMobile(10, height),
+      providerInfoGap: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(5, height),
+      titleMarginBottom: isWebLandscape
+        ? scaleByHeight(4, height)
+        : scaleByHeightMobile(2, height),
+      professionMarginBottom: isWebLandscape
+        ? scaleByHeight(32, height)
+        : scaleByHeightMobile(20, height),
+    }),
+    [isWebLandscape, height]
+  );
+
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        summaryContainer: {
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          width: '100%',
+          height: '100%',
+          padding: sizes.padding,
+          paddingHorizontal: sizes.paddingHorizontal,
+          flexDirection: isRTL ? 'row-reverse' : 'row',
+          backgroundColor: themeController.current?.formInputBackground,
+          borderRadius: sizes.borderRadius,
+        },
+        avatarNameContainer: {
+          alignItems: 'center',
+          flexDirection: isRTL ? 'row-reverse' : 'row',
+          gap: sizes.providerInfoGap,
+        },
+        avatar: {
+          width: sizes.avatar,
+          height: sizes.avatar,
+          borderRadius: sizes.avatar / 2,
+          backgroundColor: '#ddd',
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        avatarPlaceholder: {
+          width: sizes.avatar,
+          height: sizes.avatar,
+          borderRadius: sizes.avatar / 2,
+          backgroundColor: '#ddd',
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        nameText: {
+          fontSize: sizes.font,
+          color: themeController.current?.textColor,
+          fontFamily: 'Rubik-SemiBold',
+        },
+        professionText: {
+          fontSize: sizes.smallFont,
+          color: themeController.current?.unactiveTextColor,
+        },
+        visitButton: {
+          height: sizes.containerHeight,
+          width: sizes.cardWidth,
+          borderRadius: sizes.borderRadius,
+        },
+        modalHeader: {
+          alignItems: 'center',
+          borderBottomWidth: 2,
+          justifyContent: 'space-between',
+          flexDirection: isRTL ? 'row-reverse' : 'row',
+          paddingHorizontal: sizes.modalHeaderPadding,
+          paddingVertical: sizes.modalHeaderPaddingTop,
+          backgroundColor: themeController.current?.backgroundColor,
+          borderBottomColor: themeController.current?.profileDefaultBackground,
+          height: sizes.headerHeight,
+          marginTop: sizes.headerMargin,
+        },
+        modalTitle: {
+          color: themeController.current?.primaryColor,
+          fontFamily: 'Rubik-Bold',
+          fontSize: sizes.logoFont,
+        },
+        sectionTitle: {
+          marginBottom: sizes.infoSectionMarginBottom / 4,
+          fontSize: sizes.sectionTitleSize,
+          color: themeController.current?.textColor,
+        },
+        typeBadge: {
+          borderWidth: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderRadius: sizes.borderRadius / 2,
+          borderColor: themeController.current?.formInputLabelColor,
+          paddingHorizontal: sizes.badgePaddingHorizontal,
+          height: sizes.badgeHeight,
+        },
+        badgeText: {
+          fontSize: sizes.small,
+          color: themeController.current?.formInputLabelColor,
+        },
+        primaryBtn: {
+          alignItems: 'center',
+          backgroundColor: themeController.current?.buttonColorPrimaryDefault,
+          borderRadius: sizes.btnRadius,
+          justifyContent: 'center',
+        },
+      }),
+    [sizes, themeController, isRTL]
+  );
 
   const {
     avatar,
@@ -124,60 +268,17 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
       {/* Summary Block */}
       <TouchableOpacity
         onPress={() => setModalVisible(true)}
-        style={[
-          styles.visitButton,
-          {
-            height: sizes.containerHeight,
-            width: sizes.cardWidth,
-          },
-        ]}
+        style={[styles.visitButton, dynamicStyles.visitButton]}
       >
-        <View
-          style={[
-            styles.summaryContainer,
-            {
-              width: '100%',
-              height: '100%',
-              padding: sizes.padding,
-              paddingHorizontal: sizes.paddingHorizontal,
-              flexDirection: isRTL ? 'row-reverse' : 'row',
-              backgroundColor: themeController.current?.formInputBackground,
-              borderRadius: sizes.borderRadius,
-            },
-          ]}
-        >
-          <View
-            style={[
-              styles.avatarNameContainer,
-              {
-                flexDirection: isRTL ? 'row-reverse' : 'row',
-                gap: sizes.providerInfoGap,
-              },
-            ]}
-          >
+        <View style={dynamicStyles.summaryContainer}>
+          <View style={dynamicStyles.avatarNameContainer}>
             {avatar ? (
               <Image
                 source={{ uri: avatar }}
-                style={[
-                  styles.avatar,
-                  {
-                    width: sizes.avatar,
-                    height: sizes.avatar,
-                    borderRadius: sizes.avatar / 2,
-                  },
-                ]}
+                style={[styles.avatar, dynamicStyles.avatar]}
               />
             ) : (
-              <View
-                style={[
-                  styles.avatarPlaceholder,
-                  {
-                    width: sizes.avatar,
-                    height: sizes.avatar,
-                    borderRadius: sizes.avatar / 2,
-                  },
-                ]}
-              >
+              <View style={[styles.avatarPlaceholder, dynamicStyles.avatarPlaceholder]}>
                 <Image
                   source={icons.defaultAvatar}
                   style={{ width: '100%', height: '100%' }}
@@ -185,21 +286,10 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
               </View>
             )}
             <View>
-              <Text
-                style={{
-                  fontSize: sizes.font,
-                  color: themeController.current?.textColor,
-                  fontFamily: 'Rubik-SemiBold',
-                }}
-              >
+              <Text style={dynamicStyles.nameText}>
                 {name} {surname}
               </Text>
-              <Text
-                style={{
-                  fontSize: sizes.smallFont,
-                  color: themeController.current?.unactiveTextColor,
-                }}
-              >
+              <Text style={dynamicStyles.professionText}>
                 {LICENSES[professions?.[0]]}
               </Text>
             </View>
@@ -242,17 +332,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                 <View
                   style={[
                     styles.modalHeader,
-                    {
-                      flexDirection: isRTL ? 'row-reverse' : 'row',
-                      paddingHorizontal: sizes.modalHeaderPadding,
-                      paddingVertical: sizes.modalHeaderPaddingTop,
-                      backgroundColor: themeController.current?.backgroundColor,
-                      borderBottomColor:
-                        themeController.current?.profileDefaultBackground,
-                      height: sizes.headerHeight,
-                      marginTop: sizes.headerMargin,
-                      borderBottomWidth: 2,
-                    },
+                    dynamicStyles.modalHeader,
                   ]}
                 >
                   <TouchableOpacity
@@ -273,10 +353,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                   <Text
                     style={[
                       styles.modalTitle,
-                      {
-                        fontSize: sizes.logoFont,
-                        color: themeController.current?.primaryColor,
-                      },
+                      dynamicStyles.modalTitle,
                     ]}
                   >
                     FLALX
@@ -367,10 +444,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         <Text
                           style={[
                             styles.sectionTitle,
-                            {
-                              fontSize: sizes.sectionTitleSize,
-                              color: themeController.current?.textColor,
-                            },
+                            dynamicStyles.sectionTitle,
                           ]}
                         >
                           {t('profile.job_types')}
@@ -387,25 +461,10 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                               key={i}
                               style={[
                                 styles.typeBadge,
-                                {
-                                  borderRadius: sizes.borderRadius / 2,
-                                  borderColor:
-                                    themeController.current
-                                      ?.formInputLabelColor,
-                                  paddingHorizontal:
-                                    sizes.badgePaddingHorizontal,
-                                  height: sizes.badgeHeight,
-                                },
+                                dynamicStyles.typeBadge,
                               ]}
                             >
-                              <Text
-                                style={{
-                                  fontSize: sizes.small,
-                                  color:
-                                    themeController.current
-                                      ?.formInputLabelColor,
-                                }}
-                              >
+                              <Text style={dynamicStyles.badgeText}>
                                 {JOB_TYPES[type]}
                               </Text>
                             </View>
@@ -427,10 +486,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         <Text
                           style={[
                             styles.sectionTitle,
-                            {
-                              fontSize: sizes.sectionTitleSize,
-                              color: themeController.current?.textColor,
-                            },
+                            dynamicStyles.sectionTitle,
                           ]}
                         >
                           {t('profile.professions')}
@@ -447,25 +503,10 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                               key={i}
                               style={[
                                 styles.professionBadge,
-                                {
-                                  borderRadius: sizes.borderRadius / 2,
-                                  borderColor:
-                                    themeController.current
-                                      ?.formInputLabelColor,
-                                  paddingHorizontal:
-                                    sizes.badgePaddingHorizontal,
-                                  height: sizes.badgeHeight,
-                                },
+                                dynamicStyles.typeBadge,
                               ]}
                             >
-                              <Text
-                                style={{
-                                  fontSize: sizes.small,
-                                  color:
-                                    themeController.current
-                                      ?.formInputLabelColor,
-                                }}
-                              >
+                              <Text style={dynamicStyles.badgeText}>
                                 {LICENSES[p]}
                               </Text>
                             </View>
@@ -500,10 +541,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                       <Text
                         style={[
                           styles.sectionTitle,
-                          {
-                            fontSize: sizes.sectionTitleSize,
-                            color: themeController.current?.textColor,
-                          },
+                          dynamicStyles.sectionTitle,
                         ]}
                       >
                         {t('profile.about_me')}
@@ -530,10 +568,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                       <Text
                         style={[
                           styles.sectionTitle,
-                          {
-                            fontSize: sizes.sectionTitleSize,
-                            color: themeController.current?.textColor,
-                          },
+                          dynamicStyles.sectionTitle,
                         ]}
                       >
                         {t('profile.contact_info')}
@@ -542,13 +577,9 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         <TouchableOpacity
                           style={[
                             styles.primaryBtn,
+                            dynamicStyles.primaryBtn,
                             {
-                              backgroundColor:
-                                themeController.current
-                                  ?.buttonColorPrimaryDefault,
                               height: sizes.unlockContactBtnHeight,
-                              justifyContent: 'center',
-                              borderRadius: sizes.btnRadius,
                               width: 'max-content',
                               alignSelf: isRTL ? 'flex-end' : 'flex-start',
                               paddingHorizontal:
@@ -596,8 +627,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                               <Text
                                 style={{
                                   fontSize: sizes.small,
-                                  color:
-                                    themeController.current?.unactiveTextColor,
+                                  color: themeController.current?.unactiveTextColor,
                                 }}
                               >
                                 {phoneNumber}
@@ -623,8 +653,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                               <Text
                                 style={{
                                   fontSize: sizes.small,
-                                  color:
-                                    themeController.current?.unactiveTextColor,
+                                  color: themeController.current?.unactiveTextColor,
                                 }}
                               >
                                 {email}
@@ -640,12 +669,8 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                 <TouchableOpacity
                   style={[
                     styles.primaryBtn,
+                    dynamicStyles.primaryBtn,
                     {
-                      backgroundColor:
-                        themeController.current?.buttonColorPrimaryDefault,
-                      borderRadius: sizes.btnRadius,
-                      alignItems: 'center',
-                      justifyContent: 'center',
                       padding: 0,
                     },
                     isWebLandscape && {
@@ -683,34 +708,38 @@ export default ProviderSummaryBlock;
 
 const styles = StyleSheet.create({
   summaryContainer: {
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    // justifyContent: 'space-between',
+    // alignItems: 'center',
   },
   avatarNameContainer: { alignItems: 'center' },
   avatar: {
-    backgroundColor: '#ddd',
-    justifyContent: 'center',
-    alignItems: 'center',
+    // backgroundColor: '#ddd',
+    // justifyContent: 'center',
+    // alignItems: 'center',
   },
   avatarPlaceholder: {
     backgroundColor: '#ddd',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  visitButton: { borderRadius: RFValue(5) },
+  visitButton: {
+    // borderRadius: RFValue(5)
+  },
   modalHeader: {
-    alignItems: 'center',
-    padding: RFValue(10),
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-    justifyContent: 'space-between',
+    // alignItems: 'center',
+    // padding: RFValue(10),
+    // borderBottomWidth: 1,
+    // borderColor: '#ccc',
+    // justifyContent: 'space-between',
   },
   modalTitle: {
     // fontWeight: 'bold',
-    color: '#0A62EA',
+    // color: '#0A62EA',
     fontFamily: 'Rubik-Bold',
   },
-  sectionTitle: { marginBottom: RFValue(5) },
+  sectionTitle: {
+    // marginBottom: RFValue(5)
+  },
   centerRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',

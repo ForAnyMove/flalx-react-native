@@ -12,7 +12,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
 import { JOB_SUB_TYPES } from '../constants/jobSubTypes';
 import { JOB_TYPES } from '../constants/jobTypes';
 import { LICENSES } from '../constants/licenses';
@@ -25,19 +24,12 @@ import { icons } from '../constants/icons';
 import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
 import { useWindowInfo } from '../context/windowContext';
 import { useTranslation } from 'react-i18next';
-import { scaleByHeight } from '../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { t } from 'i18next';
 import SubscriptionsModal from './SubscriptionsModal';
 import { createJob } from '../src/api/jobs';
 import { useWebView } from '../context/webViewContext';
 import AutocompletePicker from './ui/AutocompletePicker';
-
-const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
-  if (Platform.OS === 'web') {
-    return isLandscape ? webSize : RFValue(mobileSize);
-  }
-  return RFValue(mobileSize);
-};
 
 const WebAbsoluteWrapper = ({ children, style, landscapeStyles }) => {
   if (Platform.OS === 'web') {
@@ -375,62 +367,77 @@ export default function NewJobModal({
 
   const [statusOptions, setStatusOptions] = useState(STATUS_OPTIONS);
 
-  // размеры
-  const sizes = {
-    font: isWebLandscape ? scaleByHeight(12, height) : RFValue(12),
-    inputFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
-    padding: isWebLandscape ? scaleByHeight(4, height) : RFValue(8),
-    inputContainerPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(16, height)
-      : RFValue(8),
-    inputContainerPaddingVertical: isWebLandscape
-      ? scaleByHeight(10, height)
-      : RFValue(6),
-    margin: isWebLandscape ? scaleByHeight(18, height) : RFValue(10),
-    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-    thumb: isWebLandscape ? scaleByHeight(128, height) : RFValue(80),
-    thumbGap: isWebLandscape ? height * 0.05 : RFValue(28),
-    headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
-    modalPadding: isWebLandscape ? scaleByHeight(45, height) : RFValue(12),
-    modalRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-    modalCrossTopRightPos: isWebLandscape
-      ? scaleByHeight(7, height)
-      : RFValue(10),
-    modalTitle: isWebLandscape ? scaleByHeight(24, height) : RFValue(16),
-    modalTitleMarginBottom: isWebLandscape
-      ? scaleByHeight(22, height)
-      : RFValue(10),
-    modalSub: isWebLandscape ? scaleByHeight(20, height) : RFValue(12),
-    chipFont: isWebLandscape ? scaleByHeight(14, height) : RFValue(12),
-    chipHeight: isWebLandscape ? scaleByHeight(34, height) : RFValue(6),
-    chipPadH: isWebLandscape ? scaleByHeight(11, height) : RFValue(12),
-    chipGap: isWebLandscape ? scaleByHeight(8, height) : RFValue(8),
-    chipMarginBottom: isWebLandscape ? scaleByHeight(40, height) : RFValue(12),
-    modalCardW: isWebLandscape ? scaleByHeight(450, height) : '88%',
-    btnH: isWebLandscape ? scaleByHeight(62, height) : RFValue(42),
-    btnW: isWebLandscape ? scaleByHeight(300, height) : '100%',
-    btnMarginBottom: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
-    headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
-    headerPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(7, height)
-      : RFValue(3),
-    containerPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(20, height)
-      : RFValue(14),
-    inputHeight: isWebLandscape ? scaleByHeight(64, height) : RFValue(40),
-    photosLabelSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(12),
-    photosLabelMarginBottom: isWebLandscape
-      ? scaleByHeight(14, height)
-      : RFValue(6),
-    saveBtnWidth: isWebLandscape ? scaleByHeight(380, height) : RFValue(120),
-    saveBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(40),
-    saveBtnFont: isWebLandscape ? scaleByHeight(20, height) : RFValue(14),
-    iconSize: isWebLandscape ? scaleByHeight(24, height) : RFValue(20),
-    removeIconSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(20),
-    removeIconPosition: isWebLandscape ? scaleByHeight(3, height) : RFValue(4),
-    imageSize: isWebLandscape ? scaleByHeight(32, height) : RFPercentage(3),
-    crossIconSize: isWebLandscape ? scaleByHeight(16, height) : RFValue(20),
-  };
+  const sizes = useMemo(() => {
+    const scale = isWebLandscape ? scaleByHeight : scaleByHeightMobile;
+    const webLandscapeScale = (size) => scaleByHeight(size, height);
+    const mobileScale = (size) => scaleByHeightMobile(size, height);
+
+    return {
+      font: isWebLandscape ? webLandscapeScale(12) : mobileScale(12),
+      inputFont: isWebLandscape ? webLandscapeScale(16) : mobileScale(10),
+      padding: isWebLandscape ? webLandscapeScale(4) : mobileScale(8),
+      inputContainerPaddingHorizontal: isWebLandscape
+        ? webLandscapeScale(16)
+        : mobileScale(8),
+      inputContainerPaddingVertical: isWebLandscape
+        ? webLandscapeScale(10)
+        : mobileScale(6),
+      margin: isWebLandscape ? webLandscapeScale(18) : mobileScale(10),
+      borderRadius: isWebLandscape ? webLandscapeScale(8) : mobileScale(5),
+      thumb: isWebLandscape ? webLandscapeScale(128) : mobileScale(80),
+      thumbGap: isWebLandscape ? height * 0.05 : mobileScale(28),
+      headerMargin: isWebLandscape ? webLandscapeScale(30) : mobileScale(5),
+      modalPadding: isWebLandscape ? webLandscapeScale(45) : mobileScale(12),
+      modalRadius: isWebLandscape ? webLandscapeScale(8) : mobileScale(5),
+      modalCrossTopRightPos: isWebLandscape
+        ? webLandscapeScale(7)
+        : mobileScale(10),
+      modalTitle: isWebLandscape ? webLandscapeScale(24) : mobileScale(16),
+      modalTitleMarginBottom: isWebLandscape
+        ? webLandscapeScale(22)
+        : mobileScale(10),
+      modalSub: isWebLandscape ? webLandscapeScale(20) : mobileScale(12),
+      chipFont: isWebLandscape ? webLandscapeScale(14) : mobileScale(12),
+      chipHeight: isWebLandscape ? webLandscapeScale(34) : mobileScale(30),
+      chipPadH: isWebLandscape ? webLandscapeScale(11) : mobileScale(12),
+      chipGap: isWebLandscape ? webLandscapeScale(8) : mobileScale(8),
+      chipMarginBottom: isWebLandscape
+        ? webLandscapeScale(40)
+        : mobileScale(12),
+      modalCardW: isWebLandscape ? webLandscapeScale(450) : '88%',
+      btnH: isWebLandscape ? webLandscapeScale(62) : mobileScale(42),
+      btnW: isWebLandscape ? webLandscapeScale(300) : '100%',
+      btnMarginBottom: isWebLandscape ? webLandscapeScale(16) : mobileScale(10),
+      headerHeight: isWebLandscape ? webLandscapeScale(50) : height * 0.07,
+      headerPaddingHorizontal: isWebLandscape
+        ? webLandscapeScale(7)
+        : mobileScale(3),
+      containerPaddingHorizontal: isWebLandscape
+        ? webLandscapeScale(20)
+        : mobileScale(14),
+      inputHeight: isWebLandscape ? webLandscapeScale(64) : mobileScale(40),
+      photosLabelSize: isWebLandscape
+        ? webLandscapeScale(18)
+        : mobileScale(12),
+      photosLabelMarginBottom: isWebLandscape
+        ? webLandscapeScale(14)
+        : mobileScale(6),
+      saveBtnWidth: isWebLandscape ? webLandscapeScale(380) : mobileScale(120),
+      saveBtnHeight: isWebLandscape ? webLandscapeScale(62) : mobileScale(40),
+      saveBtnFont: isWebLandscape ? webLandscapeScale(20) : mobileScale(14),
+      iconSize: isWebLandscape ? webLandscapeScale(24) : mobileScale(20),
+      removeIconSize: isWebLandscape ? webLandscapeScale(20) : mobileScale(20),
+      removeIconPosition: isWebLandscape
+        ? webLandscapeScale(3)
+        : mobileScale(4),
+      imageSize: isWebLandscape ? webLandscapeScale(32) : height * 0.03,
+      crossIconSize: isWebLandscape ? webLandscapeScale(24) : mobileScale(20),
+      logoSize: isWebLandscape ? webLandscapeScale(24) : mobileScale(18),
+      descriptionHeight: isWebLandscape
+        ? height * 0.12
+        : mobileScale(70),
+    };
+  }, [isWebLandscape, height]);
 
   const [filteredTypes, setFilteredTypes] = useState(JOB_TYPES);
   const [filteredSubTypes, setFilteredSubTypes] = useState(JOB_SUB_TYPES);
@@ -700,7 +707,7 @@ export default function NewJobModal({
         placeholderTextColor={'#999'}
         style={[
           styles.input,
-          { height: RFValue(70) },
+          { height: sizes.descriptionHeight },
           isRTL && { textAlign: 'right' },
           isWebLandscape && {
             height: height * 0.12,
@@ -754,7 +761,6 @@ export default function NewJobModal({
       <Text
         style={[
           styles.label,
-          { marginBottom: RFValue(8) },
           isRTL && { textAlign: 'right' },
           isWebLandscape && {
             fontSize: sizes.photosLabelSize,
@@ -830,7 +836,6 @@ export default function NewJobModal({
                     width: sizes.removeIconSize,
                     height: sizes.removeIconSize,
                   },
-                  isRTL && { right: 'auto', left: RFValue(4) },
                 ]}
                 onPress={() => removeImage(index)}
               >
@@ -1133,7 +1138,10 @@ export default function NewJobModal({
   //               styles.inputBlock,
   //               { backgroundColor: bg },
   //               {
-  //                 padding: sizes.padding,
+  //                 padding: 0,
+  //                 paddingHorizontal:
+  //                   sizes.inputContainerPaddingHorizontal,
+  //                 paddingVertical: sizes.inputContainerPaddingVertical,
   //                 borderRadius: sizes.borderRadius,
   //                 marginBottom: 0,
   //               },
@@ -1157,7 +1165,9 @@ export default function NewJobModal({
   //               })}
   //               placeholderTextColor={'#999'}
   //               style={{
-  //                 padding: sizes.padding,
+  //                 padding: 0,
+  //                 paddingVertical: sizes.padding,
+  //                 color: themeController.current?.textColor,
   //                 fontSize: sizes.inputFont,
   //                 borderRadius: sizes.borderRadius,
   //                 backgroundColor: 'transparent',
@@ -1183,7 +1193,11 @@ export default function NewJobModal({
   //             style={[
   //               styles.label,
   //               isRTL && { textAlign: 'right' },
-  //               { fontSize: sizes.font, marginBottom: sizes.margin / 2 },
+  //               {
+  //                 fontSize: sizes.photosLabelSize,
+  //                 marginBottom: sizes.photosLabelMarginBottom,
+  //                 color: themeController.current?.textColor,
+  //               },
   //             ]}
   //           >
   //             {t('newJob.uploadingPhotos', {
@@ -1287,6 +1301,7 @@ export default function NewJobModal({
   //                 padding: sizes.padding,
   //                 borderRadius: sizes.borderRadius,
   //                 marginBottom: 0,
+  //                 height: sizes.inputHeight,
   //               },
   //             ]}
   //           >
@@ -1454,16 +1469,8 @@ export default function NewJobModal({
             <Image
               source={icons.cross}
               style={{
-                width: getResponsiveSize(
-                  20,
-                  scaleByHeight(24, height),
-                  isLandscape
-                ),
-                height: getResponsiveSize(
-                  20,
-                  scaleByHeight(24, height),
-                  isLandscape
-                ),
+                width: sizes.crossIconSize,
+                height: sizes.crossIconSize,
                 tintColor: themeController.current?.formInputLabelColor,
               }}
               resizeMode='contain'
@@ -1474,11 +1481,7 @@ export default function NewJobModal({
               styles.logo,
               {
                 color: themeController.current?.primaryColor,
-                fontSize: getResponsiveSize(
-                  18,
-                  scaleByHeight(24, height),
-                  isLandscape
-                ),
+                fontSize: sizes.logoSize,
               },
             ]}
           >
@@ -1577,9 +1580,7 @@ export default function NewJobModal({
                         styles.inputBlock,
                         { backgroundColor: bg },
                         {
-                          paddingVertical: sizes.inputContainerPaddingVertical,
-                          paddingHorizontal:
-                            sizes.inputContainerPaddingHorizontal,
+                          padding: sizes.padding,
                           borderRadius: sizes.borderRadius,
                           marginBottom: 0,
                           height: '100%',
@@ -1589,9 +1590,6 @@ export default function NewJobModal({
                       <Text
                         style={[
                           styles.label,
-                          {
-                            color: themeController.current?.unactiveTextColor,
-                          },
                           isRTL && { textAlign: 'right' },
                           { fontSize: sizes.font },
                         ]}
@@ -1693,9 +1691,7 @@ export default function NewJobModal({
                       filtered={filteredProfessions}
                       setFiltered={setFilteredProfessions}
                       options={LICENSES}
-                      placeholder={t('newJob.select', {
-                        defaultValue: 'Select...',
-                      })}
+                      placeholder={t('newJob.select', { defaultValue: 'Select...' })}
                       stateFocusIndex={2}
                       setFocusStates={setFocusStates}
                       filterOptions={filterOptions}
@@ -1737,9 +1733,6 @@ export default function NewJobModal({
                       <Text
                         style={[
                           styles.label,
-                          {
-                            color: themeController.current?.unactiveTextColor,
-                          },
                           isRTL && { textAlign: 'right' },
                           { fontSize: sizes.font },
                         ]}
@@ -1909,9 +1902,7 @@ export default function NewJobModal({
                         styles.inputBlock,
                         { backgroundColor: bg },
                         {
-                          paddingVertical: sizes.inputContainerPaddingVertical,
-                          paddingHorizontal:
-                            sizes.inputContainerPaddingHorizontal,
+                          padding: sizes.padding,
                           borderRadius: sizes.borderRadius,
                           marginBottom: 0,
                           height: sizes.inputHeight,
@@ -1921,9 +1912,6 @@ export default function NewJobModal({
                       <Text
                         style={[
                           styles.label,
-                          {
-                            color: themeController.current?.unactiveTextColor,
-                          },
                           isRTL && { textAlign: 'right' },
                           { fontSize: sizes.font },
                         ]}
@@ -2459,7 +2447,6 @@ export default function NewJobModal({
 
 const styles = StyleSheet.create({
   container: {
-    // padding: RFValue(14),
     flex: 1,
   },
   header: {
@@ -2469,13 +2456,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   logo: {
-    fontSize: RFValue(20),
     fontFamily: 'Rubik-Bold',
   },
   inputBlock: {
-    marginBottom: RFValue(10),
-    borderRadius: RFValue(5),
-    padding: RFValue(8),
     ...Platform.select({
       web: {
         zIndex: 1,
@@ -2483,7 +2466,6 @@ const styles = StyleSheet.create({
     }),
   },
   imageInputBlock: {
-    marginBottom: RFValue(10),
     ...Platform.select({
       web: {
         zIndex: 1,
@@ -2495,7 +2477,6 @@ const styles = StyleSheet.create({
     // marginBottom: RFValue(4),
   },
   input: {
-    padding: RFValue(8),
     width: '100%',
     fontFamily: 'Rubik-Medium',
     fontWeight: '500',
@@ -2505,11 +2486,9 @@ const styles = StyleSheet.create({
   },
   suggestionBox: {
     position: 'absolute',
-    top: RFValue(28),
     left: 0,
     right: 0,
     zIndex: 999,
-    maxHeight: RFValue(120),
     borderRadius: 6,
     overflow: 'hidden',
     ...Platform.select({
@@ -2521,7 +2500,6 @@ const styles = StyleSheet.create({
     }),
   },
   suggestionItem: {
-    padding: RFValue(7),
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
@@ -2537,12 +2515,7 @@ const styles = StyleSheet.create({
   imageScrollContainer: {
     flexDirection: 'row',
   },
-  imageThumbnail: {
-    width: RFValue(80),
-    height: RFValue(80),
-    borderRadius: RFValue(6),
-    marginRight: RFValue(6),
-  },
+  imageThumbnail: {},
   imageWrapper: {
     position: 'relative',
   },
@@ -2554,19 +2527,15 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   bottomButtonWrapper: {
-    padding: RFValue(10),
     borderTopWidth: 1,
     borderTopColor: '#ddd',
     backgroundColor: 'white',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
-    shadowRadius: RFValue(4),
     elevation: 3,
   },
   createButton: {
-    paddingVertical: RFValue(12),
-    borderRadius: RFValue(5),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2606,8 +2575,6 @@ const styles = StyleSheet.create({
     // цвета/радиусы/паддинги задаём из sizes в JSX
     shadowColor: '#000',
     shadowOpacity: 0.15,
-    shadowRadius: RFValue(10),
-    shadowOffset: { width: 0, height: RFValue(6) },
     elevation: 8,
   },
   chip: {

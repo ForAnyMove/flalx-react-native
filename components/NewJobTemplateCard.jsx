@@ -1,11 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Image, StyleSheet, Text, View, Platform, TouchableOpacity } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
+import {
+  Image,
+  StyleSheet,
+  Text,
+  View,
+  Platform,
+  TouchableOpacity,
+  useWindowDimensions,
+} from 'react-native';
 import { useComponentContext } from '../context/globalAppContext';
-import { useWindowInfo } from '../context/windowContext';
 import { useTranslation } from 'react-i18next';
-import { scaleByHeight } from '../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
+import { useMemo } from 'react';
 
 const CARD_MARGIN = 8;
 
@@ -16,47 +23,90 @@ export default function NewJobTemplateCard({
   switchLikeStatus,
 }) {
   const { themeController } = useComponentContext();
-  const { height, isLandscape } = useWindowInfo();
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
   const { t } = useTranslation();
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
-  // размеры карточки для web-landscape считаем от height
-  const sizes = {
-    cardWidth: isWebLandscape ? scaleByHeight(242, height) : RFValue(120),
-    cardHeight: isWebLandscape ? scaleByHeight(212, height) : RFValue(120),
-    cardRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(4),
-    font: isWebLandscape ? scaleByHeight(14, height) : RFValue(9),
-    icon: isWebLandscape ? height * 0.04 : RFValue(26),
-    padding: isWebLandscape ? height * 0.008 : RFValue(6),
-    textPaddingVertical: isWebLandscape ? scaleByHeight(15, height) : RFValue(4),
-    textMarginBottom: isWebLandscape ? scaleByHeight(14, height) : RFValue(4),
-    textPaddingHorizontal: isWebLandscape ? scaleByHeight(16, height) : RFValue(6),
-    imageContainerHeight: isWebLandscape
-      ? scaleByHeight(138, height)
-      : RFValue(70),
-    likeIconSize: isWebLandscape ? scaleByHeight(40, height) : RFValue(25),
-  };
+  const sizes = useMemo(
+    () => ({
+      cardWidth: isWebLandscape
+        ? scaleByHeight(242, height)
+        : scaleByHeightMobile(120, height),
+      cardHeight: isWebLandscape
+        ? scaleByHeight(212, height)
+        : scaleByHeightMobile(120, height),
+      cardRadius: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(4, height),
+      font: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(9, height),
+      icon: isWebLandscape ? height * 0.04 : scaleByHeightMobile(26, height),
+      padding: isWebLandscape
+        ? height * 0.008
+        : scaleByHeightMobile(6, height),
+      textPaddingVertical: isWebLandscape
+        ? scaleByHeight(15, height)
+        : scaleByHeightMobile(4, height),
+      textMarginBottom: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(4, height),
+      textPaddingHorizontal: isWebLandscape
+        ? scaleByHeight(16, height)
+        : scaleByHeightMobile(6, height),
+      imageContainerHeight: isWebLandscape
+        ? scaleByHeight(138, height)
+        : scaleByHeightMobile(70, height),
+      likeIconSize: isWebLandscape
+        ? scaleByHeight(40, height)
+        : scaleByHeightMobile(25, height),
+    }),
+    [isWebLandscape, height]
+  );
 
-  return (
-    <View
-      style={[
-        styles.card,
-        {
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        card: {
           width: sizes.cardWidth,
           height: sizes.cardHeight,
           borderRadius: sizes.cardRadius,
           backgroundColor: themeController.current?.formInputBackground,
         },
-      ]}
-    >
-      <View
-        style={{
+        imageContainer: {
           height: sizes.imageContainerHeight,
           overflow: 'hidden',
           position: 'relative',
-        }}
-      >
+        },
+        placeholder: {
+          backgroundColor: themeController.current?.defaultBlocksMockBackground,
+        },
+        icon: {
+          color: themeController.current?.defaultBlocksMockColor,
+        },
+        titleText: {
+          fontSize: sizes.font,
+          color: themeController.current?.primaryColor,
+          paddingHorizontal: sizes.textPaddingHorizontal,
+          paddingTop: sizes.textPaddingVertical,
+          marginBottom: sizes.textMarginBottom,
+        },
+        readMoreText: {
+          fontSize: sizes.font,
+          color: themeController.current?.buttonColorSecondaryDefault,
+          paddingHorizontal: sizes.textPaddingHorizontal,
+          paddingBottom: sizes.textPaddingVertical,
+          textDecorationLine: 'underline',
+        },
+      }),
+    [sizes, themeController]
+  );
+
+  return (
+    <View style={[styles.card, dynamicStyles.card]}>
+      <View style={dynamicStyles.imageContainer}>
         {imageSource ? (
           <Image
             source={{ uri: imageSource }}
@@ -64,51 +114,23 @@ export default function NewJobTemplateCard({
             resizeMode='cover'
           />
         ) : (
-          <View
-            style={[
-              styles.placeholder,
-              {
-                backgroundColor:
-                  themeController.current?.defaultBlocksMockBackground,
-              },
-            ]}
-          >
+          <View style={[styles.placeholder, dynamicStyles.placeholder]}>
             <Ionicons
               name='image-outline'
               size={sizes.icon}
-              color={themeController.current?.defaultBlocksMockColor}
+              style={dynamicStyles.icon}
             />
           </View>
         )}
       </View>
       <Text
-        style={[
-          styles.title,
-          {
-            fontSize: sizes.font,
-            color: themeController.current?.primaryColor,
-            paddingHorizontal: sizes.textPaddingHorizontal,
-            paddingTop: sizes.textPaddingVertical,
-            marginBottom: sizes.textMarginBottom,
-          },
-        ]}
+        style={[styles.title, dynamicStyles.titleText]}
         numberOfLines={1}
-        ellipsisMode='tail'
+        ellipsizeMode='tail'
       >
         {t(`jobTypes.${templateTitle}`)}
       </Text>
-      <Text
-        style={[
-          styles.title,
-          {
-            fontSize: sizes.font,
-            color: themeController.current?.buttonColorSecondaryDefault,
-            paddingHorizontal: sizes.textPaddingHorizontal,
-            paddingBottom: sizes.textPaddingVertical,
-            textDecoration: 'underline',
-          },
-        ]}
-      >
+      <Text style={[styles.title, dynamicStyles.readMoreText]}>
         {t(`common.readMore`)}
       </Text>
       {/* <TouchableOpacity

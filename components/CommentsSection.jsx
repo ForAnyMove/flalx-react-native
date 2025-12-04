@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
   ScrollView,
@@ -9,13 +9,12 @@ import {
   View,
   Platform,
   Image,
+  useWindowDimensions,
 } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
-import { useWindowInfo } from '../context/windowContext';
 import { useComponentContext } from '../context/globalAppContext';
 import { useTranslation } from 'react-i18next';
 import { icons } from '../constants/icons';
-import { scaleByHeight } from '../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 
 export default function CommentsSection({
   jobId,
@@ -23,7 +22,7 @@ export default function CommentsSection({
   allowAdd = false,
   allowAddOnly = false,
 }) {
-  const { height, isLandscape } = useWindowInfo();
+  const { width, height } = useWindowDimensions();
   const { themeController, providersController, languageController } =
     useComponentContext();
   const { t } = useTranslation();
@@ -35,46 +34,40 @@ export default function CommentsSection({
   const [newText, setNewText] = useState('');
   const [rating, setRating] = useState(1); // 1 - positive, -1 - negative
 
-  const isWebLandscape = Platform.OS === 'web' && isLandscape;
-  const sizes = {
-    font: isWebLandscape ? scaleByHeight(18, height) : RFValue(12),
-    small: isWebLandscape ? scaleByHeight(14, height) : RFValue(10),
-    icon: isWebLandscape ? scaleByHeight(24, height) : RFValue(18),
-    scrollHeight: isWebLandscape ? scaleByHeight(464, height) : height * 0.35,
-    containerWidth: isWebLandscape ? scaleByHeight(508, height) : '100%',
-    containerPaddingBottom: isWebLandscape
-      ? scaleByHeight(9, height)
-      : RFValue(6),
-    iconMargin: isWebLandscape ? scaleByHeight(8, height) : RFValue(4),
-    commentsPaddingVertical: isWebLandscape
-      ? scaleByHeight(16, height)
-      : RFValue(8),
-    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(6),
-    commentPaddingVertical: isWebLandscape
-      ? scaleByHeight(8, height)
-      : RFValue(4),
-    commentPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(16, height)
-      : RFValue(8),
-    commentTextMarginTop: isWebLandscape
-      ? scaleByHeight(4, height)
-      : RFValue(3),
-    btnWidth: isWebLandscape ? scaleByHeight(330, height) : '100%',
-    btnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(35),
-    btnTextSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(18),
-    btnMarginVertical: isWebLandscape ? scaleByHeight(8, height) : RFValue(4),
-    modalWidth: isWebLandscape ? scaleByHeight(405, height) : '90%',
-    modalHeight: isWebLandscape ? scaleByHeight(450, height) : '90%',
-    modalPadding: isWebLandscape ? scaleByHeight(32, height) : RFValue(10),
-    modalCrossTop: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-    modalCrossRight: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-    modalTextfieldHeight: isWebLandscape
-      ? scaleByHeight(144, height)
-      : RFValue(40),
-    modalTextfieldWidth: isWebLandscape ? scaleByHeight(330, height) : '100%',
-    modalIconPadding: isWebLandscape ? scaleByHeight(16, height) : RFValue(5),
-    modalIconsGap: isWebLandscape ? scaleByHeight(35, height) : RFValue(7),
-  };
+  const isWebLandscape = Platform.OS === 'web' && width > height;
+
+  const sizes = useMemo(() => {
+    const scale = isWebLandscape ? scaleByHeight : scaleByHeightMobile;
+    return {
+      font: scale(18, height),
+      small: scale(14, height),
+      icon: scale(24, height),
+      scrollHeight: isWebLandscape ? scaleByHeight(464, height) : height * 0.35,
+      containerWidth: isWebLandscape ? scaleByHeight(508, height) : '100%',
+      containerPaddingBottom: scale(9, height),
+      iconMargin: scale(8, height),
+      commentsPaddingVertical: scale(16, height),
+      borderRadius: scale(8, height),
+      commentPaddingVertical: scale(8, height),
+      commentPaddingHorizontal: scale(16, height),
+      commentTextMarginTop: scale(4, height),
+      btnWidth: isWebLandscape ? scaleByHeight(330, height) : '100%',
+      btnHeight: scale(62, height),
+      btnTextSize: scale(20, height),
+      btnMarginVertical: scale(8, height),
+      modalWidth: isWebLandscape ? scaleByHeight(405, height) : '90%',
+      modalHeight: isWebLandscape ? scaleByHeight(450, height) : '90%',
+      modalPadding: scale(32, height),
+      modalCrossTop: scale(8, height),
+      modalCrossRight: scale(8, height),
+      modalTextfieldHeight: scale(144, height),
+      modalTextfieldWidth: isWebLandscape
+        ? scaleByHeight(330, height)
+        : '100%',
+      modalIconPadding: scale(16, height),
+      modalIconsGap: scale(35, height),
+    };
+  }, [isWebLandscape, height]);
 
   // загрузка комментариев
   useEffect(() => {
@@ -423,24 +416,16 @@ const styles = StyleSheet.create({
   tabsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    // marginVertical: RFValue(6),
     borderBottomWidth: 2,
   },
   tabBtn: {},
-  commentCard: {
-    // borderRadius: RFValue(6),
-    // padding: RFValue(8),
-    // marginBottom: RFValue(8),
-  },
+  commentCard: {},
   commentHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   addBtn: {
-    // padding: RFValue(10),
-    // marginTop: RFValue(8),
-    // borderRadius: RFValue(6),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -451,9 +436,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
   modalCard: {
-    // width: '85%',
-    // borderRadius: RFValue(8),
-    // padding: RFValue(12),
     justifyContent: 'space-between',
     position: 'relative',
     boxSizing: 'border-box',
@@ -463,19 +445,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    // marginBottom: RFValue(8),
   },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    // borderRadius: RFValue(6),
-    // padding: RFValue(8),
-    // minHeight: RFValue(60),
-    // marginBottom: RFValue(10),
   },
   statusRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    // marginBottom: RFValue(10),
   },
 });

@@ -14,19 +14,12 @@ import {
   Image,
   useWindowDimensions,
 } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
-import { scaleByHeight } from '../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 
 const OTP_LENGTH = 6;
-
-// Адаптив размеров (mobile => RFValue, web => уменьшенный фикс)
-const getResponsiveSize = (mobileSize, webSize) => {
-  if (Platform.OS === 'web') return webSize;
-  return RFValue(mobileSize);
-};
 
 export default function ForgottenPasswordScreen() {
   const { t } = useTranslation();
@@ -75,105 +68,52 @@ export default function ForgottenPasswordScreen() {
   // Анимации
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
-  const dynamicStyles = useMemo(() => {
+
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+
     return {
-      brand: {
-        fontSize: isWebLandscape ? scaleByHeight(57, height) : RFValue(45),
-        letterSpacing: isWebLandscape ? scaleByHeight(5, height) : RFValue(3),
-        marginBottom: isWebLandscape ? scaleByHeight(35, height) : RFValue(18),
-      },
-      title: {
-        fontSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(18),
-      },
-      subtitle: {
-        fontSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(13),
-        marginBottom: isWebLandscape ? scaleByHeight(25, height) : RFValue(18),
-      },
-      fieldBlock: {
-        marginBottom: isWebLandscape ? scaleByHeight(14, height) : RFValue(16),
-      },
-      label: {
-        fontSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(12),
-        marginBottom: isWebLandscape ? scaleByHeight(4, height) : RFValue(6),
-      },
-      input: {
-        paddingHorizontal: isWebLandscape
-          ? scaleByHeight(14, height)
-          : RFValue(12),
-        fontSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(14),
-        marginBottom: isWebLandscape ? scaleByHeight(2, height) : RFValue(8),
-      },
-      outlineBtnText: {
-        fontSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(15),
-        lineHeight: isWebLandscape ? scaleByHeight(20, height) : RFValue(16),
-        borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(7),
-      },
-      otpRow: {
-        marginTop: isWebLandscape ? scaleByHeight(4, height) : RFValue(6),
-        marginBottom: isWebLandscape ? scaleByHeight(8, height) : RFValue(12),
-        width: isWebLandscape ? scaleByHeight(314, height) : '100%',
-        height: isWebLandscape ? scaleByHeight(74, height) : RFValue(52),
-      },
-      otpCell: {
-        height: isWebLandscape ? scaleByHeight(74, height) : RFValue(52),
-        fontSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(18),
-        lineHeight: isWebLandscape ? scaleByHeight(18, height) : RFValue(19),
-        borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(7),
-      },
-      linksRow: {
-        marginBottom: isWebLandscape ? scaleByHeight(8, height) : RFValue(10),
-        width: isWebLandscape ? scaleByHeight(314, height) : '100%',
-      },
-      linkIcon: {
-        width: isWebLandscape ? scaleByHeight(24, height) : RFValue(22),
-        height: isWebLandscape ? scaleByHeight(24, height) : RFValue(22),
-      },
-      link: {
-        fontSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(13),
-      },
-      error: {
-        fontSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(13),
-      },
-      sentCodeTimer: {
-        fontSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(13),
-      },
-      modalCard: {
-        padding: isWebLandscape ? scaleByHeight(12, height) : RFValue(18),
-        borderRadius: isWebLandscape ? scaleByHeight(10, height) : RFValue(14),
-      },
-      modalText: {
-        fontSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(13),
-        marginBottom: isWebLandscape ? scaleByHeight(8, height) : RFValue(10),
-      },
-      emailDescription: {
-        fontSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(12),
-        lineHeight: isWebLandscape ? scaleByHeight(18, height) : RFValue(16),
-      },
-      // Динамические стили для web-landscape
-      webLandscapeFieldBlock: {
-        width: scaleByHeight(330, height),
-        height: scaleByHeight(76, height),
-        borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(7),
-        paddingTop: isWebLandscape ? scaleByHeight(8, height) : RFValue(10),
-      },
-      webLandscapeLabel: {
-        paddingLeft: isRTL
-          ? 0
-          : isWebLandscape
-          ? scaleByHeight(14, height)
-          : RFValue(12),
-        paddingRight: isRTL
-          ? isWebLandscape
-            ? scaleByHeight(14, height)
-            : RFValue(12)
-          : 0,
-        marginBottom: isWebLandscape ? scaleByHeight(7, height) : RFValue(4),
-      },
-      webLandscapeInput: {
-        marginBottom: isWebLandscape ? scaleByHeight(3, height) : RFValue(4),
-      },
+      brandFontSize: isWebLandscape ? web(57) : mobile(45),
+      brandLetterSpacing: isWebLandscape ? web(5) : mobile(3),
+      brandMarginBottom: isWebLandscape ? web(35) : mobile(18),
+      titleFontSize: isWebLandscape ? web(18) : mobile(18),
+      subtitleFontSize: isWebLandscape ? web(18) : mobile(13),
+      subtitleMarginBottom: isWebLandscape ? web(25) : mobile(18),
+      fieldBlockMarginBottom: isWebLandscape ? web(14) : mobile(16),
+      labelFontSize: isWebLandscape ? web(14) : mobile(12),
+      labelMarginBottom: isWebLandscape ? web(4) : mobile(6),
+      inputPaddingHorizontal: isWebLandscape ? web(14) : mobile(12),
+      inputFontSize: isWebLandscape ? web(18) : mobile(14),
+      inputMarginBottom: isWebLandscape ? web(2) : mobile(8),
+      borderRadius: isWebLandscape ? web(8) : mobile(12),
+      otpRowMarginTop: isWebLandscape ? web(4) : mobile(6),
+      otpRowMarginBottom: isWebLandscape ? web(8) : mobile(12),
+      otpRowWidth: isWebLandscape ? web(314) : '100%',
+      otpRowHeight: isWebLandscape ? web(74) : mobile(52),
+      otpCellHeight: isWebLandscape ? web(74) : mobile(52),
+      otpCellFontSize: isWebLandscape ? web(20) : mobile(18),
+      otpCellLineHeight: isWebLandscape ? web(18) : mobile(19),
+      linksRowMarginBottom: isWebLandscape ? web(8) : mobile(10),
+      linksRowWidth: isWebLandscape ? web(314) : '100%',
+      linkIconSize: isWebLandscape ? web(24) : mobile(22),
+      linkFontSize: isWebLandscape ? web(14) : mobile(13),
+      errorFontSize: isWebLandscape ? web(14) : mobile(13),
+      sentCodeTimerFontSize: isWebLandscape ? web(14) : mobile(13),
+      emailDescriptionFontSize: isWebLandscape ? web(14) : mobile(12),
+      emailDescriptionLineHeight: isWebLandscape ? web(18) : mobile(16),
+      webLandscapeFieldBlockWidth: isWebLandscape ? web(330) : '100%',
+      webLandscapeFieldBlockHeight: web(76),
+      webLandscapeFieldBlockPaddingTop: web(8),
+      webLandscapeLabelPadding: web(14),
+      webLandscapeLabelMarginBottom: web(7),
+      webLandscapeInputMarginBottom: web(3),
+      keyboardVerticalOffset: mobile(10),
+      scrollPaddingVertical: mobile(24),
+      buttonMarginTop: isWebLandscape ? web(16) : mobile(8),
+      FieldBlockPaddingHorizontal: isWebLandscape ? web(14) : mobile(12),
     };
-  }, [height, isRTL]);
+  }, [isWebLandscape, height]);
 
   // Автофокус
   const emailInputRef = useRef(null);
@@ -369,11 +309,15 @@ export default function ForgottenPasswordScreen() {
     <KeyboardAvoidingView
       behavior={Platform.select({ ios: 'padding', android: undefined })}
       style={[styles.root, { backgroundColor: theme.backgroundColor }]}
-      keyboardVerticalOffset={Platform.select({ ios: RFValue(10), android: 0 })}
+      keyboardVerticalOffset={Platform.select({
+        ios: sizes.keyboardVerticalOffset,
+        android: 0,
+      })}
     >
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
+          { paddingVertical: sizes.scrollPaddingVertical },
           isWebLandscape
             ? { justifyContent: 'center', alignItems: 'center', flex: 1 }
             : {},
@@ -393,8 +337,12 @@ export default function ForgottenPasswordScreen() {
           <Text
             style={[
               styles.brand,
-              dynamicStyles.brand,
-              { color: theme.primaryColor },
+              {
+                color: theme.primaryColor,
+                fontSize: sizes.brandFontSize,
+                letterSpacing: sizes.brandLetterSpacing,
+                marginBottom: sizes.brandMarginBottom,
+              },
             ]}
           >
             {t('auth.app_name')}
@@ -406,8 +354,11 @@ export default function ForgottenPasswordScreen() {
               <Text
                 style={[
                   styles.title,
-                  dynamicStyles.title,
-                  { color: theme.unactiveTextColor, textAlign: 'center' },
+                  {
+                    color: theme.unactiveTextColor,
+                    textAlign: 'center',
+                    fontSize: sizes.titleFontSize,
+                  },
                 ]}
               >
                 {t('auth.forgot_pass_title')}
@@ -415,8 +366,12 @@ export default function ForgottenPasswordScreen() {
               <Text
                 style={[
                   styles.subtitle,
-                  dynamicStyles.subtitle,
-                  { color: theme.unactiveTextColor, textAlign: 'center' },
+                  {
+                    color: theme.unactiveTextColor,
+                    textAlign: 'center',
+                    fontSize: sizes.subtitleFontSize,
+                    marginBottom: sizes.subtitleMarginBottom,
+                  },
                 ]}
               >
                 {t('auth.forgot_pass_subtitle')}
@@ -425,23 +380,18 @@ export default function ForgottenPasswordScreen() {
               <View
                 style={[
                   styles.fieldBlock,
-                  dynamicStyles.fieldBlock,
                   {
+                    marginBottom: sizes.fieldBlockMarginBottom,
                     backgroundColor: theme.formInputBackground,
+                    width: sizes.webLandscapeFieldBlockWidth,
+                    borderRadius: sizes.borderRadius,
+                    paddingTop: sizes.webLandscapeFieldBlockPaddingTop,
+                    paddingHorizontal: sizes.FieldBlockPaddingHorizontal,
                   },
                   isWebLandscape
                     ? {
-                        borderRadius: getResponsiveSize(
-                          12,
-                          scaleByHeight(8, height)
-                        ),
-                        paddingHorizontal: getResponsiveSize(12, 0),
-                        paddingTop: getResponsiveSize(
-                          10,
-                          scaleByHeight(8, height)
-                        ),
-                        width: scaleByHeight(330, height),
-                        height: scaleByHeight(76, height),
+                        paddingHorizontal: 0,
+                        height: sizes.webLandscapeFieldBlockHeight,
                       }
                     : null,
                 ]}
@@ -449,8 +399,9 @@ export default function ForgottenPasswordScreen() {
                 <Text
                   style={[
                     styles.label,
-                    dynamicStyles.label,
                     {
+                      fontSize: sizes.labelFontSize,
+                      marginBottom: sizes.labelMarginBottom,
                       color: theme.formInputLabelColor,
                       textAlign: isRTL ? 'right' : 'left',
                     },
@@ -458,14 +409,11 @@ export default function ForgottenPasswordScreen() {
                       ? {
                           paddingLeft: isRTL
                             ? 0
-                            : getResponsiveSize(12, scaleByHeight(14, height)),
+                            : sizes.webLandscapeLabelPadding,
                           paddingRight: isRTL
-                            ? getResponsiveSize(12, scaleByHeight(14, height))
+                            ? sizes.webLandscapeLabelPadding
                             : 0,
-                          marginBottom: getResponsiveSize(
-                            4,
-                            scaleByHeight(7, height)
-                          ),
+                          marginBottom: sizes.webLandscapeLabelMarginBottom,
                         }
                       : null,
                   ]}
@@ -476,29 +424,25 @@ export default function ForgottenPasswordScreen() {
                   ref={emailInputRef}
                   style={[
                     styles.input,
-                    dynamicStyles.input,
                     {
+                      // paddingHorizontal: sizes.inputPaddingHorizontal,
+                      fontSize: sizes.inputFontSize,
+                      marginBottom: sizes.inputMarginBottom,
                       backgroundColor: theme.defaultBlocksBackground,
                       borderColor: theme.borderColor,
                       color: theme.formInputTextColor,
                       textAlign: isRTL ? 'right' : 'left',
-                      // прозрачный инпут внутри окрашенного fieldBlock
                       backgroundColor: 'transparent',
                       borderWidth: 0,
-                      marginBottom: getResponsiveSize(
-                        4,
-                        scaleByHeight(3, height)
-                      ),
+                      marginBottom: sizes.webLandscapeInputMarginBottom,
                     },
-                    Platform.OS === 'web' && isLandscape
-                      ? {
-                          // убираем чёрную обводку (RN Web)
-                          outlineStyle: 'none',
-                          outlineWidth: 0,
-                          outlineColor: 'transparent',
-                          boxShadow: 'none',
-                        }
-                      : null,
+                    Platform.OS === 'web' &&
+                      isLandscape && {
+                        outlineStyle: 'none',
+                        outlineWidth: 0,
+                        outlineColor: 'transparent',
+                        boxShadow: 'none',
+                      },
                   ]}
                   placeholder='name@example.com'
                   placeholderTextColor={theme.formInputPlaceholderColor}
@@ -513,8 +457,9 @@ export default function ForgottenPasswordScreen() {
               <View
                 style={[
                   styles.linksRow,
-                  dynamicStyles.linksRow,
                   {
+                    marginBottom: sizes.linksRowMarginBottom,
+                    width: sizes.linksRowWidth,
                     flexDirection: 'row',
                     justifyContent: 'space-between',
                     alignItems: 'center',
@@ -526,16 +471,11 @@ export default function ForgottenPasswordScreen() {
                   onPress={() => forgotPassControl.switch()}
                   style={{ flexDirection: 'row', alignItems: 'center' }}
                 >
-                  {/* <Image
-                                            source={icons.emailClear}
-                                            style={[dynamicStyles.linkIcon, {tintColor: theme.formInputLabelColor}]}
-                                          /> */}
                   <Text
                     style={[
                       styles.link,
-                      dynamicStyles.link,
-                      // dynamicStyles.linkWithIcon,
                       {
+                        fontSize: sizes.linkFontSize,
                         color: theme.formInputLabelColor,
                         textDecorationLine: 'none',
                       },
@@ -549,8 +489,11 @@ export default function ForgottenPasswordScreen() {
               <Text
                 style={[
                   styles.emailDescription,
-                  dynamicStyles.emailDescription,
-                  { color: theme.unactiveTextColor },
+                  {
+                    fontSize: sizes.emailDescriptionFontSize,
+                    lineHeight: sizes.emailDescriptionLineHeight,
+                    color: theme.unactiveTextColor,
+                  },
                 ]}
               >
                 {t('auth.email_description')}
@@ -559,8 +502,10 @@ export default function ForgottenPasswordScreen() {
                 <Text
                   style={[
                     styles.error,
-                    dynamicStyles.error,
-                    { color: theme.errorTextColor },
+                    {
+                      fontSize: sizes.errorFontSize,
+                      color: theme.errorTextColor,
+                    },
                   ]}
                 >
                   {emailError}
@@ -587,8 +532,11 @@ export default function ForgottenPasswordScreen() {
               <Text
                 style={[
                   styles.title,
-                  dynamicStyles.title,
-                  { color: theme.unactiveTextColor, textAlign: 'center' },
+                  {
+                    fontSize: sizes.titleFontSize,
+                    color: theme.unactiveTextColor,
+                    textAlign: 'center',
+                  },
                 ]}
               >
                 {t('auth.otp_title')} {email}
@@ -596,8 +544,12 @@ export default function ForgottenPasswordScreen() {
               <Text
                 style={[
                   styles.subtitle,
-                  dynamicStyles.subtitle,
-                  { color: theme.unactiveTextColor, textAlign: 'center' },
+                  {
+                    fontSize: sizes.subtitleFontSize,
+                    marginBottom: sizes.subtitleMarginBottom,
+                    color: theme.unactiveTextColor,
+                    textAlign: 'center',
+                  },
                 ]}
               >
                 {t('auth.otp_subtitle')}
@@ -606,11 +558,11 @@ export default function ForgottenPasswordScreen() {
               <Text
                 style={[
                   styles.label,
-                  dynamicStyles.label,
                   {
+                    fontSize: sizes.labelFontSize,
+                    marginBottom: sizes.labelMarginBottom,
                     color: theme.unactiveTextColor,
                     textAlign: 'center',
-                    // alignSelf: isRTL ? 'flex-end' : 'flex-start',
                   },
                 ]}
               >
@@ -620,8 +572,11 @@ export default function ForgottenPasswordScreen() {
               <Animated.View
                 style={[
                   styles.otpRow,
-                  dynamicStyles.otpRow,
                   {
+                    marginTop: sizes.otpRowMarginTop,
+                    marginBottom: sizes.otpRowMarginBottom,
+                    width: sizes.otpRowWidth,
+                    height: sizes.otpRowHeight,
                     transform: [{ translateX: shakeAnim }],
                     flexDirection: 'row',
                   },
@@ -633,8 +588,11 @@ export default function ForgottenPasswordScreen() {
                     ref={(el) => (inputsRef.current[i] = el)}
                     style={[
                       styles.otpCell,
-                      dynamicStyles.otpCell,
                       {
+                        height: sizes.otpCellHeight,
+                        fontSize: sizes.otpCellFontSize,
+                        lineHeight: sizes.otpCellLineHeight,
+                        borderRadius: sizes.borderRadius,
                         backgroundColor: theme.formInputBackground,
                         borderColor:
                           focusedOtpIndex === i
@@ -661,8 +619,11 @@ export default function ForgottenPasswordScreen() {
                 <Text
                   style={[
                     styles.error,
-                    dynamicStyles.error,
-                    { color: theme.errorTextColor, textAlign: 'center' },
+                    {
+                      fontSize: sizes.errorFontSize,
+                      color: theme.errorTextColor,
+                      textAlign: 'center',
+                    },
                   ]}
                 >
                   {otpError}
@@ -673,8 +634,9 @@ export default function ForgottenPasswordScreen() {
               <View
                 style={[
                   styles.linksRow,
-                  dynamicStyles.linksRow,
                   {
+                    marginBottom: sizes.linksRowMarginBottom,
+                    width: sizes.linksRowWidth,
                     flexDirection: 'row',
                     justifyContent: 'space-between',
                     alignItems: 'center',
@@ -688,13 +650,16 @@ export default function ForgottenPasswordScreen() {
                 >
                   <Image
                     source={icons.arrowLeft}
-                    style={dynamicStyles.linkIcon}
+                    style={{
+                      width: sizes.linkIconSize,
+                      height: sizes.linkIconSize,
+                    }}
                   />
                   <Text
                     style={[
                       styles.link,
-                      dynamicStyles.link,
                       {
+                        fontSize: sizes.linkFontSize,
                         color: theme.formInputLabelColor,
                         textDecorationLine: 'none',
                       },
@@ -710,8 +675,8 @@ export default function ForgottenPasswordScreen() {
                     <Text
                       style={[
                         styles.link,
-                        dynamicStyles.link,
                         {
+                          fontSize: sizes.linkFontSize,
                           color: theme.formInputLabelColor,
                           textDecorationLine: 'underline',
                         },
@@ -728,8 +693,8 @@ export default function ForgottenPasswordScreen() {
                 <Text
                   style={[
                     styles.sentCodeTimer,
-                    dynamicStyles.sentCodeTimer,
                     {
+                      fontSize: sizes.sentCodeTimerFontSize,
                       color:
                         cooldownMode === 'error'
                           ? theme.errorTextColor
@@ -759,7 +724,7 @@ export default function ForgottenPasswordScreen() {
                   onPress={handleResend}
                   disabled={cooldown > 0 && cooldownMode === 'error'}
                   containerStyle={{
-                    marginTop: getResponsiveSize(8, scaleByHeight(16, height)),
+                    marginTop: sizes.buttonMarginTop,
                   }}
                 />
               )}
@@ -773,7 +738,7 @@ export default function ForgottenPasswordScreen() {
                   title={t('auth.clear_code')}
                   onPress={clearOtp}
                   containerStyle={{
-                    marginTop: getResponsiveSize(8, scaleByHeight(16, height)),
+                    marginTop: sizes.buttonMarginTop,
                   }}
                 />
               ) : (
@@ -791,7 +756,7 @@ export default function ForgottenPasswordScreen() {
                   onPress={onConfirm}
                   disabled={!canConfirm || verifying}
                   containerStyle={{
-                    marginTop: getResponsiveSize(8, scaleByHeight(16, height)),
+                    marginTop: sizes.buttonMarginTop,
                   }}
                 />
               )}
@@ -817,13 +782,14 @@ function PrimaryOutlineButton({
   const buttonDynamicStyles = useMemo(
     () => ({
       outlineBtn: {
-        height: getResponsiveSize(48, scaleByHeight(40, height)),
-        marginTop: getResponsiveSize(12, scaleByHeight(38, height)),
-        borderRadius: getResponsiveSize(12, scaleByHeight(8, height)),
+        height: isLandscape && Platform.OS === 'web' ? scaleByHeight(40, height) : scaleByHeightMobile(48, height),
+        width: isLandscape && Platform.OS === 'web' ? scaleByHeight(330, height) : '100%',
+        marginTop: isLandscape && Platform.OS === 'web' ? scaleByHeight(38, height) : scaleByHeightMobile(12, height),
+        borderRadius: isLandscape && Platform.OS === 'web' ? scaleByHeight(8, height) : scaleByHeightMobile(12, height),  
       },
       outlineBtnText: {
-        fontSize: getResponsiveSize(15, scaleByHeight(20, height)),
-        lineHeight: getResponsiveSize(17, scaleByHeight(20, height)),
+        fontSize: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(15, height),
+        lineHeight: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(16, height),
       },
       webLandscapeButton: {
         width: scaleByHeight(330, height),
@@ -869,7 +835,7 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: {
     paddingHorizontal: '6%',
-    paddingVertical: RFValue(24),
+    // paddingVertical: RFValue(24),
   },
   contentBlock: {
     alignSelf: 'center',
@@ -906,7 +872,7 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderRadius: getResponsiveSize(10, 8),
+    // borderRadius: getResponsiveSize(10, 8),
     // paddingHorizontal: getResponsiveSize(12, scaleByHeight(14)),
     // fontSize: getResponsiveSize(14, scaleByHeight(18)),
     // marginBottom: getResponsiveSize(8, scaleByHeight(2)),

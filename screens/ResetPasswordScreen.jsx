@@ -13,17 +13,10 @@ import {
   ActivityIndicator,
   useWindowDimensions,
 } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
+import { icons } from '../constants/icons';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
-import { scaleByHeight } from '../utils/resizeFuncs';
-import { icons } from '../constants/icons';
-
-// Адаптив размеров (mobile => RFValue, web => уменьшенный фикс)
-const getResponsiveSize = (mobileSize, webSize) => {
-  if (Platform.OS === 'web') return webSize;
-  return RFValue(mobileSize);
-};
 
 export default function ResetPasswordScreen() {
   const { t } = useTranslation();
@@ -88,56 +81,64 @@ export default function ResetPasswordScreen() {
     }
   }
 
-  const dynamicStyles = useMemo(() => {
-    return {
-      brand: {
-        fontSize: isWebLandscape ? scaleByHeight(57, height) : RFValue(45),
-        letterSpacing: isWebLandscape ? scaleByHeight(5, height) : RFValue(3),
-        marginBottom: isWebLandscape ? scaleByHeight(35, height) : RFValue(18),
-      },
-      title: {
-        fontSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(18),
-      },
-      subtitle: {
-        fontSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(13),
-        marginBottom: isWebLandscape ? scaleByHeight(25, height) : RFValue(18),
-      },
-      fieldBlock: {
-        marginBottom: isWebLandscape ? scaleByHeight(14, height) : RFValue(16),
-      },
-      label: {
-        fontSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(12),
-        marginBottom: isWebLandscape ? scaleByHeight(4, height) : RFValue(6),
-      },
-      input: {
-        paddingHorizontal: isWebLandscape
-          ? scaleByHeight(14, height)
-          : RFValue(12),
-        fontSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(14),
-        marginBottom: isWebLandscape ? scaleByHeight(2, height) : RFValue(8),
-      },
-      outlineBtnText: {
-        fontSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(15),
-        lineHeight: isWebLandscape ? scaleByHeight(20, height) : RFValue(16),
-        borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(7),
-      },
-    };
-  }, [height]);
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
 
-  const sizes = {
-    multilineInputMarginBottom: isWebLandscape
-      ? scaleByHeight(10, height)
-      : RFValue(25),
-    finishTitleMarginBottom: isWebLandscape
-      ? scaleByHeight(18, height)
-      : RFValue(8),
-  };
+    return {
+      // from dynamicStyles
+      brandFontSize: isWebLandscape ? web(57) : mobile(45),
+      brandLetterSpacing: isWebLandscape ? web(5) : mobile(3),
+      brandMarginBottom: isWebLandscape ? web(35) : mobile(18),
+      titleFontSize: isWebLandscape ? web(18) : mobile(18),
+      subtitleFontSize: isWebLandscape ? web(18) : mobile(13),
+      subtitleMarginBottom: isWebLandscape ? web(25) : mobile(18),
+      fieldBlockMarginBottom: isWebLandscape ? web(14) : mobile(16),
+      labelFontSize: isWebLandscape ? web(14) : mobile(12),
+      labelMarginBottom: isWebLandscape ? web(4) : mobile(6),
+      inputPaddingHorizontal: isWebLandscape ? web(14) : mobile(12),
+      inputFontSize: isWebLandscape ? web(18) : mobile(14),
+      inputMarginBottom: isWebLandscape ? web(2) : mobile(8),
+      outlineBtnTextFontSize: isWebLandscape ? web(20) : mobile(15),
+      outlineBtnTextLineHeight: isWebLandscape ? web(20) : mobile(16),
+      outlineBtnBorderRadius: isWebLandscape ? web(8) : mobile(7),
+
+      // from old sizes
+      multilineInputMarginBottom: isWebLandscape ? web(10) : mobile(25),
+      finishTitleMarginBottom: isWebLandscape ? web(18) : mobile(8),
+
+      // from getResponsiveSize
+      keyboardVerticalOffset: isWebLandscape ? 0 : mobile(10),
+      fieldBlockBorderRadius: isWebLandscape ? web(8) : mobile(12),
+      fieldBlockPaddingHorizontal: isWebLandscape ? 0 : mobile(12),
+      fieldBlockPaddingTop: isWebLandscape ? web(8) : mobile(10),
+      fieldBlockWidth: isWebLandscape ? web(330) : undefined,
+      fieldBlockHeight: isWebLandscape ? web(76) : undefined,
+      labelPaddingLeft: isWebLandscape ? web(14) : mobile(12),
+      labelPaddingRight: isWebLandscape ? web(14) : mobile(12),
+      labelWebMarginBottom: isWebLandscape ? web(7) : mobile(4),
+      inputWebMarginBottom: isWebLandscape ? web(3) : mobile(4),
+      eyeIconRight: isWebLandscape ? web(14) : mobile(12),
+      eyeIconTop: isWebLandscape ? web(26) : mobile(38),
+      eyeIconWidth: isWebLandscape ? web(24) : mobile(22),
+      eyeIconHeight: isWebLandscape ? web(24) : mobile(22),
+
+      // from PrimaryOutlineButton
+      outlineBtnHeight: isWebLandscape ? web(40) : mobile(48),
+      outlineBtnMarginTop: isWebLandscape ? web(38) : mobile(12),
+      outlineBtnBorderRadius2: isWebLandscape ? web(8) : mobile(12),
+      outlineBtnTextFontSize2: isWebLandscape ? web(20) : mobile(15),
+      outlineBtnTextLineHeight2: isWebLandscape ? web(20) : mobile(17),
+      webLandscapeButtonWidth: isWebLandscape ? web(330) : undefined,
+      webLandscapeButtonHeight: isWebLandscape ? web(62) : undefined,
+    };
+  }, [isWebLandscape, height]);
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.select({ ios: 'padding', android: undefined })}
       style={[styles.root, { backgroundColor: theme.backgroundColor }]}
-      keyboardVerticalOffset={Platform.select({ ios: RFValue(10), android: 0 })}
+      keyboardVerticalOffset={sizes.keyboardVerticalOffset}
     >
       <ScrollView
         contentContainerStyle={[
@@ -159,8 +160,12 @@ export default function ResetPasswordScreen() {
           <Text
             style={[
               styles.brand,
-              dynamicStyles.brand,
-              { color: theme.primaryColor },
+              {
+                color: theme.primaryColor,
+                fontSize: sizes.brandFontSize,
+                letterSpacing: sizes.brandLetterSpacing,
+                marginBottom: sizes.brandMarginBottom,
+              },
             ]}
           >
             {t('auth.app_name')}
@@ -168,10 +173,10 @@ export default function ResetPasswordScreen() {
           <Text
             style={[
               styles.title,
-              dynamicStyles.title,
               {
                 color: theme.unactiveTextColor,
                 textAlign: 'center',
+                fontSize: sizes.titleFontSize,
               },
             ]}
           >
@@ -181,10 +186,11 @@ export default function ResetPasswordScreen() {
           <Text
             style={[
               styles.subtitle,
-              dynamicStyles.subtitle,
               {
                 color: theme.unactiveTextColor,
                 textAlign: 'center',
+                fontSize: sizes.subtitleFontSize,
+                marginBottom: sizes.subtitleMarginBottom,
               },
             ]}
           >
@@ -195,21 +201,18 @@ export default function ResetPasswordScreen() {
           <View
             style={[
               styles.fieldBlock,
-              dynamicStyles.fieldBlock,
               {
                 backgroundColor: theme.formInputBackground,
                 position: 'relative',
+                marginBottom: sizes.fieldBlockMarginBottom,
               },
               isWebLandscape
                 ? {
-                    borderRadius: getResponsiveSize(
-                      12,
-                      scaleByHeight(8, height)
-                    ),
-                    paddingHorizontal: getResponsiveSize(12, 0),
-                    paddingTop: getResponsiveSize(10, scaleByHeight(8, height)),
-                    width: scaleByHeight(330, height),
-                    height: scaleByHeight(76, height),
+                    borderRadius: sizes.fieldBlockBorderRadius,
+                    paddingHorizontal: sizes.fieldBlockPaddingHorizontal,
+                    paddingTop: sizes.fieldBlockPaddingTop,
+                    width: sizes.fieldBlockWidth,
+                    height: sizes.fieldBlockHeight,
                   }
                 : null,
             ]}
@@ -217,23 +220,17 @@ export default function ResetPasswordScreen() {
             <Text
               style={[
                 styles.label,
-                dynamicStyles.label,
                 {
                   color: theme.formInputLabelColor,
                   textAlign: isRTL ? 'right' : 'left',
+                  fontSize: sizes.labelFontSize,
+                  marginBottom: sizes.labelMarginBottom,
                 },
                 isWebLandscape
                   ? {
-                      paddingLeft: isRTL
-                        ? 0
-                        : getResponsiveSize(12, scaleByHeight(14, height)),
-                      paddingRight: isRTL
-                        ? getResponsiveSize(12, scaleByHeight(14, height))
-                        : 0,
-                      marginBottom: getResponsiveSize(
-                        4,
-                        scaleByHeight(7, height)
-                      ),
+                      paddingLeft: isRTL ? 0 : sizes.labelPaddingLeft,
+                      paddingRight: isRTL ? sizes.labelPaddingRight : 0,
+                      marginBottom: sizes.labelWebMarginBottom,
                     }
                   : null,
               ]}
@@ -244,14 +241,15 @@ export default function ResetPasswordScreen() {
             <TextInput
               style={[
                 styles.input,
-                dynamicStyles.input,
                 {
                   borderColor: theme.borderColor,
                   color: theme.formInputTextColor,
                   backgroundColor: 'transparent',
                   borderWidth: 0,
                   textAlign: isRTL ? 'right' : 'left',
-                  marginBottom: getResponsiveSize(4, scaleByHeight(3, height)),
+                  paddingHorizontal: sizes.inputPaddingHorizontal,
+                  fontSize: sizes.inputFontSize,
+                  marginBottom: sizes.inputWebMarginBottom,
                 },
                 Platform.OS === 'web' && isLandscape
                   ? {
@@ -280,7 +278,7 @@ export default function ResetPasswordScreen() {
                 style={{
                   color: theme.errorTextColor,
                   marginTop: sizes.multilineInputMarginBottom,
-                  fontSize: dynamicStyles.label.fontSize,
+                  fontSize: sizes.labelFontSize,
                 }}
               >
                 {passwordError}
@@ -292,21 +290,11 @@ export default function ResetPasswordScreen() {
               onPress={() => setShowPassword((p) => !p)}
               style={{
                 position: 'absolute',
-                right: isRTL
-                  ? undefined
-                  : isWebLandscape
-                  ? scaleByHeight(14, height)
-                  : RFValue(12),
-                left: isRTL
-                  ? isWebLandscape
-                    ? scaleByHeight(14, height)
-                    : RFValue(12)
-                  : undefined,
-                top: isWebLandscape ? scaleByHeight(26, height) : RFValue(38),
-                width: isWebLandscape ? scaleByHeight(24, height) : RFValue(22),
-                height: isWebLandscape
-                  ? scaleByHeight(24, height)
-                  : RFValue(22),
+                right: isRTL ? undefined : sizes.eyeIconRight,
+                left: isRTL ? sizes.eyeIconRight : undefined,
+                top: sizes.eyeIconTop,
+                width: sizes.eyeIconWidth,
+                height: sizes.eyeIconHeight,
                 justifyContent: 'center',
                 alignItems: 'center',
               }}
@@ -314,12 +302,8 @@ export default function ResetPasswordScreen() {
               <Image
                 source={showPassword ? icons.eyeOpen : icons.eyeClosed}
                 style={{
-                  width: isWebLandscape
-                    ? scaleByHeight(24, height)
-                    : RFValue(22),
-                  height: isWebLandscape
-                    ? scaleByHeight(24, height)
-                    : RFValue(22),
+                  width: sizes.eyeIconWidth,
+                  height: sizes.eyeIconHeight,
                   tintColor: theme.formInputLabelColor,
                 }}
                 resizeMode='contain'
@@ -331,21 +315,18 @@ export default function ResetPasswordScreen() {
           <View
             style={[
               styles.fieldBlock,
-              dynamicStyles.fieldBlock,
               {
                 backgroundColor: theme.formInputBackground,
                 position: 'relative',
+                marginBottom: sizes.fieldBlockMarginBottom,
               },
               isWebLandscape
                 ? {
-                    borderRadius: getResponsiveSize(
-                      12,
-                      scaleByHeight(8, height)
-                    ),
-                    paddingHorizontal: getResponsiveSize(12, 0),
-                    paddingTop: getResponsiveSize(10, scaleByHeight(8, height)),
-                    width: scaleByHeight(330, height),
-                    height: scaleByHeight(76, height),
+                    borderRadius: sizes.fieldBlockBorderRadius,
+                    paddingHorizontal: sizes.fieldBlockPaddingHorizontal,
+                    paddingTop: sizes.fieldBlockPaddingTop,
+                    width: sizes.fieldBlockWidth,
+                    height: sizes.fieldBlockHeight,
                   }
                 : null,
             ]}
@@ -353,23 +334,17 @@ export default function ResetPasswordScreen() {
             <Text
               style={[
                 styles.label,
-                dynamicStyles.label,
                 {
                   color: theme.formInputLabelColor,
                   textAlign: isRTL ? 'right' : 'left',
+                  fontSize: sizes.labelFontSize,
+                  marginBottom: sizes.labelMarginBottom,
                 },
                 isWebLandscape
                   ? {
-                      paddingLeft: isRTL
-                        ? 0
-                        : getResponsiveSize(12, scaleByHeight(14, height)),
-                      paddingRight: isRTL
-                        ? getResponsiveSize(12, scaleByHeight(14, height))
-                        : 0,
-                      marginBottom: getResponsiveSize(
-                        4,
-                        scaleByHeight(7, height)
-                      ),
+                      paddingLeft: isRTL ? 0 : sizes.labelPaddingLeft,
+                      paddingRight: isRTL ? sizes.labelPaddingRight : 0,
+                      marginBottom: sizes.labelWebMarginBottom,
                     }
                   : null,
               ]}
@@ -380,7 +355,6 @@ export default function ResetPasswordScreen() {
             <TextInput
               style={[
                 styles.input,
-                dynamicStyles.input,
                 {
                   backgroundColor: theme.defaultBlocksBackground,
                   borderColor: theme.borderColor,
@@ -389,7 +363,9 @@ export default function ResetPasswordScreen() {
                   // прозрачный инпут внутри окрашенного fieldBlock
                   backgroundColor: 'transparent',
                   borderWidth: 0,
-                  marginBottom: getResponsiveSize(4, scaleByHeight(3, height)),
+                  paddingHorizontal: sizes.inputPaddingHorizontal,
+                  fontSize: sizes.inputFontSize,
+                  marginBottom: sizes.inputWebMarginBottom,
                 },
                 Platform.OS === 'web' && isLandscape
                   ? {
@@ -419,7 +395,7 @@ export default function ResetPasswordScreen() {
                 style={{
                   color: theme.errorTextColor,
                   marginTop: sizes.multilineInputMarginBottom,
-                  fontSize: dynamicStyles.label.fontSize,
+                  fontSize: sizes.labelFontSize,
                 }}
               >
                 {repeatPasswordError}
@@ -434,7 +410,7 @@ export default function ResetPasswordScreen() {
                 textAlign: 'center',
                 color: theme.errorTextColor,
                 marginTop: sizes.multilineInputMarginBottom,
-                fontSize: dynamicStyles.label.fontSize,
+                fontSize: sizes.labelFontSize,
               }}
             >
               {generalError}
@@ -446,6 +422,7 @@ export default function ResetPasswordScreen() {
             isLandscape={isLandscape}
             height={height}
             theme={theme}
+            sizes={sizes}
             title={
               loading ? (
                 <ActivityIndicator color={theme.primaryColor} />
@@ -471,38 +448,26 @@ function PrimaryOutlineButton({
   theme,
   isLandscape,
   height,
+  sizes,
   containerStyle = {},
 }) {
-  const buttonDynamicStyles = useMemo(
-    () => ({
-      outlineBtn: {
-        height: getResponsiveSize(48, scaleByHeight(40, height)),
-        marginTop: getResponsiveSize(12, scaleByHeight(38, height)),
-        borderRadius: getResponsiveSize(12, scaleByHeight(8, height)),
-      },
-      outlineBtnText: {
-        fontSize: getResponsiveSize(15, scaleByHeight(20, height)),
-        lineHeight: getResponsiveSize(17, scaleByHeight(20, height)),
-      },
-      webLandscapeButton: {
-        width: scaleByHeight(330, height),
-        height: scaleByHeight(62, height),
-      },
-    }),
-    [height]
-  );
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled}
       style={[
         styles.outlineBtn,
-        buttonDynamicStyles.outlineBtn,
-        { borderColor: theme.primaryColor, opacity: disabled ? 0.6 : 1 },
+        {
+          borderColor: theme.primaryColor,
+          opacity: disabled ? 0.6 : 1,
+          height: sizes.outlineBtnHeight,
+          marginTop: sizes.outlineBtnMarginTop,
+          borderRadius: sizes.outlineBtnBorderRadius2,
+        },
         isLandscape &&
           Platform.OS === 'web' && {
-            width: scaleByHeight(330, height),
-            height: scaleByHeight(62, height),
+            width: sizes.webLandscapeButtonWidth,
+            height: sizes.webLandscapeButtonHeight,
           },
         containerStyle,
       ]}
@@ -511,8 +476,11 @@ function PrimaryOutlineButton({
         <Text
           style={[
             styles.outlineBtnText,
-            buttonDynamicStyles.outlineBtnText,
-            { color: theme.primaryColor },
+            {
+              color: theme.primaryColor,
+              fontSize: sizes.outlineBtnTextFontSize2,
+              lineHeight: sizes.outlineBtnTextLineHeight2,
+            },
           ]}
         >
           {title}
@@ -528,18 +496,15 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: {
     paddingHorizontal: '6%',
-    paddingVertical: RFValue(24),
+    paddingVertical: 24,
   },
   contentBlock: {
     alignSelf: 'center',
     alignItems: 'center',
   },
   brand: {
-    // fontSize: getResponsiveSize(45, scaleByHeight(57)),
     fontWeight: 'bold',
-    // letterSpacing: getResponsiveSize(3, scaleByHeight(5)),
     textAlign: 'center',
-    // marginBottom: getResponsiveSize(18, scaleByHeight(35)),
     fontFamily: 'Rubik-Bold',
   },
   title: {
@@ -557,19 +522,15 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   input: {
-    borderRadius: RFValue(10),
+    borderRadius: 10,
     fontWeight: '500',
   },
   outlineBtn: {
-    marginTop: RFValue(20),
-    height: RFValue(48),
     borderWidth: 1.5,
-    borderRadius: RFValue(12),
     alignItems: 'center',
     justifyContent: 'center',
   },
   outlineBtnText: {
-    fontSize: RFValue(15),
     fontFamily: 'Rubik-Medium',
   },
 });

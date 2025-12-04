@@ -3,6 +3,7 @@ import { Dimensions, PixelRatio } from 'react-native';
 // utils/resizeFuncs.js
 
 const BASE_DESIGN_HEIGHT = 1024;
+export const MOBILE_DESIGN_HEIGHT = 892;
 
 /**
  * Масштабирует значение из макета по отношению к текущей высоте экрана.
@@ -30,4 +31,8 @@ export function scaleByHeight(
   const result = designValue * scale;
 
   return round ? PixelRatio.roundToNearestPixel(result) : result;
+}
+
+export function scaleByHeightMobile(designValue, currentHeight = Dimensions.get('window').height, { round = true } = {}) {
+  return scaleByHeight(designValue, currentHeight, MOBILE_DESIGN_HEIGHT, { round });
 }
