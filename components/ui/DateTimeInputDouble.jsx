@@ -40,6 +40,7 @@ export default function DateTimeInputDouble({
       containerPaddingVertical: scale(12),
       containerPaddingHorizontal: scale(18),
       containerMarginRight: scale(8),
+      containerHeight: scale(94),
     };
   }, [isWebLandscape, height]);
 
@@ -76,6 +77,7 @@ export default function DateTimeInputDouble({
           paddingHorizontal: sizes.containerPaddingHorizontal,
           borderRadius: sizes.borderRadius,
           marginRight: sizes.containerMarginRight,
+          height: sizes.containerHeight,
         },
       ]}
     >

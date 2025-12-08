@@ -37,17 +37,17 @@ export default function DoneScreen({
     const mobile = (size) => scaleByHeightMobile(size, height);
 
     return {
-      cardRadius: isWebLandscape ? web(5) : mobile(5),
-      imageHeight: isWebLandscape ? web(120) : mobile(45),
-      imageWidth: isWebLandscape ? web(153) : mobile(55),
-      fontTitle: isWebLandscape ? web(18) : mobile(12),
-      fontDescription: isWebLandscape ? web(16) : mobile(10),
+      cardRadius: isWebLandscape ? web(8) : mobile(8),
+      imageHeight: isWebLandscape ? web(120) : mobile(90),
+      imageWidth: isWebLandscape ? web(153) : '25%',
+      fontTitle: isWebLandscape ? web(18) : mobile(18),
+      fontDescription: isWebLandscape ? web(16) : mobile(16),
       scrollContainerWidth: isWebLandscape ? '60%' : '100%',
-      containerPaddingHorizontal: mobile(10),
-      containerPaddingVertical: mobile(14),
-      cardMarginBottom: mobile(8),
-      imageMargin: mobile(10),
-      descriptionMarginTop: mobile(2),
+      containerPaddingHorizontal: isWebLandscape ? web(10) : mobile(10),
+      containerPaddingVertical: isWebLandscape ? web(14) : mobile(14),
+      cardMarginBottom: isWebLandscape ? web(8) : mobile(8),
+      imageMargin: isWebLandscape ? web(10) : mobile(10),
+      descriptionMarginTop: isWebLandscape ? web(2) : mobile(2),
     };
   }, [height, isWebLandscape]);
 

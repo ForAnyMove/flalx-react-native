@@ -24,25 +24,25 @@ export default function SearchPanel({ searchValue, setSearchValue }) {
   const sizes = useMemo(
     () => ({
       padding: isWebLandscape
-        ? height * 0.006
-        : scaleByHeightMobile(6, height),
+        ? scaleByHeight(12, height)
+        : scaleByHeightMobile(20, height),
       borderRadius: isWebLandscape
-        ? height * 0.008
-        : scaleByHeightMobile(6, height),
-      marginBottom: isWebLandscape
-        ? height * 0.01
-        : scaleByHeightMobile(10, height),
-      inputHeight: isWebLandscape
-        ? height * 0.04
-        : scaleByHeightMobile(35, height),
-      inputPadding: isWebLandscape
-        ? height * 0.005
+        ? scaleByHeight(8, height)
         : scaleByHeightMobile(8, height),
-      icon: isWebLandscape ? height * 0.025 : scaleByHeightMobile(20, height),
+      marginBottom: isWebLandscape
+        ? scaleByHeight(16, height)
+        : scaleByHeightMobile(16, height),
+      inputHeight: isWebLandscape
+        ? scaleByHeight(48, height)
+        : scaleByHeightMobile(48, height),
+      inputPadding: isWebLandscape
+        ? scaleByHeight(16, height)
+        : scaleByHeightMobile(16, height),
+      icon: isWebLandscape ? scaleByHeight(24, height) : scaleByHeightMobile(24, height),
       fontSize: isWebLandscape
-        ? height * 0.015
-        : scaleByHeightMobile(12, height),
-      containerWidth: isWebLandscape ? '40%' : '100%',
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(14, height),
+      containerWidth: isWebLandscape ? scaleByHeight(384, height) : '100%',
     }),
     [isWebLandscape, height]
   );
@@ -51,8 +51,8 @@ export default function SearchPanel({ searchValue, setSearchValue }) {
     () =>
       StyleSheet.create({
         container: {
-          backgroundColor: themeController.current?.formInputBackground,
-          paddingHorizontal: sizes.padding,
+          backgroundColor: themeController.current?.profileDefaultBackground,
+          [isRTL ? 'paddingLeft' : 'paddingRight']: sizes.padding,
           borderRadius: sizes.borderRadius,
           marginBottom: sizes.marginBottom,
           flexDirection: isRTL ? 'row-reverse' : 'row',

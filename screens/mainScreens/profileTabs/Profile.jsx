@@ -55,42 +55,43 @@ export default function Profile() {
 
     return {
       baseFont: isWebLandscape ? web(12) : mobile(12),
-      avatarSize: isWebLandscape ? web(114) : mobile(100),
+      avatarSize: isWebLandscape ? web(114) : mobile(114),
       btnPadding: isWebLandscape ? web(10) : mobile(10),
-      btnMargin: isWebLandscape ? 0 : mobile(12),
-      btnFont: isWebLandscape ? web(20) : mobile(12),
+      btnMargin: isWebLandscape ? 0 : mobile(5),
+      btnFont: isWebLandscape ? web(20) : mobile(20),
       btnHeight: isWebLandscape ? web(64) : mobile(64),
       btnWidth: isWebLandscape ? '32%' : '100%',
-      fieldFont: isWebLandscape ? web(10) : mobile(10),
+      labelFont: isWebLandscape ? web(12) : mobile(12),
+      fieldFont: isWebLandscape ? web(16) : mobile(16),
       fieldPadding: isWebLandscape ? web(10) : mobile(10),
-      fieldMargin: isWebLandscape ? 0 : mobile(12),
-      containerPaddingH: isWebLandscape ? web(5) : mobile(5),
+      fieldMargin: isWebLandscape ? 0 : mobile(5),
+      containerPaddingH: isWebLandscape ? web(24) : mobile(12),
       containerPaddingV: isWebLandscape ? web(10) : mobile(10),
       containerWidth: '100%',
-      iconSize: isWebLandscape ? web(24) : mobile(16),
+      iconSize: isWebLandscape ? web(24) : mobile(24),
       paddingVertical: isWebLandscape ? web(10) : mobile(10),
       modalWidth: isWebLandscape ? web(450) : '80%',
       modalHeight: isWebLandscape ? web(230) : '60%',
-      modalFont: isWebLandscape ? web(24) : mobile(12),
-      modalTextMarginBottom: isWebLandscape ? web(32) : mobile(12),
-      modalBtnHeight: isWebLandscape ? web(62) : mobile(50),
+      modalFont: isWebLandscape ? web(24) : mobile(24),
+      modalTextMarginBottom: isWebLandscape ? web(32) : mobile(32),
+      modalBtnHeight: isWebLandscape ? web(62) : mobile(62),
       modalBtnWidth: isWebLandscape ? web(153) : '40%',
-      modalBtnFont: isWebLandscape ? web(20) : mobile(12),
-      modalBtnBorderRadius: isWebLandscape ? web(8) : mobile(6),
-      modalBtnsGap: isWebLandscape ? web(24) : mobile(12),
-      modalPadding: isWebLandscape ? web(32) : mobile(16),
-      modalLineHeight: isWebLandscape ? web(32) : mobile(12),
-      modalCloseBtnTopRightPosition: isWebLandscape ? web(7) : mobile(5),
-      modalIconSize: isWebLandscape ? web(22) : mobile(20),
-      modalFieldMargin: isWebLandscape ? web(18) : mobile(12),
+      modalBtnFont: isWebLandscape ? web(20) : mobile(20),
+      modalBtnBorderRadius: isWebLandscape ? web(8) : mobile(8),
+      modalBtnsGap: isWebLandscape ? web(24) : mobile(24),
+      modalPadding: isWebLandscape ? web(32) : mobile(32),
+      modalLineHeight: isWebLandscape ? web(32) : mobile(32),
+      modalCloseBtnTopRightPosition: isWebLandscape ? web(7) : mobile(7),
+      modalIconSize: isWebLandscape ? web(22) : mobile(22),
+      modalFieldMargin: isWebLandscape ? web(18) : mobile(18),
       profileBackHeight: isWebLandscape ? web(250) : mobile(250),
-      profileBackMarginBottom: isWebLandscape ? web(15) : mobile(12),
+      profileBackMarginBottom: isWebLandscape ? web(15) : mobile(15),
       profileBackBorderRadius: isWebLandscape ? web(10) : mobile(10),
       infoFieldsGap: isWebLandscape ? web(6) : mobile(6),
-      breakLineMarginVertical: isWebLandscape ? web(15) : mobile(12),
-      buttonsMarginBottom: isWebLandscape ? web(20) : mobile(12),
-      infoFieldBorderRadius: isWebLandscape ? web(8) : mobile(5),
-      infoFieldPaddingH: isWebLandscape ? web(8) : mobile(14),
+      breakLineMarginVertical: isWebLandscape ? web(15) : mobile(15),
+      buttonsMarginBottom: isWebLandscape ? web(20) : mobile(20),
+      infoFieldBorderRadius: isWebLandscape ? web(8) : mobile(8),
+      infoFieldPaddingH: isWebLandscape ? web(16) : mobile(16),
       labelMarginBottom: isWebLandscape ? web(4) : mobile(4),
       editPanelGap: isWebLandscape ? web(5) : mobile(5),
     };
@@ -261,9 +262,7 @@ export default function Profile() {
                 {
                   backgroundColor:
                     themeController.current?.buttonColorPrimaryDefault,
-                  [isWebLandscape ? 'height' : 'padding']: isWebLandscape
-                    ? sizes.btnHeight
-                    : sizes.btnPadding,
+                  height: sizes.btnHeight,
                   marginBottom: sizes.btnMargin,
                   width: sizes.btnWidth,
                   borderRadius: sizes.infoFieldBorderRadius,
@@ -368,9 +367,7 @@ export default function Profile() {
                 {
                   backgroundColor: btn.bg,
                   borderColor: btn.border,
-                  [isWebLandscape ? 'height' : 'padding']: isWebLandscape
-                    ? sizes.btnHeight
-                    : sizes.btnPadding,
+                  height: sizes.btnHeight,
                   marginBottom: sizes.btnMargin,
                   width: sizes.btnWidth,
                   borderRadius: sizes.infoFieldBorderRadius,
@@ -407,9 +404,7 @@ export default function Profile() {
                   themeController.current?.buttonColorSecondaryDefault,
                 borderColor:
                   themeController.current?.buttonColorSecondaryDefault,
-                [isWebLandscape ? 'height' : 'padding']: isWebLandscape
-                  ? sizes.btnHeight
-                  : sizes.btnPadding,
+                height: sizes.btnHeight,
                 marginBottom: sizes.btnMargin,
                 width: sizes.btnWidth,
                 borderRadius: sizes.infoFieldBorderRadius,
@@ -614,8 +609,8 @@ export default function Profile() {
                       backgroundColor:
                         themeController.current?.formInputBackground,
                       borderRadius: sizes.infoFieldBorderRadius,
-                      paddingVertical: sizes.fieldPadding,
-                      paddingHorizontal: sizes.containerPaddingH,
+                      height: sizes.btnHeight,
+                      paddingHorizontal: sizes.infoFieldPaddingH,
                       marginBottom: sizes.modalFieldMargin,
                       position: 'relative',
                     },
@@ -626,7 +621,7 @@ export default function Profile() {
                       style={[
                         styles.profileInfoLabel,
                         {
-                          fontSize: sizes.fieldFont * 0.9,
+                          fontSize: sizes.labelFont,
                           color: themeController.current?.formInputLabelColor,
                         },
                       ]}
@@ -679,8 +674,8 @@ export default function Profile() {
                     backgroundColor:
                       themeController.current?.formInputBackground,
                     borderRadius: sizes.infoFieldBorderRadius,
-                    paddingVertical: sizes.fieldPadding,
-                    paddingHorizontal: sizes.containerPaddingH,
+                    height: sizes.btnHeight,
+                    paddingHorizontal: sizes.infoFieldPaddingH,
                     marginBottom: sizes.modalFieldMargin,
                     position: 'relative',
                   },
@@ -691,7 +686,7 @@ export default function Profile() {
                     style={[
                       styles.profileInfoLabel,
                       {
-                        fontSize: sizes.fieldFont * 0.9,
+                        fontSize: sizes.labelFont,
                         color: themeController.current?.formInputLabelColor,
                       },
                     ]}
@@ -743,8 +738,8 @@ export default function Profile() {
                     backgroundColor:
                       themeController.current?.formInputBackground,
                     borderRadius: sizes.infoFieldBorderRadius,
-                    paddingVertical: sizes.fieldPadding,
-                    paddingHorizontal: sizes.containerPaddingH,
+                    height: sizes.btnHeight,
+                    paddingHorizontal: sizes.infoFieldPaddingH,
                     marginBottom: sizes.modalFieldMargin,
                   },
                 ]}
@@ -754,7 +749,7 @@ export default function Profile() {
                     style={[
                       styles.profileInfoLabel,
                       {
-                        fontSize: sizes.fieldFont * 0.9,
+                        fontSize: sizes.labelFont,
                         color: themeController.current?.formInputLabelColor,
                       },
                     ]}
@@ -912,8 +907,7 @@ function InfoField({
         styles.profileInfoString,
         {
           width: Platform.OS === 'web' && isLandscape ? '32%' : '100%',
-          [Platform.OS === 'web' && isLandscape ? 'height' : 'paddingVertical']:
-            Platform.OS === 'web' && isLandscape ? btnHeight : fieldPadding,
+          height: btnHeight,
           marginBottom: fieldMargin,
           backgroundColor: editMode
             ? themeController.current?.formInputBackgroundEditMode
@@ -928,7 +922,7 @@ function InfoField({
           style={[
             styles.profileInfoLabel,
             {
-              fontSize: baseFont * 0.9,
+              fontSize: sizes.labelFont,
               color: themeController.current?.formInputLabelColor,
               marginBottom: sizes.labelMarginBottom,
             },
@@ -1041,6 +1035,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   breakLine: { width: '100%', height: 1 },
   primaryBtn: {
@@ -1067,7 +1062,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
   },
-  profileInfoLabel: { fontWeight: 'bold' },
+  profileInfoLabel: {
+    // fontWeight: 'bold'
+  },
   profileInfoText: {
     width: '100%',
     fontFamily: 'Rubik-Medium',

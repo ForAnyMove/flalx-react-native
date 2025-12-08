@@ -40,61 +40,66 @@ export default function RegisterScreen() {
     return {
       scrollContentPaddingHorizontal: isWebLandscape ? '6%' : '8%',
       scrollContentPaddingVertical: isWebLandscape ? web(0) : mobile(20),
-      titleFontSize: isWebLandscape ? web(24) : mobile(20),
+      titleFontSize: isWebLandscape ? web(24) : mobile(24),
       titleMarginBottom: isWebLandscape ? web(0) : mobile(18),
-      step2TitleMarginBottom: isWebLandscape ? web(36) : mobile(30),
-      buttonPaddingVertical: isWebLandscape ? web(12) : mobile(14),
-      buttonBorderRadius: isWebLandscape ? web(8) : mobile(7),
-      buttonWidth: isWebLandscape ? web(330) : null,
-      buttonHeight: isWebLandscape ? web(62) : null,
-      buttonTextFontSize: isWebLandscape ? web(20) : mobile(16),
-      progressContainerMarginVertical: isWebLandscape ? web(14) : mobile(20),
-      dotMarginHorizontal: isWebLandscape ? web(14) : mobile(10),
+      step2TitleMarginBottom: isWebLandscape ? web(36) : mobile(36),
+      buttonPaddingVertical: isWebLandscape ? web(12) : mobile(12),
+      buttonBorderRadius: isWebLandscape ? web(8) : mobile(8),
+      buttonWidth: isWebLandscape ? web(330) : '100%',
+      buttonHeight: isWebLandscape ? web(62) : mobile(62),
+      buttonTextFontSize: isWebLandscape ? web(20) : mobile(20),
+      progressContainerMarginVertical: isWebLandscape ? web(14) : mobile(14),
+      dotMarginHorizontal: isWebLandscape ? web(14) : mobile(14),
       backArrowTop: isWebLandscape ? web(72) : mobile(20),
-      backArrowHeight: isWebLandscape ? web(24) : mobile(22),
+      backArrowHeight: isWebLandscape ? web(24) : mobile(24),
       backArrowSide: isWebLandscape ? web(height * 1.4 * 0.1) : mobile(10),
-      finishedTextFontSize: isWebLandscape ? web(18) : mobile(20),
-      termsBoxPaddingVertical: isWebLandscape ? web(5) : mobile(10),
-      termsBoxMarginBottom: isWebLandscape ? web(12) : mobile(15),
-      termsBoxTextFontSize: isWebLandscape ? web(16) : mobile(13),
-      termsBoxTextLineHeight: isWebLandscape ? web(18) : mobile(16),
-      termsCheckboxTextFontSize: isWebLandscape ? web(13) : mobile(14),
-      avatarContainerMarginBottom: isWebLandscape ? web(40) : mobile(10),
-      avatarContainerHeight: isWebLandscape ? web(158) : mobile(150),
+      finishedTextFontSize: isWebLandscape ? web(18) : mobile(18),
+      termsBoxPaddingVertical: isWebLandscape ? web(5) : mobile(5),
+      termsBoxMarginBottom: isWebLandscape ? web(12) : mobile(12),
+      termsBoxTextFontSize: isWebLandscape ? web(16) : mobile(16),
+      termsBoxTextLineHeight: isWebLandscape ? web(18) : mobile(18),
+      termsCheckboxTextFontSize: isWebLandscape ? web(13) : mobile(13),
+      avatarContainerMarginBottom: isWebLandscape ? web(40) : mobile(40),
+      avatarContainerHeight: isWebLandscape ? web(158) : mobile(158),
       avatarWrapperBorderRadius: isWebLandscape ? web(50) : mobile(60),
       avatarImageBorderRadius: isWebLandscape ? web(50) : mobile(60),
       cameraButtonWidth: isWebLandscape ? web(26) : mobile(26),
       cameraButtonHeight: isWebLandscape ? web(26) : mobile(26),
       cameraButtonBorderRadius: isWebLandscape ? web(60) : mobile(70),
       avatarRecommendsTextMarginTop: isWebLandscape ? web(8) : mobile(10),
-      avatarRecommendsTextFontSize: isWebLandscape ? web(14) : mobile(12),
-      avatarRecommendsTextPaddingHorizontal: isWebLandscape ? web(0) : mobile(20),
-      inputBlockMarginBottom: isWebLandscape ? web(32) : mobile(20),
-      inputBlockBorderRadius: isWebLandscape ? web(8) : mobile(7),
-      inputBlockPaddingVertical: isWebLandscape ? web(8) : mobile(5),
-      labelPaddingHorizontal: isWebLandscape ? web(16) : mobile(10),
+      avatarRecommendsTextFontSize: isWebLandscape ? web(14) : mobile(14),
+      avatarRecommendsTextPaddingHorizontal: isWebLandscape
+        ? web(0)
+        : mobile(20),
+      inputBlockMarginBottom: isWebLandscape ? web(32) : mobile(24),
+      inputBlockBorderRadius: isWebLandscape ? web(8) : mobile(8),
+      inputBlockPaddingVertical: isWebLandscape ? web(8) : mobile(8),
+      labelPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
       labelPaddingTop: isWebLandscape ? web(4) : mobile(6),
       labelFontSize: isWebLandscape ? web(12) : mobile(12),
-      inputPaddingHorizontal: isWebLandscape ? web(16) : mobile(10),
+      inputPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
       inputBorderRadius: isWebLandscape ? web(8) : mobile(8),
-      inputFontSize: isWebLandscape ? web(16) : mobile(14),
-      multilineInputHeight: isWebLandscape ? web(100) : mobile(120),
+      inputFontSize: isWebLandscape ? web(16) : mobile(16),
+      multilineInputHeight: isWebLandscape ? web(100) : mobile(100),
       multilineInputMarginBottom: isWebLandscape ? web(25) : mobile(25),
       inputsContainerPaddingHorizontal: isWebLandscape ? web(10) : mobile(10),
       typeTagsSelectorMarginBottom: isWebLandscape ? web(32) : mobile(32),
-      activeDotSize: isWebLandscape ? web(12) : mobile(10),
+      activeDotSize: isWebLandscape ? web(12) : mobile(12),
       secondDotSize: isWebLandscape ? web(8) : mobile(8),
       smallDotSize: isWebLandscape ? web(4) : mobile(4),
       arrowSideMove: isWebLandscape ? web(200) : mobile(10),
       checkboxSize: isWebLandscape ? web(18) : mobile(18),
       checkboxRadius: isWebLandscape ? web(3) : mobile(3),
-      checkboxTextSize: isWebLandscape ? web(10) : mobile(8),
+      checkboxTextSize: isWebLandscape ? web(10) : mobile(10),
       inputMarginBottom: isWebLandscape ? web(3) : mobile(4),
-      containerGap: isWebLandscape ? web(25) : mobile(10),
+      containerGap: isWebLandscape ? web(25) : mobile(25),
       containerPaddingHorizontal: isWebLandscape ? web(10) : mobile(10),
       primaryButtonWidth: isWebLandscape ? web(153) : null,
       step3Gap: isWebLandscape ? web(108) : 0,
       finalMarginBottom: isWebLandscape ? 0 : mobile(20),
+      mobileSelectorPickersMarginVertical: mobile(24),
+      inputHeight: isWebLandscape ? web(64) : mobile(64),
+      inputWidth: isWebLandscape ? web(330) : '100%',
     };
   }, [isWebLandscape, height]);
 
@@ -204,8 +209,6 @@ export default function RegisterScreen() {
         {
           paddingVertical: sizes.buttonPaddingVertical,
           borderRadius: sizes.buttonBorderRadius,
-        },
-        isWebLandscape && {
           width: sizes.buttonWidth,
           height: sizes.buttonHeight,
         },
@@ -538,6 +541,8 @@ export default function RegisterScreen() {
                       marginBottom: sizes.inputBlockMarginBottom,
                       borderRadius: sizes.inputBlockBorderRadius,
                       paddingVertical: sizes.inputBlockPaddingVertical,
+                      height: sizes.inputHeight,
+                      width: sizes.inputWidth,
                     },
                   ]}
                 >
@@ -597,6 +602,8 @@ export default function RegisterScreen() {
                       marginBottom: sizes.inputBlockMarginBottom,
                       borderRadius: sizes.inputBlockBorderRadius,
                       paddingVertical: sizes.inputBlockPaddingVertical,
+                      height: sizes.inputHeight,
+                      width: sizes.inputWidth,
                     },
                   ]}
                 >
@@ -682,61 +689,6 @@ export default function RegisterScreen() {
             </>
           )}
 
-          {/* {step === 3 && (
-            <>
-              <Text style={[styles.title, { color: theme.textColor }]}>
-                {t('register.profile_profession')}
-              </Text>
-
-              <TextInput
-                placeholder={t('register.profession_placeholder')}
-                value={form.profession}
-                onChangeText={(txt) => setForm({ ...form, profession: txt })}
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: theme.defaultBlocksBackground,
-                    borderColor: theme.borderColor,
-                    borderWidth: 1,
-                    textAlign: isRTL ? 'right' : 'left',
-                    color: theme.textColor,
-                  },
-                ]}
-                placeholderTextColor={theme.formInputPlaceholderColor}
-              />
-
-              <ProgressDots />
-
-              <View
-                style={{
-                  flexDirection: isRTL ? 'row-reverse' : 'row',
-                  justifyContent: 'space-between',
-                  gap: getResponsiveSize(10, 8),
-                }}
-              >
-                <PrimaryButton
-                  title={t('register.previous')}
-                  onPress={() => setStep(2)}
-                  customStyle={{
-                    btn: {
-                      flex: 1,
-                      backgroundColor: 'transparent',
-                      borderWidth: 1,
-                      borderColor: theme.primaryColor,
-                    },
-                    btnText: { color: theme.primaryColor },
-                  }}
-                />
-                <PrimaryButton
-                  title={t('register.next')}
-                  onPress={() => setStep(4)}
-                  disabled={!isNameValid || !isSurnameValid}
-                  customStyle={{ btn: { flex: 1 } }}
-                />
-              </View>
-            </>
-          )} */}
-
           {step === 3 && (
             <>
               <Text
@@ -759,7 +711,16 @@ export default function RegisterScreen() {
                 }
               >
                 {/* Left Column */}
-                <View style={isWebLandscape ? { flex: 1.5 } : {}}>
+                <View
+                  style={
+                    isWebLandscape
+                      ? { flex: 1.5 }
+                      : {
+                          marginVertical:
+                            sizes.mobileSelectorPickersMarginVertical,
+                        }
+                  }
+                >
                   <TagSelector
                     title={t('register.job_types_title')}
                     subtitle={t('register.job_types_subtitle')}

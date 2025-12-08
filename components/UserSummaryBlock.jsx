@@ -20,6 +20,7 @@ import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import CommentsSection from './CommentsSection';
 import { useWebView } from '../context/webViewContext';
+import { useWindowInfo } from '../context/windowContext';
 
 const UserSummaryBlock = ({
   user,
@@ -41,6 +42,7 @@ const UserSummaryBlock = ({
   const [showContactInfo, setShowContactInfo] = useState(false);
 
   const { width, height } = useWindowDimensions();
+  const {sidebarWidth} = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && width > height;
 
   // компактные размеры для веб-альбомной (меньше, чем на мобильном)

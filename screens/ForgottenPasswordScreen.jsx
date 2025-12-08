@@ -33,6 +33,7 @@ export default function ForgottenPasswordScreen() {
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const [step, setStep] = useState('email');
+  // const [step, setStep] = useState('OTP');
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState(null);
   const [sending, setSending] = useState(false);
@@ -74,44 +75,44 @@ export default function ForgottenPasswordScreen() {
     const mobile = (size) => scaleByHeightMobile(size, height);
 
     return {
-      brandFontSize: isWebLandscape ? web(57) : mobile(45),
-      brandLetterSpacing: isWebLandscape ? web(5) : mobile(3),
-      brandMarginBottom: isWebLandscape ? web(35) : mobile(18),
+      brandFontSize: isWebLandscape ? web(57) : mobile(68),
+      brandLetterSpacing: isWebLandscape ? web(5) : mobile(5),
+      brandMarginBottom: isWebLandscape ? web(35) : mobile(22),
       titleFontSize: isWebLandscape ? web(18) : mobile(18),
-      subtitleFontSize: isWebLandscape ? web(18) : mobile(13),
-      subtitleMarginBottom: isWebLandscape ? web(25) : mobile(18),
+      subtitleFontSize: isWebLandscape ? web(18) : mobile(16),
+      subtitleMarginBottom: isWebLandscape ? web(25) : mobile(28),
       fieldBlockMarginBottom: isWebLandscape ? web(14) : mobile(16),
-      labelFontSize: isWebLandscape ? web(14) : mobile(12),
+      labelFontSize: isWebLandscape ? web(14) : mobile(14),
       labelMarginBottom: isWebLandscape ? web(4) : mobile(6),
-      inputPaddingHorizontal: isWebLandscape ? web(14) : mobile(12),
-      inputFontSize: isWebLandscape ? web(18) : mobile(14),
+      inputPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
+      inputFontSize: isWebLandscape ? web(18) : mobile(18),
       inputMarginBottom: isWebLandscape ? web(2) : mobile(8),
-      borderRadius: isWebLandscape ? web(8) : mobile(12),
+      borderRadius: isWebLandscape ? web(8) : mobile(8),
       otpRowMarginTop: isWebLandscape ? web(4) : mobile(6),
       otpRowMarginBottom: isWebLandscape ? web(8) : mobile(12),
-      otpRowWidth: isWebLandscape ? web(314) : '100%',
-      otpRowHeight: isWebLandscape ? web(74) : mobile(52),
-      otpCellHeight: isWebLandscape ? web(74) : mobile(52),
-      otpCellFontSize: isWebLandscape ? web(20) : mobile(18),
-      otpCellLineHeight: isWebLandscape ? web(18) : mobile(19),
-      linksRowMarginBottom: isWebLandscape ? web(8) : mobile(10),
-      linksRowWidth: isWebLandscape ? web(314) : '100%',
+      otpRowWidth: isWebLandscape ? web(314) : '90%',
+      otpRowHeight: isWebLandscape ? web(74) : mobile(74),
+      otpCellHeight: isWebLandscape ? web(74) : mobile(74),
+      otpCellFontSize: isWebLandscape ? web(20) : mobile(20),
+      otpCellLineHeight: isWebLandscape ? web(18) : mobile(18),
+      linksRowMarginBottom: isWebLandscape ? web(8) : mobile(12),
+      linksRowWidth: isWebLandscape ? web(314) : '90%',
       linkIconSize: isWebLandscape ? web(24) : mobile(22),
-      linkFontSize: isWebLandscape ? web(14) : mobile(13),
-      errorFontSize: isWebLandscape ? web(14) : mobile(13),
-      sentCodeTimerFontSize: isWebLandscape ? web(14) : mobile(13),
-      emailDescriptionFontSize: isWebLandscape ? web(14) : mobile(12),
-      emailDescriptionLineHeight: isWebLandscape ? web(18) : mobile(16),
+      linkFontSize: isWebLandscape ? web(14) : mobile(14),
+      errorFontSize: isWebLandscape ? web(14) : mobile(14),
+      sentCodeTimerFontSize: isWebLandscape ? web(14) : mobile(14),
+      emailDescriptionFontSize: isWebLandscape ? web(14) : mobile(14),
+      emailDescriptionLineHeight: isWebLandscape ? web(18) : mobile(18),
       webLandscapeFieldBlockWidth: isWebLandscape ? web(330) : '100%',
-      webLandscapeFieldBlockHeight: web(76),
+      webLandscapeFieldBlockHeight: isWebLandscape ? web(76) : mobile(75),
       webLandscapeFieldBlockPaddingTop: web(8),
       webLandscapeLabelPadding: web(14),
       webLandscapeLabelMarginBottom: web(7),
       webLandscapeInputMarginBottom: web(3),
       keyboardVerticalOffset: mobile(10),
-      scrollPaddingVertical: mobile(24),
-      buttonMarginTop: isWebLandscape ? web(16) : mobile(8),
-      FieldBlockPaddingHorizontal: isWebLandscape ? web(14) : mobile(12),
+      scrollPaddingVertical: isWebLandscape ? web(24) : mobile(80),
+      buttonMarginTop: isWebLandscape ? web(16) : mobile(16),
+      fieldBlockPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
     };
   }, [isWebLandscape, height]);
 
@@ -386,14 +387,9 @@ export default function ForgottenPasswordScreen() {
                     width: sizes.webLandscapeFieldBlockWidth,
                     borderRadius: sizes.borderRadius,
                     paddingTop: sizes.webLandscapeFieldBlockPaddingTop,
-                    paddingHorizontal: sizes.FieldBlockPaddingHorizontal,
+                    paddingHorizontal: sizes.fieldBlockPaddingHorizontal,
+                    height: sizes.webLandscapeFieldBlockHeight,
                   },
-                  isWebLandscape
-                    ? {
-                        paddingHorizontal: 0,
-                        height: sizes.webLandscapeFieldBlockHeight,
-                      }
-                    : null,
                 ]}
               >
                 <Text
@@ -407,12 +403,6 @@ export default function ForgottenPasswordScreen() {
                     },
                     isWebLandscape
                       ? {
-                          paddingLeft: isRTL
-                            ? 0
-                            : sizes.webLandscapeLabelPadding,
-                          paddingRight: isRTL
-                            ? sizes.webLandscapeLabelPadding
-                            : 0,
                           marginBottom: sizes.webLandscapeLabelMarginBottom,
                         }
                       : null,
@@ -782,21 +772,21 @@ function PrimaryOutlineButton({
   const buttonDynamicStyles = useMemo(
     () => ({
       outlineBtn: {
-        height: isLandscape && Platform.OS === 'web' ? scaleByHeight(40, height) : scaleByHeightMobile(48, height),
+        height: isLandscape && Platform.OS === 'web' ? scaleByHeight(62, height) : scaleByHeightMobile(62, height),
         width: isLandscape && Platform.OS === 'web' ? scaleByHeight(330, height) : '100%',
         marginTop: isLandscape && Platform.OS === 'web' ? scaleByHeight(38, height) : scaleByHeightMobile(12, height),
         borderRadius: isLandscape && Platform.OS === 'web' ? scaleByHeight(8, height) : scaleByHeightMobile(12, height),  
       },
       outlineBtnText: {
-        fontSize: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(15, height),
-        lineHeight: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(16, height),
+        fontSize: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
+        lineHeight: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
       },
       webLandscapeButton: {
         width: scaleByHeight(330, height),
         height: scaleByHeight(62, height),
       },
     }),
-    [height]
+    [height, isLandscape]
   );
   return (
     <TouchableOpacity

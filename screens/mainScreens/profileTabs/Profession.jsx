@@ -120,7 +120,7 @@ export default function Profession() {
             </View>
           ))}
       </ScrollView>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={{
           backgroundColor: themeController.current?.mainBadgeBackground,
           width: sizes.plusButtonSize,
@@ -145,7 +145,7 @@ export default function Profession() {
           ]}
           resizeMode='contain'
         />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 }

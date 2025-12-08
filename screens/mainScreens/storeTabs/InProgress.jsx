@@ -37,14 +37,14 @@ export default function InProgressScreen({
     const mobile = (size) => scaleByHeightMobile(size, height);
 
     return {
-      cardRadius: isWebLandscape ? web(8) : mobile(5),
+      cardRadius: isWebLandscape ? web(8) : mobile(8),
       cardShadow: isWebLandscape ? web(1) : mobile(3),
-      imageHeight: isWebLandscape ? web(120) : mobile(45),
-      imageWidth: isWebLandscape ? web(153) : mobile(55),
-      fontTitle: isWebLandscape ? web(18) : mobile(12),
-      fontDescription: isWebLandscape ? web(16) : mobile(10),
-      badgeSize: isWebLandscape ? web(20) : mobile(16),
-      badgeFont: isWebLandscape ? web(12) : mobile(10),
+      imageHeight: isWebLandscape ? web(120) : mobile(90),
+      imageWidth: isWebLandscape ? web(153) : '25%',
+      fontTitle: isWebLandscape ? web(18) : mobile(18),
+      fontDescription: isWebLandscape ? web(16) : mobile(16),
+      badgeSize: isWebLandscape ? web(20) : mobile(20),
+      badgeFont: isWebLandscape ? web(12) : mobile(12),
       scrollContainerWidth: isWebLandscape ? '60%' : '100%',
       imageMargin: isWebLandscape ? web(10) : mobile(10),
       containerPaddingH: isWebLandscape ? web(10) : mobile(10),

@@ -14,8 +14,6 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 import { useMemo } from 'react';
 
-const CARD_MARGIN = 8;
-
 export default function NewJobTemplateCard({
   templateTitle,
   imageSource,
@@ -31,25 +29,27 @@ export default function NewJobTemplateCard({
 
   const sizes = useMemo(
     () => ({
+      cardMargin: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(4, height),
       cardWidth: isWebLandscape
         ? scaleByHeight(242, height)
-        : scaleByHeightMobile(120, height),
+        : (width - scaleByHeightMobile(20, height)) / 2 -
+          scaleByHeightMobile(17, height),
       cardHeight: isWebLandscape
         ? scaleByHeight(212, height)
-        : scaleByHeightMobile(120, height),
+        : scaleByHeightMobile(164, height),
       cardRadius: isWebLandscape
         ? scaleByHeight(8, height)
         : scaleByHeightMobile(4, height),
       font: isWebLandscape
         ? scaleByHeight(14, height)
-        : scaleByHeightMobile(9, height),
-      icon: isWebLandscape ? height * 0.04 : scaleByHeightMobile(26, height),
-      padding: isWebLandscape
-        ? height * 0.008
-        : scaleByHeightMobile(6, height),
+        : scaleByHeightMobile(14, height),
+      icon: isWebLandscape ? height * 0.04 : scaleByHeightMobile(41, height),
+      padding: isWebLandscape ? height * 0.008 : scaleByHeightMobile(6, height),
       textPaddingVertical: isWebLandscape
         ? scaleByHeight(15, height)
-        : scaleByHeightMobile(4, height),
+        : scaleByHeightMobile(8, height),
       textMarginBottom: isWebLandscape
         ? scaleByHeight(14, height)
         : scaleByHeightMobile(4, height),
@@ -58,18 +58,19 @@ export default function NewJobTemplateCard({
         : scaleByHeightMobile(6, height),
       imageContainerHeight: isWebLandscape
         ? scaleByHeight(138, height)
-        : scaleByHeightMobile(70, height),
+        : scaleByHeightMobile(100, height),
       likeIconSize: isWebLandscape
         ? scaleByHeight(40, height)
         : scaleByHeightMobile(25, height),
     }),
-    [isWebLandscape, height]
+    [isWebLandscape, height, width]
   );
 
   const dynamicStyles = useMemo(
     () =>
       StyleSheet.create({
         card: {
+          margin: sizes.cardMargin,
           width: sizes.cardWidth,
           height: sizes.cardHeight,
           borderRadius: sizes.cardRadius,
@@ -154,7 +155,6 @@ export default function NewJobTemplateCard({
 
 const styles = StyleSheet.create({
   card: {
-    margin: CARD_MARGIN,
     // shadowColor: '#000',
     // shadowOffset: { width: 0, height: 2 },
     // shadowOpacity: 0.3,

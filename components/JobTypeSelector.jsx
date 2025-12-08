@@ -12,9 +12,13 @@ import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-export default function JobTypeSelector({ selectedTypes, setSelectedTypes }) {
+export default function JobTypeSelector({
+  selectedTypes,
+  setSelectedTypes,
+  numberOfRows = 2,
+}) {
   const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
@@ -24,33 +28,31 @@ export default function JobTypeSelector({ selectedTypes, setSelectedTypes }) {
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
+  const [containerWidth, setContainerWidth] = useState(null);
+
   const sizes = useMemo(
     () => ({
       font: isWebLandscape
         ? scaleByHeight(14, height)
-        : scaleByHeightMobile(9, height),
+        : scaleByHeightMobile(14, height),
       padH: isWebLandscape
         ? scaleByHeight(11, height)
         : scaleByHeightMobile(10, height),
       height: isWebLandscape
         ? scaleByHeight(34, height)
-        : scaleByHeightMobile(25, height),
+        : scaleByHeightMobile(34, height),
       radius: isWebLandscape
         ? scaleByHeight(4, height)
-        : scaleByHeightMobile(5, height),
+        : scaleByHeightMobile(4, height),
       rowGap: isWebLandscape
-        ? scaleByHeight(9, height)
-        : scaleByHeightMobile(6, height),
+        ? scaleByHeight(10, height)
+        : scaleByHeightMobile(10, height),
       colGap: isWebLandscape
-        ? scaleByHeight(8, height)
-        : scaleByHeightMobile(6, height),
-      twoRowsH: isWebLandscape
-        ? scaleByHeight(78, height)
-        : scaleByHeightMobile(40, height),
+        ? scaleByHeight(10, height)
+        : scaleByHeightMobile(10, height),
       trashSize: isWebLandscape
         ? scaleByHeight(32, height)
-        : scaleByHeightMobile(18, height),
-      maxScrollWidth: isWebLandscape ? scaleByHeight(5200, height) : '520%',
+        : scaleByHeightMobile(24, height),
       trashSizeMargin: isWebLandscape
         ? scaleByHeight(18, height)
         : scaleByHeightMobile(8, height),
@@ -62,6 +64,17 @@ export default function JobTypeSelector({ selectedTypes, setSelectedTypes }) {
     }),
     [isWebLandscape, height]
   );
+
+  const wrapperHeight =
+    numberOfRows * sizes.height + (numberOfRows - 1) * sizes.rowGap;
+
+  const handleContainerLayout = (event) => {
+    if (containerWidth === null && numberOfRows > 1) {
+      const fullWidth = event.nativeEvent.layout.width;
+      const calculatedWidth = fullWidth / numberOfRows;
+      setContainerWidth(calculatedWidth);
+    }
+  };
 
   const colors = {
     tagBg: themeController.current?.formInputBackground,
@@ -128,8 +141,8 @@ export default function JobTypeSelector({ selectedTypes, setSelectedTypes }) {
         tagWrapper: {
           rowGap: sizes.rowGap,
           columnGap: sizes.colGap,
-          height: sizes.twoRowsH,
-          width: sizes.maxScrollWidth,
+          height: wrapperHeight,
+          width: containerWidth || undefined,
         },
         tag: {
           paddingHorizontal: sizes.padH,
@@ -147,7 +160,7 @@ export default function JobTypeSelector({ selectedTypes, setSelectedTypes }) {
           height: sizes.trashSize,
         },
       }),
-    [sizes, isRTL]
+    [sizes, isRTL, wrapperHeight, containerWidth]
   );
 
   return (
@@ -159,7 +172,10 @@ export default function JobTypeSelector({ selectedTypes, setSelectedTypes }) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <View style={[styles.tagWrapper, dynamicStyles.tagWrapper]}>
+        <View
+          onLayout={handleContainerLayout}
+          style={[styles.tagWrapper, dynamicStyles.tagWrapper]}
+        >
           {Object.entries(jobTypes || {})?.map(([key, label]) => {
             const active = isSelected(key);
             return (
@@ -197,7 +213,10 @@ export default function JobTypeSelector({ selectedTypes, setSelectedTypes }) {
       </ScrollView>
 
       {/* Корзина (очистить всё) */}
-      <TouchableOpacity onPress={clearAll} style={[styles.trashButton, dynamicStyles.trashButton]}>
+      <TouchableOpacity
+        onPress={clearAll}
+        style={[styles.trashButton, dynamicStyles.trashButton]}
+      >
         <Image
           source={icons.delete}
           style={[

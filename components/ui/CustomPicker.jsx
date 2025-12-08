@@ -33,12 +33,12 @@ const CustomPicker = ({
     const scale = isWebLandscape ? web : mobile;
 
     return {
-      baseFont: scale(12),
+      baseFont: scale(16),
       font: scale(12),
-      iconSize: scale(18),
-      pickerHeight: scale(50),
-      borderRadius: scale(5),
-      inputContainerPaddingHorizontal: scale(8),
+      iconSize: scale(24),
+      pickerHeight: scale(64),
+      borderRadius: scale(8),
+      inputContainerPaddingHorizontal: scale(16),
       labelGap: scale(3),
     };
   }, [isWebLandscape, height]);

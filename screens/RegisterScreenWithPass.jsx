@@ -142,75 +142,75 @@ export default function AuthScreenWithPass() {
     () => ({
       brandFontSize: isWebLandscape
         ? scaleByHeight(57, height)
-        : scaleByHeightMobile(45, height),
+        : scaleByHeightMobile(68, height),
       brandLetterSpacing: isWebLandscape
         ? scaleByHeight(5, height)
-        : scaleByHeightMobile(3, height),
+        : scaleByHeightMobile(5, height),
       brandMarginBottom: isWebLandscape
         ? scaleByHeight(35, height)
-        : scaleByHeightMobile(18, height),
+        : scaleByHeightMobile(22, height),
       titleFontSize: isWebLandscape
         ? scaleByHeight(18, height)
         : scaleByHeightMobile(18, height),
       subtitleFontSize: isWebLandscape
         ? scaleByHeight(18, height)
-        : scaleByHeightMobile(13, height),
+        : scaleByHeightMobile(18, height),
       subtitleMarginBottom: isWebLandscape
         ? scaleByHeight(25, height)
-        : scaleByHeightMobile(18, height),
+        : scaleByHeightMobile(28, height),
       fieldBlockMarginBottom: isWebLandscape
         ? scaleByHeight(14, height)
         : scaleByHeightMobile(16, height),
       labelFontSize: isWebLandscape
         ? scaleByHeight(14, height)
-        : scaleByHeightMobile(12, height),
+        : scaleByHeightMobile(14, height),
       labelMarginBottom: isWebLandscape
         ? scaleByHeight(4, height)
         : scaleByHeightMobile(6, height),
       inputPaddingHorizontal: isWebLandscape
-        ? scaleByHeight(14, height)
-        : scaleByHeightMobile(12, height),
+        ? scaleByHeight(16, height)
+        : scaleByHeightMobile(16, height),
       inputFontSize: isWebLandscape
         ? scaleByHeight(18, height)
-        : scaleByHeightMobile(14, height),
+        : scaleByHeightMobile(18, height),
       inputMarginBottom: isWebLandscape
         ? scaleByHeight(2, height)
         : scaleByHeightMobile(8, height),
       outlineBtnTextFontSize: isWebLandscape
         ? scaleByHeight(20, height)
-        : scaleByHeightMobile(15, height),
+        : scaleByHeightMobile(20, height),
       outlineBtnTextLineHeight: isWebLandscape
         ? scaleByHeight(20, height)
-        : scaleByHeightMobile(16, height),
+        : scaleByHeightMobile(20, height),
       outlineBtnBorderRadius: isWebLandscape
         ? scaleByHeight(8, height)
-        : scaleByHeightMobile(7, height),
+        : scaleByHeightMobile(8, height),
       otpRowMarginTop: isWebLandscape
         ? scaleByHeight(4, height)
         : scaleByHeightMobile(6, height),
       otpRowMarginBottom: isWebLandscape
         ? scaleByHeight(8, height)
         : scaleByHeightMobile(12, height),
-      otpRowWidth: isWebLandscape ? scaleByHeight(314, height) : '100%',
+      otpRowWidth: isWebLandscape ? scaleByHeight(314, height) : '90%',
       otpRowHeight: isWebLandscape
         ? scaleByHeight(74, height)
-        : scaleByHeightMobile(52, height),
+        : scaleByHeightMobile(74, height),
       otpCellHeight: isWebLandscape
         ? scaleByHeight(74, height)
-        : scaleByHeightMobile(52, height),
+        : scaleByHeightMobile(74, height),
       otpCellFontSize: isWebLandscape
         ? scaleByHeight(20, height)
-        : scaleByHeightMobile(18, height),
+        : scaleByHeightMobile(20, height),
       otpCellLineHeight: isWebLandscape
         ? scaleByHeight(18, height)
-        : scaleByHeightMobile(19, height),
+        : scaleByHeightMobile(18, height),
       otpCellBorderRadius: isWebLandscape
         ? scaleByHeight(8, height)
-        : scaleByHeightMobile(7, height),
+        : scaleByHeightMobile(8, height),
       linksRowMarginBottom: isWebLandscape
         ? scaleByHeight(8, height)
-        : scaleByHeightMobile(10, height),
-      linksRowWidth: isWebLandscape ? scaleByHeight(314, height) : '100%',
+        : scaleByHeightMobile(12, height),
+      linksRowWidth: isWebLandscape ? scaleByHeight(314, height) : '90%',
       linkIconWidth: isWebLandscape
         ? scaleByHeight(16, height)
         : scaleByHeightMobile(22, height),
@@ -219,16 +219,16 @@ export default function AuthScreenWithPass() {
         : scaleByHeightMobile(22, height),
       linkFontSize: isWebLandscape
         ? scaleByHeight(14, height)
-        : scaleByHeightMobile(13, height),
+        : scaleByHeightMobile(14, height),
       linkWithIconPaddingHorizontal: isWebLandscape
         ? scaleByHeight(3, height)
         : scaleByHeightMobile(3, height),
       errorFontSize: isWebLandscape
         ? scaleByHeight(14, height)
-        : scaleByHeightMobile(13, height),
+        : scaleByHeightMobile(14, height),
       sentCodeTimerFontSize: isWebLandscape
         ? scaleByHeight(14, height)
-        : scaleByHeightMobile(13, height),
+        : scaleByHeightMobile(14, height),
       modalCardPadding: isWebLandscape
         ? scaleByHeight(12, height)
         : scaleByHeightMobile(18, height),
@@ -237,22 +237,22 @@ export default function AuthScreenWithPass() {
         : scaleByHeightMobile(14, height),
       modalTextFontSize: isWebLandscape
         ? scaleByHeight(18, height)
-        : scaleByHeightMobile(13, height),
+        : scaleByHeightMobile(18, height),
       modalTextMarginBottom: isWebLandscape
         ? scaleByHeight(8, height)
-        : scaleByHeightMobile(10, height),
+        : scaleByHeightMobile(8, height),
       emailDescriptionFontSize: isWebLandscape
         ? scaleByHeight(14, height)
-        : scaleByHeightMobile(12, height),
+        : scaleByHeightMobile(14, height),
       emailDescriptionLineHeight: isWebLandscape
         ? scaleByHeight(18, height)
-        : scaleByHeightMobile(16, height),
+        : scaleByHeightMobile(18, height),
       webLandscapeFieldBlockWidth: scaleByHeight(330, height),
       webLandscapeFieldBlockHeight: scaleByHeight(76, height),
       webLandscapeFieldBlockBorderRadius: scaleByHeight(8, height),
       webLandscapeFieldBlockPaddingTop: scaleByHeight(8, height),
-      webLandscapeLabelPaddingLeft: scaleByHeight(14, height),
-      webLandscapeLabelPaddingRight: scaleByHeight(14, height),
+      webLandscapeLabelPaddingLeft: 0,
+      webLandscapeLabelPaddingRight: 0,
       webLandscapeLabelMarginBottom: scaleByHeight(7, height),
       webLandscapeInputMarginBottom: scaleByHeight(3, height),
       multilineInputMarginBottom: isWebLandscape
@@ -261,16 +261,31 @@ export default function AuthScreenWithPass() {
       finishTitleMarginBottom: isWebLandscape
         ? scaleByHeight(18, height)
         : scaleByHeightMobile(8, height),
-      keyboardVerticalOffset: isWebLandscape ? 0 : scaleByHeightMobile(10, height),
+      keyboardVerticalOffset: isWebLandscape
+        ? 0
+        : scaleByHeightMobile(10, height),
       eyeIconPosition: isWebLandscape
         ? scaleByHeight(14, height)
         : scaleByHeightMobile(12, height),
       eyeIconTop: isWebLandscape
         ? scaleByHeight(26, height)
-        : scaleByHeightMobile(38, height),
+        : scaleByHeightMobile(35, height),
       eyeIconSize: isWebLandscape
         ? scaleByHeight(24, height)
-        : scaleByHeightMobile(22, height),
+        : scaleByHeightMobile(24, height),
+      fieldBlockPaddingTop: isWebLandscape
+        ? scaleByHeight(10, height)
+        : scaleByHeightMobile(12, height),
+      fieldBlockWidth: isWebLandscape ? scaleByHeight(330, height) : '100%',
+      fieldBlockHeight: isWebLandscape
+        ? scaleByHeight(76, height)
+        : scaleByHeightMobile(75, height),
+      borderRadius: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(8, height),
+      containerPaddingVertical: isWebLandscape
+        ? 0
+        : scaleByHeightMobile(80, height),
     }),
     [isWebLandscape, height]
   );
@@ -297,7 +312,6 @@ export default function AuthScreenWithPass() {
         marginBottom: sizes.labelMarginBottom,
       },
       input: {
-        paddingHorizontal: sizes.inputPaddingHorizontal,
         fontSize: sizes.inputFontSize,
         marginBottom: sizes.inputMarginBottom,
       },
@@ -358,8 +372,6 @@ export default function AuthScreenWithPass() {
         paddingTop: sizes.webLandscapeFieldBlockPaddingTop,
       },
       webLandscapeLabel: {
-        paddingLeft: isRTL ? 0 : sizes.webLandscapeLabelPaddingLeft,
-        paddingRight: isRTL ? sizes.webLandscapeLabelPaddingRight : 0,
         marginBottom: sizes.webLandscapeLabelMarginBottom,
       },
       webLandscapeInput: {
@@ -377,6 +389,9 @@ export default function AuthScreenWithPass() {
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
+          {
+            paddingVertical: sizes.containerPaddingVertical,
+          },
           isWebLandscape
             ? { justifyContent: 'center', alignItems: 'center', flex: 1 }
             : {},
@@ -476,22 +491,12 @@ export default function AuthScreenWithPass() {
                 dynamicStyles.fieldBlock,
                 {
                   backgroundColor: theme.formInputBackground,
+                  borderRadius: sizes.borderRadius,
+                  paddingHorizontal: sizes.inputPaddingHorizontal,
+                  paddingTop: sizes.fieldBlockPaddingTop,
+                  width: sizes.fieldBlockWidth,
+                  height: sizes.fieldBlockHeight,
                 },
-                isWebLandscape
-                  ? {
-                      borderRadius: getResponsiveSize(
-                        12,
-                        scaleByHeight(8, height)
-                      ),
-                      paddingHorizontal: getResponsiveSize(12, 0),
-                      paddingTop: getResponsiveSize(
-                        10,
-                        scaleByHeight(8, height)
-                      ),
-                      width: scaleByHeight(330, height),
-                      height: scaleByHeight(76, height),
-                    }
-                  : null,
               ]}
             >
               <Text
@@ -504,10 +509,6 @@ export default function AuthScreenWithPass() {
                   },
                   isWebLandscape
                     ? {
-                        paddingLeft: isRTL ? 0 : sizes.webLandscapeLabelPaddingLeft,
-                        paddingRight: isRTL
-                          ? sizes.webLandscapeLabelPaddingRight
-                          : 0,
                         marginBottom: sizes.webLandscapeLabelMarginBottom,
                       }
                     : null,
@@ -575,22 +576,12 @@ export default function AuthScreenWithPass() {
                 {
                   backgroundColor: theme.formInputBackground,
                   position: 'relative',
+                  borderRadius: sizes.borderRadius,
+                  paddingHorizontal: sizes.inputPaddingHorizontal,
+                  paddingTop: sizes.fieldBlockPaddingTop,
+                  width: sizes.fieldBlockWidth,
+                  height: sizes.fieldBlockHeight,
                 },
-                isWebLandscape
-                  ? {
-                      borderRadius: getResponsiveSize(
-                        12,
-                        scaleByHeight(8, height)
-                      ),
-                      paddingHorizontal: getResponsiveSize(12, 0),
-                      paddingTop: getResponsiveSize(
-                        10,
-                        scaleByHeight(8, height)
-                      ),
-                      width: scaleByHeight(330, height),
-                      height: scaleByHeight(76, height),
-                    }
-                  : null,
               ]}
             >
               <Text
@@ -603,7 +594,9 @@ export default function AuthScreenWithPass() {
                   },
                   isWebLandscape
                     ? {
-                        paddingLeft: isRTL ? 0 : sizes.webLandscapeLabelPaddingLeft,
+                        paddingLeft: isRTL
+                          ? 0
+                          : sizes.webLandscapeLabelPaddingLeft,
                         paddingRight: isRTL
                           ? sizes.webLandscapeLabelPaddingRight
                           : 0,
@@ -697,22 +690,12 @@ export default function AuthScreenWithPass() {
                 {
                   backgroundColor: theme.formInputBackground,
                   position: 'relative',
+                  borderRadius: sizes.borderRadius,
+                  paddingHorizontal: sizes.inputPaddingHorizontal,
+                  paddingTop: sizes.fieldBlockPaddingTop,
+                  width: sizes.fieldBlockWidth,
+                  height: sizes.fieldBlockHeight,
                 },
-                isWebLandscape
-                  ? {
-                      borderRadius: getResponsiveSize(
-                        12,
-                        scaleByHeight(8, height)
-                      ),
-                      paddingHorizontal: getResponsiveSize(12, 0),
-                      paddingTop: getResponsiveSize(
-                        10,
-                        scaleByHeight(8, height)
-                      ),
-                      width: scaleByHeight(330, height),
-                      height: scaleByHeight(76, height),
-                    }
-                  : null,
               ]}
             >
               <Text
@@ -725,7 +708,9 @@ export default function AuthScreenWithPass() {
                   },
                   isWebLandscape
                     ? {
-                        paddingLeft: isRTL ? 0 : sizes.webLandscapeLabelPaddingLeft,
+                        paddingLeft: isRTL
+                          ? 0
+                          : sizes.webLandscapeLabelPaddingLeft,
                         paddingRight: isRTL
                           ? sizes.webLandscapeLabelPaddingRight
                           : 0,
@@ -881,19 +866,19 @@ function PrimaryOutlineButton({
     () => ({
       height: isWebLandscape
         ? scaleByHeight(62, height)
-        : scaleByHeightMobile(48, height),
+        : scaleByHeightMobile(62, height),
       marginTop: isWebLandscape
         ? scaleByHeight(38, height)
         : scaleByHeightMobile(12, height),
       borderRadius: isWebLandscape
         ? scaleByHeight(8, height)
-        : scaleByHeightMobile(12, height),
+        : scaleByHeightMobile(8, height),
       fontSize: isWebLandscape
         ? scaleByHeight(20, height)
-        : scaleByHeightMobile(15, height),
+        : scaleByHeightMobile(20, height),
       lineHeight: isWebLandscape
         ? scaleByHeight(20, height)
-        : scaleByHeightMobile(17, height),
+        : scaleByHeightMobile(20, height),
       width: isWebLandscape ? scaleByHeight(330, height) : '100%',
     }),
     [isWebLandscape, height]
@@ -951,7 +936,6 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: {
     paddingHorizontal: '6%',
-    paddingVertical: 24, // Replaced RFValue(24)
   },
   contentBlock: {
     alignSelf: 'center',

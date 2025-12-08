@@ -40,10 +40,10 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
     () => ({
       font: isWebLandscape
         ? scaleByHeight(16, height)
-        : scaleByHeightMobile(12, height),
+        : scaleByHeightMobile(14, height),
       smallFont: isWebLandscape
         ? scaleByHeight(14, height)
-        : scaleByHeightMobile(10, height),
+        : scaleByHeightMobile(12, height),
       sectionTitleSize: isWebLandscape
         ? scaleByHeight(18, height)
         : scaleByHeightMobile(14, height),
@@ -59,9 +59,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
       icon: isWebLandscape
         ? scaleByHeight(24, height)
         : scaleByHeightMobile(28, height),
-      padding: isWebLandscape
-        ? height * 0.01
-        : scaleByHeightMobile(10, height),
+      padding: isWebLandscape ? height * 0.01 : scaleByHeightMobile(10, height),
       paddingHorizontal: isWebLandscape
         ? scaleByHeight(17, height)
         : scaleByHeightMobile(12, height),
@@ -99,7 +97,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
         : scaleByHeightMobile(12, height),
       unlockContactBtnHeight: isWebLandscape
         ? scaleByHeight(38, height)
-        : scaleByHeightMobile(40, height),
+        : scaleByHeightMobile(35, height),
       btnRadius: isWebLandscape
         ? scaleByHeight(8, height)
         : scaleByHeightMobile(6, height),
@@ -130,13 +128,29 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
         : scaleByHeightMobile(10, height),
       providerInfoGap: isWebLandscape
         ? scaleByHeight(8, height)
-        : scaleByHeightMobile(5, height),
+        : scaleByHeightMobile(10, height),
       titleMarginBottom: isWebLandscape
         ? scaleByHeight(4, height)
         : scaleByHeightMobile(2, height),
       professionMarginBottom: isWebLandscape
         ? scaleByHeight(32, height)
         : scaleByHeightMobile(20, height),
+      infoSectionsContainerMarginBottom: isWebLandscape
+        ? 0
+        : scaleByHeightMobile(15, height),
+      infoSectionsContainerGap: isWebLandscape
+        ? 0
+        : scaleByHeightMobile(15, height),
+      createRequestBtnHeight: isWebLandscape
+        ? scaleByHeight(62, height)
+        : scaleByHeightMobile(45, height),
+      createRequestBtnFontSize: isWebLandscape
+        ? scaleByHeight(20, height)
+        : scaleByHeightMobile(16, height),
+      mobileBottomContainerPaddingVertical: scaleByHeightMobile(16, height),
+      containerPaddingHorizontal: isWebLandscape
+        ? scaleByHeight(20, height)
+        : scaleByHeightMobile(14, height),
     }),
     [isWebLandscape, height]
   );
@@ -230,6 +244,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
           backgroundColor: themeController.current?.buttonColorPrimaryDefault,
           borderRadius: sizes.btnRadius,
           justifyContent: 'center',
+          height: sizes.createRequestBtnHeight,
         },
       }),
     [sizes, themeController, isRTL]
@@ -278,7 +293,12 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                 style={[styles.avatar, dynamicStyles.avatar]}
               />
             ) : (
-              <View style={[styles.avatarPlaceholder, dynamicStyles.avatarPlaceholder]}>
+              <View
+                style={[
+                  styles.avatarPlaceholder,
+                  dynamicStyles.avatarPlaceholder,
+                ]}
+              >
                 <Image
                   source={icons.defaultAvatar}
                   style={{ width: '100%', height: '100%' }}
@@ -329,12 +349,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                   height: '100%',
                 }}
               >
-                <View
-                  style={[
-                    styles.modalHeader,
-                    dynamicStyles.modalHeader,
-                  ]}
-                >
+                <View style={[styles.modalHeader, dynamicStyles.modalHeader]}>
                   <TouchableOpacity
                     onPress={() => {
                       setModalVisible(false);
@@ -350,12 +365,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                       }}
                     />
                   </TouchableOpacity>
-                  <Text
-                    style={[
-                      styles.modalTitle,
-                      dynamicStyles.modalTitle,
-                    ]}
-                  >
+                  <Text style={[styles.modalTitle, dynamicStyles.modalTitle]}>
                     FLALX
                   </Text>
                 </View>
@@ -422,6 +432,10 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                   {/* Контейнер для сетки 2x2 */}
                   <View
                     style={[
+                      {
+                        marginBottom: sizes.infoSectionsContainerMarginBottom,
+                        gap: sizes.infoSectionsContainerGap,
+                      },
                       isWebLandscape && {
                         flexDirection: isRTL ? 'row-reverse' : 'row',
                         flexWrap: 'wrap',
@@ -627,7 +641,8 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                               <Text
                                 style={{
                                   fontSize: sizes.small,
-                                  color: themeController.current?.unactiveTextColor,
+                                  color:
+                                    themeController.current?.unactiveTextColor,
                                 }}
                               >
                                 {phoneNumber}
@@ -653,7 +668,8 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                               <Text
                                 style={{
                                   fontSize: sizes.small,
-                                  color: themeController.current?.unactiveTextColor,
+                                  color:
+                                    themeController.current?.unactiveTextColor,
                                 }}
                               >
                                 {email}
@@ -666,35 +682,85 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                   </View>
                   <CommentsSection userId={user.id} />
                 </ScrollView>
-                <TouchableOpacity
-                  style={[
-                    styles.primaryBtn,
-                    dynamicStyles.primaryBtn,
-                    {
-                      padding: 0,
-                    },
-                    isWebLandscape && {
-                      width: '30%',
-                      height: scaleByHeight(62, height),
-                      alignSelf: isRTL ? 'flex-end' : 'flex-start',
-                      marginBottom: sizes.infoSectionMarginBottom,
-                    },
-                  ]}
-                  onPress={() => {
-                    chooseUser();
-                    setModalVisible(false);
-                    setShowContactInfo(false);
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: sizes.professionSize,
-                      color: themeController.current?.buttonTextColorPrimary,
+                {isWebLandscape ? (
+                  <TouchableOpacity
+                    style={[
+                      styles.primaryBtn,
+                      dynamicStyles.primaryBtn,
+                      {
+                        padding: 0,
+                      },
+                      isWebLandscape && {
+                        width: '30%',
+                        alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                        marginBottom: sizes.infoSectionMarginBottom,
+                      },
+                    ]}
+                    onPress={() => {
+                      chooseUser();
+                      setModalVisible(false);
+                      setShowContactInfo(false);
                     }}
                   >
-                    {t('providersSection.createRequest')}
-                  </Text>
-                </TouchableOpacity>
+                    <Text
+                      style={{
+                        fontSize: sizes.createRequestBtnFontSize,
+                        color: themeController.current?.buttonTextColorPrimary,
+                      }}
+                    >
+                      {t('providersSection.createRequest')}
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View
+                    style={[
+                      styles.bottomButtonWrapper,
+                      {
+                        width: width,
+                        backgroundColor:
+                          themeController.current?.backgroundColor,
+                        paddingHorizontal: sizes.containerPaddingHorizontal,
+                        paddingVertical:
+                          sizes.mobileBottomContainerPaddingVertical,
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: -6 },
+                        shadowOpacity: 0.12,
+                        shadowRadius: 8,
+                        elevation: 16,
+                      },
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={[
+                        styles.primaryBtn,
+                        dynamicStyles.primaryBtn,
+                        {
+                          padding: 0,
+                        },
+                        isWebLandscape && {
+                          width: '30%',
+                          alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                          marginBottom: sizes.infoSectionMarginBottom,
+                        },
+                      ]}
+                      onPress={() => {
+                        chooseUser();
+                        setModalVisible(false);
+                        setShowContactInfo(false);
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: sizes.createRequestBtnFontSize,
+                          color:
+                            themeController.current?.buttonTextColorPrimary,
+                        }}
+                      >
+                        {t('providersSection.createRequest')}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             </TouchableWithoutFeedback>
           </View>
@@ -763,5 +829,10 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     flex: 1,
+  },
+  bottomButtonWrapper: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
   },
 });

@@ -51,8 +51,7 @@ export default function Store() {
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
   const { width, height } = useWindowDimensions();
-  const { sidebarWidth } = useWindowInfo();
-  const isLandscape = width > height;
+  const { sidebarWidth, isLandscape } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
 
   const orderedTabs = isRTL ? TAB_TITLES_RTL : TAB_TITLES;
@@ -254,27 +253,34 @@ export default function Store() {
 
     const panelHeight = isWebLandscape ? web(65) : mobile(81);
     const badgeSize = isWebLandscape ? web(20) : panelHeight * 0.25;
-    const plusButtonSize = isWebLandscape ? web(64) : mobile(40);
 
     return {
       panelHeight,
-      iconSize: isWebLandscape ? web(24) : panelHeight * 0.35,
-      fontSize: isWebLandscape ? web(12) : panelHeight * 0.2,
+      iconSize: isWebLandscape ? web(24) : mobile(24),
+      fontSize: isWebLandscape ? web(12) : mobile(12),
       badgeSize,
-      underlineHeight: isWebLandscape ? web(2) : panelHeight * 0.05,
+      underlineHeight: isWebLandscape ? web(2) : mobile(2),
       tabPaddingBottom: panelHeight * 0.1,
       badgeTop: -badgeSize * 0.3,
       badgeRight: -badgeSize * 0.8,
       badgePaddingHorizontal: badgeSize * 0.3,
       badgeFontSize: badgeSize * 0.6,
       titleHeight: panelHeight * 0.35,
-      titlePaddingHorizontal: mobile(4),
-      underlineBorderRadius: mobile(2),
-      plusButtonSize,
-      plusButtonLeft: mobile(16),
+      titlePaddingHorizontal: isWebLandscape ? web(4) : mobile(4),
+      underlineBorderRadius: isWebLandscape ? web(2) : mobile(2),
+      plusButtonSize: isWebLandscape ? web(64) : mobile(64),
+      plusButtonLeft: isWebLandscape ? web(32) : mobile(16),
       plusButtonRight: isWebLandscape ? web(32) : mobile(16),
-      plusButtonBottom: mobile(16),
+      plusButtonBottom: isWebLandscape ? web(16) : mobile(16),
       plusIconSize: isWebLandscape ? web(24) : mobile(24),
+      plusButtonShadowColor: '#000',
+      plusButtonShadowOffset: {
+        width: 0,
+        height: isWebLandscape ? web(4) : mobile(4),
+      },
+      plusButtonShadowOpacity: 0.3,
+      plusButtonShadowRadius: isWebLandscape ? web(5) : mobile(5),
+      plusButtonElevation: isWebLandscape ? 10 : 8,
     };
   }, [height, isWebLandscape]);
 
@@ -429,6 +435,11 @@ export default function Store() {
                 right: sizes.plusButtonRight,
               }),
           bottom: sizes.plusButtonBottom,
+          shadowColor: sizes.plusButtonShadowColor,
+          shadowOffset: sizes.plusButtonShadowOffset,
+          shadowOpacity: sizes.plusButtonShadowOpacity,
+          shadowRadius: sizes.plusButtonShadowRadius,
+          elevation: sizes.plusButtonElevation,
         }}
         onPress={async () => {
           const pendingJobRequest = await checkHasPendingJob(session);

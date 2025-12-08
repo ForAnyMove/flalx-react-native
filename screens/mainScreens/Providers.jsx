@@ -35,7 +35,7 @@ export default function Providers() {
 
     return {
       paddingVertical: isWebLandscape ? web(25) : mobile(14),
-      paddingHorizontal: mobile(10),
+      paddingHorizontal: isWebLandscape ? web(10) : mobile(10),
       scrollViewColumnGap: web(23),
       scrollViewRowGap: isWebLandscape ? web(23) : mobile(10),
     };

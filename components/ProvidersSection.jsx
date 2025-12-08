@@ -187,7 +187,7 @@ export default function ProvidersSection({
             <View style={styleRow.gridItem}>
               <UserSummaryBlockWrapper
                 status={status}
-                userId={item.id || item}
+                userId={item?.id || item}
                 currentJobId={currentJobInfo?.id}
                 closeAllModal={closeAllModal}
                 providersController={providersController}

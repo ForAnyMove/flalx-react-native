@@ -35,11 +35,11 @@ const AutocompletePicker = ({
     const scale = isWebLandscape ? web : mobile;
 
     return {
-      baseFont: scale(12),
+      baseFont: scale(16),
       font: scale(12),
-      pickerHeight: scale(50),
-      borderRadius: scale(5),
-      inputContainerPaddingHorizontal: scale(8),
+      pickerHeight: isWebLandscape ? web(64) : mobile(64),
+      borderRadius: isWebLandscape ? web(8) : mobile(8),
+      inputContainerPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
       labelGap: scale(3),
     };
   }, [isWebLandscape, height]);

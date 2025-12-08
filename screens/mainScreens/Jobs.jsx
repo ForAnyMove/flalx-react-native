@@ -42,8 +42,8 @@ export default function Jobs() {
   } = useComponentContext();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
-  const { width, height, isLandscape } = useWindowDimensions();
-  const { sidebarWidth } = useWindowInfo();
+  const { width, height } = useWindowDimensions();
+  const { sidebarWidth, isLandscape } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
 
   const orderedTabs = isRTL ? TAB_TITLES_RTL : TAB_TITLES;
@@ -244,10 +244,10 @@ export default function Jobs() {
 
     return {
       panelHeight,
-      iconSize: isWebLandscape ? web(24) : panelHeight * 0.35,
-      fontSize: isWebLandscape ? web(12) : panelHeight * 0.2,
+      iconSize: isWebLandscape ? web(24) : mobile(24),
+      fontSize: isWebLandscape ? web(12) : mobile(12),
       badgeSize,
-      underlineHeight: isWebLandscape ? web(2) : panelHeight * 0.05,
+      underlineHeight: isWebLandscape ? web(2) : mobile(2),
       tabPaddingBottom: panelHeight * 0.1,
       badgeTop: -badgeSize * 0.3,
       badgeRight: -badgeSize * 0.8,

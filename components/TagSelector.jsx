@@ -32,12 +32,12 @@ export default function TagSelector({
     const webScale = (size) => scaleByHeight(size, height);
     const mobileScale = (size) => scaleByHeightMobile(size, height);
     return {
-      font: isWebLandscape ? webScale(14) : mobileScale(12),
+      font: isWebLandscape ? webScale(14) : mobileScale(14),
       padH: isWebLandscape ? webScale(12) : mobileScale(12),
       height: isWebLandscape ? webScale(38) : mobileScale(32),
-      radius: isWebLandscape ? webScale(4) : mobileScale(8),
-      rowGap: isWebLandscape ? webScale(10) : mobileScale(8),
-      colGap: isWebLandscape ? webScale(10) : mobileScale(8),
+      radius: isWebLandscape ? webScale(4) : mobileScale(4),
+      rowGap: isWebLandscape ? webScale(10) : mobileScale(10),
+      colGap: isWebLandscape ? webScale(10) : mobileScale(10),
       titleFont: isWebLandscape ? webScale(16) : mobileScale(14),
       subtitleFont: isWebLandscape ? webScale(14) : mobileScale(12),
       titleGap: isWebLandscape ? webScale(6) : mobileScale(2),

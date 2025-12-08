@@ -46,31 +46,32 @@ export default function Settings() {
     const mobile = (size) => scaleByHeightMobile(size, height);
 
     return {
-      baseFont: isWebLandscape ? web(16) : mobile(12),
+      baseFont: isWebLandscape ? web(16) : mobile(16),
       font: isWebLandscape ? web(12) : mobile(12),
-      questionsFont: isWebLandscape ? web(18) : mobile(10),
-      iconCircleSize: isWebLandscape ? web(40) : mobile(22),
+      questionsFont: isWebLandscape ? web(18) : mobile(14),
+      iconCircleSize: isWebLandscape ? web(40) : mobile(40),
       iconSize: isWebLandscape ? web(18) : mobile(18),
-      containerPadding: isWebLandscape ? height * 0.02 : mobile(10),
-      pickerHeight: isWebLandscape ? height * 0.06 : mobile(50),
+      containerPaddingVertical: isWebLandscape ? web(24) : mobile(14),
+      containerPaddingHorizontal: isWebLandscape ? web(24) : mobile(12),
+      pickerHeight: isWebLandscape ? web(64) : mobile(64),
       rowGap: isWebLandscape ? height * 0.015 : mobile(10),
-      colGap: isWebLandscape ? height * 0.02 : 0,
+      colGap: isWebLandscape ? height * 0.02 : mobile(12),
       switchMargin: isWebLandscape ? height * 0.02 : mobile(16),
       btnPadding: isWebLandscape ? height * 0.015 : mobile(12),
-      btnFont: isWebLandscape ? web(20) : mobile(12),
+      btnFont: isWebLandscape ? web(20) : mobile(20),
       rowsWidth: isWebLandscape ? '65%' : '100%',
       rowsAlign: isWebLandscape
         ? isRTL
           ? 'flex-end'
           : 'flex-start'
         : 'stretch',
-      bottomInset: isWebLandscape ? height * 0.02 : 0,
+      bottomInset: isWebLandscape ? height * 0.02 : mobile(12),
       borderRadius: isWebLandscape ? web(8) : mobile(5),
       regulationsModalWidth: isWebLandscape ? web(480) : '100%',
       regulationsModalHeight: isWebLandscape ? web(600) : '100%',
       aboutModalHeight: isWebLandscape ? web(650) : '100%',
-      modalIconSize: isWebLandscape ? web(24) : mobile(15),
-      modalCloseBtnTopRightPosition: isWebLandscape ? web(7) : mobile(5),
+      modalIconSize: isWebLandscape ? web(24) : mobile(24),
+      modalCloseBtnTopRightPosition: isWebLandscape ? web(7) : mobile(7),
       regulationsModalPaddingVertical: isWebLandscape ? web(36) : mobile(10),
       regulationsModalPaddingHorizontal: isWebLandscape ? web(44) : mobile(10),
       contactUsModalPaddingHorizontal: isWebLandscape ? web(74.5) : mobile(10),
@@ -83,20 +84,20 @@ export default function Settings() {
       contactUsModalHeight: isWebLandscape ? web(790) : '100%',
       feedbackModalHeight: isWebLandscape ? web(480) : '100%',
       sendContactFormModalHeight: isWebLandscape ? web(450) : '100%',
-      inputContainerPaddingVertical: isWebLandscape ? web(10) : mobile(6),
-      inputContainerPaddingHorizontal: isWebLandscape ? web(16) : mobile(8),
-      inputHeight: isWebLandscape ? web(64) : mobile(40),
+      inputContainerPaddingVertical: isWebLandscape ? web(10) : mobile(10),
+      inputContainerPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
+      inputHeight: isWebLandscape ? web(64) : mobile(64),
       inputWidth: isWebLandscape ? web(330) : mobile(150),
-      textAreaHeight: isWebLandscape ? web(144) : mobile(40),
-      textInputPadding: isWebLandscape ? web(4) : mobile(8),
-      inputFont: isWebLandscape ? web(16) : mobile(10),
-      modalInputMarginBottom: isWebLandscape ? web(16) : mobile(8),
+      textAreaHeight: isWebLandscape ? web(144) : mobile(144),
+      textInputPadding: isWebLandscape ? web(4) : mobile(4),
+      inputFont: isWebLandscape ? web(16) : mobile(16),
+      modalInputMarginBottom: isWebLandscape ? web(16) : mobile(16),
       contactUsDescriptionPaddingHorizontal: isWebLandscape
         ? web(18)
         : mobile(12),
       checkboxContainerHeight: isWebLandscape ? web(36) : mobile(20),
       checkboxIconSize: isWebLandscape ? web(14) : mobile(13),
-      checkboxTextSize: isWebLandscape ? web(14) : mobile(10),
+      checkboxTextSize: isWebLandscape ? web(14) : mobile(14),
       checkboxMarginBottom: isWebLandscape ? web(24) : mobile(8),
       checkboxPaddingHorizontal: isWebLandscape ? web(4) : mobile(4),
       btnHeight: isWebLandscape ? web(62) : undefined,
@@ -109,7 +110,7 @@ export default function Settings() {
       bottomMb: isWebLandscape ? web(55) : 0,
       bottomMr: isWebLandscape ? web(93) : 0,
       scrollPaddingBottom: isWebLandscape ? height * 0.18 : mobile(40),
-      btnHeightWeb: isWebLandscape ? web(62) : undefined,
+      btnHeightWeb: isWebLandscape ? web(62) : mobile(62),
       checkboxSize: isWebLandscape ? web(18) : mobile(18),
       checkboxTextMargin: isWebLandscape ? web(10) : mobile(10),
       checkboxIconBorderWidth: isWebLandscape ? web(2) : mobile(2),
@@ -133,7 +134,8 @@ export default function Settings() {
         styles.container,
         {
           backgroundColor: themeController.current?.backgroundColor,
-          padding: sizes.containerPadding,
+          paddingVertical: sizes.containerPaddingVertical,
+          paddingHorizontal: sizes.containerPaddingHorizontal,
         },
       ]}
     >
@@ -143,7 +145,7 @@ export default function Settings() {
         }}
       >
         {/* Break Line */}
-        <View
+        {/* <View
           style={[
             styles.breakLine,
             {
@@ -151,9 +153,16 @@ export default function Settings() {
               marginVertical: sizes.rowGap,
             },
           ]}
-        />
+        /> */}
         {/* Language + Theme */}
-        <View style={[rowStyle, isWebLandscape && { height: sizes.inputHeight }]}>
+        <View
+          style={[
+            rowStyle,
+            isWebLandscape
+              ? { height: sizes.inputHeight }
+              : { height: sizes.inputHeight * 2 + sizes.colGap },
+          ]}
+        >
           <CustomPicker
             label={t('settings.language')}
             options={[
@@ -281,9 +290,9 @@ export default function Settings() {
                 padding: sizes.btnPadding,
                 flex: isWebLandscape ? 1 : undefined,
                 borderRadius: sizes.borderRadius,
+                height: sizes.btnHeightWeb,
               },
               isWebLandscape && {
-                height: sizes.btnHeightWeb,
                 alignItems: 'center',
                 justifyContent: 'center',
               },
@@ -312,9 +321,9 @@ export default function Settings() {
                 padding: sizes.btnPadding,
                 borderRadius: sizes.borderRadius,
                 flex: isWebLandscape ? 1 : undefined,
+                height: sizes.btnHeightWeb,
               },
               isWebLandscape && {
-                height: sizes.btnHeightWeb,
                 alignItems: 'center',
                 justifyContent: 'center',
               },
@@ -422,7 +431,7 @@ export default function Settings() {
                 width: sizes.iconSize,
                 height: sizes.iconSize,
               }}
-              resizeMode="contain"
+              resizeMode='contain'
             />
           </TouchableOpacity>
           <TouchableOpacity
@@ -439,7 +448,7 @@ export default function Settings() {
             <Image
               source={icons.phoneClear}
               style={{ width: sizes.iconSize, height: sizes.iconSize }}
-              resizeMode="contain"
+              resizeMode='contain'
             />
           </TouchableOpacity>
         </View>
@@ -448,7 +457,7 @@ export default function Settings() {
       {/* About Modal */}
       <Modal
         visible={aboutVisible}
-        animationType="slide"
+        animationType='slide'
         transparent={isWebLandscape}
       >
         <ModalContent
@@ -466,7 +475,7 @@ export default function Settings() {
       {/* Regulations Modal */}
       <Modal
         visible={regulationsVisible}
-        animationType="slide"
+        animationType='slide'
         transparent={isWebLandscape}
       >
         <ModalContent
@@ -483,7 +492,7 @@ export default function Settings() {
       {/* Contact Us Modal */}
       <Modal
         visible={contactUsVisible}
-        animationType="slide"
+        animationType='slide'
         transparent={isWebLandscape}
       >
         <ModalContent
@@ -501,7 +510,7 @@ export default function Settings() {
       {/* Feedback Modal */}
       <Modal
         visible={feedbackVisible}
-        animationType="slide"
+        animationType='slide'
         transparent={isWebLandscape}
       >
         <ModalContent
@@ -647,6 +656,7 @@ function ModalContent({
             paddingHorizontal: paddingHorizontalByType(),
             justifyContent: 'center',
             boxSizing: 'border-box',
+            height: '100%',
           },
           isWebLandscape && {
             width: sizes.regulationsModalWidth,
@@ -662,6 +672,7 @@ function ModalContent({
               position: 'absolute',
               top: sizes.modalCloseBtnTopRightPosition,
               right: sizes.modalCloseBtnTopRightPosition,
+              zIndex: 10,
             },
           ]}
           onPress={() => onClose()}
@@ -726,7 +737,7 @@ function ModalContent({
             </Text>
           </View>
         ) : (
-          <View>
+          <View style={[!isWebLandscape && { height: '100%', justifyContent: 'space-between' }]}>
             <Text
               style={[
                 {
@@ -807,7 +818,7 @@ function ModalContent({
                           themeController.current?.formInputLabelColor
                         }
                         style={{
-                          fontWeight: '500',
+                          fontFamily: 'Rubik-Medium',
                           color: themeController.current?.textColor,
                           padding: 0,
                           paddingVertical: sizes.textInputPadding,
@@ -873,7 +884,7 @@ function ModalContent({
                           themeController.current?.formInputLabelColor
                         }
                         style={{
-                          fontWeight: '500',
+                          fontFamily: 'Rubik-Medium',
                           color: themeController.current?.textColor,
                           padding: 0,
                           paddingVertical: sizes.textInputPadding,
@@ -881,6 +892,7 @@ function ModalContent({
                           borderRadius: sizes.borderRadius,
                           backgroundColor: 'transparent',
                           textAlign: isRTL ? 'right' : 'left',
+                          height: '100%',
                         }}
                         multiline={true}
                       />
@@ -926,7 +938,7 @@ function ModalContent({
                           themeController.current?.formInputLabelColor
                         }
                         style={{
-                          fontWeight: '500',
+                          fontFamily: 'Rubik-Medium',
                           color: themeController.current?.textColor,
                           padding: 0,
                           paddingVertical: sizes.textInputPadding,
@@ -978,7 +990,7 @@ function ModalContent({
                           themeController.current?.formInputLabelColor
                         }
                         style={{
-                          fontWeight: '500',
+                          fontFamily: 'Rubik-Medium',
                           color: themeController.current?.textColor,
                           padding: 0,
                           paddingVertical: sizes.textInputPadding,
@@ -1168,7 +1180,7 @@ function ModalContent({
                           themeController.current?.formInputLabelColor
                         }
                         style={{
-                          fontWeight: '500',
+                          fontFamily: 'Rubik-Medium',
                           color: themeController.current?.textColor,
                           padding: 0,
                           paddingVertical: sizes.textInputPadding,

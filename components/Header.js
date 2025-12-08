@@ -20,16 +20,15 @@ export default function Header({ switchToProfile }) {
   const isRTL = languageController.isRTL;
 
   const sizes = useMemo(() => {
-    const scale = isWebLandscape ? scaleByHeight : scaleByHeightMobile;
     return {
       headerHeight: isWebLandscape ? scaleByHeight(50, height) : height * 0.07,
-      headerPaddingHorizontal: scale(9, height),
-      headerMarginHorizontal: scale(31, height),
-      headerMargin: scale(30, height),
+      headerPaddingHorizontal: isWebLandscape ? scaleByHeight(6, height) : scaleByHeightMobile(10, height),
+      headerMarginHorizontal: isWebLandscape ? scaleByHeight(31, height) : 0,
+      headerMargin: isWebLandscape ? scaleByHeight(30, height) : scaleByHeightMobile(0, height),
       borderBottomWidth: isWebLandscape ? scaleByHeight(2, height) : 1,
-      logoFontSize: scale(24, height),
-      avatarSize: scale(32, height),
-      avatarBorderRadius: scale(16, height),
+      logoFontSize: isWebLandscape ? scaleByHeight(24, height) : scaleByHeightMobile(24, height),
+      avatarSize: isWebLandscape ? scaleByHeight(32, height) : scaleByHeightMobile(32, height),
+      avatarBorderRadius: isWebLandscape ? scaleByHeight(16, height) : scaleByHeightMobile(16, height),
     };
   }, [isWebLandscape, height]);
 

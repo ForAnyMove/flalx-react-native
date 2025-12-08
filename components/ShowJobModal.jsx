@@ -14,7 +14,6 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-// import { RFValue, RFPercentage } from 'react-native-responsive-fontsize';
 import { JOB_SUB_TYPES } from '../constants/jobSubTypes';
 import { JOB_TYPES } from '../constants/jobTypes';
 import { LICENSES } from '../constants/licenses';
@@ -30,18 +29,15 @@ import { useTranslation } from 'react-i18next';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import JobModalWrapper from './JobModalWrapper';
-import { addSelfToJobProviders, completeJob, updateJobComment } from '../src/api/jobs';
+import {
+  addSelfToJobProviders,
+  completeJob,
+  updateJobComment,
+} from '../src/api/jobs';
 import { useWebView } from '../context/webViewContext';
 import SubscriptionsModal from './SubscriptionsModal';
 import CommentsSection from './CommentsSection';
 import CompleteJobModal from './CompleteJobModal';
-
-const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
-  if (Platform.OS === 'web') {
-    return isLandscape ? webSize : RFValue(mobileSize);
-  }
-  return RFValue(mobileSize);
-};
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -74,7 +70,6 @@ export default function ShowJobModal({
   status: initialStatus,
   currentJobId,
 }) {
-  // const router = useRouter();
   const {
     themeController,
     session,
@@ -104,16 +99,16 @@ export default function ShowJobModal({
     // Определяем, какие массивы отслеживать
     const jobGroups = isCreator
       ? {
-        waiting: jobsController.creator.waiting,
-        'in_progress': jobsController.creator.inProgress,
-        done: jobsController.creator.done,
-      }
+          waiting: jobsController.creator.waiting,
+          in_progress: jobsController.creator.inProgress,
+          done: jobsController.creator.done,
+        }
       : {
-        new: jobsController.executor.new,
-        waiting: jobsController.executor.waiting,
-        'in_progress': jobsController.executor.inProgress,
-        done: jobsController.executor.done,
-      };
+          new: jobsController.executor.new,
+          waiting: jobsController.executor.waiting,
+          in_progress: jobsController.executor.inProgress,
+          done: jobsController.executor.done,
+        };
 
     // Поиск текущего местоположения заявки
     let currentLocation = null;
@@ -131,7 +126,9 @@ export default function ShowJobModal({
       const prev = prevJobLocation.current;
       if (prev && prev !== currentLocation) {
         const fromStatus = `${isCreator ? 'client' : 'business'}-${prev}`;
-        const toStatus = `${isCreator ? 'client' : 'business'}-${currentLocation}`;
+        const toStatus = `${
+          isCreator ? 'client' : 'business'
+        }-${currentLocation}`;
         console.log(
           `Заявка ${currentJobId} переместилась: ${fromStatus} → ${toStatus}`
         );
@@ -150,16 +147,16 @@ export default function ShowJobModal({
     status,
     ...(status.startsWith('client')
       ? [
-        jobsController.creator.waiting,
-        jobsController.creator.inProgress,
-        jobsController.creator.done,
-      ]
+          jobsController.creator.waiting,
+          jobsController.creator.inProgress,
+          jobsController.creator.done,
+        ]
       : [
-        jobsController.executor.new,
-        jobsController.executor.waiting,
-        jobsController.executor.inProgress,
-        jobsController.executor.done,
-      ]),
+          jobsController.executor.new,
+          jobsController.executor.waiting,
+          jobsController.executor.inProgress,
+          jobsController.executor.done,
+        ]),
   ]);
 
   const sizes = useMemo(
@@ -169,37 +166,36 @@ export default function ShowJobModal({
         : scaleByHeightMobile(12, height),
       inputFont: isWebLandscape
         ? scaleByHeight(16, height)
-        : scaleByHeightMobile(10, height),
+        : scaleByHeightMobile(16, height),
       padding: isWebLandscape
         ? scaleByHeight(4, height)
         : scaleByHeightMobile(8, height),
       inputContainerPaddingHorizontal: isWebLandscape
         ? scaleByHeight(16, height)
-        : scaleByHeightMobile(8, height),
+        : scaleByHeightMobile(16, height),
       inputContainerPaddingVertical: isWebLandscape
         ? scaleByHeight(10, height)
-        : scaleByHeightMobile(6, height),
+        : scaleByHeightMobile(10, height),
       margin: isWebLandscape
         ? scaleByHeight(18, height)
         : scaleByHeightMobile(10, height),
+      mobileGap: scaleByHeightMobile(16, height),
       borderRadius: isWebLandscape
         ? scaleByHeight(8, height)
-        : scaleByHeightMobile(5, height),
+        : scaleByHeightMobile(8, height),
       thumb: isWebLandscape
         ? scaleByHeight(128, height)
-        : scaleByHeightMobile(80, height),
+        : scaleByHeightMobile(128, height),
       headerMargin: isWebLandscape
         ? scaleByHeight(30, height)
         : scaleByHeightMobile(5, height),
-      headerHeight: isWebLandscape
-        ? scaleByHeight(50, height)
-        : height * 0.07,
+      headerHeight: isWebLandscape ? scaleByHeight(50, height) : height * 0.07,
       icon: isWebLandscape
         ? scaleByHeight(24, height)
         : scaleByHeightMobile(16, height),
       iconSize: isWebLandscape
         ? scaleByHeight(24, height)
-        : scaleByHeightMobile(15, height),
+        : scaleByHeightMobile(24, height),
       horizontalGap: isWebLandscape ? width * 0.01 : 0,
       headerPaddingHorizontal: isWebLandscape
         ? scaleByHeight(7, height)
@@ -212,19 +208,18 @@ export default function ShowJobModal({
         : scaleByHeightMobile(40, height),
       photosLabelSize: isWebLandscape
         ? scaleByHeight(18, height)
-        : scaleByHeightMobile(12, height),
+        : scaleByHeightMobile(18, height),
       photosLabelMarginBottom: isWebLandscape
         ? scaleByHeight(14, height)
-        : scaleByHeightMobile(6, height),
-      saveBtnWidth: isWebLandscape
-        ? scaleByHeight(380, height)
-        : scaleByHeightMobile(120, height),
+        : scaleByHeightMobile(16, height),
+      saveBtnWidth: isWebLandscape ? scaleByHeight(380, height) : '100%',
+      saveBtnWidthHalf: isWebLandscape ? scaleByHeight(180, height) : '48%',
       saveBtnHeight: isWebLandscape
         ? scaleByHeight(62, height)
-        : scaleByHeightMobile(40, height),
+        : scaleByHeightMobile(62, height),
       saveBtnFont: isWebLandscape
         ? scaleByHeight(20, height)
-        : scaleByHeightMobile(14, height),
+        : scaleByHeightMobile(20, height),
       underBtnTextMarginTop: isWebLandscape
         ? scaleByHeight(14, height)
         : scaleByHeightMobile(10, height),
@@ -246,7 +241,7 @@ export default function ShowJobModal({
       modalLongBtnWidth: isWebLandscape ? scaleByHeight(300, height) : '80%',
       modalBtnFont: isWebLandscape
         ? scaleByHeight(20, height)
-        : scaleByHeightMobile(14, height),
+        : scaleByHeightMobile(20, height),
       modalBtnBorderRadius: isWebLandscape
         ? scaleByHeight(8, height)
         : scaleByHeightMobile(6, height),
@@ -256,7 +251,7 @@ export default function ShowJobModal({
       modalPadding: isWebLandscape
         ? scaleByHeight(32, height)
         : scaleByHeightMobile(16, height),
-      modalLineHeight: isWebLandscape ? scaleByHeight(32, height) : 1,
+      modalLineHeight: isWebLandscape ? scaleByHeight(32, height) : scaleByHeightMobile(22, height),
       modalCloseBtnTopRightPosition: isWebLandscape
         ? scaleByHeight(7, height)
         : scaleByHeightMobile(5, height),
@@ -265,16 +260,16 @@ export default function ShowJobModal({
         : scaleByHeightMobile(10, height),
       noPhotosMessageSize: isWebLandscape
         ? scaleByHeight(24, height)
-        : scaleByHeightMobile(24, height),
+        : scaleByHeightMobile(21, height),
       noPhotosMessageHeight: isWebLandscape
         ? scaleByHeight(128, height)
-        : scaleByHeightMobile(75, height),
+        : scaleByHeightMobile(128, height),
       noPhotosMessageWidth: isWebLandscape
         ? scaleByHeight(685, height)
         : '100%',
       commentFieldHeight: isWebLandscape
         ? scaleByHeight(131, height)
-        : scaleByHeightMobile(70, height),
+        : scaleByHeightMobile(131, height),
       descriptionInputHeight: isWebLandscape
         ? 'auto'
         : scaleByHeightMobile(70, height),
@@ -287,6 +282,9 @@ export default function ShowJobModal({
       historyIconSize: isWebLandscape
         ? scaleByHeight(24, height)
         : scaleByHeightMobile(20, height),
+      mobileBottomContainerPaddingVertical: scaleByHeightMobile(16, height),
+      dateTimeGapMobile: scaleByHeightMobile(20, height),
+      mobileBottomPaddingExtraSpace: scaleByHeightMobile(120, height),
     }),
     [isWebLandscape, height, width]
   );
@@ -295,9 +293,10 @@ export default function ShowJobModal({
     () =>
       StyleSheet.create({
         inputBlock: {
-          marginBottom: sizes.margin,
           borderRadius: sizes.borderRadius,
-          padding: sizes.padding,
+          padding: 0,
+          paddingHorizontal: sizes.inputContainerPaddingHorizontal,
+          paddingVertical: sizes.inputContainerPaddingVertical,
           backgroundColor: themeController.current?.formInputBackground,
           ...Platform.select({
             web: {
@@ -310,12 +309,16 @@ export default function ShowJobModal({
           fontSize: sizes.font,
         },
         input: {
-          padding: sizes.padding,
           width: '100%',
-          fontFamily: 'Rubik-Medium',
+          fontFamily: 'Rubik-Regular',
           fontWeight: '500',
           color: themeController.current?.textColor,
           fontSize: sizes.inputFont,
+          ...Platform.select({
+            web: isWebLandscape && {
+              fontFamily: 'Rubik-Medium',
+            },
+          }),
         },
         imageInputBlock: {
           marginBottom: sizes.margin,
@@ -427,75 +430,6 @@ export default function ShowJobModal({
     [sizes, themeController]
   );
 
-  // размеры (только для веб-альбомной — иначе RFValue как было)
-  // const sizes = {
-  //   font: isWebLandscape ? scaleByHeight(12, height) : RFValue(12),
-  //   inputFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
-  //   padding: isWebLandscape ? scaleByHeight(4, height) : RFValue(8),
-  //   inputContainerPaddingHorizontal: isWebLandscape
-  //     ? scaleByHeight(16, height)
-  //     : RFValue(8),
-  //   inputContainerPaddingVertical: isWebLandscape
-  //     ? scaleByHeight(10, height)
-  //     : RFValue(6),
-  //   margin: isWebLandscape ? scaleByHeight(18, height) : RFValue(10),
-  //   borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-  //   thumb: isWebLandscape ? scaleByHeight(128, height) : RFValue(80),
-  //   headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
-  //   headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
-  //   icon: isWebLandscape ? scaleByHeight(24, height) : RFValue(16),
-  //   iconSize: isWebLandscape ? scaleByHeight(24, height) : RFValue(15),
-  //   horizontalGap: isWebLandscape ? width * 0.01 : 0,
-  //   headerPaddingHorizontal: isWebLandscape
-  //     ? scaleByHeight(7, height)
-  //     : RFValue(3),
-  //   containerPaddingHorizontal: isWebLandscape
-  //     ? scaleByHeight(20, height)
-  //     : RFValue(14),
-  //   inputHeight: isWebLandscape ? scaleByHeight(64, height) : RFValue(40),
-  //   photosLabelSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(12),
-  //   photosLabelMarginBottom: isWebLandscape
-  //     ? scaleByHeight(14, height)
-  //     : RFValue(6),
-  //   saveBtnWidth: isWebLandscape ? scaleByHeight(380, height) : RFValue(120),
-  //   saveBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(40),
-  //   saveBtnFont: isWebLandscape ? scaleByHeight(20, height) : RFValue(14),
-  //   underBtnTextMarginTop: isWebLandscape
-  //     ? scaleByHeight(14, height)
-  //     : RFValue(10),
-  //   modalWidth: isWebLandscape ? scaleByHeight(450, height) : '80%',
-  //   modalHeight: isWebLandscape ? scaleByHeight(230, height) : '60%',
-  //   doubleBtnLineModalHeight: isWebLandscape
-  //     ? scaleByHeight(306, height)
-  //     : RFValue(40),
-  //   modalFont: isWebLandscape ? scaleByHeight(24, height) : RFValue(14),
-  //   modalTextMarginBottom: isWebLandscape
-  //     ? scaleByHeight(32, height)
-  //     : RFValue(12),
-  //   modalBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(50),
-  //   modalBtnWidth: isWebLandscape ? scaleByHeight(153, height) : '40%',
-  //   modalLongBtnWidth: isWebLandscape ? scaleByHeight(300, height) : '80%',
-  //   modalBtnFont: isWebLandscape ? scaleByHeight(20, height) : RFValue(14),
-  //   modalBtnBorderRadius: isWebLandscape
-  //     ? scaleByHeight(8, height)
-  //     : RFValue(6),
-  //   modalBtnsGap: isWebLandscape ? scaleByHeight(24, height) : RFValue(12),
-  //   modalPadding: isWebLandscape ? scaleByHeight(32, height) : RFValue(16),
-  //   modalLineHeight: isWebLandscape ? scaleByHeight(32, height) : 1,
-  //   modalCloseBtnTopRightPosition: isWebLandscape
-  //     ? scaleByHeight(7, height)
-  //     : RFValue(5),
-  //   btnsColumnGap: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
-  //   noPhotosMessageSize: isWebLandscape ? scaleByHeight(24) : RFValue(24),
-  //   noPhotosMessageHeight: isWebLandscape
-  //     ? scaleByHeight(128, height)
-  //     : RFValue(75),
-  //   noPhotosMessageWidth: isWebLandscape ? scaleByHeight(685, height) : '100%',
-  //   commentFieldHeight: isWebLandscape
-  //     ? scaleByHeight(131, height)
-  //     : RFValue(70),
-  // };
-
   const [newJobModalVisible, setNewJobModalVisible] = useState(false);
   const [isInterestedRequest, setInterestedRequest] = useState(
     status === 'jobs-waiting'
@@ -510,7 +444,7 @@ export default function ShowJobModal({
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
-    () => { }
+    () => {}
   );
 
   const [plansModalVisible, setPlansModalVisible] = useState(false);
@@ -607,83 +541,6 @@ export default function ShowJobModal({
             status={status}
             closeAllModal={closeModal}
           />,
-          <View
-            style={{
-              width: '100%',
-              gap: sizes.horizontalGap,
-              flexDirection: isWebLandscape
-                ? isRTL
-                  ? 'row-reverse'
-                  : 'row'
-                : 'column',
-            }}
-          >
-            <TouchableOpacity
-              key='updateButton'
-              style={[
-                styles.createButton,
-                {
-                  backgroundColor:
-                    themeController.current?.buttonColorPrimaryDefault,
-                  borderRadius: sizes.borderRadius,
-                },
-                isWebLandscape && {
-                  width: sizes.saveBtnWidth,
-                  height: sizes.saveBtnHeight,
-                },
-              ]}
-              onPress={() => setNewJobModalVisible(true)}
-            >
-              <Text
-                style={{
-                  color: 'white',
-                  textAlign: 'center',
-                  ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
-                }}
-              >
-                {t('showJob.buttons.update', { defaultValue: 'Update' })}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              key='closeButton'
-              style={[
-                styles.createButton,
-                {
-                  backgroundColor:
-                    themeController.current?.buttonColorSecondaryDefault,
-                  borderRadius: sizes.borderRadius,
-                },
-                isWebLandscape && {
-                  width: sizes.saveBtnWidth,
-                  height: sizes.saveBtnHeight,
-                },
-              ]}
-              onPress={() => {
-                setAcceptModalVisible(true);
-                setAcceptModalVisibleTitle(t('showJob.messages.closeJobTitle'));
-                setAcceptModalVisibleFunc(() => async () => {
-                  try {
-                    await jobsController.actions
-                      .deleteJob(currentJobId)
-                      .then(closeModal());
-                  } catch (err) {
-                    console.error('Ошибка закрытия заявки:', err.message);
-                  }
-                  setAcceptModalVisible(false);
-                });
-              }}
-            >
-              <Text
-                style={{
-                  color: 'white',
-                  textAlign: 'center',
-                  ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
-                }}
-              >
-                {t('showJob.buttons.close', { defaultValue: 'Close' })}
-              </Text>
-            </TouchableOpacity>
-          </View>,
         ];
       case 'store-in-progress':
         return [
@@ -752,7 +609,6 @@ export default function ShowJobModal({
                 style={[
                   styles.input,
                   {
-                    height: RFValue(70),
                     color: themeController.current?.textColor,
                     fontSize: sizes.inputFont,
                   },
@@ -764,228 +620,191 @@ export default function ShowJobModal({
               />
             </View>
           </View>,
-          false &&
-          ((
-            <TouchableOpacity
-              key='confirmButton'
-              style={[
-                styles.createButton,
-                {
-                  backgroundColor:
-                    themeController.current?.buttonColorPrimaryDefault,
-                  borderRadius: sizes.borderRadius,
-                  ...(isWebLandscape && {
-                    paddingVertical: sizes.padding * 1.2,
-                    borderRadius: sizes.borderRadius,
-                  }),
-                },
-                isWebLandscape && {
-                  width: sizes.saveBtnWidth,
-                  height: sizes.saveBtnHeight,
-                },
-              ]}
-              onPress={() => jobsController.actions.confirmJob(currentJobId)}
-            >
-              <Text
-                style={{
-                  color: 'white',
-                  textAlign: 'center',
-                  ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
-                }}
-              >
-                {t('showJob.buttons.confirmCompletion', {
-                  defaultValue: 'Confirm job completion',
-                })}
-              </Text>
-            </TouchableOpacity>
-          )),
-          (
-            <CommentsSection
-              jobId={currentJobInfo?.id}
-              userId={currentJobInfo?.executor}
-              allowAdd={currentJobInfo?.comments?.length == 0}
-              allowAddOnly={true}
-            />
-          )
+          <CommentsSection
+            jobId={currentJobInfo?.id}
+            userId={currentJobInfo?.executor}
+            allowAdd={currentJobInfo?.comments?.length == 0}
+            allowAddOnly={true}
+          />,
         ];
       case 'jobs-new':
         return [
-          isInterestedRequest ? (
-            <>
-              <TouchableOpacity
-                key='updateButton'
-                style={[
-                  styles.createButton,
-                  {
-                    backgroundColor: 'transparent',
-                    backgroundColor:
-                      themeController.current?.buttonColorSecondaryDefault,
-                    borderRadius: sizes.borderRadius,
-                    ...(isWebLandscape && {
-                      paddingVertical: sizes.padding * 1.2,
-                    }),
-                  },
-                  isWebLandscape && {
-                    width: sizes.saveBtnWidth,
-                    height: sizes.saveBtnHeight,
-                  },
-                ]}
-                onPress={() => setCancelRequestModal(true)}
-              >
-                <Text
-                  style={{
-                    color: themeController.current?.buttonTextColorSecondary,
-                    textAlign: 'center',
-                    ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
-                  }}
-                >
-                  {t('showJob.buttons.cancelRequest', {
-                    defaultValue: 'Cancel request',
-                  })}
-                </Text>
-              </TouchableOpacity>
-              <Text
-                style={[
-                  styles.waitText,
-                  {
-                    color: themeController.current?.unactiveTextColor,
-                    marginTop: sizes.underBtnTextMarginTop,
-                  },
-                  isWebLandscape && {
-                    fontSize: sizes.inputFont,
-                    textAlign: isRTL ? 'right' : 'left',
-                  },
-                ]}
-                key='waitText'
-              >
-                {t('showJob.messages.waitForCall', {
-                  defaultValue: 'Wait for a call from the customer...',
-                })}
-              </Text>
-            </>
-          ) : (
-            <TouchableOpacity
-              key='updateButton'
-              style={[
-                styles.createButton,
-                {
-                  backgroundColor:
-                    themeController.current?.buttonColorPrimaryDefault,
-                  ...(isWebLandscape && {
-                    paddingVertical: sizes.padding * 1.2,
-                    borderRadius: sizes.borderRadius,
-                  }),
-                },
-                isWebLandscape && {
-                  width: sizes.saveBtnWidth,
-                  height: sizes.saveBtnHeight,
-                },
-              ]}
-              onPress={handleInterestRequest}
-            >
-              <Text
-                style={{
-                  color: 'white',
-                  textAlign: 'center',
-                  ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
-                }}
-              >
-                {t('showJob.buttons.interested', {
-                  defaultValue: 'I am interested in the job',
-                })}
-              </Text>
-            </TouchableOpacity>
-          ),
+          // isInterestedRequest ? (
+          //   <>
+          //     <TouchableOpacity
+          //       key='updateButton'
+          //       style={[
+          //         styles.createButton,
+          //         {
+          //           backgroundColor: 'transparent',
+          //           backgroundColor:
+          //             themeController.current?.buttonColorSecondaryDefault,
+          //           borderRadius: sizes.borderRadius,
+          //           ...(isWebLandscape && {
+          //             paddingVertical: sizes.padding * 1.2,
+          //           }),
+          //         },
+          //         isWebLandscape && {
+          //           width: sizes.saveBtnWidth,
+          //           height: sizes.saveBtnHeight,
+          //         },
+          //       ]}
+          //       onPress={() => setCancelRequestModal(true)}
+          //     >
+          //       <Text
+          //         style={{
+          //           color: themeController.current?.buttonTextColorSecondary,
+          //           textAlign: 'center',
+          //           ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
+          //         }}
+          //       >
+          //         {t('showJob.buttons.cancelRequest', {
+          //           defaultValue: 'Cancel request',
+          //         })}
+          //       </Text>
+          //     </TouchableOpacity>
+          //     <Text
+          //       style={[
+          //         styles.waitText,
+          //         {
+          //           color: themeController.current?.unactiveTextColor,
+          //           marginTop: sizes.underBtnTextMarginTop,
+          //         },
+          //         isWebLandscape && {
+          //           fontSize: sizes.inputFont,
+          //           textAlign: isRTL ? 'right' : 'left',
+          //         },
+          //       ]}
+          //       key='waitText'
+          //     >
+          //       {t('showJob.messages.waitForCall', {
+          //         defaultValue: 'Wait for a call from the customer...',
+          //       })}
+          //     </Text>
+          //   </>
+          // ) : (
+          //   <TouchableOpacity
+          //     key='updateButton'
+          //     style={[
+          //       styles.createButton,
+          //       {
+          //         backgroundColor:
+          //           themeController.current?.buttonColorPrimaryDefault,
+          //         ...(isWebLandscape && {
+          //           paddingVertical: sizes.padding * 1.2,
+          //           borderRadius: sizes.borderRadius,
+          //         }),
+          //       },
+          //       isWebLandscape && {
+          //         width: sizes.saveBtnWidth,
+          //         height: sizes.saveBtnHeight,
+          //       },
+          //     ]}
+          //     onPress={handleInterestRequest}
+          //   >
+          //     <Text
+          //       style={{
+          //         color: 'white',
+          //         textAlign: 'center',
+          //         ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
+          //       }}
+          //     >
+          //       {t('showJob.buttons.interested', {
+          //         defaultValue: 'I am interested in the job',
+          //       })}
+          //     </Text>
+          //   </TouchableOpacity>
+          // ),
         ];
       case 'jobs-waiting':
         return [
-          isInterestedRequest ? (
-            <>
-              <TouchableOpacity
-                key='updateButton'
-                style={[
-                  styles.createButton,
-                  {
-                    backgroundColor: 'transparent',
-                    backgroundColor:
-                      themeController.current?.buttonColorSecondaryDefault,
-                    borderRadius: sizes.borderRadius,
-                    ...(isWebLandscape && {
-                      paddingVertical: sizes.padding * 1.2,
-                    }),
-                  },
-                  isWebLandscape && {
-                    width: sizes.saveBtnWidth,
-                    height: sizes.saveBtnHeight,
-                  },
-                ]}
-                onPress={() => setCancelRequestModal(true)}
-              >
-                <Text
-                  style={{
-                    color: themeController.current?.buttonTextColorSecondary,
-                    textAlign: 'center',
-                    ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
-                  }}
-                >
-                  {t('showJob.buttons.cancelRequest', {
-                    defaultValue: 'Cancel request',
-                  })}
-                </Text>
-              </TouchableOpacity>
-              <Text
-                style={[
-                  styles.waitText,
-                  {
-                    color: themeController.current?.unactiveTextColor,
-                    marginTop: sizes.underBtnTextMarginTop,
-                  },
-                  isRTL && { textAlign: 'right' },
-                  isWebLandscape && {
-                    fontSize: sizes.inputFont,
-                    textAlign: isRTL ? 'right' : 'left',
-                  },
-                ]}
-                key='waitText'
-              >
-                {t('showJob.messages.waitForCall', {
-                  defaultValue: 'Wait for a call from the customer...',
-                })}
-              </Text>
-            </>
-          ) : (
-            <TouchableOpacity
-              key='updateButton'
-              style={[
-                styles.createButton,
-                {
-                  backgroundColor:
-                    themeController.current?.buttonColorPrimaryDefault,
-                  borderRadius: sizes.borderRadius,
-                  ...(isWebLandscape && {
-                    paddingVertical: sizes.padding * 1.2,
-                  }),
-                },
-                isWebLandscape && {
-                  width: sizes.saveBtnWidth,
-                  height: sizes.saveBtnHeight,
-                },
-              ]}
-              onPress={handleInterestRequest}
-            >
-              <Text
-                style={{
-                  color: 'white',
-                  textAlign: 'center',
-                  ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
-                }}
-              >
-                {t('showJob.buttons.interested', {
-                  defaultValue: 'I am interested in the job',
-                })}
-              </Text>
-            </TouchableOpacity>
-          ),
+          // isInterestedRequest ? (
+          //   <>
+          //     <TouchableOpacity
+          //       key='updateButton'
+          //       style={[
+          //         styles.createButton,
+          //         {
+          //           backgroundColor: 'transparent',
+          //           backgroundColor:
+          //             themeController.current?.buttonColorSecondaryDefault,
+          //           borderRadius: sizes.borderRadius,
+          //           ...(isWebLandscape && {
+          //             paddingVertical: sizes.padding * 1.2,
+          //           }),
+          //         },
+          //         isWebLandscape && {
+          //           width: sizes.saveBtnWidth,
+          //           height: sizes.saveBtnHeight,
+          //         },
+          //       ]}
+          //       onPress={() => setCancelRequestModal(true)}
+          //     >
+          //       <Text
+          //         style={{
+          //           color: themeController.current?.buttonTextColorSecondary,
+          //           textAlign: 'center',
+          //           ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
+          //         }}
+          //       >
+          //         {t('showJob.buttons.cancelRequest', {
+          //           defaultValue: 'Cancel request',
+          //         })}
+          //       </Text>
+          //     </TouchableOpacity>
+          //     <Text
+          //       style={[
+          //         styles.waitText,
+          //         {
+          //           color: themeController.current?.unactiveTextColor,
+          //           marginTop: sizes.underBtnTextMarginTop,
+          //         },
+          //         isRTL && { textAlign: 'right' },
+          //         isWebLandscape && {
+          //           fontSize: sizes.inputFont,
+          //           textAlign: isRTL ? 'right' : 'left',
+          //         },
+          //       ]}
+          //       key='waitText'
+          //     >
+          //       {t('showJob.messages.waitForCall', {
+          //         defaultValue: 'Wait for a call from the customer...',
+          //       })}
+          //     </Text>
+          //   </>
+          // ) : (
+          //   <TouchableOpacity
+          //     key='updateButton'
+          //     style={[
+          //       styles.createButton,
+          //       {
+          //         backgroundColor:
+          //           themeController.current?.buttonColorPrimaryDefault,
+          //         borderRadius: sizes.borderRadius,
+          //         ...(isWebLandscape && {
+          //           paddingVertical: sizes.padding * 1.2,
+          //         }),
+          //       },
+          //       isWebLandscape && {
+          //         width: sizes.saveBtnWidth,
+          //         height: sizes.saveBtnHeight,
+          //       },
+          //     ]}
+          //     onPress={handleInterestRequest}
+          //   >
+          //     <Text
+          //       style={{
+          //         color: 'white',
+          //         textAlign: 'center',
+          //         ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
+          //       }}
+          //     >
+          //       {t('showJob.buttons.interested', {
+          //         defaultValue: 'I am interested in the job',
+          //       })}
+          //     </Text>
+          //   </TouchableOpacity>
+          // ),
         ];
       case 'jobs-in-progress':
         return [
@@ -996,37 +815,6 @@ export default function ShowJobModal({
             status={status}
             closeAllModal={closeModal}
           />,
-          <TouchableOpacity
-            key='completeBtn'
-            style={[
-              styles.createButton,
-              {
-                backgroundColor:
-                  themeController.current?.buttonColorPrimaryDefault,
-                borderRadius: sizes.borderRadius,
-                ...(isWebLandscape && {
-                  paddingVertical: sizes.padding * 1.2,
-                }),
-              },
-              isWebLandscape && {
-                width: sizes.saveBtnWidth,
-                height: sizes.saveBtnHeight,
-              },
-            ]}
-            onPress={() => setCompleteJobModalVisible(true)}
-          >
-            <Text
-              style={{
-                color: 'white',
-                textAlign: 'center',
-                ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
-              }}
-            >
-              {t('showJob.buttons.markCompleted', {
-                defaultValue: 'Mark as completed',
-              })}
-            </Text>
-          </TouchableOpacity>,
         ];
       case 'jobs-done':
         return [
@@ -1090,7 +878,9 @@ export default function ShowJobModal({
                     <TouchableOpacity
                       onPress={() => {
                         setEditableCommentState(false);
-                        setEditableCommentValue(currentJobInfo?.job_comment?.comment || '');
+                        setEditableCommentValue(
+                          currentJobInfo?.job_comment?.comment || ''
+                        );
                       }}
                     >
                       <MaterialIcons
@@ -1135,7 +925,9 @@ export default function ShowJobModal({
                 value={
                   editableCommentState
                     ? editableCommentValue
-                    : (currentJobInfo?.job_comment ? currentJobInfo?.job_comment.comment : null)
+                    : currentJobInfo?.job_comment
+                    ? currentJobInfo?.job_comment.comment
+                    : null
                 }
                 placeholder={t('showJob.fields.myCommentsPlaceholder', {
                   defaultValue: 'Write a comment on the completed work...',
@@ -1165,6 +957,330 @@ export default function ShowJobModal({
     }
   }
 
+  function bottomButtonByStatus(status) {
+    switch (status) {
+      case 'store-waiting':
+        return [
+          <View
+            style={{
+              width: '100%',
+              gap: sizes.horizontalGap,
+              justifyContent: 'space-between',
+              flexDirection: isRTL ? 'row-reverse' : 'row',
+            }}
+          >
+            <TouchableOpacity
+              key='updateButton'
+              style={[
+                styles.createButton,
+                {
+                  backgroundColor:
+                    themeController.current?.buttonColorPrimaryDefault,
+                  borderRadius: sizes.borderRadius,
+                  width: sizes.saveBtnWidthHalf,
+                  height: sizes.saveBtnHeight,
+                },
+              ]}
+              onPress={() => setNewJobModalVisible(true)}
+            >
+              <Text
+                style={{
+                  color: 'white',
+                  textAlign: 'center',
+                  fontSize: sizes.saveBtnFont,
+                }}
+              >
+                {t('showJob.buttons.update', { defaultValue: 'Update' })}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              key='closeButton'
+              style={[
+                styles.createButton,
+                {
+                  backgroundColor:
+                    themeController.current?.buttonColorSecondaryDefault,
+                  borderRadius: sizes.borderRadius,
+                  width: sizes.saveBtnWidthHalf,
+                  height: sizes.saveBtnHeight,
+                },
+              ]}
+              onPress={() => {
+                setAcceptModalVisible(true);
+                setAcceptModalVisibleTitle(t('showJob.messages.closeJobTitle'));
+                setAcceptModalVisibleFunc(() => async () => {
+                  try {
+                    await jobsController.actions
+                      .deleteJob(currentJobId)
+                      .then(closeModal());
+                  } catch (err) {
+                    console.error('Ошибка закрытия заявки:', err.message);
+                  }
+                  setAcceptModalVisible(false);
+                });
+              }}
+            >
+              <Text
+                style={{
+                  color: 'white',
+                  textAlign: 'center',
+                  fontSize: sizes.saveBtnFont,
+                }}
+              >
+                {t('showJob.buttons.close', { defaultValue: 'Close' })}
+              </Text>
+            </TouchableOpacity>
+          </View>,
+        ];
+      // case 'store-in-progress':
+      //   return [
+      //     <ProvidersSection
+      //       key='providers'
+      //       styles={styles}
+      //       currentJobInfo={currentJobInfo}
+      //       status={status}
+      //       closeAllModal={closeModal}
+      //     />,
+      //   ];
+      case 'store-done':
+        return [
+          // false &&
+          // ((
+          //   <TouchableOpacity
+          //     key='confirmButton'
+          //     style={[
+          //       styles.createButton,
+          //       {
+          //         backgroundColor:
+          //           themeController.current?.buttonColorPrimaryDefault,
+          //         borderRadius: sizes.borderRadius,
+          //         ...(isWebLandscape && {
+          //           paddingVertical: sizes.padding * 1.2,
+          //           borderRadius: sizes.borderRadius,
+          //         }),
+          //       },
+          //       isWebLandscape && {
+          //         width: sizes.saveBtnWidth,
+          //         height: sizes.saveBtnHeight,
+          //       },
+          //     ]}
+          //     onPress={() => jobsController.actions.confirmJob(currentJobId)}
+          //   >
+          //     <Text
+          //       style={{
+          //         color: 'white',
+          //         textAlign: 'center',
+          //         ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
+          //       }}
+          //     >
+          //       {t('showJob.buttons.confirmCompletion', {
+          //         defaultValue: 'Confirm job completion',
+          //       })}
+          //     </Text>
+          //   </TouchableOpacity>
+          // )),
+        ];
+      case 'jobs-new':
+        return [
+          isInterestedRequest ? (
+            <>
+              <TouchableOpacity
+                key='updateButton'
+                style={[
+                  styles.createButton,
+                  {
+                    backgroundColor: 'transparent',
+                    backgroundColor:
+                      themeController.current?.buttonColorSecondaryDefault,
+                    borderRadius: sizes.borderRadius,
+                    width: sizes.saveBtnWidth,
+                    height: sizes.saveBtnHeight,
+                  },
+                ]}
+                onPress={() => setCancelRequestModal(true)}
+              >
+                <Text
+                  style={{
+                    color: themeController.current?.buttonTextColorSecondary,
+                    textAlign: 'center',
+                    fontSize: sizes.saveBtnFont,
+                  }}
+                >
+                  {t('showJob.buttons.cancelRequest', {
+                    defaultValue: 'Cancel request',
+                  })}
+                </Text>
+              </TouchableOpacity>
+              <Text
+                style={[
+                  styles.waitText,
+                  {
+                    color: themeController.current?.unactiveTextColor,
+                    marginTop: sizes.underBtnTextMarginTop,
+                    fontSize: sizes.inputFont,
+                    textAlign: 'center',
+                  },
+                ]}
+                key='waitText'
+              >
+                {t('showJob.messages.waitForCall', {
+                  defaultValue: 'Wait for a call from the customer...',
+                })}
+              </Text>
+            </>
+          ) : (
+            <TouchableOpacity
+              key='updateButton'
+              style={[
+                styles.createButton,
+                {
+                  backgroundColor:
+                    themeController.current?.buttonColorPrimaryDefault,
+                  borderRadius: sizes.borderRadius,
+                  width: sizes.saveBtnWidth,
+                  height: sizes.saveBtnHeight,
+                },
+              ]}
+              onPress={handleInterestRequest}
+            >
+              <Text
+                style={{
+                  color: 'white',
+                  textAlign: 'center',
+                  fontSize: sizes.saveBtnFont,
+                }}
+              >
+                {t('showJob.buttons.interested', {
+                  defaultValue: 'I am interested in the job',
+                })}
+              </Text>
+            </TouchableOpacity>
+          ),
+        ];
+      case 'jobs-waiting':
+        return [
+          isInterestedRequest ? (
+            <>
+              <TouchableOpacity
+                key='updateButton'
+                style={[
+                  styles.createButton,
+                  {
+                    backgroundColor: 'transparent',
+                    backgroundColor:
+                      themeController.current?.buttonColorSecondaryDefault,
+                    borderRadius: sizes.borderRadius,
+                    width: sizes.saveBtnWidth,
+                    height: sizes.saveBtnHeight,
+                  },
+                ]}
+                onPress={() => setCancelRequestModal(true)}
+              >
+                <Text
+                  style={{
+                    color: themeController.current?.buttonTextColorSecondary,
+                    textAlign: 'center',
+                    fontSize: sizes.saveBtnFont,
+                  }}
+                >
+                  {t('showJob.buttons.cancelRequest', {
+                    defaultValue: 'Cancel request',
+                  })}
+                </Text>
+              </TouchableOpacity>
+              <Text
+                style={[
+                  styles.waitText,
+                  {
+                    color: themeController.current?.unactiveTextColor,
+                    marginTop: sizes.underBtnTextMarginTop,
+                    fontSize: sizes.inputFont,
+                    textAlign: 'center',
+                  },
+                ]}
+                key='waitText'
+              >
+                {t('showJob.messages.waitForCall', {
+                  defaultValue: 'Wait for a call from the customer...',
+                })}
+              </Text>
+            </>
+          ) : (
+            <TouchableOpacity
+              key='updateButton'
+              style={[
+                styles.createButton,
+                {
+                  backgroundColor:
+                    themeController.current?.buttonColorPrimaryDefault,
+                  borderRadius: sizes.borderRadius,
+                  width: sizes.saveBtnWidth,
+                  height: sizes.saveBtnHeight,
+                },
+              ]}
+              onPress={handleInterestRequest}
+            >
+              <Text
+                style={{
+                  color: 'white',
+                  textAlign: 'center',
+                  fontSize: sizes.saveBtnFont,
+                }}
+              >
+                {t('showJob.buttons.interested', {
+                  defaultValue: 'I am interested in the job',
+                })}
+              </Text>
+            </TouchableOpacity>
+          ),
+        ];
+      case 'jobs-in-progress':
+        return [
+          <TouchableOpacity
+            key='completeBtn'
+            style={[
+              styles.createButton,
+              {
+                backgroundColor:
+                  themeController.current?.buttonColorPrimaryDefault,
+                borderRadius: sizes.borderRadius,
+                width: sizes.saveBtnWidth,
+                height: sizes.saveBtnHeight,
+              },
+            ]}
+            onPress={() => setCompleteJobModalVisible(true)}
+          >
+            <Text
+              style={{
+                color: 'white',
+                textAlign: 'center',
+                fontSize: sizes.saveBtnFont,
+              }}
+            >
+              {t('showJob.buttons.markCompleted', {
+                defaultValue: 'Mark as completed',
+              })}
+            </Text>
+          </TouchableOpacity>,
+        ];
+      case 'jobs-done':
+        return [
+          // <View
+          //   style={
+          //     isWebLandscape && {
+          //       flexDirection: isRTL ? 'row-reverse' : 'row',
+          //       gap: scaleByHeight(21, height),
+          //     }
+          //   }
+          //   key='done-view'
+          // >
+          // </View>,
+        ];
+      default:
+        return [];
+    }
+  }
+
   const formContent = [
     <View
       style={[
@@ -1175,13 +1291,21 @@ export default function ShowJobModal({
       key='type'
     >
       <Text
-        style={[styles.label, dynamicStyles.label, isRTL && { textAlign: 'right' }]}
+        style={[
+          styles.label,
+          dynamicStyles.label,
+          isRTL && { textAlign: 'right' },
+        ]}
       >
         {t('showJob.fields.type', { defaultValue: 'Type' })}
       </Text>
       <TextInput
         value={JOB_TYPES[currentJobInfo?.type] || '-'}
-        style={[styles.input, dynamicStyles.input, isRTL && { textAlign: 'right' }]}
+        style={[
+          styles.input,
+          dynamicStyles.input,
+          isRTL && { textAlign: 'right' },
+        ]}
         readOnly
       />
     </View>,
@@ -1194,13 +1318,21 @@ export default function ShowJobModal({
       key='subType'
     >
       <Text
-        style={[styles.label, dynamicStyles.label, isRTL && { textAlign: 'right' }]}
+        style={[
+          styles.label,
+          dynamicStyles.label,
+          isRTL && { textAlign: 'right' },
+        ]}
       >
         {t('showJob.fields.subType', { defaultValue: 'Sub type' })}
       </Text>
       <TextInput
         value={JOB_SUB_TYPES[currentJobInfo?.subType] || '-'}
-        style={[styles.input, dynamicStyles.input, isRTL && { textAlign: 'right' }]}
+        style={[
+          styles.input,
+          dynamicStyles.input,
+          isRTL && { textAlign: 'right' },
+        ]}
         readOnly
       />
     </View>,
@@ -1213,13 +1345,21 @@ export default function ShowJobModal({
       key='profession'
     >
       <Text
-        style={[styles.label, dynamicStyles.label, isRTL && { textAlign: 'right' }]}
+        style={[
+          styles.label,
+          dynamicStyles.label,
+          isRTL && { textAlign: 'right' },
+        ]}
       >
         {t('showJob.fields.profession', { defaultValue: 'Profession' })}
       </Text>
       <TextInput
         value={LICENSES[currentJobInfo?.profession] || '-'}
-        style={[styles.input, dynamicStyles.input, isRTL && { textAlign: 'right' }]}
+        style={[
+          styles.input,
+          dynamicStyles.input,
+          isRTL && { textAlign: 'right' },
+        ]}
         readOnly
       />
     </View>,
@@ -1232,7 +1372,11 @@ export default function ShowJobModal({
       key='description'
     >
       <Text
-        style={[styles.label, dynamicStyles.label, isRTL && { textAlign: 'right' }]}
+        style={[
+          styles.label,
+          dynamicStyles.label,
+          isRTL && { textAlign: 'right' },
+        ]}
       >
         {t('showJob.fields.description', { defaultValue: 'Description' })}
       </Text>
@@ -1257,20 +1401,50 @@ export default function ShowJobModal({
       key='price'
     >
       <Text
-        style={[styles.label, dynamicStyles.label, isRTL && { textAlign: 'right' }]}
+        style={[
+          styles.label,
+          dynamicStyles.label,
+          isRTL && { textAlign: 'right' },
+        ]}
       >
         {t('showJob.fields.price', { defaultValue: 'Price' })}
       </Text>
       <TextInput
         value={currentJobInfo?.price || '-'}
-        style={[styles.input, dynamicStyles.input, isRTL && { textAlign: 'right' }]}
+        style={[
+          styles.input,
+          dynamicStyles.input,
+          isRTL && { textAlign: 'right' },
+        ]}
         keyboardType='numeric'
         readOnly
       />
     </View>,
-    <View style={[styles.imageInputBlock, dynamicStyles.imageInputBlock]} key='images'>
+    <View
+      style={[styles.imageInputBlock, dynamicStyles.imageInputBlock]}
+      key='images'
+    >
+      <Text
+        style={[
+          styles.label,
+          isRTL && { textAlign: 'right' },
+          {
+            fontSize: sizes.photosLabelSize,
+            marginBottom: sizes.photosLabelMarginBottom,
+            color: themeController.current?.textColor,
+          },
+        ]}
+      >
+        {t('showJob.fields.photos', {
+          defaultValue: 'Photos',
+        })}
+      </Text>
       <View
-        style={[styles.imageRow, dynamicStyles.imageRow, isRTL && { flexDirection: 'row-reverse' }]}
+        style={[
+          styles.imageRow,
+          dynamicStyles.imageRow,
+          isRTL && { flexDirection: 'row-reverse' },
+        ]}
       >
         {/* Скролл с картинками */}
         <ScrollView
@@ -1279,6 +1453,7 @@ export default function ShowJobModal({
           contentContainerStyle={[
             styles.imageScrollContainer,
             dynamicStyles.imageScrollContainer,
+            !isWebLandscape && { width: '100%' },
             isRTL && { flexDirection: 'row-reverse' },
           ]}
         >
@@ -1295,7 +1470,10 @@ export default function ShowJobModal({
                 >
                   <Image
                     source={{ uri }}
-                    style={[styles.imageThumbnail, dynamicStyles.imageThumbnail]}
+                    style={[
+                      styles.imageThumbnail,
+                      dynamicStyles.imageThumbnail,
+                    ]}
                   />
                 </View>
               ))}
@@ -1333,18 +1511,32 @@ export default function ShowJobModal({
       key='location'
     >
       <Text
-        style={[styles.label, dynamicStyles.label, isRTL && { textAlign: 'right' }]}
+        style={[
+          styles.label,
+          dynamicStyles.label,
+          isRTL && { textAlign: 'right' },
+        ]}
       >
         {t('showJob.fields.location', { defaultValue: 'Location' })}
       </Text>
       <TextInput
         value={currentJobInfo?.location || '-'}
-        style={[styles.input, dynamicStyles.input, isRTL && { textAlign: 'right' }]}
+        style={[
+          styles.input,
+          dynamicStyles.input,
+          isRTL && { textAlign: 'right' },
+        ]}
         readOnly
       />
     </View>,
     <View
-      style={[styles.row, isRTL && { flexDirection: 'row-reverse' }]}
+      style={[
+        styles.row,
+        {
+          gap: sizes.dateTimeGapMobile,
+        },
+        isRTL && { flexDirection: 'row-reverse' },
+      ]}
       key='dateTimeRange'
     >
       {Platform.OS !== 'android' ? (
@@ -1432,14 +1624,7 @@ export default function ShowJobModal({
                 resizeMode='contain'
               />
             </TouchableOpacity>
-            <Text
-              style={[
-                styles.logo,
-                dynamicStyles.logo,
-              ]}
-            >
-              FLALX
-            </Text>
+            <Text style={[styles.logo, dynamicStyles.logo]}>FLALX</Text>
             <TouchableOpacity
               // onPress={() =>
               //   router.canGoBack?.() ? router.back() : router.replace('/store')
@@ -1950,6 +2135,9 @@ export default function ShowJobModal({
                   {extraUiByStatus(status).map((node, idx) => (
                     <View key={`extra-${idx}`}>{node}</View>
                   ))}
+                  {bottomButtonByStatus(status).map((node, idx) => (
+                    <View key={`extra-btn-${idx}`}>{node}</View>
+                  ))}
                 </View>
               </ScrollView>
             ) : (
@@ -1957,7 +2145,15 @@ export default function ShowJobModal({
                 data={formContent}
                 keyExtractor={(_, index) => index.toString()}
                 renderItem={({ item }) => item}
-                contentContainerStyle={styles.container}
+                contentContainerStyle={{
+                  // ...styles.container,
+                  ...{
+                    gap: sizes.mobileGap,
+                    height: '90%',
+                    width: '100%',
+                    overflow: 'auto',
+                  },
+                }}
                 keyboardShouldPersistTaps='handled'
               />
             )
@@ -1966,9 +2162,39 @@ export default function ShowJobModal({
               data={formContent}
               keyExtractor={(_, index) => index.toString()}
               renderItem={({ item }) => item}
-              contentContainerStyle={styles.container}
+              contentContainerStyle={{
+                // ...styles.container,
+                ...{
+                  gap: sizes.mobileGap,
+                  height: '90%',
+                  width: '100%',
+                  overflow: 'auto',
+                },
+              }}
               keyboardShouldPersistTaps='handled'
             />
+          )}
+          {!isWebLandscape && (
+            <View
+              style={[
+                styles.bottomButtonWrapper,
+                {
+                  width: width,
+                  backgroundColor: themeController.current?.backgroundColor,
+                  paddingHorizontal: sizes.containerPaddingHorizontal,
+                  paddingVertical: sizes.mobileBottomContainerPaddingVertical,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: -6 },
+                  shadowOpacity: 0.12,
+                  shadowRadius: 8,
+                  elevation: 16,
+                },
+              ]}
+            >
+              {bottomButtonByStatus(status).map((node, idx) => (
+                <View key={`extra-btn-${idx}`}>{node}</View>
+              ))}
+            </View>
           )}
         </View>
       )}
@@ -2223,10 +2449,10 @@ export default function ShowJobModal({
                   setPlansModalVisible(true);
                   setConfirmInterestModal(false);
                 }}
-              // onPress={() => {
-              //   setConfirmInterestModal(false);
-              //   setInterestedRequest(true);
-              // }}
+                // onPress={() => {
+                //   setConfirmInterestModal(false);
+                //   setInterestedRequest(true);
+                // }}
               >
                 <Text
                   style={{
@@ -2391,8 +2617,9 @@ export default function ShowJobModal({
           setCompleteJobModalVisible(false);
         }}
         completeFunc={(options) => {
-          completeJob(currentJobId, options, session).then(() =>
-            jobsController.reloadExecutor(), closeModal()
+          completeJob(currentJobId, options, session).then(
+            () => jobsController.reloadExecutor(),
+            closeModal()
           );
         }}
       />
@@ -2412,23 +2639,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   logo: {
-    // fontSize: RFValue(20),
     fontFamily: 'Rubik-Bold',
   },
   closeButton: {
-    // fontSize: RFValue(18),
   },
   modalCloseTouchableArea: {
     alignSelf: 'flex-end',
-    // marginBottom: RFValue(8),
   },
   modalCloseButton: {
-    // fontSize: RFValue(18),
   },
   inputBlock: {
-    // marginBottom: RFValue(10),
-    // borderRadius: RFValue(5),
-    // padding: RFValue(8),
     ...Platform.select({
       web: {
         zIndex: 1,
@@ -2436,7 +2656,6 @@ const styles = StyleSheet.create({
     }),
   },
   imageInputBlock: {
-    // marginBottom: RFValue(10),
     ...Platform.select({
       web: {
         zIndex: 1,
@@ -2444,11 +2663,8 @@ const styles = StyleSheet.create({
     }),
   },
   label: {
-    // fontWeight: 'bold',
-    // marginBottom: RFValue(4),
   },
   input: {
-    // padding: RFValue(8),
     width: '100%',
     fontFamily: 'Rubik-Medium',
     fontWeight: '500',
@@ -2457,8 +2673,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#84B0F4',
     justifyContent: 'center',
     alignItems: 'center',
-    // borderRadius: RFValue(6),
-    // marginRight: RFValue(6),
   },
   imageRow: {
     flexDirection: 'row',
@@ -2469,19 +2683,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   imageThumbnail: {
-    // width: RFValue(80),
-    // height: RFValue(80),
-    // borderRadius: RFValue(6),
-    // marginRight: RFValue(6),
   },
   imageWrapper: {
     position: 'relative',
-    // marginRight: RFValue(6), /* Lines 2220-2221 omitted */
   },
   createButton: {
-    /* Lines 2223-2224 omitted */
-    // borderRadius: RFValue(5),
-    /* Lines 2225-2226 omitted */
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2510,9 +2716,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   waitText: {
-    // fontSize: RFValue(10),
     textAlign: 'center',
-    // marginBottom: RFValue(5),
   },
   overlay: {
     flex: 1,
@@ -2523,15 +2727,11 @@ const styles = StyleSheet.create({
   modalContent: {
     position: 'relative',
     width: '80%',
-    // padding: RFValue(18),
-    // borderRadius: RFValue(8),
     alignItems: 'center',
   },
   message: {
-    // fontSize: RFValue(12),
     fontWeight: '500',
     textAlign: 'center',
-    // marginBottom: RFValue(18),
   },
   buttonRow: {
     flexDirection: 'row',
@@ -2545,14 +2745,10 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    // paddingVertical: RFValue(9),
-    // marginHorizontal: RFValue(5),
-    // borderRadius: RFValue(5),
     alignItems: 'center',
   },
   buttonText: {
-    // fontSize: RFValue(12),
-    fontWeight: '600',
+    fontFamily: 'Rubik-Medium',
   },
   editableTitlePanel: {
     flexDirection: 'row',
@@ -2561,7 +2757,6 @@ const styles = StyleSheet.create({
   },
   editPanel: {
     flexDirection: 'row',
-    // gap: RFValue(5),
   },
   gridContainer: {
     width: '100%',
@@ -2582,5 +2777,10 @@ const styles = StyleSheet.create({
   },
   modalText: {
     fontFamily: 'Rubik-Bold',
+  },
+  bottomButtonWrapper: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
   },
 });

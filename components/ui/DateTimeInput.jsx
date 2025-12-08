@@ -44,12 +44,12 @@ export default function DateTimeInput({
 
     return {
       font: scale(12),
-      inputFont: isWebLandscape ? scale(16) : scale(10),
+      inputFont: isWebLandscape ? scale(16) : scale(16),
       padding: scale(8),
-      inputContainerPaddingHorizontal: scale(8),
-      inputContainerPaddingVertical: scale(6),
+      inputContainerPaddingHorizontal: scale(16),
+      inputContainerPaddingVertical: scale(10),
       borderRadius: scale(6),
-      inputHeight: scale(40),
+      inputHeight: scale(64),
     };
   }, [isWebLandscape, height]);
   if (Platform.OS === 'web') {
@@ -118,6 +118,9 @@ export default function DateTimeInput({
                 padding: 0,
                 paddingVertical: sizes.padding,
               },
+              !isWebLandscape && {
+                fontFamily: 'Rubik-Regular',
+              }
             ]}
             onClick={() => !readOnly && setInputActive(true)}
           >
