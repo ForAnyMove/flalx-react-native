@@ -1,0 +1,7 @@
+
+export const PROFESSION_TYPES = {
+  VERIFIED: 'VERIFIED',
+  PENDING: 'PENDING',
+  REJECTED: 'REJECTED',
+  NEW: 'NEW',
+};

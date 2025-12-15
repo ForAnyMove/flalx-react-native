@@ -143,6 +143,8 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         business_waiting: 'Waiting offers',
         business_in_progress: 'Jobs in progress',
         business_done: 'Finished jobs',
+        my_professions: 'My Professions',
+        system_professions: 'System Professions',
       },
       my_profile: {
         first_name: 'First Name',
@@ -395,6 +397,30 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         success_subtitle: 'You can now log in with your new password',
         success_button: 'Continue',
       },
+      professions: {
+        register_modal: {
+          title: 'Register a new profession',
+          description:
+            'If you did not find your profession in the list, you can send a request to add it. We will review it and add it to the system.',
+          profession_label: 'Profession',
+          profession_placeholder: 'Select a profession',
+          subtype_label: 'Subtype/Specialization',
+          subtype_placeholder: 'e.g., "Commercial Electrician"',
+          send_button: 'Send Request',
+          success_title: 'Submission Successful',
+          success_description:
+            'We will respond to you by email as soon as possible.',
+          ok_button: 'OK',
+        },
+        verification: {
+          title: 'Verification',
+          passport_photo: 'Photo of Passport',
+          certificate_photo: 'Photo of ID/Certificate',
+          success_title: 'Submission Successful',
+          success_description:
+            'Your profession has been sent for moderation and will be published after verification.',
+        },
+      },
     },
   },
   he: {
@@ -539,6 +565,8 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         business_waiting: 'הצעות ממתינות',
         business_in_progress: 'עבודות בתהליך',
         business_done: 'עבודות שהושלמו',
+        my_professions: 'המקצועות שלי',
+        system_professions: 'מקצועות המערכת',
       },
       my_profile: {
         first_name: 'שם פרטי',
@@ -792,6 +820,29 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         success_title: 'הסיסמה עודכנה',
         success_subtitle: 'כעת ניתן להתחבר באמצעות הסיסמה החדשה',
         success_button: 'המשך',
+      },
+      professions: {
+        register_modal: {
+          title: 'רישום מקצוע חדש',
+          description:
+            'אם לא מצאת את המקצוע שלך ברשימה, תוכל לשלוח בקשה להוספתו. אנו נבדוק אותה ונוסיף אותה למערכת.',
+          profession_label: 'מקצוע',
+          profession_placeholder: 'בחר מקצוע',
+          subtype_label: 'תת-סוג/התמחות',
+          subtype_placeholder: 'למשל, "חשמלאי מסחרי"',
+          send_button: 'שלח בקשה',
+          success_title: 'ההגשה הצליחה',
+          success_description: 'אנו נגיב לך באימייל בהקדם האפשרי.',
+          ok_button: 'אישור',
+        },
+        verification: {
+          title: 'אימות',
+          passport_photo: 'תמונת דרכון',
+          certificate_photo: 'תמונת תעודת זהות/תעודה',
+          success_title: 'ההגשה הצליחה',
+          success_description:
+            'המקצוע שלך נשלח לבדיקה ויפורסם לאחר אימות.',
+        },
       },
     },
   },

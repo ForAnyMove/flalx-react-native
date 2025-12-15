@@ -30,6 +30,7 @@ import SubscriptionsModal from './SubscriptionsModal';
 import { createJob } from '../src/api/jobs';
 import { useWebView } from '../context/webViewContext';
 import AutocompletePicker from './ui/AutocompletePicker';
+import AddressPicker from './ui/AddressPicker';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -213,7 +214,7 @@ export default function NewJobModal({
   const [description, setDescription] = useState(initialJob?.description || '');
   const [price, setPrice] = useState(initialJob?.price || '');
   const [images, setImages] = useState(initialJob?.images || []); // тут будут уже public URLs
-  const [location, setLocation] = useState(initialJob?.location || '');
+  const [location, setLocation] = useState(initialJob?.location || null);
   const [startDateTime, setStartDateTime] = useState(
     initialJob?.startDateTime || null
   );
@@ -266,7 +267,10 @@ export default function NewJobModal({
       if (JSON.stringify(images) !== JSON.stringify(initialJob.images))
         jobChanges.images = images;
       if (price !== initialJob.price) jobChanges.price = price;
-      if (location !== initialJob.location) jobChanges.location = location;
+      // if (location !== initialJob.location) jobChanges.location = location;
+      // New comparison for location object
+      if (JSON.stringify(location) !== JSON.stringify(initialJob.location))
+        jobChanges.location = location;
       // сравнение дат (если обе существуют и разные)
       if (
         startDateTime &&
@@ -416,30 +420,13 @@ export default function NewJobModal({
       isWebLandscape={isWebLandscape}
       sizeOverrides={sizes}
     />,
-    <AutocompletePicker
-      label={t('newJob.profession', {
-        defaultValue: 'Profession (optional)',
-      })}
-      selectedValue={profession}
-      setValue={(text) => {
-        setProfession(text);
-        if (fieldErrors.profession && text) {
-          setFieldErrors((prev) => ({ ...prev, profession: false }));
-        }
-      }}
-      filtered={filteredProfessions}
-      setFiltered={setFilteredProfessions}
-      options={LICENSES}
-      placeholder={t('newJob.select', { defaultValue: 'Select...' })}
-      stateFocusIndex={2}
-      setFocusStates={setFocusStates}
-      filterOptions={filterOptions}
-      focusStates={focusStates}
-      error={fieldErrors.profession}
-      backgroundColor={themeController.current?.formInputBackground}
-      rtl={isRTL}
-      isWebLandscape={isWebLandscape}
-      sizeOverrides={sizes}
+    <AddressPicker
+      key='location'
+      label={t('newJob.location', { defaultValue: 'Location' })}
+      initialAddress={location?.address || ''}
+      onLocationSelect={setLocation}
+      placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
+      isRTL={isRTL}
     />,
     <View
       style={[
@@ -984,35 +971,16 @@ export default function NewJobModal({
                       },
                     ]}
                   >
-                    <AutocompletePicker
-                      label={t('newJob.profession', {
-                        defaultValue: 'Profession (optional)',
+                    <AddressPicker
+                      label={t('newJob.location', {
+                        defaultValue: 'Location',
                       })}
-                      value={profession}
-                      setValue={(text) => {
-                        setProfession(text);
-                        if (fieldErrors.profession && text) {
-                          setFieldErrors((prev) => ({
-                            ...prev,
-                            profession: false,
-                          }));
-                        }
-                      }}
-                      filtered={filteredProfessions}
-                      setFiltered={setFilteredProfessions}
-                      options={LICENSES}
-                      placeholder={t('newJob.select', {
-                        defaultValue: 'Select...',
+                      initialAddress={location?.address || ''}
+                      onLocationSelect={setLocation}
+                      placeholder={t('newJob.typePlaceholder', {
+                        defaultValue: 'Type...',
                       })}
-                      stateFocusIndex={2}
-                      setFocusStates={setFocusStates}
-                      filterOptions={filterOptions}
-                      focusStates={focusStates}
-                      error={fieldErrors.profession}
-                      backgroundColor={bg}
-                      rtl={isRTL}
-                      isWebLandscape={isWebLandscape}
-                      sizeOverrides={sizes}
+                      isRTL={isRTL}
                     />
                   </View>
 

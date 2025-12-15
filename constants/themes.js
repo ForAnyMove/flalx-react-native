@@ -38,7 +38,7 @@ export const LIGHT_THEME = {
   textColorSecondary: '#885588',
   switchTrackColor: '#DFDFFF',
   switchThumbColor: '#FE8A01',
-  verifiedMarkerColor: '#44d15f',
+  verifiedMarkerColor: '#47DD95',
   verifiedGradientEndColor: '#faec5d',
   topMarkerColor: '#ffaf40',
   topGradientEndColor: '#bff891',

@@ -27,7 +27,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.alexfam.flalxapp"
+      "package": "com.yulab.flalx"
     },
     "web": {
       "favicon": "./assets/logo/favicon.png"
