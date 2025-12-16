@@ -3,6 +3,7 @@ import { useState } from 'react';
 export default function authTabsManager() {
   const [isRegisterNewUser, setRegisterNewUser] = useState(false);
   const [isOTPAuth, setOTPAuth] = useState(false);
+  const [forgottenPasswordScreen, setForgottenPasswordScreen] = useState(false);
 
   return {
     registerControl: {
@@ -14,5 +15,9 @@ export default function authTabsManager() {
       state: isOTPAuth,
       switch: () => setOTPAuth((prev) => !prev),
     },
+    forgotPassControl: {
+      state: forgottenPasswordScreen,
+      switch: () => setForgottenPasswordScreen((prev) => !prev)
+    }
   };
 }

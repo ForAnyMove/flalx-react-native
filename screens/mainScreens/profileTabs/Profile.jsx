@@ -9,16 +9,16 @@ import {
   View,
   Platform,
   Modal,
+  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
-import { useState } from 'react';
-import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
+import { useMemo, useState } from 'react';
 import { icons } from '../../../constants/icons';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import ImagePickerModal from '../../../components/ui/ImagePickerModal';
 import { uploadImageToSupabase } from '../../../utils/supabase/uploadImageToSupabase';
-import { scaleByHeight } from '../../../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import SubscriptionsModal from '../../../components/SubscriptionsModal';
 
 export default function Profile() {
@@ -28,7 +28,7 @@ export default function Profile() {
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
-    () => {}
+    () => () => {}
   );
   const [changePasswordModal, showPasswordModal] = useState(false);
 
@@ -40,65 +40,62 @@ export default function Profile() {
   const [showNewPassword, setShowNewPassword] = useState(false);
 
   const [pickerVisible, setPickerVisible] = useState(false);
-  const { height, isLandscape } = useWindowInfo();
+  const { height } = useWindowDimensions();
+  const { isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 
   const [subscriptionsModal, setSubscriptionsModal] = useState(false);
 
-  // базовые размеры
-  const baseFont = RFValue(12);
-  const avatarSize = RFValue(100);
-  const btnPadding = RFValue(10);
-  const btnFont = RFValue(12);
-  const btnWidth = '100%';
-  const fieldFont = RFValue(10);
-  const fieldPadding = RFValue(10);
-  const fieldMargin = RFValue(12);
-  const containerPaddingH = RFValue(5);
-  const containerPaddingV = RFValue(10);
-  const containerWidth = '100%';
-  const iconSize = RFValue(16);
-
-  // для web-landscape переопределяем
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
-  const sizes = {
-    baseFont: isWebLandscape ? height * 0.016 : baseFont,
-    avatarSize: isWebLandscape ? scaleByHeight(114, height) : avatarSize,
-    btnPadding: isWebLandscape ? height * 0.0144 : btnPadding,
-    btnMargin: isWebLandscape ? height * 0 : RFValue(12),
-    btnFont: isWebLandscape ? scaleByHeight(20, height) : btnFont,
-    btnHeight: isWebLandscape ? scaleByHeight(64, height) : RFValue(64),
-    btnWidth: isWebLandscape ? '32%' : btnWidth,
-    fieldFont: isWebLandscape ? height * 0.0145 : fieldFont,
-    fieldPadding: isWebLandscape ? height * 0.009 : fieldPadding,
-    fieldMargin: isWebLandscape ? height * 0 : fieldMargin,
-    containerPaddingH: isWebLandscape ? height * 0.02 : containerPaddingH,
-    containerPaddingV: isWebLandscape ? height * 0.01 : containerPaddingV,
-    containerWidth: isWebLandscape ? '100%' : containerWidth,
-    iconSize: isWebLandscape ? scaleByHeight(24, height) : iconSize,
-    paddingVertical: isWebLandscape ? height * 0.005 : RFPercentage(2),
-    modalWidth: isWebLandscape ? scaleByHeight(450, height) : '80%',
-    modalHeight: isWebLandscape ? scaleByHeight(230, height) : '60%',
-    modalFont: isWebLandscape ? scaleByHeight(24, height) : baseFont,
-    modalTextMarginBottom: isWebLandscape
-      ? scaleByHeight(32, height)
-      : RFValue(12),
-    modalBtnHeight: isWebLandscape ? scaleByHeight(62, height) : RFValue(50),
-    modalBtnWidth: isWebLandscape ? scaleByHeight(153, height) : '40%',
-    modalBtnFont: isWebLandscape ? scaleByHeight(20, height) : baseFont,
-    modalBtnBorderRadius: isWebLandscape
-      ? scaleByHeight(8, height)
-      : RFValue(6),
-    modalBtnsGap: isWebLandscape ? scaleByHeight(24, height) : RFValue(12),
-    modalPadding: isWebLandscape ? scaleByHeight(32, height) : RFValue(16),
-    modalLineHeight: isWebLandscape ? scaleByHeight(32, height) : 1,
-    modalCloseBtnTopRightPosition: isWebLandscape
-      ? scaleByHeight(7, height)
-      : RFValue(5),
-    iconSize: isWebLandscape ? scaleByHeight(22, height) : RFValue(20),
-    modalFieldMargin: isWebLandscape ? scaleByHeight(18, height) : fieldMargin,
-  };
+
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+
+    return {
+      baseFont: isWebLandscape ? web(12) : mobile(12),
+      avatarSize: isWebLandscape ? web(114) : mobile(114),
+      btnPadding: isWebLandscape ? web(10) : mobile(10),
+      btnMargin: isWebLandscape ? 0 : mobile(5),
+      btnFont: isWebLandscape ? web(20) : mobile(20),
+      btnHeight: isWebLandscape ? web(64) : mobile(64),
+      btnWidth: isWebLandscape ? '32%' : '100%',
+      labelFont: isWebLandscape ? web(12) : mobile(12),
+      fieldFont: isWebLandscape ? web(16) : mobile(16),
+      fieldPadding: isWebLandscape ? web(10) : mobile(10),
+      fieldMargin: isWebLandscape ? 0 : mobile(5),
+      containerPaddingH: isWebLandscape ? web(24) : mobile(12),
+      containerPaddingV: isWebLandscape ? web(10) : mobile(10),
+      containerWidth: '100%',
+      iconSize: isWebLandscape ? web(24) : mobile(24),
+      paddingVertical: isWebLandscape ? web(10) : mobile(10),
+      modalWidth: isWebLandscape ? web(450) : '80%',
+      modalHeight: isWebLandscape ? web(230) : '60%',
+      modalFont: isWebLandscape ? web(24) : mobile(24),
+      modalTextMarginBottom: isWebLandscape ? web(32) : mobile(32),
+      modalBtnHeight: isWebLandscape ? web(62) : mobile(62),
+      modalBtnWidth: isWebLandscape ? web(153) : '40%',
+      modalBtnFont: isWebLandscape ? web(20) : mobile(20),
+      modalBtnBorderRadius: isWebLandscape ? web(8) : mobile(8),
+      modalBtnsGap: isWebLandscape ? web(24) : mobile(24),
+      modalPadding: isWebLandscape ? web(32) : mobile(32),
+      modalLineHeight: isWebLandscape ? web(32) : mobile(32),
+      modalCloseBtnTopRightPosition: isWebLandscape ? web(7) : mobile(7),
+      modalIconSize: isWebLandscape ? web(22) : mobile(22),
+      modalFieldMargin: isWebLandscape ? web(18) : mobile(18),
+      profileBackHeight: isWebLandscape ? web(250) : mobile(250),
+      profileBackMarginBottom: isWebLandscape ? web(15) : mobile(15),
+      profileBackBorderRadius: isWebLandscape ? web(10) : mobile(10),
+      infoFieldsGap: isWebLandscape ? web(6) : mobile(6),
+      breakLineMarginVertical: isWebLandscape ? web(15) : mobile(15),
+      buttonsMarginBottom: isWebLandscape ? web(20) : mobile(20),
+      infoFieldBorderRadius: isWebLandscape ? web(8) : mobile(8),
+      infoFieldPaddingH: isWebLandscape ? web(16) : mobile(16),
+      labelMarginBottom: isWebLandscape ? web(4) : mobile(4),
+      editPanelGap: isWebLandscape ? web(5) : mobile(5),
+    };
+  }, [height, isWebLandscape]);
 
   // Функция загрузки и обновления аватара
   async function uploadAvatar(uri) {
@@ -144,15 +141,9 @@ export default function Profile() {
             {
               backgroundColor:
                 themeController.current?.profileDefaultBackground,
-              height: isWebLandscape
-                ? scaleByHeight(250, height)
-                : RFPercentage(30),
-              marginBottom: isWebLandscape
-                ? scaleByHeight(15, height)
-                : RFValue(12),
-              borderRadius: isWebLandscape
-                ? scaleByHeight(10, height)
-                : RFValue(10),
+              height: sizes.profileBackHeight,
+              marginBottom: sizes.profileBackMarginBottom,
+              borderRadius: sizes.profileBackBorderRadius,
             },
           ]}
         >
@@ -192,7 +183,7 @@ export default function Profile() {
             flexDirection: isWebLandscape ? 'row' : 'column',
             flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
             justifyContent: isWebLandscape ? 'space-between' : 'center',
-            gap: RFValue(6),
+            gap: sizes.infoFieldsGap,
             direction: isRTL ? 'rtl' : 'ltr',
           }}
         >
@@ -238,6 +229,7 @@ export default function Profile() {
               isLandscape={isLandscape}
               multiline={f.multiline}
               height={height}
+              sizes={sizes}
             />
           ))}
         </View>
@@ -247,7 +239,7 @@ export default function Profile() {
             styles.breakLine,
             {
               backgroundColor: themeController.current?.breakLineColor,
-              marginVertical: isWebLandscape ? height * 0.015 : RFValue(12),
+              marginVertical: sizes.breakLineMarginVertical,
             },
           ]}
         />
@@ -258,7 +250,7 @@ export default function Profile() {
             flexDirection: isWebLandscape ? 'row' : 'column',
             flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
             justifyContent: isWebLandscape ? 'space-between' : 'center',
-            gap: RFValue(6),
+            gap: sizes.infoFieldsGap,
             direction: isRTL ? 'rtl' : 'ltr',
           }}
         >
@@ -270,14 +262,10 @@ export default function Profile() {
                 {
                   backgroundColor:
                     themeController.current?.buttonColorPrimaryDefault,
-                  [isWebLandscape ? 'height' : 'padding']: isWebLandscape
-                    ? sizes.btnHeight
-                    : sizes.btnPadding,
+                  height: sizes.btnHeight,
                   marginBottom: sizes.btnMargin,
                   width: sizes.btnWidth,
-                  borderRadius: isWebLandscape
-                    ? scaleByHeight(8, height)
-                    : RFValue(5),
+                  borderRadius: sizes.infoFieldBorderRadius,
                 },
               ]}
               onPress={() => {
@@ -308,7 +296,7 @@ export default function Profile() {
             styles.breakLine,
             {
               backgroundColor: themeController.current?.breakLineColor,
-              marginVertical: isWebLandscape ? height * 0.015 : RFValue(12),
+              marginVertical: sizes.breakLineMarginVertical,
             },
           ]}
         />
@@ -319,9 +307,9 @@ export default function Profile() {
             flexDirection: isWebLandscape ? 'row' : 'column',
             flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
             justifyContent: isWebLandscape ? 'space-between' : 'center',
-            gap: RFValue(6),
+            gap: sizes.infoFieldsGap,
             direction: isRTL ? 'rtl' : 'ltr',
-            marginBottom: isWebLandscape ? height * 0.02 : RFValue(12),
+            marginBottom: sizes.buttonsMarginBottom,
           }}
         >
           {[
@@ -379,14 +367,10 @@ export default function Profile() {
                 {
                   backgroundColor: btn.bg,
                   borderColor: btn.border,
-                  [isWebLandscape ? 'height' : 'padding']: isWebLandscape
-                    ? sizes.btnHeight
-                    : sizes.btnPadding,
+                  height: sizes.btnHeight,
                   marginBottom: sizes.btnMargin,
                   width: sizes.btnWidth,
-                  borderRadius: isWebLandscape
-                    ? scaleByHeight(8, height)
-                    : RFValue(5),
+                  borderRadius: sizes.infoFieldBorderRadius,
                 },
               ]}
             >
@@ -408,7 +392,7 @@ export default function Profile() {
             flexDirection: isWebLandscape ? 'row' : 'column',
             flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
             justifyContent: 'center',
-            gap: RFValue(6),
+            gap: sizes.infoFieldsGap,
             direction: isRTL ? 'rtl' : 'ltr',
           }}
         >
@@ -420,14 +404,10 @@ export default function Profile() {
                   themeController.current?.buttonColorSecondaryDefault,
                 borderColor:
                   themeController.current?.buttonColorSecondaryDefault,
-                [isWebLandscape ? 'height' : 'padding']: isWebLandscape
-                  ? sizes.btnHeight
-                  : sizes.btnPadding,
+                height: sizes.btnHeight,
                 marginBottom: sizes.btnMargin,
                 width: sizes.btnWidth,
-                borderRadius: isWebLandscape
-                  ? scaleByHeight(8, height)
-                  : RFValue(5),
+                borderRadius: sizes.infoFieldBorderRadius,
               },
             ]}
             onPress={() => {
@@ -486,8 +466,8 @@ export default function Profile() {
               <Image
                 source={icons.cross}
                 style={{
-                  width: sizes.iconSize,
-                  height: sizes.iconSize,
+                  width: sizes.modalIconSize,
+                  height: sizes.modalIconSize,
                   tintColor: themeController.current?.textColor,
                 }}
               />
@@ -595,8 +575,8 @@ export default function Profile() {
               <Image
                 source={icons.cross}
                 style={{
-                  width: sizes.iconSize,
-                  height: sizes.iconSize,
+                  width: sizes.modalIconSize,
+                  height: sizes.modalIconSize,
                   tintColor: themeController.current?.textColor,
                 }}
               />
@@ -628,11 +608,9 @@ export default function Profile() {
                     {
                       backgroundColor:
                         themeController.current?.formInputBackground,
-                      borderRadius: isWebLandscape
-                        ? scaleByHeight(8, height)
-                        : RFValue(5),
-                      paddingVertical: sizes.fieldPadding,
-                      paddingHorizontal: sizes.containerPaddingH,
+                      borderRadius: sizes.infoFieldBorderRadius,
+                      height: sizes.btnHeight,
+                      paddingHorizontal: sizes.infoFieldPaddingH,
                       marginBottom: sizes.modalFieldMargin,
                       position: 'relative',
                     },
@@ -643,7 +621,7 @@ export default function Profile() {
                       style={[
                         styles.profileInfoLabel,
                         {
-                          fontSize: sizes.fieldFont * 0.9,
+                          fontSize: sizes.labelFont,
                           color: themeController.current?.formInputLabelColor,
                         },
                       ]}
@@ -695,11 +673,9 @@ export default function Profile() {
                   {
                     backgroundColor:
                       themeController.current?.formInputBackground,
-                    borderRadius: isWebLandscape
-                      ? scaleByHeight(8, height)
-                      : RFValue(5),
-                    paddingVertical: sizes.fieldPadding,
-                    paddingHorizontal: sizes.containerPaddingH,
+                    borderRadius: sizes.infoFieldBorderRadius,
+                    height: sizes.btnHeight,
+                    paddingHorizontal: sizes.infoFieldPaddingH,
                     marginBottom: sizes.modalFieldMargin,
                     position: 'relative',
                   },
@@ -710,7 +686,7 @@ export default function Profile() {
                     style={[
                       styles.profileInfoLabel,
                       {
-                        fontSize: sizes.fieldFont * 0.9,
+                        fontSize: sizes.labelFont,
                         color: themeController.current?.formInputLabelColor,
                       },
                     ]}
@@ -761,11 +737,9 @@ export default function Profile() {
                   {
                     backgroundColor:
                       themeController.current?.formInputBackground,
-                    borderRadius: isWebLandscape
-                      ? scaleByHeight(8, height)
-                      : RFValue(5),
-                    paddingVertical: sizes.fieldPadding,
-                    paddingHorizontal: sizes.containerPaddingH,
+                    borderRadius: sizes.infoFieldBorderRadius,
+                    height: sizes.btnHeight,
+                    paddingHorizontal: sizes.infoFieldPaddingH,
                     marginBottom: sizes.modalFieldMargin,
                   },
                 ]}
@@ -775,7 +749,7 @@ export default function Profile() {
                     style={[
                       styles.profileInfoLabel,
                       {
-                        fontSize: sizes.fieldFont * 0.9,
+                        fontSize: sizes.labelFont,
                         color: themeController.current?.formInputLabelColor,
                       },
                     ]}
@@ -921,6 +895,7 @@ function InfoField({
   isLandscape,
   btnHeight,
   height,
+  sizes,
 }) {
   const { themeController } = useComponentContext();
   const [editMode, setEditMode] = useState(false);
@@ -932,18 +907,13 @@ function InfoField({
         styles.profileInfoString,
         {
           width: Platform.OS === 'web' && isLandscape ? '32%' : '100%',
-          [Platform.OS === 'web' && isLandscape ? 'height' : 'paddingVertical']:
-            Platform.OS === 'web' && isLandscape ? btnHeight : fieldPadding,
+          height: btnHeight,
           marginBottom: fieldMargin,
           backgroundColor: editMode
             ? themeController.current?.formInputBackgroundEditMode
             : themeController.current?.formInputBackground,
-          borderRadius:
-            Platform.OS === 'web' && isLandscape
-              ? scaleByHeight(8, height)
-              : RFValue(5),
-          paddingHorizontal:
-            Platform.OS === 'web' && isLandscape ? RFValue(8) : RFValue(14),
+          borderRadius: sizes.infoFieldBorderRadius,
+          paddingHorizontal: sizes.infoFieldPaddingH,
         },
       ]}
     >
@@ -952,8 +922,9 @@ function InfoField({
           style={[
             styles.profileInfoLabel,
             {
-              fontSize: baseFont * 0.9,
+              fontSize: sizes.labelFont,
               color: themeController.current?.formInputLabelColor,
+              marginBottom: sizes.labelMarginBottom,
             },
           ]}
         >
@@ -988,7 +959,7 @@ function InfoField({
         )}
       </View>
       {editMode ? (
-        <View style={styles.editPanel}>
+        <View style={[styles.editPanel, { gap: sizes.editPanelGap }]}>
           <TouchableOpacity
             onPress={() => {
               setEditMode(false);
@@ -1040,14 +1011,12 @@ function InfoField({
 }
 
 const styles = StyleSheet.create({
-  userProfile: { flex: 1, paddingVertical: RFPercentage(2) },
+  userProfile: { flex: 1 },
   profileBack: {
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: RFValue(10),
     overflow: 'hidden',
-    marginBottom: RFValue(12),
   },
   cameraButton: {
     position: 'absolute',
@@ -1063,52 +1032,45 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   profileInfoString: {
-    borderRadius: 8,
-    paddingHorizontal: RFValue(14),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  breakLine: { width: '100%', height: 1, marginVertical: RFValue(12) },
+  breakLine: { width: '100%', height: 1 },
   primaryBtn: {
-    borderRadius: RFValue(5),
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: RFValue(12),
   },
   primaryText: {
     // fontWeight: 'bold'
   },
   secondaryBtn: {
-    borderRadius: RFValue(5),
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: RFValue(12),
   },
   secondaryText: {
     // fontWeight: 'bold'
   },
   primaryReverseBtn: {
-    borderRadius: RFValue(5),
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    marginBottom: RFValue(12),
   },
   secondaryReverseBtn: {
-    borderRadius: RFValue(5),
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    marginBottom: RFValue(12),
   },
-  profileInfoLabel: { fontWeight: 'bold', marginBottom: RFValue(4) },
+  profileInfoLabel: {
+    // fontWeight: 'bold'
+  },
   profileInfoText: {
     width: '100%',
     fontFamily: 'Rubik-Medium',
     fontWeight: '500',
   },
-  editPanel: { flexDirection: 'row', gap: RFValue(5) },
+  editPanel: { flexDirection: 'row' },
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',

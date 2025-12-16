@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Image,
   Modal,
@@ -9,18 +9,18 @@ import {
   View,
   TouchableWithoutFeedback,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
-import { RFValue, RFPercentage } from 'react-native-responsive-fontsize';
 import { JOB_SUB_TYPES } from '../constants/jobSubTypes';
 import { JOB_TYPES } from '../constants/jobTypes';
 import { LICENSES } from '../constants/licenses';
 import { useComponentContext } from '../context/globalAppContext';
-import { useWindowInfo } from '../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import { icons } from '../constants/icons';
-import { scaleByHeight } from '../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import CommentsSection from './CommentsSection';
 import { useWebView } from '../context/webViewContext';
+import { useWindowInfo } from '../context/windowContext';
 
 const UserSummaryBlock = ({
   user,
@@ -41,73 +41,57 @@ const UserSummaryBlock = ({
   const [modalVisible, setModalVisible] = useState(false);
   const [showContactInfo, setShowContactInfo] = useState(false);
 
-  const { width, height, isLandscape, sidebarWidth } = useWindowInfo?.() || {
-    width: 1280,
-    height: 800,
-    isLandscape: false,
-    sidebarWidth: 0,
-  };
-  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const { width, height } = useWindowDimensions();
+  const {sidebarWidth} = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && width > height;
 
   // компактные размеры для веб-альбомной (меньше, чем на мобильном)
-  const sizes = {
-    font: isWebLandscape ? scaleByHeight(16, height) : RFValue(12),
-    smallFont: isWebLandscape ? scaleByHeight(14, height) : RFValue(10),
-    sectionTitleSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(14),
-    small: isWebLandscape ? scaleByHeight(14, height) : RFValue(10),
-    inputFont: isWebLandscape ? height * 0.013 : RFValue(10),
-    padding: isWebLandscape ? height * 0.009 : RFValue(8),
-    paddingHorizontal: isWebLandscape ? scaleByHeight(17, height) : RFValue(12),
-    margin: isWebLandscape ? height * 0.01 : RFValue(10),
-    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-    thumb: isWebLandscape ? height * 0.11 : RFValue(80),
-    headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
-    headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
-    avatar: isWebLandscape ? scaleByHeight(48, height) : RFValue(33),
-    icon: isWebLandscape ? scaleByHeight(24, height) : RFValue(24),
-    iconSmall: isWebLandscape ? height * 0.025 : RFValue(20),
-    panelWidth: isWebLandscape ? Math.min(width * 0.55, 720) : undefined, // ширина панели модалки на вебе
-    cardWidth: isWebLandscape ? '100%' : '100%', // 👈 3 в ряд для web-landscape
-    logoFont: isWebLandscape ? scaleByHeight(24, height) : RFValue(18),
-    containerHeight: isWebLandscape ? scaleByHeight(80, height) : RFValue(70),
-    pagePaddingHorizontal: isWebLandscape
-      ? scaleByHeight(24, height)
-      : RFValue(15),
-    nameSize: isWebLandscape ? scaleByHeight(28, height) : RFValue(14),
-    professionSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(12),
-    infoSectionMarginBottom: isWebLandscape
-      ? scaleByHeight(23, height)
-      : RFValue(15),
-    btnRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(6),
-    unlockContactBtnHeight: isWebLandscape
-      ? scaleByHeight(38, height)
-      : RFValue(40),
-    unlockContactBtnPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(24, height)
-      : RFValue(15),
-    iconMargin: isWebLandscape ? scaleByHeight(7, height) : RFValue(3),
-    showContactInfoMarginBottom: isWebLandscape
-      ? scaleByHeight(10, height)
-      : RFValue(5),
-    modalAvatar: isWebLandscape ? scaleByHeight(112, height) : RFValue(70),
-    avatarMarginTop: isWebLandscape
-      ? scaleByHeight(24, height)
-      : RFValue(8),
-    avatarMarginBottom: isWebLandscape
-      ? scaleByHeight(8, height)
-      : RFValue(8),
-    contactInfoHeight: isWebLandscape ? scaleByHeight(50, height) : RFValue(30),
-    badgeHeight: isWebLandscape ? scaleByHeight(34, height) : RFValue(20),
-    badgeGap: isWebLandscape ? scaleByHeight(8, height) : RFValue(6),
-    badgePaddingHorizontal: isWebLandscape
-      ? scaleByHeight(12, height)
-      : RFValue(10),
-    providerInfoGap: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-    titleMarginBottom: isWebLandscape ? scaleByHeight(4, height) : RFValue(2),
-    professionMarginBottom: isWebLandscape
-      ? scaleByHeight(32, height)
-      : RFValue(20),
-  };
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+    const scale = isWebLandscape ? web : mobile;
+
+    return {
+      font: scale(16),
+      smallFont: scale(14),
+      sectionTitleSize: scale(18),
+      small: scale(14),
+      inputFont: isWebLandscape ? height * 0.013 : mobile(10),
+      padding: isWebLandscape ? height * 0.009 : mobile(8),
+      paddingHorizontal: scale(17),
+      margin: isWebLandscape ? height * 0.01 : mobile(10),
+      borderRadius: scale(8),
+      thumb: isWebLandscape ? height * 0.11 : mobile(80),
+      headerHeight: isWebLandscape ? web(50) : height * 0.07,
+      headerMargin: isWebLandscape ? web(30) : mobile(5),
+      avatar: isWebLandscape ? web(48) : mobile(33),
+      icon: scale(24),
+      iconSmall: isWebLandscape ? height * 0.025 : mobile(20),
+      panelWidth: isWebLandscape ? Math.min(width * 0.55, 720) : undefined,
+      cardWidth: '100%',
+      logoFont: scale(24),
+      containerHeight: scale(80),
+      pagePaddingHorizontal: scale(24),
+      nameSize: scale(28),
+      professionSize: scale(20),
+      infoSectionMarginBottom: scale(23),
+      btnRadius: scale(8),
+      unlockContactBtnHeight: scale(38),
+      unlockContactBtnPaddingHorizontal: scale(24),
+      iconMargin: scale(7),
+      showContactInfoMarginBottom: scale(10),
+      modalAvatar: isWebLandscape ? web(112) : mobile(70),
+      avatarMarginTop: scale(24),
+      avatarMarginBottom: scale(8),
+      contactInfoHeight: scale(50),
+      badgeHeight: scale(34),
+      badgeGap: scale(8),
+      badgePaddingHorizontal: scale(12),
+      providerInfoGap: scale(8),
+      titleMarginBottom: scale(4),
+      professionMarginBottom: scale(32),
+    };
+  }, [isWebLandscape, width, height]);
 
   const userId = user.id || user?._j?.id;
 
@@ -862,37 +846,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   nameText: {
-    fontSize: RFValue(12),
     fontWeight: '500',
   },
   visitButton: {
-    paddingHorizontal: RFValue(12),
-    paddingVertical: RFValue(5),
-    borderRadius: RFValue(5),
   },
   visitButtonText: {
     textDecorationLine: 'underline',
   },
   modalContent: {
-    padding: RFValue(12),
-    paddingBottom: RFValue(20),
   },
   modalAvatar: {
-    width: RFValue(70),
-    height: RFValue(70),
-    borderRadius: RFValue(50),
     alignSelf: 'center',
-    marginBottom: RFValue(8),
   },
   modalAvatarPlaceholder: {
-    width: RFValue(70),
-    height: RFValue(70),
-    borderRadius: RFValue(50),
     backgroundColor: '#ddd',
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    marginBottom: RFValue(8),
   },
   modalName: {
     textAlign: 'center',
@@ -904,7 +874,6 @@ const styles = StyleSheet.create({
   wrapRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: RFValue(10),
   },
   professionBadge: {
     borderWidth: 1,
@@ -917,22 +886,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   typeText: {
-    fontSize: RFValue(10),
     color: '#444',
   },
   sectionTitle: {
     fontWeight: '600',
-    fontSize: RFValue(12),
-    marginBottom: RFValue(5),
     color: '#333',
   },
   aboutText: {
-    fontSize: RFValue(10),
     color: '#444',
-    marginBottom: RFValue(12),
   },
   contactInfo: {
-    fontSize: RFValue(11),
     color: '#333',
     marginVertical: 2,
   },
@@ -949,13 +912,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Rubik-Bold',
   },
   primaryBtn: {
-    // marginHorizontal: RFValue(12),
     alignItems: 'center',
-    // marginVertical: RFValue(5),
   },
-  primaryText: {
-    // fontSize: RFValue(12),
-  },
+  primaryText: {},
 
   // фон модалки (перехватчик кликов)
   backdrop: {

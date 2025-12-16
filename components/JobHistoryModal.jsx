@@ -1,23 +1,24 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   FlatList,
+  Image,
   Modal,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Platform,
-  Image,
+  useWindowDimensions,
 } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
+import { icons } from '../constants/icons';
 import { JOB_SUB_TYPES } from '../constants/jobSubTypes';
 import { JOB_TYPES } from '../constants/jobTypes';
 import { LICENSES } from '../constants/licenses';
 import { useComponentContext } from '../context/globalAppContext';
-import { useTranslation } from 'react-i18next';
 import { useWindowInfo } from '../context/windowContext';
-import { icons } from '../constants/icons';
 import JobModalWrapper from './JobModalWrapper';
+import { useTranslation } from 'react-i18next';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 
 function CustomModal({isWebLandscape, visible, transparent, animationType, children}) {
   if (isWebLandscape) {
@@ -37,30 +38,39 @@ function CustomModal({isWebLandscape, visible, transparent, animationType, child
 export default function JobHistoryModal({ visible, onClose, history = [] }) {
   const { themeController, languageController } = useComponentContext();
   const { t } = useTranslation();
-  const { height, isLandscape } = useWindowInfo();
+  const { height } = useWindowDimensions();
+  const { isLandscape } = useWindowInfo();
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
-  // компактные размеры для веб-альбомной; на остальных — RFValue как раньше
-  const sizes = {
-    headerTitle: isWebLandscape ? height * 0.03 : RFValue(16),
-    icon: isWebLandscape ? height * 0.035 : RFValue(24),
-    modalTop: isWebLandscape ? height * 0.02 : RFValue(40),
-    modalSide: isWebLandscape ? height * 0.018 : RFValue(16),
-    sortIcon: isWebLandscape ? height * 0.018 : RFValue(14),
-    sortText: isWebLandscape ? height * 0.014 : RFValue(13),
-    listBottom: isWebLandscape ? height * 0.025 : RFValue(20),
-    cardRadius: isWebLandscape ? height * 0.012 : RFValue(10),
-    cardPad: isWebLandscape ? height * 0.016 : RFValue(12),
-    cardGap: isWebLandscape ? height * 0.014 : RFValue(12),
-    cardDate: isWebLandscape ? height * 0.016 : RFValue(13),
-    cardType: isWebLandscape ? height * 0.015 : RFValue(13),
-    changeGap: isWebLandscape ? height * 0.01 : RFValue(6),
-    bullet: isWebLandscape ? height * 0.007 : RFValue(6),
-    bulletRadius: isWebLandscape ? height * 0.0035 : RFValue(3),
-    bulletRight: isWebLandscape ? height * 0.01 : RFValue(8),
-    changeText: isWebLandscape ? height * 0.014 : RFValue(12),
-  };
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+
+    return {
+      headerTitle: isWebLandscape ? web(16) : mobile(16),
+      icon: isWebLandscape ? web(24) : mobile(24),
+      modalTop: isWebLandscape ? web(40) : mobile(40),
+      modalSide: isWebLandscape ? web(16) : mobile(16),
+      sortIcon: isWebLandscape ? web(14) : mobile(14),
+      sortText: isWebLandscape ? web(13) : mobile(13),
+      listBottom: isWebLandscape ? web(20) : mobile(20),
+      cardRadius: isWebLandscape ? web(10) : mobile(10),
+      cardPad: isWebLandscape ? web(12) : mobile(12),
+      cardGap: isWebLandscape ? web(12) : mobile(12),
+      cardDate: isWebLandscape ? web(13) : mobile(13),
+      cardType: isWebLandscape ? web(13) : mobile(13),
+      changeGap: isWebLandscape ? web(6) : mobile(6),
+      bullet: isWebLandscape ? web(6) : mobile(6),
+      bulletRadius: isWebLandscape ? web(3) : mobile(3),
+      bulletRight: isWebLandscape ? web(8) : mobile(8),
+      changeText: isWebLandscape ? web(12) : mobile(12),
+      sortButtonMarginBottom: isWebLandscape ? web(10) : mobile(10),
+      sortTextMarginLeft: isWebLandscape ? web(4) : mobile(4),
+      cardHeaderMarginBottom: isWebLandscape ? web(8) : mobile(8),
+      changeListMarginTop: isWebLandscape ? web(4) : mobile(4),
+    };
+  }, [height, isWebLandscape]);
 
   const [sortNewFirst, setSortNewFirst] = useState(true);
 
@@ -137,7 +147,12 @@ export default function JobHistoryModal({ visible, onClose, history = [] }) {
           },
         ]}
       >
-        <View style={styles.cardHeader}>
+        <View
+          style={[
+            styles.cardHeader,
+            { marginBottom: sizes.cardHeaderMarginBottom },
+          ]}
+        >
           <Text
             style={[
               styles.cardDate,
@@ -163,7 +178,9 @@ export default function JobHistoryModal({ visible, onClose, history = [] }) {
             {eventTypeLabel}
           </Text>
         </View>
-        <View style={[styles.changeList, { marginTop: sizes.changeGap / 2 }]}>
+        <View
+          style={[styles.changeList, { marginTop: sizes.changeListMarginTop }]}
+        >
           {changeKeys.map((key, index) => (
             <View
               key={index}
@@ -200,7 +217,12 @@ export default function JobHistoryModal({ visible, onClose, history = [] }) {
   };
 
   return (
-    <CustomModal visible={visible} isWebLandscape={isWebLandscape} animationType='slide' transparent={false}>
+    <CustomModal
+      visible={visible}
+      isWebLandscape={isWebLandscape}
+      animationType='slide'
+      transparent={false}
+    >
       <View
         style={[
           styles.modalContainer,
@@ -212,8 +234,15 @@ export default function JobHistoryModal({ visible, onClose, history = [] }) {
           },
         ]}
       >
-        <View style={[styles.header, { marginBottom: sizes.cardGap, 
-            flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        <View
+          style={[
+            styles.header,
+            {
+              marginBottom: sizes.cardGap,
+              flexDirection: isRTL ? 'row-reverse' : 'row',
+            },
+          ]}
+        >
           <TouchableOpacity onPress={onClose}>
             <Image
               source={icons.cross}
@@ -242,7 +271,7 @@ export default function JobHistoryModal({ visible, onClose, history = [] }) {
           style={[
             styles.sortButton,
             {
-              marginBottom: isWebLandscape ? sizes.cardGap / 1.4 : RFValue(10),
+              marginBottom: sizes.sortButtonMarginBottom,
             },
           ]}
         >
@@ -261,6 +290,7 @@ export default function JobHistoryModal({ visible, onClose, history = [] }) {
               {
                 fontSize: sizes.sortText,
                 color: themeController.current?.textColor || 'black',
+                marginLeft: sizes.sortTextMarginLeft,
               },
             ]}
           >
@@ -288,36 +318,23 @@ export default function JobHistoryModal({ visible, onClose, history = [] }) {
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    paddingTop: RFValue(40),
-    paddingHorizontal: RFValue(16),
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: RFValue(16),
   },
   headerTitle: {
-    fontSize: RFValue(16),
     fontWeight: 'bold',
     color: '#0A62EA',
   },
   sortButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: RFValue(10),
   },
-  sortText: {
-    fontSize: RFValue(13),
-    marginLeft: RFValue(4),
-  },
-  listContent: {
-    paddingBottom: RFValue(20),
-  },
+  sortText: {},
+  listContent: {},
   card: {
-    borderRadius: RFValue(10),
-    padding: RFValue(12),
-    marginBottom: RFValue(12),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -327,35 +344,18 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: RFValue(8),
   },
   cardDate: {
-    fontSize: RFValue(13),
     fontWeight: 'bold',
-    color: '#000',
   },
-  cardType: {
-    fontSize: RFValue(13),
-    color: 'rgba(0,0,0,0.5)',
-  },
-  changeList: {
-    marginTop: RFValue(4),
-  },
+  cardType: {},
+  changeList: {},
   changeItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: RFValue(6),
   },
-  bullet: {
-    width: RFValue(6),
-    height: RFValue(6),
-    borderRadius: RFValue(3),
-    marginTop: RFValue(6),
-    marginRight: RFValue(8),
-  },
+  bullet: {},
   changeText: {
     flex: 1,
-    fontSize: RFValue(12),
-    color: '#444',
   },
 });

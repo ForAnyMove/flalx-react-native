@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,11 @@ import {
   Animated,
   ActivityIndicator,
   useWindowDimensions,
-  Platform
+  Platform,
 } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
-import { scaleByHeight } from '../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 
 export default function LoadingStub() {
   const { t } = useTranslation();
@@ -31,41 +30,39 @@ export default function LoadingStub() {
         Animated.timing(pulse, {
           toValue: 0.6,
           duration: 700,
-          useNativeDriver: true
+          useNativeDriver: true,
         }),
         Animated.timing(pulse, {
           toValue: 1,
           duration: 700,
-          useNativeDriver: true
-        })
+          useNativeDriver: true,
+        }),
       ])
     ).start();
   }, []);
 
-  const fontSize = isWebLandscape
-    ? scaleByHeight(48, height)
-    : RFValue(40);
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
 
-  const letterSpacing = isWebLandscape
-    ? scaleByHeight(4, height)
-    : RFValue(2);
+    return {
+      fontSize: isWebLandscape ? web(48) : mobile(40),
+      letterSpacing: isWebLandscape ? web(4) : mobile(2),
+      indicatorMarginTop: isWebLandscape ? web(20) : mobile(20),
+    };
+  }, [isWebLandscape, height]);
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: theme.backgroundColor }
-      ]}
-    >
+    <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <Animated.Text
         style={[
           styles.text,
           {
             opacity: pulse,
             color: theme.primaryColor,
-            fontSize,
-            letterSpacing
-          }
+            fontSize: sizes.fontSize,
+            letterSpacing: sizes.letterSpacing,
+          },
         ]}
       >
         FLALX
@@ -74,7 +71,7 @@ export default function LoadingStub() {
       <ActivityIndicator
         size={isLandscape ? 'large' : 'small'}
         color={theme.primaryColor}
-        style={{ marginTop: RFValue(20) }}
+        style={{ marginTop: sizes.indicatorMarginTop }}
       />
     </View>
   );

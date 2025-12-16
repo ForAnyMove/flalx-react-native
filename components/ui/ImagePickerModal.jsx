@@ -1,5 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Modal,
   Platform,
@@ -7,17 +7,28 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
-import { scaleByHeight } from '../../utils/resizeFuncs';
-import { useWindowInfo } from '../../context/windowContext';
-import { RFValue } from 'react-native-responsive-fontsize';
+import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { normalizeImageUri } from '../../utils/supabase/uriHelpers';
 
 export default function ImagePickerModal({ visible, onClose, onAdd }) {
   const [url, setUrl] = useState('');
 
-  const { width, height, isLandscape, sidebarWidth = 0 } = useWindowInfo();
-  const isWebLandscape = isLandscape && Platform.OS === 'web';
+  const { width, height } = useWindowDimensions();
+  const isWebLandscape = width > height && Platform.OS === 'web';
+
+  const sizes = useMemo(() => {
+    const scale = isWebLandscape ? scaleByHeight : scaleByHeightMobile;
+    return {
+      modalWidth: isWebLandscape ? scale(350, height) : '80%',
+      borderRadius: scale(8, height),
+      padding: scale(20, height),
+      titleFontSize: scale(18, height),
+      marginBottom: scale(10, height),
+      inputPadding: scale(8, height),
+    };
+  }, [isWebLandscape, height]);
 
   const pickImageFromDevice = async () => {
     try {
@@ -81,10 +92,6 @@ export default function ImagePickerModal({ visible, onClose, onAdd }) {
     }
   };
 
-  const sizes = {
-    modalWidth: isWebLandscape ? scaleByHeight(350, height) : '80%',
-    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-  };
   return (
     <Modal visible={visible} transparent animationType='slide'>
       <View
@@ -98,22 +105,29 @@ export default function ImagePickerModal({ visible, onClose, onAdd }) {
         <View
           style={{
             backgroundColor: 'white',
-            padding: 20,
+            padding: sizes.padding,
             borderRadius: sizes.borderRadius,
             width: sizes.modalWidth,
           }}
         >
-          <Text style={{ fontSize: 18, marginBottom: 10 }}>Add Image</Text>
+          <Text
+            style={{
+              fontSize: sizes.titleFontSize,
+              marginBottom: sizes.marginBottom,
+            }}
+          >
+            Add Image
+          </Text>
           <TouchableOpacity
             onPress={pickImageFromDevice}
-            style={{ marginBottom: 10 }}
+            style={{ marginBottom: sizes.marginBottom }}
           >
             <Text style={{ color: '#0A62EA' }}>Pick from device gallery</Text>
           </TouchableOpacity>
           {Platform.OS !== 'web' && (
             <TouchableOpacity
               onPress={openCameraFromDevice}
-              style={{ marginBottom: 10 }}
+              style={{ marginBottom: sizes.marginBottom }}
             >
               <Text style={{ color: '#0A62EA' }}>Open Camera</Text>
             </TouchableOpacity>
@@ -126,12 +140,15 @@ export default function ImagePickerModal({ visible, onClose, onAdd }) {
               borderWidth: 1,
               borderColor: '#ccc',
               borderRadius: sizes.borderRadius,
-              padding: 8,
-              marginBottom: 10,
+              padding: sizes.inputPadding,
+              marginBottom: sizes.marginBottom,
             }}
           />
           <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-            <TouchableOpacity onPress={onClose} style={{ marginRight: 10 }}>
+            <TouchableOpacity
+              onPress={onClose}
+              style={{ marginRight: sizes.marginBottom }}
+            >
               <Text>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={handleAddUrl}>

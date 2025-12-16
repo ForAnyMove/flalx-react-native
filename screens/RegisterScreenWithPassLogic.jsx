@@ -11,10 +11,9 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { RFValue } from 'react-native-responsive-fontsize';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
-import { scaleByHeight } from '../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 
 export default function RegisterScreenWithPass() {
   const { t } = useTranslation();
@@ -33,148 +32,79 @@ export default function RegisterScreenWithPass() {
   const isLandscape = width > height;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
-  const dynamicStyles = useMemo(() => {
-    return {
-      scrollContent: {
-        paddingHorizontal: isWebLandscape ? '6%' : '8%',
-        paddingVertical: isWebLandscape
-          ? scaleByHeight(0, height)
-          : RFValue(20),
-      },
-      title: {
-        fontSize: isWebLandscape ? scaleByHeight(24, height) : RFValue(20),
-        marginBottom: isWebLandscape ? scaleByHeight(0, height) : RFValue(18),
-      },
-      step2Title: {
-        marginBottom: isWebLandscape ? scaleByHeight(36, height) : RFValue(30),
-      },
-      button: {
-        paddingVertical: isWebLandscape
-          ? scaleByHeight(12, height)
-          : RFValue(14),
-        borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(7),
-        ...Platform.select({
-          web: isWebLandscape && {
-            width: scaleByHeight(330, height),
-            height: scaleByHeight(62, height),
-          },
-        }),
-      },
-      buttonText: {
-        fontSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(16),
-      },
-      progressContainer: {
-        marginVertical: isWebLandscape
-          ? scaleByHeight(14, height)
-          : RFValue(20),
-      },
-      dot: {
-        marginHorizontal: isWebLandscape
-          ? scaleByHeight(14, height)
-          : RFValue(10),
-      },
-      backArrow: {
-        top: isWebLandscape ? scaleByHeight(72, height) : RFValue(20),
-        height: isWebLandscape ? scaleByHeight(24, height) : RFValue(22),
-        [isRTL ? 'right' : 'left']: isWebLandscape
-          ? scaleByHeight(height * 1.4 * 0.1, height)
-          : RFValue(10),
-      },
-      finishedText: {
-        fontSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(20),
-      },
-      termsBox: {
-        paddingVertical: isWebLandscape
-          ? scaleByHeight(5, height)
-          : RFValue(10),
-        marginBottom: isWebLandscape ? scaleByHeight(12, height) : RFValue(15),
-      },
-      termsBoxText: {
-        fontSize: isWebLandscape ? scaleByHeight(16, height) : RFValue(13),
-        lineHeight: isWebLandscape ? scaleByHeight(18, height) : RFValue(16),
-      },
-      termsCheckboxText: {
-        fontSize: isWebLandscape ? scaleByHeight(13, height) : RFValue(14),
-      },
-      avatarContainer: {
-        marginBottom: isWebLandscape ? scaleByHeight(40, height) : RFValue(10),
-        height: isWebLandscape ? scaleByHeight(158, height) : RFValue(150),
-      },
-      avatarWrapper: {
-        borderRadius: isWebLandscape ? scaleByHeight(50, height) : RFValue(60),
-      },
-      avatarImage: {
-        borderRadius: isWebLandscape ? scaleByHeight(50, height) : RFValue(60),
-      },
-      cameraButton: {
-        width: isWebLandscape ? scaleByHeight(26, height) : RFValue(26),
-        height: isWebLandscape ? scaleByHeight(26, height) : RFValue(26),
-        borderRadius: isWebLandscape ? scaleByHeight(60, height) : RFValue(70),
-      },
-      avatarRecommendsText: {
-        marginTop: isWebLandscape ? scaleByHeight(8, height) : RFValue(10),
-        fontSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(12),
-        paddingHorizontal: isWebLandscape
-          ? scaleByHeight(0, height)
-          : RFValue(20),
-      },
-      inputBlock: {
-        marginBottom: isWebLandscape ? scaleByHeight(24, height) : RFValue(20),
-        borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(7),
-        paddingVertical: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-        height: isWebLandscape ? scaleByHeight(64, height) : RFValue(40),
-        width: isWebLandscape ? scaleByHeight(330, height) : '100%',
-      },
-      label: {
-        paddingHorizontal: isWebLandscape
-          ? scaleByHeight(16, height)
-          : RFValue(10),
-        paddingTop: isWebLandscape ? scaleByHeight(4, height) : RFValue(6),
-        fontSize: isWebLandscape ? scaleByHeight(12, height) : RFValue(12),
-      },
-      input: {
-        paddingHorizontal: isWebLandscape
-          ? scaleByHeight(16, height)
-          : RFValue(10),
-        borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(8),
-        fontSize: isWebLandscape ? scaleByHeight(16, height) : RFValue(14),
-      },
-      multilineInput: {
-        height: isWebLandscape ? scaleByHeight(100, height) : RFValue(120),
-        marginBottom: isWebLandscape ? scaleByHeight(25, height) : RFValue(25),
-      },
-      inputsContainer: {
-        paddingHorizontal: isWebLandscape
-          ? scaleByHeight(10, height)
-          : RFValue(10),
-      },
-      typeTagsSelector: {
-        marginBottom: isWebLandscape ? scaleByHeight(32, height) : RFValue(32),
-      },
-    };
-  }, [height, isRTL]);
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
 
-  const sizes = {
-    activeDotSize: isWebLandscape ? scaleByHeight(12, height) : RFValue(10),
-    secondDotSize: isWebLandscape ? scaleByHeight(8, height) : RFValue(8),
-    smallDotSize: isWebLandscape ? scaleByHeight(4, height) : RFValue(4),
-    arrowSideMove: isWebLandscape ? scaleByHeight(200, height) : RFValue(10),
-    checkboxSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(18),
-    checkboxRadius: isWebLandscape ? scaleByHeight(3, height) : RFValue(3),
-    checkboxTextSize: isWebLandscape ? scaleByHeight(10, height) : RFValue(8),
-    inputMarginBottom: isWebLandscape ? scaleByHeight(3, height) : RFValue(4),
-    containerGap: isWebLandscape ? scaleByHeight(25, height) : RFValue(10),
-    containerPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(10, height)
-      : RFValue(10),
-    multilineInputHeight: isWebLandscape
-      ? scaleByHeight(120, height)
-      : RFValue(100),
-    multilineInputMarginBottom: isWebLandscape
-      ? scaleByHeight(10, height)
-      : RFValue(25),
-    primaryButtonWidth: isWebLandscape ? scaleByHeight(153, height) : null,
-  };
+    return {
+      scrollContentPaddingHorizontal: isWebLandscape ? '6%' : '8%',
+      scrollContentPaddingVertical: isWebLandscape ? web(0) : mobile(20),
+      titleFontSize: isWebLandscape ? web(24) : mobile(20),
+      titleMarginBottom: isWebLandscape ? web(0) : mobile(18),
+      step2TitleMarginBottom: isWebLandscape ? web(36) : mobile(30),
+      buttonPaddingVertical: isWebLandscape ? web(12) : mobile(14),
+      buttonBorderRadius: isWebLandscape ? web(8) : mobile(7),
+      buttonWidth: isWebLandscape ? web(330) : '100%',
+      buttonHeight: isWebLandscape ? web(62) : undefined,
+      buttonTextFontSize: isWebLandscape ? web(20) : mobile(16),
+      progressContainerMarginVertical: isWebLandscape ? web(14) : mobile(20),
+      dotMarginHorizontal: isWebLandscape ? web(14) : mobile(10),
+      backArrowTop: isWebLandscape ? web(72) : mobile(20),
+      backArrowHeight: isWebLandscape ? web(24) : mobile(22),
+      backArrowSide: isWebLandscape
+        ? web(height * 1.4 * 0.1)
+        : mobile(10),
+      finishedTextFontSize: isWebLandscape ? web(18) : mobile(20),
+      termsBoxPaddingVertical: isWebLandscape ? web(5) : mobile(10),
+      termsBoxMarginBottom: isWebLandscape ? web(12) : mobile(15),
+      termsBoxTextFontSize: isWebLandscape ? web(16) : mobile(13),
+      termsBoxTextLineHeight: isWebLandscape ? web(18) : mobile(16),
+      termsCheckboxTextFontSize: isWebLandscape ? web(13) : mobile(14),
+      avatarContainerMarginBottom: isWebLandscape ? web(40) : mobile(10),
+      avatarContainerHeight: isWebLandscape ? web(158) : mobile(150),
+      avatarWrapperBorderRadius: isWebLandscape ? web(50) : mobile(60),
+      avatarImageBorderRadius: isWebLandscape ? web(50) : mobile(60),
+      cameraButtonWidth: isWebLandscape ? web(26) : mobile(26),
+      cameraButtonHeight: isWebLandscape ? web(26) : mobile(26),
+      cameraButtonBorderRadius: isWebLandscape ? web(60) : mobile(70),
+      avatarRecommendsTextMarginTop: isWebLandscape ? web(8) : mobile(10),
+      avatarRecommendsTextFontSize: isWebLandscape ? web(14) : mobile(12),
+      avatarRecommendsTextPaddingHorizontal: isWebLandscape
+        ? web(0)
+        : mobile(20),
+      inputBlockMarginBottom: isWebLandscape ? web(24) : mobile(20),
+      inputBlockBorderRadius: isWebLandscape ? web(8) : mobile(7),
+      inputBlockPaddingVertical: isWebLandscape ? web(8) : mobile(5),
+      inputBlockHeight: isWebLandscape ? web(64) : mobile(40),
+      inputBlockWidth: isWebLandscape ? web(330) : '100%',
+      labelPaddingHorizontal: isWebLandscape ? web(16) : mobile(10),
+      labelPaddingTop: isWebLandscape ? web(4) : mobile(6),
+      labelFontSize: isWebLandscape ? web(12) : mobile(12),
+      inputPaddingHorizontal: isWebLandscape ? web(16) : mobile(10),
+      inputBorderRadius: isWebLandscape ? web(8) : mobile(8),
+      inputFontSize: isWebLandscape ? web(16) : mobile(14),
+      multilineInputHeight: isWebLandscape ? web(100) : mobile(120),
+      multilineInputMarginBottom: isWebLandscape ? web(25) : mobile(25),
+      inputsContainerPaddingHorizontal: isWebLandscape ? web(10) : mobile(10),
+      typeTagsSelectorMarginBottom: isWebLandscape ? web(32) : mobile(32),
+      activeDotSize: isWebLandscape ? web(12) : mobile(10),
+      secondDotSize: isWebLandscape ? web(8) : mobile(8),
+      smallDotSize: isWebLandscape ? web(4) : mobile(4),
+      arrowSideMove: isWebLandscape ? web(200) : mobile(10),
+      checkboxSize: isWebLandscape ? web(18) : mobile(18),
+      checkboxRadius: isWebLandscape ? web(3) : mobile(3),
+      checkboxTextSize: isWebLandscape ? web(10) : mobile(8),
+      inputMarginBottom: isWebLandscape ? web(3) : mobile(4),
+      containerGap: isWebLandscape ? web(25) : mobile(10),
+      containerPaddingHorizontal: isWebLandscape ? web(10) : mobile(10),
+      primaryButtonWidth: isWebLandscape ? web(153) : null,
+      errorMarginTop: isWebLandscape ? web(4) : mobile(4),
+      eyeIconRight: isWebLandscape ? web(14) : mobile(12),
+      eyeIconTop: isWebLandscape ? web(20) : mobile(38),
+      eyeIconWidth: isWebLandscape ? web(24) : mobile(22),
+      eyeIconHeight: isWebLandscape ? web(24) : mobile(22),
+    };
+  }, [isWebLandscape, height, isRTL]);
 
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
@@ -296,7 +226,12 @@ export default function RegisterScreenWithPass() {
       disabled={disabled}
       style={[
         styles.button,
-        dynamicStyles.button,
+        {
+          paddingVertical: sizes.buttonPaddingVertical,
+          borderRadius: sizes.buttonBorderRadius,
+          width: sizes.buttonWidth,
+          height: sizes.buttonHeight,
+        },
         {
           backgroundColor: disabled
             ? theme.buttonColorPrimaryDisabled
@@ -309,8 +244,10 @@ export default function RegisterScreenWithPass() {
         <Text
           style={[
             styles.buttonText,
-            dynamicStyles.buttonText,
-            { color: theme.buttonTextColorPrimary },
+            {
+              fontSize: sizes.buttonTextFontSize,
+              color: theme.buttonTextColorPrimary,
+            },
             customStyle?.btnText,
           ]}
         >
@@ -330,8 +267,11 @@ export default function RegisterScreenWithPass() {
       }
       style={[
         styles.backArrow,
-        dynamicStyles.backArrow,
-        { [isRTL ? 'right' : 'left']: sizes.arrowSideMove },
+        {
+          top: sizes.backArrowTop,
+          height: sizes.backArrowHeight,
+          [isRTL ? 'right' : 'left']: sizes.arrowSideMove,
+        },
       ]}
     >
       <Image
@@ -350,7 +290,12 @@ export default function RegisterScreenWithPass() {
           { backgroundColor: theme.backgroundColor },
         ]}
       >
-        <Text style={[styles.finishedText, { color: theme.textColor }]}>
+        <Text
+          style={[
+            styles.finishedText,
+            { color: theme.textColor, fontSize: sizes.finishedTextFontSize },
+          ]}
+        >
           {t('register.register_success')}
         </Text>
       </View>
@@ -400,7 +345,10 @@ export default function RegisterScreenWithPass() {
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollContent,
-          dynamicStyles.scrollContent,
+          {
+            paddingHorizontal: sizes.scrollContentPaddingHorizontal,
+            paddingVertical: sizes.scrollContentPaddingVertical,
+          },
           !isWebLandscape && { height: '100%' },
           !isWebLandscape &&
             step === 1 && {
@@ -437,9 +385,11 @@ export default function RegisterScreenWithPass() {
               <Text
                 style={[
                   styles.title,
-                  dynamicStyles.title,
-                  dynamicStyles.step2Title,
-                  { color: theme.textColor },
+                  {
+                    color: theme.textColor,
+                    fontSize: sizes.titleFontSize,
+                    marginBottom: sizes.step2TitleMarginBottom,
+                  },
                 ]}
               >
                 {t('register.profile_create')}
@@ -447,23 +397,34 @@ export default function RegisterScreenWithPass() {
 
               {/* --- FIELDS --- */}
               <View
-                style={[styles.inputsContainer, dynamicStyles.inputsContainer]}
+                style={[
+                  styles.inputsContainer,
+                  { paddingHorizontal: sizes.inputsContainerPaddingHorizontal },
+                ]}
               >
                 {/* --- EMAIL --- */}
                 <View
                   style={[
                     styles.inputBlock,
-                    dynamicStyles.inputBlock,
-                    { backgroundColor: theme.formInputBackground },
+                    {
+                      backgroundColor: theme.formInputBackground,
+                      marginBottom: sizes.inputBlockMarginBottom,
+                      borderRadius: sizes.inputBlockBorderRadius,
+                      paddingVertical: sizes.inputBlockPaddingVertical,
+                      height: sizes.inputBlockHeight,
+                      width: sizes.inputBlockWidth,
+                    },
                   ]}
                 >
                   <Text
                     style={[
                       styles.label,
-                      dynamicStyles.label,
                       {
                         textAlign: isRTL ? 'right' : 'left',
                         color: theme.textColor,
+                        paddingHorizontal: sizes.labelPaddingHorizontal,
+                        paddingTop: sizes.labelPaddingTop,
+                        fontSize: sizes.labelFontSize,
                       },
                     ]}
                   >
@@ -479,27 +440,22 @@ export default function RegisterScreenWithPass() {
                     placeholder={t('register.email')}
                     style={[
                       styles.input,
-                      dynamicStyles.input,
                       {
                         textAlign: isRTL ? 'right' : 'left',
                         color: theme.textColor,
-                        backgroundColor: theme.defaultBlocksBackground,
-                        borderColor: theme.borderColor,
-                        borderWidth: 1,
-                        // прозрачный инпут внутри окрашенного fieldBlock
                         backgroundColor: 'transparent',
                         borderWidth: 0,
                         marginBottom: sizes.inputMarginBottom,
+                        paddingHorizontal: sizes.inputPaddingHorizontal,
+                        borderRadius: sizes.inputBorderRadius,
+                        fontSize: sizes.inputFontSize,
                       },
-                      isWebLandscape
-                        ? {
-                            // убираем чёрную обводку (RN Web)
-                            outlineStyle: 'none',
-                            outlineWidth: 0,
-                            outlineColor: 'transparent',
-                            boxShadow: 'none',
-                          }
-                        : null,
+                      isWebLandscape && {
+                        outlineStyle: 'none',
+                        outlineWidth: 0,
+                        outlineColor: 'transparent',
+                        boxShadow: 'none',
+                      },
                     ]}
                     placeholderTextColor={theme.formInputPlaceholderColor}
                   />
@@ -509,7 +465,7 @@ export default function RegisterScreenWithPass() {
                       style={{
                         color: theme.errorTextColor,
                         marginTop: sizes.multilineInputMarginBottom,
-                        fontSize: dynamicStyles.label.fontSize,
+                        fontSize: sizes.labelFontSize,
                       }}
                     >
                       {emailError}
@@ -521,20 +477,26 @@ export default function RegisterScreenWithPass() {
                 <View
                   style={[
                     styles.inputBlock,
-                    dynamicStyles.inputBlock,
                     {
                       backgroundColor: theme.formInputBackground,
                       position: 'relative',
+                      marginBottom: sizes.inputBlockMarginBottom,
+                      borderRadius: sizes.inputBlockBorderRadius,
+                      paddingVertical: sizes.inputBlockPaddingVertical,
+                      height: sizes.inputBlockHeight,
+                      width: sizes.inputBlockWidth,
                     },
                   ]}
                 >
                   <Text
                     style={[
                       styles.label,
-                      dynamicStyles.label,
                       {
                         textAlign: isRTL ? 'right' : 'left',
                         color: theme.textColor,
+                        paddingHorizontal: sizes.labelPaddingHorizontal,
+                        paddingTop: sizes.labelPaddingTop,
+                        fontSize: sizes.labelFontSize,
                       },
                     ]}
                   >
@@ -551,33 +513,33 @@ export default function RegisterScreenWithPass() {
                     placeholder={t('register.password')}
                     style={[
                       styles.input,
-                      dynamicStyles.input,
                       {
                         textAlign: isRTL ? 'right' : 'left',
                         color: theme.textColor,
-                        backgroundColor: theme.defaultBlocksBackground,
-                        borderColor: theme.borderColor,
-                        borderWidth: 1,
-                        // прозрачный инпут внутри окрашенного fieldBlock
                         backgroundColor: 'transparent',
                         borderWidth: 0,
                         marginBottom: sizes.inputMarginBottom,
+                        paddingHorizontal: sizes.inputPaddingHorizontal,
+                        borderRadius: sizes.inputBorderRadius,
+                        fontSize: sizes.inputFontSize,
                       },
-                      isWebLandscape
-                        ? {
-                            // убираем чёрную обводку (RN Web)
-                            outlineStyle: 'none',
-                            outlineWidth: 0,
-                            outlineColor: 'transparent',
-                            boxShadow: 'none',
-                          }
-                        : null,
+                      isWebLandscape && {
+                        outlineStyle: 'none',
+                        outlineWidth: 0,
+                        outlineColor: 'transparent',
+                        boxShadow: 'none',
+                      },
                     ]}
                     placeholderTextColor={theme.formInputPlaceholderColor}
                   />
 
                   {passwordError && (
-                    <Text style={{ color: 'red', marginTop: RFValue(4) }}>
+                    <Text
+                      style={{
+                        color: 'red',
+                        marginTop: sizes.errorMarginTop,
+                      }}
+                    >
                       {passwordError}
                     </Text>
                   )}
@@ -585,25 +547,11 @@ export default function RegisterScreenWithPass() {
                     onPress={() => setShowPassword((prev) => !prev)}
                     style={{
                       position: 'absolute',
-                      right: isRTL
-                        ? undefined
-                        : isWebLandscape
-                        ? scaleByHeight(14, height)
-                        : RFValue(12),
-                      left: isRTL
-                        ? isWebLandscape
-                          ? scaleByHeight(14, height)
-                          : RFValue(12)
-                        : undefined,
-                      top: isWebLandscape
-                        ? scaleByHeight(20, height)
-                        : RFValue(38),
-                      width: isWebLandscape
-                        ? scaleByHeight(24, height)
-                        : RFValue(22),
-                      height: isWebLandscape
-                        ? scaleByHeight(24, height)
-                        : RFValue(22),
+                      right: isRTL ? undefined : sizes.eyeIconRight,
+                      left: isRTL ? sizes.eyeIconRight : undefined,
+                      top: sizes.eyeIconTop,
+                      width: sizes.eyeIconWidth,
+                      height: sizes.eyeIconHeight,
                       justifyContent: 'center',
                       alignItems: 'center',
                     }}
@@ -611,12 +559,8 @@ export default function RegisterScreenWithPass() {
                     <Image
                       source={showPassword ? icons.eyeOpen : icons.eyeClosed}
                       style={{
-                        width: isWebLandscape
-                          ? scaleByHeight(24, height)
-                          : RFValue(22),
-                        height: isWebLandscape
-                          ? scaleByHeight(24, height)
-                          : RFValue(22),
+                        width: sizes.eyeIconWidth,
+                        height: sizes.eyeIconHeight,
                         tintColor: theme.formInputLabelColor,
                       }}
                       resizeMode='contain'
@@ -628,17 +572,25 @@ export default function RegisterScreenWithPass() {
                 <View
                   style={[
                     styles.inputBlock,
-                    dynamicStyles.inputBlock,
-                    { backgroundColor: theme.formInputBackground },
+                    {
+                      backgroundColor: theme.formInputBackground,
+                      marginBottom: sizes.inputBlockMarginBottom,
+                      borderRadius: sizes.inputBlockBorderRadius,
+                      paddingVertical: sizes.inputBlockPaddingVertical,
+                      height: sizes.inputBlockHeight,
+                      width: sizes.inputBlockWidth,
+                    },
                   ]}
                 >
                   <Text
                     style={[
                       styles.label,
-                      dynamicStyles.label,
                       {
                         textAlign: isRTL ? 'right' : 'left',
                         color: theme.textColor,
+                        paddingHorizontal: sizes.labelPaddingHorizontal,
+                        paddingTop: sizes.labelPaddingTop,
+                        fontSize: sizes.labelFontSize,
                       },
                     ]}
                   >
@@ -655,27 +607,22 @@ export default function RegisterScreenWithPass() {
                     placeholder={t('register.repeat_password')}
                     style={[
                       styles.input,
-                      dynamicStyles.input,
                       {
                         textAlign: isRTL ? 'right' : 'left',
                         color: theme.textColor,
-                        backgroundColor: theme.defaultBlocksBackground,
-                        borderColor: theme.borderColor,
-                        borderWidth: 1,
-                        // прозрачный инпут внутри окрашенного fieldBlock
                         backgroundColor: 'transparent',
                         borderWidth: 0,
                         marginBottom: sizes.inputMarginBottom,
+                        paddingHorizontal: sizes.inputPaddingHorizontal,
+                        borderRadius: sizes.inputBorderRadius,
+                        fontSize: sizes.inputFontSize,
                       },
-                      isWebLandscape
-                        ? {
-                            // убираем чёрную обводку (RN Web)
-                            outlineStyle: 'none',
-                            outlineWidth: 0,
-                            outlineColor: 'transparent',
-                            boxShadow: 'none',
-                          }
-                        : null,
+                      isWebLandscape && {
+                        outlineStyle: 'none',
+                        outlineWidth: 0,
+                        outlineColor: 'transparent',
+                        boxShadow: 'none',
+                      },
                     ]}
                     placeholderTextColor={theme.formInputPlaceholderColor}
                   />
@@ -685,7 +632,7 @@ export default function RegisterScreenWithPass() {
                       style={{
                         color: theme.errorTextColor,
                         marginTop: sizes.multilineInputMarginBottom,
-                        fontSize: dynamicStyles.label.fontSize,
+                        fontSize: sizes.labelFontSize,
                       }}
                     >
                       {passwordRepeatError}
@@ -700,7 +647,7 @@ export default function RegisterScreenWithPass() {
                       textAlign: 'center',
                       color: theme.errorTextColor,
                       marginTop: sizes.multilineInputMarginBottom,
-                      fontSize: dynamicStyles.label.fontSize,
+                      fontSize: sizes.labelFontSize,
                     }}
                   >
                     {generalError}

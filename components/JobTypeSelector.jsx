@@ -6,37 +6,74 @@ import {
   View,
   Platform,
   Image,
+  useWindowDimensions,
 } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
 import { useTranslation } from 'react-i18next';
-import { useWindowInfo } from '../context/windowContext';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
-import { scaleByHeight } from '../utils/resizeFuncs';
-import { useEffect, useRef } from 'react';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-export default function JobTypeSelector({ selectedTypes, setSelectedTypes }) {
+export default function JobTypeSelector({
+  selectedTypes,
+  setSelectedTypes,
+  numberOfRows = 2,
+}) {
   const { t } = useTranslation();
-  const { height, isLandscape } = useWindowInfo();
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
   const { themeController, languageController } = useComponentContext();
 
   const scrollRef = useRef(null);
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
-  const sizes = {
-    font: isWebLandscape ? scaleByHeight(14, height) : RFValue(9),
-    padH: isWebLandscape ? scaleByHeight(11, height) : RFValue(10),
-    height: isWebLandscape ? scaleByHeight(34, height) : RFValue(25),
-    radius: isWebLandscape ? scaleByHeight(4, height) : RFValue(5),
-    rowGap: isWebLandscape ? scaleByHeight(9, height) : RFValue(6),
-    colGap: isWebLandscape ? scaleByHeight(8, height) : RFValue(6),
-    twoRowsH: isWebLandscape ? scaleByHeight(78, height) : RFValue(40),
-    trashSize: isWebLandscape ? scaleByHeight(32, height) : RFValue(18),
-    maxScrollWidth: isWebLandscape ? scaleByHeight(5200, height) : '520%',
-    trashSizeMargin: isWebLandscape ? scaleByHeight(18, height) : RFValue(8),
-    containerWidth: isWebLandscape ? scaleByHeight(830, height) : '100%',
-    containerMarginBottom: isWebLandscape ? scaleByHeight(30, height) : RFValue(15),
+  const [containerWidth, setContainerWidth] = useState(null);
+
+  const sizes = useMemo(
+    () => ({
+      font: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(14, height),
+      padH: isWebLandscape
+        ? scaleByHeight(11, height)
+        : scaleByHeightMobile(10, height),
+      height: isWebLandscape
+        ? scaleByHeight(34, height)
+        : scaleByHeightMobile(34, height),
+      radius: isWebLandscape
+        ? scaleByHeight(4, height)
+        : scaleByHeightMobile(4, height),
+      rowGap: isWebLandscape
+        ? scaleByHeight(10, height)
+        : scaleByHeightMobile(10, height),
+      colGap: isWebLandscape
+        ? scaleByHeight(10, height)
+        : scaleByHeightMobile(10, height),
+      trashSize: isWebLandscape
+        ? scaleByHeight(32, height)
+        : scaleByHeightMobile(24, height),
+      trashSizeMargin: isWebLandscape
+        ? scaleByHeight(18, height)
+        : scaleByHeightMobile(8, height),
+      containerWidth: isWebLandscape ? scaleByHeight(830, height) : '100%',
+      containerMarginBottom: isWebLandscape
+        ? scaleByHeight(30, height)
+        : scaleByHeightMobile(15, height),
+      containerPadding: isWebLandscape ? 0 : scaleByHeightMobile(4, height),
+    }),
+    [isWebLandscape, height]
+  );
+
+  const wrapperHeight =
+    numberOfRows * sizes.height + (numberOfRows - 1) * sizes.rowGap;
+
+  const handleContainerLayout = (event) => {
+    if (containerWidth === null && numberOfRows > 1) {
+      const fullWidth = event.nativeEvent.layout.width;
+      const calculatedWidth = fullWidth / numberOfRows;
+      setContainerWidth(calculatedWidth);
+    }
   };
 
   const colors = {
@@ -93,8 +130,41 @@ export default function JobTypeSelector({ selectedTypes, setSelectedTypes }) {
     }
   }, []);
 
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          width: sizes.containerWidth,
+          marginBottom: sizes.containerMarginBottom,
+          padding: sizes.containerPadding,
+        },
+        tagWrapper: {
+          rowGap: sizes.rowGap,
+          columnGap: sizes.colGap,
+          height: wrapperHeight,
+          width: containerWidth || undefined,
+        },
+        tag: {
+          paddingHorizontal: sizes.padH,
+          height: sizes.height,
+          borderRadius: sizes.radius,
+        },
+        tagText: {
+          fontSize: sizes.font,
+        },
+        trashButton: {
+          [isRTL ? 'marginRight' : 'marginLeft']: sizes.trashSizeMargin,
+        },
+        trashIcon: {
+          width: sizes.trashSize,
+          height: sizes.trashSize,
+        },
+      }),
+    [sizes, isRTL, wrapperHeight, containerWidth]
+  );
+
   return (
-    <View style={[styles.container, { width: sizes.containerWidth, marginBottom: sizes.containerMarginBottom }]}>
+    <View style={[styles.container, dynamicStyles.container]}>
       {/* Теги */}
       <ScrollView
         ref={scrollRef}
@@ -103,15 +173,8 @@ export default function JobTypeSelector({ selectedTypes, setSelectedTypes }) {
         contentContainerStyle={styles.scrollContent}
       >
         <View
-          style={[
-            styles.tagWrapper,
-            {
-              rowGap: sizes.rowGap,
-              columnGap: sizes.colGap,
-              height: sizes.twoRowsH,
-              width: sizes.maxScrollWidth,
-            },
-          ]}
+          onLayout={handleContainerLayout}
+          style={[styles.tagWrapper, dynamicStyles.tagWrapper]}
         >
           {Object.entries(jobTypes || {})?.map(([key, label]) => {
             const active = isSelected(key);
@@ -121,10 +184,8 @@ export default function JobTypeSelector({ selectedTypes, setSelectedTypes }) {
                 onPress={() => toggleType(key)}
                 style={[
                   styles.tag,
+                  dynamicStyles.tag,
                   {
-                    paddingHorizontal: sizes.padH,
-                    height: sizes.height,
-                    borderRadius: sizes.radius,
                     backgroundColor: active
                       ? colors.tagSelectedBg
                       : 'transparent',
@@ -137,8 +198,8 @@ export default function JobTypeSelector({ selectedTypes, setSelectedTypes }) {
                 <Text
                   style={[
                     styles.tagText,
+                    dynamicStyles.tagText,
                     {
-                      fontSize: sizes.font,
                       color: active ? colors.tagSelectedText : colors.tagText,
                     },
                   ]}
@@ -154,21 +215,19 @@ export default function JobTypeSelector({ selectedTypes, setSelectedTypes }) {
       {/* Корзина (очистить всё) */}
       <TouchableOpacity
         onPress={clearAll}
-        style={[
-          styles.trashButton,
-          { [isRTL ? 'marginRight' : 'marginLeft']: sizes.trashSizeMargin },
-        ]}
+        style={[styles.trashButton, dynamicStyles.trashButton]}
       >
         <Image
           source={icons.delete}
-          style={{
-            width: sizes.trashSize,
-            height: sizes.trashSize,
-            tintColor:
-              selectedTypes.length > 0
-                ? colors.dangerActive
-                : colors.dangerInactive,
-          }}
+          style={[
+            dynamicStyles.trashIcon,
+            {
+              tintColor:
+                selectedTypes.length > 0
+                  ? colors.dangerActive
+                  : colors.dangerInactive,
+            },
+          ]}
           resizeMode='contain'
         />
       </TouchableOpacity>
@@ -180,11 +239,8 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: RFValue(4),
   },
-  trashButton: {
-    // marginRight: RFValue(6)
-  },
+  trashButton: {},
   scrollContent: { flexGrow: 1 },
   tagWrapper: { flexDirection: 'row', flexWrap: 'wrap' },
   tag: { alignItems: 'center', justifyContent: 'center', borderWidth: 1 },

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
   Modal,
@@ -10,15 +10,14 @@ import {
   TouchableWithoutFeedback,
   View,
   Image,
+  useWindowDimensions,
 } from 'react-native';
-import { RFValue, RFPercentage } from 'react-native-responsive-fontsize';
 import { useComponentContext } from '../context/globalAppContext';
 import CustomFlatList from './ui/CustomFlatList';
 import UserSummaryBlock from './UserSummaryBlock';
-import { useWindowInfo } from '../context/windowContext'; // ориентация/размеры
 import { useTranslation } from 'react-i18next'; // ⬅️ переводы
 import { icons } from '../constants/icons';
-import { scaleByHeight } from '../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 
 function showTitleByStatus(status, t) {
   switch (status) {
@@ -93,50 +92,67 @@ export default function ProvidersSection({
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   // размеры/ориентация экрана
-  const { width, height, isLandscape, sidebarWidth } = useWindowInfo?.() || {
-    width: 1280,
-    height: 800,
-    isLandscape: false,
-  };
-  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const { width, height } = useWindowDimensions();
+  const isWebLandscape = Platform.OS === 'web' && width > height;
 
   const isShortProviderBlock = status !== 'store-waiting';
 
   // размеры (в веб-альбомной — компактнее и от высоты)
-  const sizes = {
-    font: isWebLandscape ? scaleByHeight(18, height) : RFValue(12),
-    inputFont: isWebLandscape ? height * 0.014 : RFValue(10),
-    padding: isWebLandscape ? height * 0.01 : RFValue(8),
-    margin: isWebLandscape ? height * 0.012 : RFValue(10),
-    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-    thumb: isWebLandscape ? height * 0.12 : RFValue(80),
-    headerHeight: isWebLandscape ? height * 0.07 : RFPercentage(7),
-    icon: isWebLandscape ? scaleByHeight(24, height) : RFValue(16),
-    horizontalGap: isWebLandscape ? width * 0.01 : 0,
-    containerPaddingVertical: isWebLandscape
-      ? scaleByHeight(12, height)
-      : RFValue(12),
-    containerPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(15, height)
-      : RFValue(10),
-    badgeSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(14),
-    badgeFontSize: isWebLandscape ? scaleByHeight(12, height) : RFValue(8),
-    sectionMarginBottom: isWebLandscape
-      ? scaleByHeight(30, height)
-      : RFValue(15),
-    providerFullScreenPadding: isWebLandscape
-      ? scaleByHeight(20, height)
-      : RFValue(30),
-  };
+  const sizes = useMemo(() => {
+    const scale = isWebLandscape ? scaleByHeight : scaleByHeightMobile;
+    const staticScale = scaleByHeightMobile;
+
+    const font = scale(18, height);
+    const margin = scale(12, height);
+    const badgeSize = scale(20, height);
+    const padding = scale(8, height);
+    const icon = scale(24, height);
+
+    return {
+      font: font,
+      inputFont: scale(14, height),
+      padding: padding,
+      margin: margin,
+      borderRadius: scale(8, height),
+      thumb: scale(80, height),
+      headerHeight: isWebLandscape ? height * 0.07 : height * 0.07,
+      icon: icon,
+      horizontalGap: isWebLandscape ? width * 0.01 : 0,
+      containerPaddingVertical: scale(12, height),
+      containerPaddingHorizontal: scale(15, height),
+      badgeSize: badgeSize,
+      badgeFontSize: scale(12, height),
+      sectionMarginBottom: scale(30, height),
+      providerFullScreenPadding: scale(20, height),
+      modalPaddingTop: scale(30, height),
+      // Новые значения
+      sectionWidth: isWebLandscape
+        ? scaleByHeight(isShortProviderBlock ? 330 : 1040, height)
+        : '100%',
+      sectionMaxHeight: isWebLandscape ? height * 0.25 : 200,
+      headerGap: isWebLandscape ? margin / 2 : staticScale(8, height),
+      headerInnerHeight: isWebLandscape
+        ? scaleByHeight(32, height)
+        : undefined,
+      badgeBorderRadius: badgeSize / 2,
+      modalHeaderMarginBottom: isWebLandscape
+        ? margin / 1.2
+        : staticScale(10, height),
+      modalTitleFontSize: font * 1.2,
+      gridGap: staticScale(8, height),
+    };
+  }, [isWebLandscape, height, width, isShortProviderBlock]);
 
   // сетка 3×N для веб-альбомной
   const gridContainerStyleWeb = isWebLandscape
     ? {
         display: 'grid',
-        gridTemplateColumns: `repeat(${isShortProviderBlock ? 1 : 3}, minmax(0, 1fr))`,
+        gridTemplateColumns: `repeat(${
+          isShortProviderBlock ? 1 : 3
+        }, minmax(0, 1fr))`,
         gridAutoRows: 'auto',
-        gridColumnGap: sizes.horizontalGap || RFValue(8),
-        gridRowGap: sizes.horizontalGap || RFValue(8),
+        gridColumnGap: sizes.horizontalGap || sizes.gridGap,
+        gridRowGap: sizes.horizontalGap || sizes.gridGap,
         alignItems: 'start',
         justifyItems: 'stretch',
         direction: isRTL ? 'rtl' : 'ltr',
@@ -171,7 +187,7 @@ export default function ProvidersSection({
             <View style={styleRow.gridItem}>
               <UserSummaryBlockWrapper
                 status={status}
-                userId={item.id || item}
+                userId={item?.id || item}
                 currentJobId={currentJobInfo?.id}
                 closeAllModal={closeAllModal}
                 providersController={providersController}
@@ -206,14 +222,14 @@ export default function ProvidersSection({
         style={[
           {
             backgroundColor: themeController.current?.formInputBackground,
-            maxHeight: isWebLandscape ? height * 0.25 : RFValue(200),
+            maxHeight: sizes.sectionMaxHeight,
             overflow: 'hidden',
             // paddingHorizontal: sizes.containerPaddingHorizontal,
             paddingVertical: sizes.containerPaddingVertical,
             borderRadius: sizes.borderRadius,
             marginBottom: sizes.sectionMarginBottom,
+            width: sizes.sectionWidth,
           },
-          isWebLandscape && { width: scaleByHeight(isShortProviderBlock ? 330 : 1040, height) },
         ]}
         key='providers'
       >
@@ -232,10 +248,9 @@ export default function ProvidersSection({
                 {
                   flexDirection: isRTL ? 'row' : 'row-reverse',
                   alignItems: 'center',
-                  gap: isWebLandscape ? sizes.margin / 2 : RFValue(8),
+                  gap: sizes.headerGap,
+                  height: sizes.headerInnerHeight,
                 },
-                // isRTL && { flexDirection: 'row-reverse' },
-                isWebLandscape && { height: scaleByHeight(32, height) },
               ]}
             >
               {status === 'store-waiting' && providerList?.length > 0 && (
@@ -246,11 +261,9 @@ export default function ProvidersSection({
                       backgroundColor:
                         themeController.current?.secondaryBadgeBackground,
                       alignSelf: 'flex-start',
-                    },
-                    isWebLandscape && {
                       height: sizes.badgeSize,
                       minWidth: sizes.badgeSize,
-                      borderRadius: sizes.badgeSize / 2,
+                      borderRadius: sizes.badgeBorderRadius,
                     },
                   ]}
                 >
@@ -319,11 +332,9 @@ export default function ProvidersSection({
                   {
                     backgroundColor: themeController.current?.backgroundColor,
                     padding: sizes.providerFullScreenPadding,
-                    paddingTop: isWebLandscape
-                      ? scaleByHeight(30, height)
-                      : RFValue(30),
+                    paddingTop: sizes.modalPaddingTop,
                     ...(isWebLandscape && {
-                      width: width - sidebarWidth,
+                      width: width,
                       alignSelf: isRTL ? 'flex-start' : 'flex-end',
                     }),
                   },
@@ -334,9 +345,7 @@ export default function ProvidersSection({
                     styleRow.modalHeader,
                     isRTL && { flexDirection: 'row-reverse' },
                     {
-                      marginBottom: isWebLandscape
-                        ? sizes.margin / 1.2
-                        : RFValue(10),
+                      marginBottom: sizes.modalHeaderMarginBottom,
                       borderBottomColor:
                         themeController.current?.formInputLabelColor,
                       borderBottomWidth: 2,
@@ -348,7 +357,7 @@ export default function ProvidersSection({
                     style={[
                       styleRow.modalTitle,
                       {
-                        fontSize: sizes.font * 1.2,
+                        fontSize: sizes.modalTitleFontSize,
                         textAlign: isRTL ? 'right' : 'left',
                       },
                     ]}
@@ -382,23 +391,16 @@ const styleRow = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  iconButton: {
-    padding: RFValue(4),
-  },
+  iconButton: {},
   modalContainer: {
     flex: 1,
-    padding: RFValue(10),
-    paddingTop: RFValue(30),
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: RFValue(10),
   },
-  modalTitle: {
-    fontSize: RFValue(16),
-  },
+  modalTitle: {},
   // элемент сетки
   gridItem: {
     width: '100%',

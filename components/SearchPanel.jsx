@@ -1,28 +1,79 @@
-import { useState } from 'react';
-import { StyleSheet, TextInput, View, Image, Platform } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
+import { useMemo, useState } from 'react';
+import {
+  StyleSheet,
+  TextInput,
+  View,
+  Image,
+  Platform,
+  useWindowDimensions,
+} from 'react-native';
 import { useComponentContext } from '../context/globalAppContext';
-import { useWindowInfo } from '../context/windowContext';
 import { icons } from '../constants/icons';
 import { useTranslation } from 'react-i18next';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 
 export default function SearchPanel({ searchValue, setSearchValue }) {
   const { themeController, languageController } = useComponentContext();
-  const { height, isLandscape } = useWindowInfo();
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
-  const sizes = {
-    padding: isWebLandscape ? height * 0.006 : RFValue(6),
-    borderRadius: isWebLandscape ? height * 0.008 : RFValue(6),
-    marginBottom: isWebLandscape ? height * 0.01 : RFValue(10),
-    inputHeight: isWebLandscape ? height * 0.04 : RFValue(35),
-    inputPadding: isWebLandscape ? height * 0.005 : RFValue(8),
-    icon: isWebLandscape ? height * 0.025 : RFValue(20),
-    fontSize: isWebLandscape ? height * 0.015 : RFValue(12),
-    containerWidth: isWebLandscape ? '40%' : '100%',
-  };
+
+  const sizes = useMemo(
+    () => ({
+      padding: isWebLandscape
+        ? scaleByHeight(12, height)
+        : scaleByHeightMobile(20, height),
+      borderRadius: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(8, height),
+      marginBottom: isWebLandscape
+        ? scaleByHeight(16, height)
+        : scaleByHeightMobile(16, height),
+      inputHeight: isWebLandscape
+        ? scaleByHeight(48, height)
+        : scaleByHeightMobile(48, height),
+      inputPadding: isWebLandscape
+        ? scaleByHeight(16, height)
+        : scaleByHeightMobile(16, height),
+      icon: isWebLandscape ? scaleByHeight(24, height) : scaleByHeightMobile(24, height),
+      fontSize: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(14, height),
+      containerWidth: isWebLandscape ? scaleByHeight(384, height) : '100%',
+    }),
+    [isWebLandscape, height]
+  );
+
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          backgroundColor: themeController.current?.profileDefaultBackground,
+          [isRTL ? 'paddingLeft' : 'paddingRight']: sizes.padding,
+          borderRadius: sizes.borderRadius,
+          marginBottom: sizes.marginBottom,
+          flexDirection: isRTL ? 'row-reverse' : 'row',
+          width: sizes.containerWidth,
+        },
+        searchInput: {
+          color: themeController.current?.textColor,
+          height: sizes.inputHeight,
+          paddingHorizontal: sizes.inputPadding,
+          fontSize: sizes.fontSize,
+          textAlign: isRTL ? 'right' : 'left',
+        },
+        searchIcon: {
+          marginLeft: isRTL ? 0 : sizes.padding,
+          marginRight: isRTL ? sizes.padding : 0,
+          width: sizes.icon,
+          height: sizes.icon,
+        },
+      }),
+    [sizes, themeController, isRTL]
+  );
 
   const [isFocused, setIsFocused] = useState(false);
 
@@ -30,45 +81,25 @@ export default function SearchPanel({ searchValue, setSearchValue }) {
     <View
       style={[
         styles.container,
-        {
-          backgroundColor: themeController.current?.formInputBackground,
-          paddingHorizontal: sizes.padding,
-          borderRadius: sizes.borderRadius,
-          marginBottom: sizes.marginBottom,
-          flexDirection: isRTL ? 'row-reverse' : 'row',
-          width: sizes.containerWidth,
-        },
+        dynamicStyles.container,
         isFocused && styles.containerFocused,
-        isFocused && { shadowColor: themeController.current?.formInputBorderColor },
+        isFocused && {
+          shadowColor: themeController.current?.formInputBorderColor,
+        },
       ]}
     >
       <TextInput
         placeholder={t('common.search')}
         value={searchValue}
         onChangeText={setSearchValue}
-        style={[
-          styles.searchInput,
-          {
-            color: themeController.current?.textColor,
-            height: sizes.inputHeight,
-            paddingHorizontal: sizes.inputPadding,
-            fontSize: sizes.fontSize,
-            textAlign: isRTL ? 'right' : 'left',
-          },
-        ]}
-        placeholderTextColor={themeController.current?.formInputPlaceholderColor}
+        style={[styles.searchInput, dynamicStyles.searchInput]}
+        placeholderTextColor={
+          themeController.current?.formInputPlaceholderColor
+        }
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
       />
-      <Image
-        source={icons.search}
-        style={{
-          marginLeft: isRTL ? 0 : sizes.padding,
-          marginRight: isRTL ? sizes.padding : 0,
-          width: sizes.icon,
-          height: sizes.icon,
-        }}
-      />
+      <Image source={icons.search} style={dynamicStyles.searchIcon} />
     </View>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,11 @@ import {
   Image,
   FlatList,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { icons } from '../../constants/icons';
-import { RFValue } from 'react-native-responsive-fontsize';
-import { useWindowInfo } from '../../context/windowContext';
-import { scaleByHeight } from '../../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 
 const CustomPicker = ({
   label,
@@ -25,21 +24,24 @@ const CustomPicker = ({
   containerStyle = {},
 }) => {
   const { themeController } = useComponentContext();
-  const { height, isLandscape } = useWindowInfo();
-  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const { width, height } = useWindowDimensions();
+  const isWebLandscape = Platform.OS === 'web' && width > height;
 
-  const sizes = {
-    baseFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(12),
-    font: isWebLandscape ? scaleByHeight(12, height) : RFValue(12),
-    iconSize: isWebLandscape ? scaleByHeight(24, height) : RFValue(18),
-    pickerHeight: isWebLandscape ? scaleByHeight(64, height) : RFValue(50),
-    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-    inputContainerPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(16, height)
-      : RFValue(8),
-    labelTopPosition: isWebLandscape ? scaleByHeight(12, height) : RFValue(5),
-    labelGap: isWebLandscape ? scaleByHeight(4, height) : RFValue(3),
-  };
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+    const scale = isWebLandscape ? web : mobile;
+
+    return {
+      baseFont: scale(16),
+      font: scale(12),
+      iconSize: scale(24),
+      pickerHeight: scale(64),
+      borderRadius: scale(8),
+      inputContainerPaddingHorizontal: scale(16),
+      labelGap: scale(3),
+    };
+  }, [isWebLandscape, height]);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [pickerLayout, setPickerLayout] = useState(null);
@@ -261,13 +263,6 @@ const styles = StyleSheet.create({
   pickerContainer: {
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  label: {
-    position: 'absolute',
-    top: RFValue(5),
-  },
-  value: {
-    marginTop: RFValue(10),
   },
   arrowContainer: {
     justifyContent: 'center',

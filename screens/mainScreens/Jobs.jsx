@@ -7,12 +7,12 @@ import {
   View,
   Image,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { icons } from '../../constants/icons';
-import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
 import { useWindowInfo } from '../../context/windowContext';
 import NewJobModal from '../../components/NewJobModal';
 import NewScreen from './jobsTabs/New';
@@ -21,7 +21,7 @@ import InProgressScreen from './jobsTabs/InProgress';
 import DoneScreen from './jobsTabs/Done';
 import ShowJobModal from '../../components/ShowJobModal';
 import JobModalWrapper from '../../components/JobModalWrapper';
-import { scaleByHeight } from '../../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 
 const TAB_TITLES = ['new', 'waiting', 'in_progress', 'done'];
 const TAB_TITLES_RTL = ['done', 'in_progress', 'waiting', 'new'];
@@ -42,7 +42,8 @@ export default function Jobs() {
   } = useComponentContext();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
-  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
+  const { width, height } = useWindowDimensions();
+  const { sidebarWidth, isLandscape } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
 
   const orderedTabs = isRTL ? TAB_TITLES_RTL : TAB_TITLES;
@@ -225,10 +226,6 @@ export default function Jobs() {
     }
   }, [appTabController.activeSubTab]);
 
-  // высота панели
-  const panelHeight =
-    Platform.OS === 'web' && isLandscape ? height * 0.08 : RFPercentage(10);
-
   // следим за сменой isRTL и синхронизируем активный таб
   useEffect(() => {
     const newIndex = orderedTabs.indexOf(appTabController.activeSubTab);
@@ -238,30 +235,42 @@ export default function Jobs() {
     }
   }, [isRTL, orderedTabs]);
 
-  const sizes = {
-    iconSize: isWebLandscape ? scaleByHeight(24, height) : panelHeight * 0.35,
-    fontSize: isWebLandscape ? scaleByHeight(12, height) : panelHeight * 0.2,
-    badgeSize: isWebLandscape ? scaleByHeight(20, height) : panelHeight * 0.25,
-    underlineHeight: isWebLandscape
-      ? scaleByHeight(2, height)
-      : panelHeight * 0.05,
-  };
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+
+    const panelHeight = isWebLandscape ? web(65) : mobile(81);
+    const badgeSize = isWebLandscape ? web(20) : panelHeight * 0.25;
+
+    return {
+      panelHeight,
+      iconSize: isWebLandscape ? web(24) : mobile(24),
+      fontSize: isWebLandscape ? web(12) : mobile(12),
+      badgeSize,
+      underlineHeight: isWebLandscape ? web(2) : mobile(2),
+      tabPaddingBottom: panelHeight * 0.1,
+      badgeTop: -badgeSize * 0.3,
+      badgeRight: -badgeSize * 0.8,
+      badgePaddingHorizontal: badgeSize * 0.3,
+      badgeFontSize: badgeSize * 0.6,
+      titleHeight: panelHeight * 0.35,
+      titlePaddingHorizontal: isWebLandscape ? web(4) : mobile(4),
+      underlineBorderRadius: isWebLandscape ? web(2) : mobile(2),
+    };
+  }, [height, isWebLandscape]);
+  
   return (
     <View style={{ flex: 1, userSelect: 'none' }}>
       {/* Заголовки вкладок */}
       <View
         style={{
           flexDirection: 'row',
-          height: panelHeight,
+          height: sizes.panelHeight,
           backgroundColor: themeController.current?.backgroundColor,
           overflow: 'hidden',
         }}
       >
         {orderedTabs.map((title, idx) => {
-          const iconSize = sizes.iconSize;
-          const fontSize = sizes.fontSize;
-          const badgeSize = sizes.badgeSize;
-
           return (
             <TouchableOpacity
               key={idx}
@@ -270,7 +279,7 @@ export default function Jobs() {
                 flex: 1,
                 alignItems: 'center',
                 justifyContent: 'flex-end',
-                paddingBottom: panelHeight * 0.1,
+                paddingBottom: sizes.tabPaddingBottom,
               }}
             >
               {/* Иконка */}
@@ -280,7 +289,7 @@ export default function Jobs() {
                 >
                   <Image
                     source={icons[`${title}-dark`]}
-                    style={{ width: iconSize, height: iconSize }}
+                    style={{ width: sizes.iconSize, height: sizes.iconSize }}
                     resizeMode='contain'
                   />
                 </Animated.View>
@@ -288,22 +297,22 @@ export default function Jobs() {
                   <View
                     style={{
                       position: 'absolute',
-                      top: -badgeSize * 0.3,
-                      right: -badgeSize * 0.8,
-                      minWidth: badgeSize,
-                      height: badgeSize,
-                      borderRadius: badgeSize / 2,
+                      top: sizes.badgeTop,
+                      right: sizes.badgeRight,
+                      minWidth: sizes.badgeSize,
+                      height: sizes.badgeSize,
+                      borderRadius: sizes.badgeSize / 2,
                       backgroundColor:
                         themeController.current?.mainBadgeBackground,
                       justifyContent: 'center',
                       alignItems: 'center',
-                      paddingHorizontal: badgeSize * 0.3,
+                      paddingHorizontal: sizes.badgePaddingHorizontal,
                     }}
                   >
                     <Text
                       style={{
                         color: themeController.current?.badgeTextColor,
-                        fontSize: badgeSize * 0.6,
+                        fontSize: sizes.badgeFontSize,
                         // fontWeight: 'bold',
                       }}
                     >
@@ -316,9 +325,9 @@ export default function Jobs() {
               {/* Заголовок */}
               <View
                 style={{
-                  height: panelHeight * 0.35,
+                  height: sizes.titleHeight,
                   justifyContent: 'center',
-                  paddingHorizontal: RFValue(4),
+                  paddingHorizontal: sizes.titlePaddingHorizontal,
                 }}
               >
                 <Animated.Text
@@ -326,7 +335,7 @@ export default function Jobs() {
                     color: interpolatedColorValues[idx],
                     // fontWeight: 'bold',
                     textAlign: 'center',
-                    fontSize,
+                    fontSize: sizes.fontSize,
                   }}
                   numberOfLines={2}
                   ellipsizeMode='tail'
@@ -346,7 +355,7 @@ export default function Jobs() {
             width: underlineAnimatedWidth,
             height: sizes.underlineHeight,
             backgroundColor: themeController.current?.primaryColor,
-            borderRadius: RFValue(2),
+            borderRadius: sizes.underlineBorderRadius,
             zIndex: 2,
           }}
         />

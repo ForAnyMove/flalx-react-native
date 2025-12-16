@@ -5,38 +5,32 @@ import {
   TouchableOpacity,
   View,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
-import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
+import { useMemo } from 'react';
 import { useComponentContext } from '../context/globalAppContext';
-import { useWindowInfo } from '../context/windowContext';
 import { icons } from '../constants/icons';
-import { scaleByHeight } from '../utils/resizeFuncs';
-
-// адаптивный размер
-const getResponsiveSize = (mobileSize, webSize, isLandscape) => {
-  if (Platform.OS === 'web') {
-    return isLandscape ? webSize : RFValue(mobileSize);
-  }
-  return RFValue(mobileSize);
-};
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 
 export default function Header({ switchToProfile }) {
   const { themeController, user, languageController } = useComponentContext();
-  const { isLandscape, height } = useWindowInfo();
+  const { width, height } = useWindowDimensions();
   const userAvatar = user.current?.avatar;
-  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const isWebLandscape = Platform.OS === 'web' && width > height;
   const isRTL = languageController.isRTL;
-  const sizes = {
-    headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
-    headerPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(9, height)
-      : RFValue(3),
-    headerMarginHorizontal: isWebLandscape
-      ? scaleByHeight(31, height)
-      : RFValue(3),
-    headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(5),
-    borderBottomWidth: isWebLandscape ? scaleByHeight(2, height) : 1,
-  };
+
+  const sizes = useMemo(() => {
+    return {
+      headerHeight: isWebLandscape ? scaleByHeight(50, height) : height * 0.07,
+      headerPaddingHorizontal: isWebLandscape ? scaleByHeight(6, height) : scaleByHeightMobile(10, height),
+      headerMarginHorizontal: isWebLandscape ? scaleByHeight(31, height) : 0,
+      headerMargin: isWebLandscape ? scaleByHeight(30, height) : scaleByHeightMobile(0, height),
+      borderBottomWidth: isWebLandscape ? scaleByHeight(2, height) : 1,
+      logoFontSize: isWebLandscape ? scaleByHeight(24, height) : scaleByHeightMobile(24, height),
+      avatarSize: isWebLandscape ? scaleByHeight(32, height) : scaleByHeightMobile(32, height),
+      avatarBorderRadius: isWebLandscape ? scaleByHeight(16, height) : scaleByHeightMobile(16, height),
+    };
+  }, [isWebLandscape, height]);
 
   return (
     <View
@@ -59,11 +53,7 @@ export default function Header({ switchToProfile }) {
           styles.logoText,
           {
             color: themeController.current?.primaryColor,
-            fontSize: getResponsiveSize(
-              18,
-              scaleByHeight(24, height),
-              isLandscape
-            ),
+            fontSize: sizes.logoFontSize,
           },
         ]}
       >
@@ -73,21 +63,9 @@ export default function Header({ switchToProfile }) {
         <Image
           source={userAvatar ? { uri: userAvatar } : icons.defaultAvatarInverse}
           style={{
-            width: getResponsiveSize(
-              30,
-              scaleByHeight(32, height),
-              isLandscape
-            ),
-            height: getResponsiveSize(
-              30,
-              scaleByHeight(32, height),
-              isLandscape
-            ),
-            borderRadius: getResponsiveSize(
-              30,
-              scaleByHeight(16, height),
-              isLandscape
-            ),
+            width: sizes.avatarSize,
+            height: sizes.avatarSize,
+            borderRadius: sizes.avatarBorderRadius,
           }}
         />
       </TouchableOpacity>
@@ -100,7 +78,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    // paddingHorizontal: RFValue(12),
   },
   logoText: {
     textTransform: 'uppercase',

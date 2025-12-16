@@ -15,7 +15,7 @@ export default function CustomFlatList({
       horizontal={horizontal}
       contentContainerStyle={contentContainerStyle}
       keyboardShouldPersistTaps={keyboardShouldPersistTaps}
-      style={isWeb ? { overflow: 'auto' } : {}}
+      style={[isWeb && { overflow: 'auto' }]}
     >
       {data.map((item, index) => {
         const key = keyExtractor(item, index);

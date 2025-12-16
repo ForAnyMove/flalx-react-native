@@ -13,21 +13,14 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { RFValue, RFPercentage } from 'react-native-responsive-fontsize';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import { useComponentContext } from '../context/globalAppContext';
 import ImagePickerModal from '../components/ui/ImagePickerModal';
 import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
 import { icons } from '../constants/icons';
-import { scaleByHeight } from '../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import TagSelector from '../components/TagSelector';
 import CustomPicker from '../components/ui/CustomPicker';
-
-// универсальная адаптация размеров: на мобиле RFValue, на web — уменьшенный фикс
-const getResponsiveSize = (mobileSize, webSize) => {
-  if (Platform.OS === 'web') return webSize;
-  return RFValue(mobileSize);
-};
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
@@ -40,146 +33,75 @@ export default function RegisterScreen() {
   const isLandscape = width > height;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
-  const dynamicStyles = useMemo(() => {
-    return {
-      scrollContent: {
-        paddingHorizontal: isWebLandscape ? '6%' : '8%',
-        paddingVertical: isWebLandscape
-          ? scaleByHeight(0, height)
-          : RFValue(20),
-      },
-      title: {
-        fontSize: isWebLandscape ? scaleByHeight(24, height) : RFValue(20),
-        marginBottom: isWebLandscape ? scaleByHeight(0, height) : RFValue(18),
-      },
-      step2Title: {
-        marginBottom: isWebLandscape ? scaleByHeight(36, height) : RFValue(30),
-      },
-      button: {
-        paddingVertical: isWebLandscape
-          ? scaleByHeight(12, height)
-          : RFValue(14),
-        borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(7),
-        ...Platform.select({
-          web: isWebLandscape && {
-            width: scaleByHeight(330, height),
-            height: scaleByHeight(62, height),
-          },
-        }),
-      },
-      buttonText: {
-        fontSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(16),
-      },
-      progressContainer: {
-        marginVertical: isWebLandscape
-          ? scaleByHeight(14, height)
-          : RFValue(20),
-      },
-      dot: {
-        marginHorizontal: isWebLandscape
-          ? scaleByHeight(14, height)
-          : RFValue(10),
-      },
-      backArrow: {
-        top: isWebLandscape ? scaleByHeight(72, height) : RFValue(20),
-        height: isWebLandscape ? scaleByHeight(24, height) : RFValue(22),
-        [isRTL ? 'right' : 'left']: isWebLandscape
-          ? scaleByHeight(height * 1.4 * 0.1, height)
-          : RFValue(10),
-      },
-      finishedText: {
-        fontSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(20),
-      },
-      termsBox: {
-        paddingVertical: isWebLandscape
-          ? scaleByHeight(5, height)
-          : RFValue(10),
-        marginBottom: isWebLandscape ? scaleByHeight(12, height) : RFValue(15),
-      },
-      termsBoxText: {
-        fontSize: isWebLandscape ? scaleByHeight(16, height) : RFValue(13),
-        lineHeight: isWebLandscape ? scaleByHeight(18, height) : RFValue(16),
-      },
-      termsCheckboxText: {
-        fontSize: isWebLandscape ? scaleByHeight(13, height) : RFValue(14),
-      },
-      avatarContainer: {
-        marginBottom: isWebLandscape ? scaleByHeight(40, height) : RFValue(10),
-        height: isWebLandscape ? scaleByHeight(158, height) : RFValue(150),
-      },
-      avatarWrapper: {
-        borderRadius: isWebLandscape ? scaleByHeight(50, height) : RFValue(60),
-      },
-      avatarImage: {
-        borderRadius: isWebLandscape ? scaleByHeight(50, height) : RFValue(60),
-      },
-      cameraButton: {
-        width: isWebLandscape ? scaleByHeight(26, height) : RFValue(26),
-        height: isWebLandscape ? scaleByHeight(26, height) : RFValue(26),
-        borderRadius: isWebLandscape ? scaleByHeight(60, height) : RFValue(70),
-      },
-      avatarRecommendsText: {
-        marginTop: isWebLandscape ? scaleByHeight(8, height) : RFValue(10),
-        fontSize: isWebLandscape ? scaleByHeight(14, height) : RFValue(12),
-        paddingHorizontal: isWebLandscape
-          ? scaleByHeight(0, height)
-          : RFValue(20),
-      },
-      inputBlock: {
-        marginBottom: isWebLandscape ? scaleByHeight(32, height) : RFValue(20),
-        borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(7),
-        paddingVertical: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-      },
-      label: {
-        paddingHorizontal: isWebLandscape
-          ? scaleByHeight(16, height)
-          : RFValue(10),
-        paddingTop: isWebLandscape ? scaleByHeight(4, height) : RFValue(6),
-        fontSize: isWebLandscape ? scaleByHeight(12, height) : RFValue(12),
-      },
-      input: {
-        paddingHorizontal: isWebLandscape
-          ? scaleByHeight(16, height)
-          : RFValue(10),
-        borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(8),
-        fontSize: isWebLandscape ? scaleByHeight(16, height) : RFValue(14),
-      },
-      multilineInput: {
-        height: isWebLandscape ? scaleByHeight(100, height) : RFValue(120),
-        marginBottom: isWebLandscape ? scaleByHeight(25, height) : RFValue(25),
-      },
-      inputsContainer: {
-        paddingHorizontal: isWebLandscape
-          ? scaleByHeight(10, height)
-          : RFValue(10),
-      },
-      typeTagsSelector: {
-        marginBottom: isWebLandscape ? scaleByHeight(32, height) : RFValue(32),
-      },
-    };
-  }, [height, isRTL]);
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
 
-  const sizes = {
-    activeDotSize: isWebLandscape ? scaleByHeight(12, height) : RFValue(10),
-    secondDotSize: isWebLandscape ? scaleByHeight(8, height) : RFValue(8),
-    smallDotSize: isWebLandscape ? scaleByHeight(4, height) : RFValue(4),
-    arrowSideMove: isWebLandscape ? scaleByHeight(200, height) : RFValue(10),
-    checkboxSize: isWebLandscape ? scaleByHeight(18, height) : RFValue(18),
-    checkboxRadius: isWebLandscape ? scaleByHeight(3, height) : RFValue(3),
-    checkboxTextSize: isWebLandscape ? scaleByHeight(10, height) : RFValue(8),
-    inputMarginBottom: isWebLandscape ? scaleByHeight(3, height) : RFValue(4),
-    containerGap: isWebLandscape ? scaleByHeight(25, height) : RFValue(10),
-    containerPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(10, height)
-      : RFValue(10),
-    multilineInputHeight: isWebLandscape
-      ? scaleByHeight(120, height)
-      : RFValue(100),
-    multilineInputMarginBottom: isWebLandscape
-      ? scaleByHeight(10, height)
-      : RFValue(25),
-    primaryButtonWidth: isWebLandscape ? scaleByHeight(153, height) : null,
-  };
+    return {
+      scrollContentPaddingHorizontal: isWebLandscape ? '6%' : '8%',
+      scrollContentPaddingVertical: isWebLandscape ? web(0) : mobile(20),
+      titleFontSize: isWebLandscape ? web(24) : mobile(24),
+      titleMarginBottom: isWebLandscape ? web(0) : mobile(18),
+      step2TitleMarginBottom: isWebLandscape ? web(36) : mobile(36),
+      buttonPaddingVertical: isWebLandscape ? web(12) : mobile(12),
+      buttonBorderRadius: isWebLandscape ? web(8) : mobile(8),
+      buttonWidth: isWebLandscape ? web(330) : '100%',
+      buttonHeight: isWebLandscape ? web(62) : mobile(62),
+      buttonTextFontSize: isWebLandscape ? web(20) : mobile(20),
+      progressContainerMarginVertical: isWebLandscape ? web(14) : mobile(14),
+      dotMarginHorizontal: isWebLandscape ? web(14) : mobile(14),
+      backArrowTop: isWebLandscape ? web(72) : mobile(20),
+      backArrowHeight: isWebLandscape ? web(24) : mobile(24),
+      backArrowSide: isWebLandscape ? web(height * 1.4 * 0.1) : mobile(10),
+      finishedTextFontSize: isWebLandscape ? web(18) : mobile(18),
+      termsBoxPaddingVertical: isWebLandscape ? web(5) : mobile(5),
+      termsBoxMarginBottom: isWebLandscape ? web(12) : mobile(12),
+      termsBoxTextFontSize: isWebLandscape ? web(16) : mobile(16),
+      termsBoxTextLineHeight: isWebLandscape ? web(18) : mobile(18),
+      termsCheckboxTextFontSize: isWebLandscape ? web(13) : mobile(13),
+      avatarContainerMarginBottom: isWebLandscape ? web(40) : mobile(40),
+      avatarContainerHeight: isWebLandscape ? web(158) : mobile(158),
+      avatarWrapperBorderRadius: isWebLandscape ? web(50) : mobile(60),
+      avatarImageBorderRadius: isWebLandscape ? web(50) : mobile(60),
+      cameraButtonWidth: isWebLandscape ? web(26) : mobile(26),
+      cameraButtonHeight: isWebLandscape ? web(26) : mobile(26),
+      cameraButtonBorderRadius: isWebLandscape ? web(60) : mobile(70),
+      avatarRecommendsTextMarginTop: isWebLandscape ? web(8) : mobile(10),
+      avatarRecommendsTextFontSize: isWebLandscape ? web(14) : mobile(14),
+      avatarRecommendsTextPaddingHorizontal: isWebLandscape
+        ? web(0)
+        : mobile(20),
+      inputBlockMarginBottom: isWebLandscape ? web(32) : mobile(24),
+      inputBlockBorderRadius: isWebLandscape ? web(8) : mobile(8),
+      inputBlockPaddingVertical: isWebLandscape ? web(8) : mobile(8),
+      labelPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
+      labelPaddingTop: isWebLandscape ? web(4) : mobile(6),
+      labelFontSize: isWebLandscape ? web(12) : mobile(12),
+      inputPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
+      inputBorderRadius: isWebLandscape ? web(8) : mobile(8),
+      inputFontSize: isWebLandscape ? web(16) : mobile(16),
+      multilineInputHeight: isWebLandscape ? web(100) : mobile(100),
+      multilineInputMarginBottom: isWebLandscape ? web(25) : mobile(25),
+      inputsContainerPaddingHorizontal: isWebLandscape ? web(10) : mobile(10),
+      typeTagsSelectorMarginBottom: isWebLandscape ? web(32) : mobile(32),
+      activeDotSize: isWebLandscape ? web(12) : mobile(12),
+      secondDotSize: isWebLandscape ? web(8) : mobile(8),
+      smallDotSize: isWebLandscape ? web(4) : mobile(4),
+      arrowSideMove: isWebLandscape ? web(200) : mobile(10),
+      checkboxSize: isWebLandscape ? web(18) : mobile(18),
+      checkboxRadius: isWebLandscape ? web(3) : mobile(3),
+      checkboxTextSize: isWebLandscape ? web(10) : mobile(10),
+      inputMarginBottom: isWebLandscape ? web(3) : mobile(4),
+      containerGap: isWebLandscape ? web(25) : mobile(25),
+      containerPaddingHorizontal: isWebLandscape ? web(10) : mobile(10),
+      primaryButtonWidth: isWebLandscape ? web(153) : null,
+      step3Gap: isWebLandscape ? web(108) : 0,
+      finalMarginBottom: isWebLandscape ? 0 : mobile(20),
+      mobileSelectorPickersMarginVertical: mobile(24),
+      inputHeight: isWebLandscape ? web(64) : mobile(64),
+      inputWidth: isWebLandscape ? web(330) : '100%',
+    };
+  }, [isWebLandscape, height]);
 
   const [step, setStep] = useState(1);
   const [accepted, setAccepted] = useState(false);
@@ -242,7 +164,12 @@ export default function RegisterScreen() {
   // const totalSteps = 4;
   const totalSteps = 3;
   const ProgressDots = () => (
-    <View style={[styles.progressContainer, dynamicStyles.progressContainer]}>
+    <View
+      style={[
+        styles.progressContainer,
+        { marginVertical: sizes.progressContainerMarginVertical },
+      ]}
+    >
       {Array.from({ length: totalSteps }).map((_, i) => {
         const active = step === i + 1;
         const distance = Math.abs(step - (i + 1));
@@ -256,7 +183,7 @@ export default function RegisterScreen() {
             key={i}
             style={[
               styles.dot,
-              dynamicStyles.dot,
+              { marginHorizontal: sizes.dotMarginHorizontal },
               {
                 width: size,
                 height: size,
@@ -279,7 +206,12 @@ export default function RegisterScreen() {
       disabled={disabled}
       style={[
         styles.button,
-        dynamicStyles.button,
+        {
+          paddingVertical: sizes.buttonPaddingVertical,
+          borderRadius: sizes.buttonBorderRadius,
+          width: sizes.buttonWidth,
+          height: sizes.buttonHeight,
+        },
         {
           backgroundColor: disabled
             ? theme.buttonColorPrimaryDisabled
@@ -292,8 +224,10 @@ export default function RegisterScreen() {
         <Text
           style={[
             styles.buttonText,
-            dynamicStyles.buttonText,
-            { color: theme.buttonTextColorPrimary },
+            {
+              fontSize: sizes.buttonTextFontSize,
+              color: theme.buttonTextColorPrimary,
+            },
             customStyle?.btnText,
           ]}
         >
@@ -311,8 +245,11 @@ export default function RegisterScreen() {
       onPress={() => (step > 1 ? setStep(step - 1) : session.signOut())}
       style={[
         styles.backArrow,
-        dynamicStyles.backArrow,
-        { [isRTL ? 'right' : 'left']: sizes.arrowSideMove },
+        {
+          top: sizes.backArrowTop,
+          height: sizes.backArrowHeight,
+          [isRTL ? 'right' : 'left']: sizes.backArrowSide,
+        },
       ]}
     >
       <Image
@@ -331,7 +268,12 @@ export default function RegisterScreen() {
           { backgroundColor: theme.backgroundColor },
         ]}
       >
-        <Text style={[styles.finishedText, { color: theme.textColor }]}>
+        <Text
+          style={[
+            styles.finishedText,
+            { color: theme.textColor, fontSize: sizes.finishedTextFontSize },
+          ]}
+        >
           {t('register.register_success')}
         </Text>
       </View>
@@ -381,7 +323,10 @@ export default function RegisterScreen() {
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollContent,
-          dynamicStyles.scrollContent,
+          {
+            paddingHorizontal: sizes.scrollContentPaddingHorizontal,
+            paddingVertical: sizes.scrollContentPaddingVertical,
+          },
           !isWebLandscape && { height: '100%' },
           !isWebLandscape &&
             step === 2 && {
@@ -389,7 +334,7 @@ export default function RegisterScreen() {
             },
           !isWebLandscape &&
             step === 3 && {
-              paddingHorizontal: RFValue(10),
+              paddingHorizontal: sizes.containerPaddingHorizontal,
             },
           isWebLandscape
             ? {
@@ -426,8 +371,11 @@ export default function RegisterScreen() {
               <Text
                 style={[
                   styles.title,
-                  dynamicStyles.title,
-                  { color: theme.primaryColor },
+                  {
+                    color: theme.primaryColor,
+                    fontSize: sizes.titleFontSize,
+                    marginBottom: sizes.titleMarginBottom,
+                  },
                 ]}
               >
                 {t('register.terms_title')}
@@ -436,7 +384,10 @@ export default function RegisterScreen() {
               <ScrollView
                 style={[
                   styles.termsBox,
-                  dynamicStyles.termsBox,
+                  {
+                    paddingVertical: sizes.termsBoxPaddingVertical,
+                    marginBottom: sizes.termsBoxMarginBottom,
+                  },
                   isWebLandscape
                     ? { height: '40vh', maxHeight: '40vh' } // компактнее на web-экранах
                     : null,
@@ -445,8 +396,11 @@ export default function RegisterScreen() {
                 <Text
                   style={[
                     styles.termsBoxText,
-                    dynamicStyles.termsBoxText,
-                    { color: theme.formInputLabelColor },
+                    {
+                      color: theme.formInputLabelColor,
+                      fontSize: sizes.termsBoxTextFontSize,
+                      lineHeight: sizes.termsBoxTextLineHeight,
+                    },
                   ]}
                 >
                   {t('register.terms_text')}
@@ -460,8 +414,8 @@ export default function RegisterScreen() {
                 text={t('register.terms_accept')}
                 textStyle={[
                   styles.termsCheckboxText,
-                  dynamicStyles.termsCheckboxText,
                   {
+                    fontSize: sizes.termsCheckboxTextFontSize,
                     textAlign: isRTL ? 'right' : 'left',
                     color: theme.unactiveTextColor,
                     textDecorationLine: 'none',
@@ -496,9 +450,11 @@ export default function RegisterScreen() {
               <Text
                 style={[
                   styles.title,
-                  dynamicStyles.title,
-                  dynamicStyles.step2Title,
-                  { color: theme.textColor },
+                  {
+                    color: theme.textColor,
+                    fontSize: sizes.titleFontSize,
+                    marginBottom: sizes.step2TitleMarginBottom,
+                  },
                 ]}
               >
                 {t('register.profile_create')}
@@ -506,19 +462,38 @@ export default function RegisterScreen() {
 
               {/* --- Аватар --- */}
               <View
-                style={[styles.avatarContainer, dynamicStyles.avatarContainer]}
+                style={[
+                  styles.avatarContainer,
+                  {
+                    marginBottom: sizes.avatarContainerMarginBottom,
+                    height: sizes.avatarContainerHeight,
+                  },
+                ]}
               >
                 <View
-                  style={[styles.avatarWrapper, dynamicStyles.avatarWrapper]}
+                  style={[
+                    styles.avatarWrapper,
+                    { borderRadius: sizes.avatarWrapperBorderRadius },
+                  ]}
                 >
                   <Image
                     source={
                       avatarUrl ? { uri: avatarUrl } : icons.defaultAvatar
                     }
-                    style={[styles.avatarImage, dynamicStyles.avatarImage]}
+                    style={[
+                      styles.avatarImage,
+                      { borderRadius: sizes.avatarImageBorderRadius },
+                    ]}
                   />
                   <TouchableOpacity
-                    style={[styles.cameraButton, dynamicStyles.cameraButton]}
+                    style={[
+                      styles.cameraButton,
+                      {
+                        width: sizes.cameraButtonWidth,
+                        height: sizes.cameraButtonHeight,
+                        borderRadius: sizes.cameraButtonBorderRadius,
+                      },
+                    ]}
                     onPress={() => setPickerVisible(true)}
                   >
                     <Image source={icons.camera} style={styles.cameraIcon} />
@@ -527,8 +502,13 @@ export default function RegisterScreen() {
                 <Text
                   style={[
                     styles.avatarRecommendsText,
-                    dynamicStyles.avatarRecommendsText,
-                    { color: theme.textColor },
+                    {
+                      color: theme.textColor,
+                      marginTop: sizes.avatarRecommendsTextMarginTop,
+                      fontSize: sizes.avatarRecommendsTextFontSize,
+                      paddingHorizontal:
+                        sizes.avatarRecommendsTextPaddingHorizontal,
+                    },
                   ]}
                 >
                   {t('register.profile_avatar_recommended')}
@@ -548,22 +528,33 @@ export default function RegisterScreen() {
 
               {/* --- Имя и Фамилия --- */}
               <View
-                style={[styles.inputsContainer, dynamicStyles.inputsContainer]}
+                style={[
+                  styles.inputsContainer,
+                  { paddingHorizontal: sizes.inputsContainerPaddingHorizontal },
+                ]}
               >
                 <View
                   style={[
                     styles.inputBlock,
-                    dynamicStyles.inputBlock,
-                    { backgroundColor: theme.formInputBackground },
+                    {
+                      backgroundColor: theme.formInputBackground,
+                      marginBottom: sizes.inputBlockMarginBottom,
+                      borderRadius: sizes.inputBlockBorderRadius,
+                      paddingVertical: sizes.inputBlockPaddingVertical,
+                      height: sizes.inputHeight,
+                      width: sizes.inputWidth,
+                    },
                   ]}
                 >
                   <Text
                     style={[
                       styles.label,
-                      dynamicStyles.label,
                       {
                         textAlign: isRTL ? 'right' : 'left',
                         color: theme.textColor,
+                        paddingHorizontal: sizes.labelPaddingHorizontal,
+                        paddingTop: sizes.labelPaddingTop,
+                        fontSize: sizes.labelFontSize,
                       },
                     ]}
                   >
@@ -575,7 +566,6 @@ export default function RegisterScreen() {
                     onChangeText={(txt) => setForm({ ...form, name: txt })}
                     style={[
                       styles.input,
-                      dynamicStyles.input,
                       {
                         textAlign: isRTL ? 'right' : 'left',
                         color: theme.textColor,
@@ -586,6 +576,9 @@ export default function RegisterScreen() {
                         backgroundColor: 'transparent',
                         borderWidth: 0,
                         marginBottom: sizes.inputMarginBottom,
+                        paddingHorizontal: sizes.inputPaddingHorizontal,
+                        borderRadius: sizes.inputBorderRadius,
+                        fontSize: sizes.inputFontSize,
                       },
                       isWebLandscape
                         ? {
@@ -604,17 +597,25 @@ export default function RegisterScreen() {
                 <View
                   style={[
                     styles.inputBlock,
-                    dynamicStyles.inputBlock,
-                    { backgroundColor: theme.formInputBackground },
+                    {
+                      backgroundColor: theme.formInputBackground,
+                      marginBottom: sizes.inputBlockMarginBottom,
+                      borderRadius: sizes.inputBlockBorderRadius,
+                      paddingVertical: sizes.inputBlockPaddingVertical,
+                      height: sizes.inputHeight,
+                      width: sizes.inputWidth,
+                    },
                   ]}
                 >
                   <Text
                     style={[
                       styles.label,
-                      dynamicStyles.label,
                       {
                         textAlign: isRTL ? 'right' : 'left',
                         color: theme.textColor,
+                        paddingHorizontal: sizes.labelPaddingHorizontal,
+                        paddingTop: sizes.labelPaddingTop,
+                        fontSize: sizes.labelFontSize,
                       },
                     ]}
                   >
@@ -626,7 +627,6 @@ export default function RegisterScreen() {
                     onChangeText={(txt) => setForm({ ...form, surname: txt })}
                     style={[
                       styles.input,
-                      dynamicStyles.input,
                       {
                         textAlign: isRTL ? 'right' : 'left',
                         color: theme.textColor,
@@ -637,6 +637,9 @@ export default function RegisterScreen() {
                         backgroundColor: 'transparent',
                         borderWidth: 0,
                         marginBottom: sizes.inputMarginBottom,
+                        paddingHorizontal: sizes.inputPaddingHorizontal,
+                        borderRadius: sizes.inputBorderRadius,
+                        fontSize: sizes.inputFontSize,
                       },
                       isWebLandscape
                         ? {
@@ -686,69 +689,14 @@ export default function RegisterScreen() {
             </>
           )}
 
-          {/* {step === 3 && (
-            <>
-              <Text style={[styles.title, { color: theme.textColor }]}>
-                {t('register.profile_profession')}
-              </Text>
-
-              <TextInput
-                placeholder={t('register.profession_placeholder')}
-                value={form.profession}
-                onChangeText={(txt) => setForm({ ...form, profession: txt })}
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: theme.defaultBlocksBackground,
-                    borderColor: theme.borderColor,
-                    borderWidth: 1,
-                    textAlign: isRTL ? 'right' : 'left',
-                    color: theme.textColor,
-                  },
-                ]}
-                placeholderTextColor={theme.formInputPlaceholderColor}
-              />
-
-              <ProgressDots />
-
-              <View
-                style={{
-                  flexDirection: isRTL ? 'row-reverse' : 'row',
-                  justifyContent: 'space-between',
-                  gap: getResponsiveSize(10, 8),
-                }}
-              >
-                <PrimaryButton
-                  title={t('register.previous')}
-                  onPress={() => setStep(2)}
-                  customStyle={{
-                    btn: {
-                      flex: 1,
-                      backgroundColor: 'transparent',
-                      borderWidth: 1,
-                      borderColor: theme.primaryColor,
-                    },
-                    btnText: { color: theme.primaryColor },
-                  }}
-                />
-                <PrimaryButton
-                  title={t('register.next')}
-                  onPress={() => setStep(4)}
-                  disabled={!isNameValid || !isSurnameValid}
-                  customStyle={{ btn: { flex: 1 } }}
-                />
-              </View>
-            </>
-          )} */}
-
           {step === 3 && (
             <>
               <Text
                 style={[
                   styles.title,
-                  dynamicStyles.title,
                   {
                     color: theme.textColor,
+                    fontSize: sizes.titleFontSize,
                   },
                 ]}
               >
@@ -758,19 +706,30 @@ export default function RegisterScreen() {
               <View
                 style={
                   isWebLandscape
-                    ? { flexDirection: 'row', gap: scaleByHeight(108, height) }
+                    ? { flexDirection: 'row', gap: sizes.step3Gap }
                     : {}
                 }
               >
                 {/* Left Column */}
-                <View style={isWebLandscape ? { flex: 1.5 } : {}}>
+                <View
+                  style={
+                    isWebLandscape
+                      ? { flex: 1.5 }
+                      : {
+                          marginVertical:
+                            sizes.mobileSelectorPickersMarginVertical,
+                        }
+                  }
+                >
                   <TagSelector
                     title={t('register.job_types_title')}
                     subtitle={t('register.job_types_subtitle')}
                     options={jobTypes}
                     selectedItems={selectedJobTypes}
                     setSelectedItems={setSelectedJobTypes}
-                    containerStyle={dynamicStyles.typeTagsSelector}
+                    containerStyle={{
+                      marginBottom: sizes.typeTagsSelectorMarginBottom,
+                    }}
                     numberOfRows={6}
                   />
                   <TagSelector
@@ -795,7 +754,9 @@ export default function RegisterScreen() {
                     selectedValue={qualificationLevel}
                     onValueChange={setQualificationLevel}
                     isRTL={isRTL}
-                    containerStyle={dynamicStyles.typeTagsSelector}
+                    containerStyle={{
+                      marginBottom: sizes.typeTagsSelectorMarginBottom,
+                    }}
                   />
                   <CustomPicker
                     label={t('register.experience_label')}
@@ -803,22 +764,30 @@ export default function RegisterScreen() {
                     selectedValue={experience}
                     onValueChange={setExperience}
                     isRTL={isRTL}
-                    containerStyle={dynamicStyles.typeTagsSelector}
+                    containerStyle={{
+                      marginBottom: sizes.typeTagsSelectorMarginBottom,
+                    }}
                   />
                   <View
                     style={[
                       styles.inputBlock,
-                      dynamicStyles.inputBlock,
-                      { backgroundColor: theme.formInputBackground },
+                      {
+                        backgroundColor: theme.formInputBackground,
+                        marginBottom: sizes.inputBlockMarginBottom,
+                        borderRadius: sizes.inputBlockBorderRadius,
+                        paddingVertical: sizes.inputBlockPaddingVertical,
+                      },
                     ]}
                   >
                     <Text
                       style={[
                         styles.label,
-                        dynamicStyles.label,
                         {
                           textAlign: isRTL ? 'right' : 'left',
                           color: theme.textColor,
+                          paddingHorizontal: sizes.labelPaddingHorizontal,
+                          paddingTop: sizes.labelPaddingTop,
+                          fontSize: sizes.labelFontSize,
                         },
                       ]}
                     >
@@ -833,8 +802,6 @@ export default function RegisterScreen() {
                       multiline
                       style={[
                         styles.input,
-                        dynamicStyles.input,
-                        dynamicStyles.multilineInput,
                         {
                           height: sizes.multilineInputHeight,
                           textAlign: isRTL ? 'right' : 'left',
@@ -846,6 +813,9 @@ export default function RegisterScreen() {
                           backgroundColor: 'transparent',
                           borderWidth: 0,
                           marginBottom: sizes.multilineInputMarginBottom,
+                          paddingHorizontal: sizes.inputPaddingHorizontal,
+                          borderRadius: sizes.inputBorderRadius,
+                          fontSize: sizes.inputFontSize,
                         },
                         isWebLandscape
                           ? {
@@ -872,7 +842,7 @@ export default function RegisterScreen() {
                       justifyContent: 'center',
                       gap: sizes.containerGap,
                     },
-                    !isWebLandscape && { marginBottom: RFValue(20) },
+                    { marginBottom: sizes.finalMarginBottom },
                   ]}
                 >
                   <PrimaryButton

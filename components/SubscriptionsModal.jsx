@@ -7,26 +7,38 @@ import {
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../context/globalAppContext';
 import JobModalWrapper from './JobModalWrapper';
-import { useWindowInfo } from '../context/windowContext';
 import { icons } from '../constants/icons';
-import { scaleByHeight } from '../utils/resizeFuncs';
-import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
-import { createSubscription, downgradeSubscription, payForPlanUpgrade, upgradeSubscription } from '../src/api/subscriptions';
+import {
+  createSubscription,
+  downgradeSubscription,
+  payForPlanUpgrade,
+  upgradeSubscription,
+} from '../src/api/subscriptions';
 import { useWebView } from '../context/webViewContext';
 import { useNotification } from '../src/render';
+import { useMemo } from 'react';
 
 function SubscriptionsModalContent({ closeModal }) {
-  const { themeController, languageController, subscriptionPlans, subscription, session, setAppLoading } = useComponentContext();
-  const { showWarning, showInfo, showError } = useNotification()
+  const {
+    themeController,
+    languageController,
+    subscriptionPlans,
+    subscription,
+    session,
+    setAppLoading,
+  } = useComponentContext();
+  const { showWarning, showInfo, showError } = useNotification();
   const { openWebView } = useWebView();
-  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
+  const { width, height } = useWindowDimensions();
   const { t } = useTranslation();
   const isRTL = languageController?.isRTL;
-  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const isWebLandscape = Platform.OS === 'web' && width > height;
 
   const tryPurchaseSubscription = async (planId) => {
     try {
@@ -133,54 +145,40 @@ function SubscriptionsModalContent({ closeModal }) {
     }
   };
 
-  const sizes = {
-    headerHeight: isWebLandscape ? scaleByHeight(50, height) : RFPercentage(7),
-    headerMargin: isWebLandscape ? scaleByHeight(30, height) : RFValue(0),
-    icon: isWebLandscape ? scaleByHeight(24, height) : RFValue(24),
-    logoFont: isWebLandscape ? scaleByHeight(24, height) : RFValue(20),
-    modalHeaderPadding: isWebLandscape ? scaleByHeight(7, height) : RFValue(10),
-    modalHeaderPaddingTop: isWebLandscape
-      ? scaleByHeight(32, height)
-      : RFValue(15),
-    containerPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(23, height)
-      : RFValue(15),
-    subscriptionsGap: isWebLandscape ? scaleByHeight(23, height) : RFValue(15),
-    subscriptionMarginBottom: isWebLandscape
-      ? scaleByHeight(23, height)
-      : RFValue(15),
-    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-    subscriptionWidth: isWebLandscape
-      ? scaleByHeight(419, height)
-      : RFValue(300),
-    subscriptionHeight: isWebLandscape
-      ? scaleByHeight(220, height)
-      : RFValue(150),
-    subscriptionPadding: isWebLandscape
-      ? scaleByHeight(14, height)
-      : RFValue(15),
-    subscriptionTitleFont: isWebLandscape
-      ? scaleByHeight(18, height)
-      : RFValue(18),
-    subscriptionsTitleMargin: isWebLandscape
-      ? scaleByHeight(15, height)
-      : RFValue(15),
-    subscriptionsDescriptionFont: isWebLandscape
-      ? scaleByHeight(16, height)
-      : RFValue(16),
-    subscriptionsFeaturesFont: isWebLandscape
-      ? scaleByHeight(12, height)
-      : RFValue(12),
-    priceMarginBottom: isWebLandscape ? scaleByHeight(23, height) : RFValue(15),
-    subscriptionButtonFont: isWebLandscape
-      ? scaleByHeight(20, height)
-      : RFValue(16),
-    subscriptionsContainerWidth: isWebLandscape
-      ? scaleByHeight(900, height)
-      : '100%',
-    btnWidth: isWebLandscape ? scaleByHeight(387, height) : RFValue(150),
-    btnHeight: isWebLandscape ? scaleByHeight(52, height) : RFValue(40),
-  };
+  const sizes = useMemo(() => {
+    const scale = isWebLandscape ? scaleByHeight : scaleByHeightMobile;
+    return {
+      headerHeight: isWebLandscape ? scaleByHeight(50, height) : height * 0.07,
+      headerMargin: isWebLandscape ? scaleByHeight(30, height) : 0,
+      icon: scale(24, height),
+      logoFont: scale(24, height),
+      modalHeaderPadding: scale(7, height),
+      modalHeaderPaddingTop: scale(32, height),
+      containerPaddingHorizontal: scale(23, height),
+      subscriptionsGap: scale(23, height),
+      subscriptionMarginBottom: scale(23, height),
+      borderRadius: scale(8, height),
+      subscriptionWidth: isWebLandscape
+        ? scaleByHeight(419, height)
+        : scaleByHeightMobile(300, height),
+      subscriptionPadding: scale(14, height),
+      subscriptionTitleFont: scale(18, height),
+      subscriptionsTitleMargin: scale(15, height),
+      subscriptionsDescriptionFont: scale(16, height),
+      subscriptionsFeaturesFont: scale(12, height),
+      priceMarginBottom: scale(23, height),
+      subscriptionButtonFont: scale(20, height),
+      subscriptionsContainerWidth: isWebLandscape
+        ? scaleByHeight(900, height)
+        : '100%',
+      btnWidth: isWebLandscape
+        ? scaleByHeight(387, height)
+        : scaleByHeightMobile(150, height),
+      btnHeight: isWebLandscape
+        ? scaleByHeight(52, height)
+        : scaleByHeightMobile(40, height),
+    };
+  }, [isWebLandscape, height]);
 
   //#region helpers
 
@@ -213,7 +211,7 @@ function SubscriptionsModalContent({ closeModal }) {
         activeOpacity={1}
         style={{
           height: height,
-          width: width - (isLandscape ? sidebarWidth : 0),
+          width: width,
           backgroundColor: themeController.current?.backgroundColor,
           alignSelf: isRTL ? 'flex-start' : 'flex-end',
           paddingHorizontal: sizes.containerPaddingHorizontal,
@@ -421,7 +419,6 @@ const styles = StyleSheet.create({
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: RFValue(10),
     borderBottomWidth: 1,
     borderColor: '#ccc',
     justifyContent: 'space-between',

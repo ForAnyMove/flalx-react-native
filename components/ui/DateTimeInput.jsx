@@ -1,10 +1,14 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useState } from 'react';
-import { Platform, Text, TouchableOpacity, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import {
+  Platform,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
-import { scaleByHeight } from '../../utils/resizeFuncs';
-import { RFValue } from 'react-native-responsive-fontsize';
-import { useWindowInfo } from '../../context/windowContext';
+import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
 
 export default function DateTimeInput({
@@ -16,9 +20,9 @@ export default function DateTimeInput({
   const { themeController, languageController } = useComponentContext();
   const [showPicker, setShowPicker] = useState(false);
 
-  const { width, height, isLandscape, sidebarWidth = 0 } = useWindowInfo();
+  const { width, height } = useWindowDimensions();
   const isRTL = languageController.isRTL;
-  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const isWebLandscape = Platform.OS === 'web' && width > height;
 
   const { t } = useTranslation();
   const [inputActive, setInputActive] = useState(false);
@@ -33,19 +37,21 @@ export default function DateTimeInput({
     }
   };
 
-  const sizes = {
-    font: isWebLandscape ? scaleByHeight(12, height) : RFValue(12),
-    inputFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
-    padding: isWebLandscape ? scaleByHeight(4, height) : RFValue(8),
-    inputContainerPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(16, height)
-      : RFValue(8),
-    inputContainerPaddingVertical: isWebLandscape
-      ? scaleByHeight(10, height)
-      : RFValue(6),
-    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(6),
-    inputHeight: isWebLandscape ? scaleByHeight(64, height) : RFValue(40),
-  };
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+    const scale = isWebLandscape ? web : mobile;
+
+    return {
+      font: scale(12),
+      inputFont: isWebLandscape ? scale(16) : scale(16),
+      padding: scale(8),
+      inputContainerPaddingHorizontal: scale(16),
+      inputContainerPaddingVertical: scale(10),
+      borderRadius: scale(6),
+      inputHeight: scale(64),
+    };
+  }, [isWebLandscape, height]);
   if (Platform.OS === 'web') {
     return (
       <View
@@ -112,6 +118,9 @@ export default function DateTimeInput({
                 padding: 0,
                 paddingVertical: sizes.padding,
               },
+              !isWebLandscape && {
+                fontFamily: 'Rubik-Regular',
+              }
             ]}
             onClick={() => !readOnly && setInputActive(true)}
           >

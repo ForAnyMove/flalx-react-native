@@ -1,14 +1,13 @@
-import { Modal, Platform, View, Animated, Easing } from 'react-native';
+import { Modal, Platform, View, Animated, Easing, useWindowDimensions } from 'react-native';
 import { useEffect, useRef } from 'react';
-import { useWindowInfo } from '../context/windowContext';
 import { useComponentContext } from '../context/globalAppContext';
 
 export default function JobModalWrapper({ visible, children, main=true}) {
-  const { isLandscape, height, width, sidebarWidth } = useWindowInfo();
+  const { height, width } = useWindowDimensions();
   const { themeController, languageController } = useComponentContext();
   const isRTL = languageController.isRTL;
 
-  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const isWebLandscape = Platform.OS === 'web' && width > height;
 
   // --- Анимация прозрачности и смещения
   const opacity = useRef(new Animated.Value(0)).current;

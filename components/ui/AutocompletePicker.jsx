@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,10 @@ import {
   FlatList,
   Platform,
   Keyboard,
+  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
-import { RFValue } from 'react-native-responsive-fontsize';
-import { useWindowInfo } from '../../context/windowContext';
-import { scaleByHeight } from '../../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 
 const AutocompletePicker = ({
   label,
@@ -26,20 +25,24 @@ const AutocompletePicker = ({
   value,
 }) => {
   const { themeController } = useComponentContext();
-  const { height, isLandscape } = useWindowInfo();
-  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const { width, height } = useWindowDimensions();
+  const isWebLandscape = Platform.OS === 'web' && width > height;
 
   // --- Размеры и стили ---
-  const sizes = {
-    baseFont: isWebLandscape ? scaleByHeight(16, height) : RFValue(12),
-    font: isWebLandscape ? scaleByHeight(12, height) : RFValue(12),
-    pickerHeight: isWebLandscape ? scaleByHeight(64, height) : RFValue(50),
-    borderRadius: isWebLandscape ? scaleByHeight(8, height) : RFValue(5),
-    inputContainerPaddingHorizontal: isWebLandscape
-      ? scaleByHeight(16, height)
-      : RFValue(8),
-    labelGap: isWebLandscape ? scaleByHeight(4, height) : RFValue(3),
-  };
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+    const scale = isWebLandscape ? web : mobile;
+
+    return {
+      baseFont: scale(16),
+      font: scale(12),
+      pickerHeight: isWebLandscape ? web(64) : mobile(64),
+      borderRadius: isWebLandscape ? web(8) : mobile(8),
+      inputContainerPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
+      labelGap: scale(3),
+    };
+  }, [isWebLandscape, height]);
 
   // --- Состояния ---
   const [isFocused, setIsFocused] = useState(false);

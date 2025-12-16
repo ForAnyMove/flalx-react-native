@@ -1,26 +1,45 @@
-import { useEffect, useState } from 'react';
-import { ScrollView, Text, View, Platform, Modal } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  ScrollView,
+  Text,
+  View,
+  Platform,
+  Modal,
+  useWindowDimensions,
+  StyleSheet,
+} from 'react-native';
 import JobTypeSelector from '../../components/JobTypeSelector';
 import ProviderSummaryBlock from '../../components/ProviderSummaryBlock';
 import SearchPanel from '../../components/SearchPanel';
 import { useComponentContext } from '../../context/globalAppContext';
-import { useWindowInfo } from '../../context/windowContext';
 import JobModalWrapper from '../../components/JobModalWrapper';
 import NewJobModal from '../../components/NewJobModal';
-import { scaleByHeight } from '../../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 
 export default function Providers() {
   const { themeController, providersController, languageController } =
     useComponentContext();
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');
-  const { isLandscape, height } = useWindowInfo();
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
   const isRTL = languageController.isRTL;
   const [newJobModalVisible, setNewJobModalVisible] = useState(false);
   const [chosenUserId, setChosenUserId] = useState(null);
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+
+    return {
+      paddingVertical: isWebLandscape ? web(25) : mobile(14),
+      paddingHorizontal: isWebLandscape ? web(10) : mobile(10),
+      scrollViewColumnGap: web(23),
+      scrollViewRowGap: isWebLandscape ? web(23) : mobile(10),
+    };
+  }, [isWebLandscape, height]);
 
   if (providersController.error)
     return <Text>{providersController.error}</Text>;
@@ -33,14 +52,15 @@ export default function Providers() {
       (user?.name?.toLowerCase().includes(searchValue.toLowerCase()) ||
         user?.surname?.toLowerCase().includes(searchValue.toLowerCase()))
   );
-  
+
   return (
     <View
       style={[
         styles.container,
         {
           backgroundColor: themeController.current?.backgroundColor,
-          paddingVertical: isWebLandscape ? height * 0.03 : RFValue(14),
+          paddingVertical: sizes.paddingVertical,
+          paddingHorizontal: sizes.paddingHorizontal,
         },
       ]}
     >
@@ -64,8 +84,8 @@ export default function Providers() {
         <ScrollView
           contentContainerStyle={{
             flexDirection: isWebLandscape ? 'row' : 'column',
-            columnGap: isWebLandscape ? scaleByHeight(23, height) : 0,
-            rowGap: isWebLandscape ? scaleByHeight(23, height) : RFValue(10),
+            columnGap: isWebLandscape ? sizes.scrollViewColumnGap : 0,
+            rowGap: sizes.scrollViewRowGap,
             flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
             justifyContent: isWebLandscape
               ? isRTL
@@ -75,10 +95,14 @@ export default function Providers() {
           }}
         >
           {filteredProviders?.map((user, index) => (
-            <ProviderSummaryBlock key={index} user={user} chooseUser={() => {
-              setChosenUserId(user?.id);
-              setNewJobModalVisible(true);
-            }} />
+            <ProviderSummaryBlock
+              key={index}
+              user={user}
+              chooseUser={() => {
+                setChosenUserId(user?.id);
+                setNewJobModalVisible(true);
+              }}
+            />
           ))}
         </ScrollView>
       )}
@@ -101,9 +125,8 @@ export default function Providers() {
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: RFValue(10),
   },
-};
+});

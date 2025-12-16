@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Platform } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './../utils/supabase/supabase';
 import { API_BASE_URL } from '../utils/config';
@@ -12,17 +12,75 @@ import { getUserSubscription } from '../src/api/subscriptions';
 
 export default function sessionManager() {
   const [session, setSession] = useState(null);
+  const [trialSession, setTrialSession] = useState(null);
   const [user, setUser] = useState(null);
   const [subscription, setSubscription] = useState(null);
   const [revealedUsers, setRevealedUsers] = useState([]); // для хранения ID пользователей с раскрытыми контактами
   const [email, setEmail] = useState(null); // для verifyOtp
+  const [isInPasswordReset, setIsInPasswordReset] = useState(false);
+  const preResetAuthCall = useRef(false);
 
   const [isLoader, setLoader] = useState(true);
+
+  function clearSupabaseStorage() {
+    if (Platform.OS === 'web') {
+      // Удаляем кастомную сессию
+      localStorage.removeItem('supabase_session');
+
+      // Удаляем все sb-*-auth-token
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+          localStorage.removeItem(key);
+        }
+      });
+    } else {
+      // React Native: удаляем через AsyncStorage
+
+      AsyncStorage.removeItem('supabase_session');
+
+      AsyncStorage.getAllKeys().then((keys) => {
+        const sbKeys = keys.filter(
+          (k) => k.startsWith('sb-') && k.endsWith('-auth-token')
+        );
+        if (sbKeys.length > 0) {
+          AsyncStorage.multiRemove(sbKeys);
+        }
+      });
+    }
+  }
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+
+    const handler = () => {
+      if (preResetAuthCall.current || isInPasswordReset) {
+        console.log('Clearing Supabase storage on page unload (WEB)');
+        clearSupabaseStorage();
+      }
+    };
+
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isInPasswordReset]);
 
   // Загружаем сессию при старте
   useEffect(() => {
     loadSession();
   }, []);
+
+  // useEffect(() => {
+  //   if (Platform.OS === "web") return;
+
+  //   const sub = AppState.addEventListener("change", (state) => {
+  //     if (state === "background") {
+  //       if (preResetAuthCall.current || isInPasswordReset) {
+  //         console.log("Clearing Supabase storage (RN background)");
+  //         clearSupabaseStorage();
+  //       }
+  //     }
+  //   });
+
+  //   return () => sub.remove();
+  // }, [isInPasswordReset]);
 
   async function loadSession() {
     try {
@@ -46,6 +104,8 @@ export default function sessionManager() {
         }
 
         // data.session уже будет с обновлённым токеном, если refresh прошёл
+        console.log('save session in load session, ', savedSession, parsed);
+
         await saveSession(data.session);
         setSession(parsed);
         console.log('Сессия восстановлена:', parsed);
@@ -66,6 +126,8 @@ export default function sessionManager() {
   }
 
   async function saveSession(newSession) {
+    console.log('save session');
+
     try {
       setSession(newSession);
       if (Platform.OS === 'web') {
@@ -93,6 +155,27 @@ export default function sessionManager() {
       return { success: true };
     }
   }
+  // Запросить код на email
+  async function resetPasswordWithEmail(userEmail, options = {}) {
+    setEmail(userEmail); // сохраним email для дальнейшей проверки кода
+    const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
+      redirectTo: 'flalx://reset-password', // deep link
+    });
+    if (error) {
+      console.error('Ошибка при отправке кода:', error.message);
+      return { success: false, error: error.message };
+    } else {
+      console.log('Код отправлен на email:', userEmail);
+      return { success: true };
+    }
+  }
+
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      console.log('Пользователь открыл ссылку восстановления');
+      setIsInPasswordReset(true); // поместить в контекст
+    }
+  });
 
   // Проверка кода
   async function verifyOtp(code) {
@@ -128,6 +211,31 @@ export default function sessionManager() {
         // Передаем ошибку дальше, чтобы UI мог ее обработать
         throw new Error('Не удалось загрузить профиль пользователя.');
       }
+    }
+  }
+
+  // Проверка кода
+  async function verifyOtpResetPassword(code) {
+    if (!email) {
+      console.error('Email не установлен. Сначала вызови signInWithEmail().');
+      return;
+    }
+
+    preResetAuthCall.current = true;
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token: code,
+      type: 'email',
+    });
+
+    if (error) {
+      console.error('Ошибка проверки кода:', error.message);
+      throw new Error(`Ошибка проверки кода: ${error.message}`);
+    } else {
+      console.log('Код принят:', data);
+      setTrialSession(data.session);
+
+      setIsInPasswordReset(true);
     }
   }
 
@@ -273,11 +381,31 @@ export default function sessionManager() {
 
   useEffect(() => {
     const { data: subscription } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session) {
-          await saveSession(session);
-          setSession(session);
-        } else {
+      async (event, newSession) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          console.log('Password recovery mode: session НЕ сохраняем');
+          setTrialSession(newSession); // временная сессия
+          setIsInPasswordReset(true);
+          return;
+        }
+
+        if (event === 'SIGNED_IN') {
+          // но если мы в режиме reset — тоже не сохраняем!
+          if (preResetAuthCall.current || isInPasswordReset) {
+            console.log('SIGNED_IN во время reset password – игнорируем');
+            preResetAuthCall.current = false;
+            return;
+          }
+
+          // обычный вход — сохраняем
+          console.log('default sign in event');
+
+          await saveSession(newSession);
+          setSession(newSession);
+          return;
+        }
+
+        if (!newSession) {
           setSession(null);
           setUser(null);
         }
@@ -435,6 +563,24 @@ export default function sessionManager() {
       return { success: false, error: e.message };
     }
   }
+  // Обновление пароля после сброса
+  async function setNewPassword(newPassword) {
+    await supabase.auth.setSession(trialSession);
+
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      console.error('Ошибка:', error.message);
+      return { success: false, error: error.message };
+    }
+
+    setIsInPasswordReset(false);
+    preResetAuthCall.current = false;
+    signOut();
+    return { success: true };
+  }
 
   return {
     session: {
@@ -443,14 +589,17 @@ export default function sessionManager() {
       sendCode: (email) => signInWithEmail(email),
       signInWithPassword: (email, password) =>
         signInWithPassword(email, password),
+      resetPasswordWithEmail: (email) => resetPasswordWithEmail(email),
       checkCode: (code) => verifyOtp(code),
+      checkCodeForPaswordReset: (code) => verifyOtpResetPassword(code),
       signOut,
       serverURL: API_BASE_URL,
-      createUser: (email, password) =>
-        createUser(email, password),
+      createUser: (email, password) => createUser(email, password),
       changePassword: (oldPassword, newPassword) =>
         changePassword(oldPassword, newPassword),
       createPassword: (newPassword) => createPassword(newPassword),
+      resetPassword: isInPasswordReset,
+      setNewPassword: (newPassword) => setNewPassword(newPassword),
     },
     user: {
       current: user,

@@ -25,6 +25,8 @@ import { GlobalNotificationHandler, NotificationProvider } from './src/render';
 import AuthScreenWithPass from './screens/AuthScreenWithPass';
 import RegisterScreenWithPass from './screens/RegisterScreenWithPass';
 import LoadingStub from './screens/LoaderScreen';
+import ForgottenPasswordScreen from './screens/ForgottenPasswordScreen';
+import ResetPasswordScreen from './screens/ResetPasswordScreen';
 
 // --- Глобальное применение шрифта ---
 const originalTextRender = Text.render;
@@ -62,6 +64,7 @@ function App() {
     isLoader,
     registerControl,
     authControl,
+    forgotPassControl,
   } = useComponentContext();
   const [isOnboardingShowed, setOnboardingShowed] = useState(false);
   const [onboardingStatusChecked, setOnboardingStatusChecked] = useState(false);
@@ -185,6 +188,14 @@ function App() {
   if (registerControl.state) {
     content = <RegisterScreenWithPass />;
   }
+  // Регистрация перед входом
+  if (forgotPassControl.state) {
+    content = <ForgottenPasswordScreen />;
+  }
+  if (session.resetPassword) {
+    content = <ResetPasswordScreen />;
+  }
+  
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>

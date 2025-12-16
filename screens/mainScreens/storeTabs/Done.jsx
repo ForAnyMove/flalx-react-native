@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   Image,
   Modal,
@@ -7,17 +7,15 @@ import {
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
 import JobTypeSelector from '../../../components/JobTypeSelector';
 import { FontAwesome6 } from '@expo/vector-icons';
-import { RFValue } from 'react-native-responsive-fontsize';
 import SearchPanel from '../../../components/SearchPanel';
-import ShowJobModal from '../../../components/ShowJobModal';
-import { JOB_TYPES } from '../../../constants/jobTypes';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
-import { scaleByHeight } from '../../../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 
 export default function DoneScreen({
   setShowJobModalVisible,
@@ -26,36 +24,43 @@ export default function DoneScreen({
 }) {
   const { themeController, jobsController, languageController } =
     useComponentContext();
-  const { height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
+  const { height } = useWindowDimensions();
+  const { isLandscape } = useWindowInfo();
   const isRTL = languageController.isRTL;
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
-  // размеры для web-landscape
-  const sizes = {
-    cardRadius: isWebLandscape ? height * 0.007 : RFValue(5),
-    imageHeight: isWebLandscape ? scaleByHeight(120, height) : RFValue(45),
-    imageWidth: isWebLandscape ? scaleByHeight(153, height) : RFValue(55),
-    fontTitle: isWebLandscape ? scaleByHeight(18, height) : RFValue(12),
-    fontDescription: isWebLandscape ? scaleByHeight(16, height) : RFValue(10),
-    badgeSize: isWebLandscape ? scaleByHeight(20, height) : RFValue(16),
-    badgeFont: isWebLandscape ? scaleByHeight(12, height) : RFValue(10),
-    scrollContainerWidth: isWebLandscape ? '60%' : '100%',
-    badgePosition: isWebLandscape ? height * 0.005 : RFValue(5),
-    personalMarkerBorderWidth: isWebLandscape ? height * 0.003 : RFValue(2),
-    personalMarkerVP: isWebLandscape ? height * 0.003 : RFValue(2),
-    personalMarkerHP: isWebLandscape ? height * 0.012 : RFValue(6),
-    personalMarkerBottomAngleRadius: isWebLandscape
-      ? height * 0.01
-      : RFValue(8),
-    personalMarkerFontSize: isWebLandscape ? height * 0.015 : RFValue(10),
-    containerMarginTop: isWebLandscape
-      ? scaleByHeight(24, height)
-      : RFValue(14),
-  };
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+
+    return {
+      cardRadius: isWebLandscape ? web(8) : mobile(8),
+      imageHeight: isWebLandscape ? web(120) : mobile(90),
+      imageWidth: isWebLandscape ? web(153) : '25%',
+      fontTitle: isWebLandscape ? web(18) : mobile(18),
+      fontDescription: isWebLandscape ? web(16) : mobile(16),
+      badgeSize: isWebLandscape ? web(20) : mobile(20),
+      badgeFont: isWebLandscape ? web(12) : mobile(12),
+      scrollContainerWidth: isWebLandscape ? '60%' : '100%',
+      badgePosition: isWebLandscape ? web(5) : mobile(5),
+      personalMarkerBorderWidth: isWebLandscape ? web(3) : mobile(3),
+      personalMarkerVP: isWebLandscape ? web(3) : mobile(3),
+      personalMarkerHP: isWebLandscape ? web(12) : mobile(12),
+      personalMarkerBottomAngleRadius: isWebLandscape ? web(8) : mobile(8),
+      personalMarkerFontSize: isWebLandscape ? web(15) : mobile(15),
+      containerMarginTop: isWebLandscape ? web(24) : mobile(24),
+      imageMargin: isWebLandscape ? web(10) : mobile(10),
+      containerPaddingH: isWebLandscape ? web(10) : mobile(10),
+      containerPaddingV: isWebLandscape ? web(14) : mobile(14),
+      cardMarginBottom: isWebLandscape ? web(8) : mobile(8),
+      descriptionMarginTop: isWebLandscape ? web(2) : mobile(2),
+      badgePadding: isWebLandscape ? web(2) : mobile(2),
+    };
+  }, [height, isWebLandscape]);
 
   const filteredJobsList = jobsController.creator.done
     .filter((job) =>
@@ -74,6 +79,8 @@ export default function DoneScreen({
         {
           backgroundColor: themeController.current?.backgroundColor,
           direction: isRTL ? 'rtl' : 'ltr',
+          paddingHorizontal: sizes.containerPaddingH,
+          paddingVertical: sizes.containerPaddingV,
         },
       ]}
     >
@@ -119,7 +126,7 @@ export default function DoneScreen({
             return (
               <TouchableOpacity
                 key={index}
-                style={styles.cardContainer}
+                style={[styles.cardContainer, { marginBottom: sizes.cardMarginBottom }]}
                 onPress={() => {
                   setCurrentJobId(job.id);
                   setShowJobModalVisible(true);
@@ -147,11 +154,11 @@ export default function DoneScreen({
                           themeController.current?.defaultBlocksMockBackground,
                         ...(isRTL
                           ? {
-                            marginLeft: RFValue(10),
+                            marginLeft: sizes.imageMargin,
                             marginRight: 0,
                           }
                           : {
-                            marginRight: RFValue(10),
+                            marginRight: sizes.imageMargin,
                             marginLeft: 0,
                           }),
                         ...(isRTL && Platform.OS === 'web'
@@ -205,6 +212,7 @@ export default function DoneScreen({
                             textAlign:
                               isRTL && Platform.OS === 'web' ? 'right' : 'left',
                             fontSize: sizes.fontDescription,
+                            marginTop: sizes.descriptionMarginTop,
                           },
                         ]}
                       >
@@ -264,30 +272,20 @@ export default function DoneScreen({
 const styles = {
   container: {
     flex: 1,
-    paddingHorizontal: RFValue(10),
-    paddingVertical: RFValue(14),
     paddingBottom: 0,
   },
   scrollContainer: {
     paddingBottom: 0,
   },
-  cardContainer: {
-    marginBottom: RFValue(8),
-  },
+  cardContainer: {},
   cardContent: {
     flexDirection: 'row',
-    borderRadius: RFValue(5),
     alignItems: 'center',
     position: 'relative',
   },
   imageContainer: {
-    width: RFValue(55),
-    height: RFValue(55),
-    borderTopLeftRadius: RFValue(5),
-    borderBottomLeftRadius: RFValue(5),
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: RFValue(10),
     overflow: 'hidden',
   },
   image: {
@@ -306,28 +304,17 @@ const styles = {
     justifyContent: 'center',
   },
   title: {
-    fontSize: RFValue(12),
     // fontWeight: '600',
   },
-  description: {
-    fontSize: RFValue(10),
-    marginTop: RFValue(2),
-  },
+  description: {},
   badge: {
     position: 'absolute',
-    top: RFValue(5),
-    right: RFValue(5),
-    borderRadius: RFValue(999),
-    paddingHorizontal: RFValue(2),
-    paddingVertical: RFValue(2),
-    minWidth: RFValue(16),
-    height: RFValue(16),
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badgeText: {
     // fontWeight: 'bold',
-    fontSize: RFValue(10),
   },
   specialMarkerContainer: {
     position: 'absolute',
