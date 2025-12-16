@@ -104,6 +104,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         back_to_sign_in: 'Back to sign in',
         ok: 'OK',
         invalid_email: 'Enter a valid email',
+        invalid_password: 'Enter a valid password',
         clear_code: 'Clear code',
         invalid_code: 'Invalid code',
         email_description:
@@ -483,6 +484,7 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         back_to_sign_in: 'חזרה להתחברות',
         ok: 'אוקיי',
         invalid_email: 'הזן אימייל תקין',
+        invalid_password: 'הזן סיסמה תקינה',
         clear_code: 'נקה קוד',
         invalid_code: 'קוד שגוי',
         email_description:
