@@ -107,6 +107,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         forgot_pass_subtitle: 'Enter your email for sending reset code.',
         ok: 'OK',
         invalid_email: 'Enter a valid email',
+        invalid_password: 'Enter a valid password',
         clear_code: 'Clear code',
         invalid_code: 'Invalid code',
         email_description:
@@ -532,6 +533,7 @@ or reject it. Please adhere to the platform rules.`,
         forgot_pass_subtitle: 'הזן את האימייל שלך לקבלת קוד לאיפוס הסיסמה.',
         ok: 'אוקיי',
         invalid_email: 'הזן אימייל תקין',
+        invalid_password: 'הזן סיסמה תקינה',
         clear_code: 'נקה קוד',
         invalid_code: 'קוד שגוי',
         email_description:
