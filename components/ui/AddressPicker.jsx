@@ -6,7 +6,7 @@ import {
   Platform,
   useWindowDimensions,
 } from 'react-native';
-import { LocationAutocomplete } from '@julekgwa/react-native-places-autocomplete';
+import GooglePlacesTextInput from 'react-native-google-places-textinput';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 
@@ -42,15 +42,17 @@ const AddressPicker = ({
     };
   }, [isWebLandscape, height]);
 
-  const handleSelect = (data, details) => {
-    if (details?.geometry?.location) {
-      const location = {
-        latitude: details.geometry.location.lat,
-        longitude: details.geometry.location.lng,
-        address: data.description,
-      };
-      onLocationSelect(location);
-    }
+  const handleSelect = (place) => {
+    console.log('Place: ', place);
+    
+    // if (place?.geometry?.location) {
+    //   const location = {
+    //     latitude: place.geometry.location.lat,
+    //     longitude: place.geometry.location.lng,
+    //     address: place.formatted_address,
+    //   };
+    //   onLocationSelect(location);
+    // }
   };
 
   return (
@@ -80,78 +82,58 @@ const AddressPicker = ({
         >
           {label}
         </Text>
-        <LocationAutocomplete
-          // provider='openstreetmap'
-          // debounce={300}
-  provider="google"
-  providerConfig={{
-    apiKey: GOOGLE_PLACES_API_KEY,
-  }}
-  queryOptions={{
-    components: "country:us",
-    types: "geocode"
-  }}
-          placeholder={placeholder || ''}
-          // onPress={handleSelect}
-          // query={{
-          //   // key: GOOGLE_PLACES_API_KEY,
-          //   language: 'ru',
-          // }}
-      // queryOptions={{
-      //   countrycodes: "us,ca,gb", // Limit to specific countries
-      //   limit: 8
-      // }}
-      onLocationSelect={handleSelect}
-      showRecentSearches={true}
-          // onFail={(error) => console.error('Google Places Autocomplete Error:', error)}
-          // fetchDetails={true}
-          // textInputProps={{
-          //   style: [
-          //     styles.input,
-          //     {
-          //       color: themeController.current?.textColor,
-          //       fontSize: sizes.baseFont,
-          //       textAlign: isRTL ? 'right' : 'left',
-          //     },
-          //   ],
-          //   placeholderTextColor: themeController.current?.formInputLabelColor,
-          // }}
-          // styles={{
-          //   container: {
-          //     flex: 1,
-          //   },
-          //   textInput: {
-          //     backgroundColor: 'transparent',
-          //     height: sizes.baseFont * 1.5,
-          //     padding: 0,
-          //     margin: 0,
-          //   },
-          //   listView: {
-          //     position: 'absolute',
-          //     top: sizes.pickerHeight - sizes.labelGap,
-          //     left: -sizes.inputContainerPaddingHorizontal,
-          //     right: -sizes.inputContainerPaddingHorizontal,
-          //     backgroundColor: themeController.current?.formInputBackground,
-          //     borderBottomLeftRadius: sizes.borderRadius,
-          //     borderBottomRightRadius: sizes.borderRadius,
-          //     elevation: 5,
-          //     zIndex: 1000,
-          //   },
-          //   row: {
-          //     padding: 15,
-          //     height: 'auto',
-          //   },
-          //   description: {
-          //     color: themeController.current?.textColor,
-          //   },
-          //   separator: {
-          //     height: 1,
-          //     backgroundColor:
-          //       themeController.current?.profileDefaultBackground,
-          //   },
-          // }}
-          // enablePoweredByContainer={false}
-          // defaultValue={initialAddress}
+        <GooglePlacesTextInput
+          apiKey={GOOGLE_PLACES_API_KEY}
+          onPlaceSelected={handleSelect}
+          textInputProps={{
+            placeholder: placeholder || '',
+            defaultValue: initialAddress,
+            style: [
+              styles.input,
+              {
+                color: themeController.current?.textColor,
+                fontSize: sizes.baseFont,
+                textAlign: isRTL ? 'right' : 'left',
+              },
+            ],
+            placeholderTextColor:
+              themeController.current?.formInputPlaceholderColor,
+          }}
+          styles={{
+            container: {
+              flex: 1,
+            },
+            textInput: {
+              backgroundColor: 'transparent',
+              height: 'auto',
+              padding: 0,
+              margin: 0,
+            },
+            listView: {
+              position: 'absolute',
+              top: sizes.pickerHeight - sizes.labelGap,
+              left: -sizes.inputContainerPaddingHorizontal,
+              right: -sizes.inputContainerPaddingHorizontal,
+              backgroundColor: themeController.current?.formInputBackground,
+              borderBottomLeftRadius: sizes.borderRadius,
+              borderBottomRightRadius: sizes.borderRadius,
+              elevation: 5,
+              zIndex: 1000,
+            },
+            row: {
+              padding: 15,
+              height: 'auto',
+            },
+            description: {
+              color: themeController.current?.textColor,
+            },
+            separator: {
+              height: 1,
+              backgroundColor:
+                themeController.current?.profileDefaultBackground,
+            },
+          }}
+          fetchDetails={true}
         />
       </View>
     </View>
