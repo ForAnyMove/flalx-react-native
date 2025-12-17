@@ -244,6 +244,8 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         readMore: 'Read more',
         cancel: 'Cancel',
         change: 'Change',
+        submit: 'Submit',
+        ok: 'OK',
       },
       profile: {
         professions: 'License levels I work at',
@@ -399,14 +401,16 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
       },
       professions: {
         register_modal: {
-          title: 'Register a new profession',
-          description:
-            'If you did not find your profession in the list, you can send a request to add it. We will review it and add it to the system.',
+          title: 'Register of a new profession',
+          description: `If you don\'t find the type/subtype you need in the app,
+you can request that we add it to the system. 
+Moderation will review your request and approve 
+or reject it. Please adhere to the platform rules.`,
           profession_label: 'Profession',
-          profession_placeholder: 'Select a profession',
-          subtype_label: 'Subtype/Specialization',
-          subtype_placeholder: 'e.g., "Commercial Electrician"',
-          send_button: 'Send Request',
+          profession_placeholder: 'Select or enter profession',
+          subtype_label: 'Subtype',
+          subtype_placeholder: 'Enter subtype',
+          send_button: 'Send',
           success_title: 'Submission Successful',
           success_description:
             'We will respond to you by email as soon as possible.',
@@ -669,6 +673,8 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         readMore: 'קרא עוד',
         cancel: 'בטל',
         change: 'שנה',
+        submit: 'שלח',
+        ok: 'אוקיי',
       },
       profile: {
         professions: 'רמות רישוי שאני עובד בהן',
@@ -825,12 +831,12 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         register_modal: {
           title: 'רישום מקצוע חדש',
           description:
-            'אם לא מצאת את המקצוע שלך ברשימה, תוכל לשלוח בקשה להוספתו. אנו נבדוק אותה ונוסיף אותה למערכת.',
+            'אם אינך מוצא את הסוג/תת-הסוג שאתה צריך באפליקציה,\nאתה יכול לבקש שנוסיף אותו למערכת.\nהמודרציה תבדוק את בקשתך ותאשר\nאו תדחה אותה. אנא הקפד על כללי הפלטפורמה.',
           profession_label: 'מקצוע',
-          profession_placeholder: 'בחר מקצוע',
-          subtype_label: 'תת-סוג/התמחות',
-          subtype_placeholder: 'למשל, "חשמלאי מסחרי"',
-          send_button: 'שלח בקשה',
+          profession_placeholder: 'בחר או הזן מקצוע',
+          subtype_label: 'תת-סוג',
+          subtype_placeholder: 'הזן תת-סוג',
+          send_button: 'שלח',
           success_title: 'ההגשה הצליחה',
           success_description: 'אנו נגיב לך באימייל בהקדם האפשרי.',
           ok_button: 'אישור',

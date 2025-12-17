@@ -13,12 +13,13 @@ import {
 import { useWindowInfo } from '../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
-import { FontAwesome6, MaterialIcons } from '@expo/vector-icons';
 import { useComponentContext } from '../context/globalAppContext';
 import ImagePickerModal from './ui/ImagePickerModal';
+import { icons } from '../constants/icons';
+import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
 
 const AddProfessionModal = ({ visible, onClose }) => {
-  const { themeController, languageController } = useComponentContext();
+  const { themeController, languageController, user } = useComponentContext();
   const { height, width } = useWindowDimensions();
   const { isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -34,23 +35,31 @@ const AddProfessionModal = ({ visible, onClose }) => {
   const sizes = useMemo(() => {
     const scale = isWebLandscape ? scaleByHeight : scaleByHeightMobile;
     return {
-      modalWidth: isWebLandscape ? width * 0.35 : width * 0.9,
-      modalMaxHeight: isWebLandscape ? height * 0.8 : height * 0.9,
-      borderRadius: scale(12),
+      modalWidth: isWebLandscape ? scale(450) : width,
+      modalMaxHeight: isWebLandscape ? height * 0.8 : height,
+      borderRadius: scale(8),
       padding: scale(24),
-      headerBottomMargin: scale(16),
-      titleSize: scale(20),
-      iconSize: scale(18),
-      buttonHeight: scale(50),
+      paddingVertical: scale(40),
+      paddingHorizontal: scale(60),
+      headerBottomMargin: scale(32),
+      titleSize: scale(24),
+      descriptionSize: scale(18),
+      crossSpace: scale(8),
+      iconSize: scale(24),
+      buttonHeight: scale(62),
       buttonFontSize: scale(16),
-      uploadRowHeight: scale(56),
-      uploadIconSize: scale(24),
+      uploadRowHeight: scale(64),
+      uploadRowWidth: isWebLandscape ? '100%' : '100%',
+      uploadRowPaddingH: scale(16),
+      uploadRowMarginBottom: scale(16),
+      uploadIconSize: scale(40),
       uploadTextSize: scale(16),
       imageGridGap: scale(8),
-      imageSize: scale(70),
-      removeIconSize: scale(20),
-      successIconContainerSize: scale(72),
-      successIconSize: scale(36),
+      imageSize: scale(100),
+      textMarginH: scale(10),
+      removeIconSize: scale(16),
+      successIconContainerSize: scale(112),
+      successIconSize: scale(112),
       successTitleMarginTop: scale(24),
       successDescriptionMarginTop: scale(8),
       successButtonMarginTop: scale(32),
@@ -62,14 +71,44 @@ const AddProfessionModal = ({ visible, onClose }) => {
     setPickerVisible(true);
   };
 
-  const handleAddImages = (images) => {
-    if (activePicker === 'passport') {
-      setPassportPhotos((prev) => [...prev, ...images]);
-    } else if (activePicker === 'certificate') {
-      setCertificatePhotos((prev) => [...prev, ...images]);
+  // const handleAddImages = (images) => {
+  //   if (activePicker === 'passport') {
+  //     setPassportPhotos((prev) => [...prev, ...images]);
+  //   } else if (activePicker === 'certificate') {
+  //     setCertificatePhotos((prev) => [...prev, ...images]);
+  //   }
+  //   setPickerVisible(false);
+  //   setActivePicker(null);
+  // };
+
+  const handleAddImages = async (uris) => {
+    try {
+      const uploadedUrls = await Promise.all(
+        uris.map(async (uri) => {
+          // если хочешь лимит размера для локальных файлов:
+          // if (uri.startsWith('file://')) await checkFileSize(uri, 5);
+
+          const res = await uploadImageToSupabase(uri, user.current.id, {
+            bucket: 'jobs',
+            isAvatar: false,
+          });
+          return res?.publicUrl || null;
+        })
+      );
+
+      if (activePicker === 'passport') {
+        setPassportPhotos((prev) => [...prev, ...uploadedUrls.filter(Boolean)]);
+      } else if (activePicker === 'certificate') {
+        setCertificatePhotos((prev) => [
+          ...prev,
+          ...uploadedUrls.filter(Boolean),
+        ]);
+      }
+      setPickerVisible(false);
+      setActivePicker(null);
+    } catch (e) {
+      console.error('Ошибка загрузки изображений:', e);
     }
-    setPickerVisible(false);
-    setActivePicker(null);
   };
 
   const handleRemoveImage = (index, type) => {
@@ -111,12 +150,16 @@ const AddProfessionModal = ({ visible, onClose }) => {
       maxHeight: sizes.modalMaxHeight,
       backgroundColor: themeController.current?.backgroundColor,
       borderRadius: sizes.borderRadius,
-      padding: sizes.padding,
+      paddingVertical: sizes.paddingVertical,
+      paddingHorizontal: sizes.paddingHorizontal,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 10 },
       shadowOpacity: 0.25,
       shadowRadius: 20,
       elevation: 20,
+      alignItems: 'center',
+      position: 'relative',
+      boxSizing: 'border-box',
     },
     header: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
@@ -131,28 +174,34 @@ const AddProfessionModal = ({ visible, onClose }) => {
       flex: 1,
       textAlign: isRTL ? 'right' : 'left',
     },
+    crossIcon: {
+      width: sizes.iconSize,
+      height: sizes.iconSize,
+      tintColor: themeController.current?.textColor,
+    },
     submitButton: {
       height: sizes.buttonHeight,
+      width: '100%',
       backgroundColor: themeController.current?.buttonColorPrimaryDefault,
       borderRadius: sizes.borderRadius,
       justifyContent: 'center',
       alignItems: 'center',
-      marginTop: sizes.padding,
+      marginTop: sizes.uploadRowMarginBottom,
     },
     submitButtonText: {
       color: themeController.current?.buttonTextColorPrimary,
       fontSize: sizes.buttonFontSize,
-      fontWeight: 'bold',
     },
     uploadRow: {
       height: sizes.uploadRowHeight,
+      width: sizes.uploadRowWidth,
       backgroundColor: themeController.current?.formInputBackground,
       borderRadius: sizes.borderRadius,
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      paddingHorizontal: sizes.padding / 2,
+      paddingHorizontal: sizes.uploadRowPaddingH,
       justifyContent: 'space-between',
-      marginBottom: sizes.padding / 2,
+      marginBottom: sizes.uploadRowMarginBottom,
     },
     uploadRowInfo: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
@@ -161,47 +210,49 @@ const AddProfessionModal = ({ visible, onClose }) => {
     uploadText: {
       fontSize: sizes.uploadTextSize,
       color: themeController.current?.textColor,
-      marginHorizontal: sizes.padding / 2,
+      marginHorizontal: sizes.textMarginH,
     },
     imageGrid: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
+      // flexWrap: 'wrap',
       gap: sizes.imageGridGap,
       marginBottom: sizes.padding,
     },
     imageContainer: {
       position: 'relative',
+      backgroundColor: themeController.current?.formInputBackground,
+      borderRadius: sizes.borderRadius,
     },
     image: {
       width: sizes.imageSize,
       height: sizes.imageSize,
-      borderRadius: sizes.borderRadius / 2,
+      borderRadius: sizes.borderRadius,
     },
     removeButton: {
       position: 'absolute',
-      top: -5,
-      right: -5,
-      backgroundColor: themeController.current?.backgroundColor,
-      borderRadius: 50,
-      padding: 2,
+      top: sizes.crossSpace / 2,
+      right: sizes.crossSpace / 2,
+      backgroundColor: themeController.current?.backgroundColor + '80',
+      borderRadius: sizes.removeIconSize,
+      padding: sizes.crossSpace / 4,
     },
     // Success view styles
     successContainer: {
       alignItems: 'center',
-      padding: sizes.padding,
     },
     successIconContainer: {
       width: sizes.successIconContainerSize,
       height: sizes.successIconContainerSize,
       borderRadius: sizes.successIconContainerSize / 2,
-      backgroundColor: themeController.current?.buttonColorPrimaryDefault + '20',
+      backgroundColor:
+        themeController.current?.buttonColorPrimaryDefault + '20',
       justifyContent: 'center',
       alignItems: 'center',
     },
     successTitle: {
       fontSize: sizes.titleSize,
       fontWeight: 'bold',
-      color: themeController.current?.textColor,
+      color: themeController.current?.primaryColor,
       marginTop: sizes.successTitleMarginTop,
       textAlign: 'center',
     },
@@ -210,7 +261,7 @@ const AddProfessionModal = ({ visible, onClose }) => {
       color: themeController.current?.unactiveTextColor,
       marginTop: sizes.successDescriptionMarginTop,
       textAlign: 'center',
-      lineHeight: sizes.descriptionSize * 1.5,
+      lineHeight: sizes.descriptionSize * 1.25,
     },
     okButton: {
       height: sizes.buttonHeight,
@@ -227,25 +278,29 @@ const AddProfessionModal = ({ visible, onClose }) => {
       fontWeight: 'bold',
     },
   });
+  console.log(passportPhotos);
 
   const renderImageGrid = (photos, type) => (
-    <View style={styles.imageGrid}>
+    <ScrollView contentContainerStyle={styles.imageGrid} horizontal={true}>
       {photos.map((photo, index) => (
         <View key={index} style={styles.imageContainer}>
-          <Image source={{ uri: photo.uri || photo }} style={styles.image} />
+          <Image source={{ uri: photo }} style={styles.image} />
           <TouchableOpacity
             style={styles.removeButton}
             onPress={() => handleRemoveImage(index, type)}
           >
-            <MaterialIcons
-              name='cancel'
-              size={sizes.removeIconSize}
-              color={themeController.current?.unactiveTextColor}
+            <Image
+              source={icons.cross}
+              style={{
+                width: sizes.removeIconSize,
+                height: sizes.removeIconSize,
+                tintColor: themeController.current?.textColor,
+              }}
             />
           </TouchableOpacity>
         </View>
       ))}
-    </View>
+    </ScrollView>
   );
 
   return (
@@ -253,61 +308,84 @@ const AddProfessionModal = ({ visible, onClose }) => {
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           {isSubmitted ? (
-            <View style={styles.successContainer}>
-              <View style={styles.successIconContainer}>
-                <FontAwesome6
-                  name='check'
-                  size={sizes.successIconSize}
-                  color={themeController.current?.buttonColorPrimaryDefault}
-                />
+            <>
+              <View style={styles.successContainer}>
+                <View style={styles.successIconContainer}>
+                  <Image
+                    source={icons.checkDefault}
+                    style={{
+                      width: sizes.successIconSize,
+                      height: sizes.successIconSize,
+                    }}
+                  />
+                </View>
+                <Text style={styles.successTitle}>
+                  {t('professions.verification.success_title')}
+                </Text>
+                <Text style={styles.successDescription}>
+                  {t('professions.verification.success_description')}
+                </Text>
+                <TouchableOpacity style={styles.okButton} onPress={handleClose}>
+                  <Text style={styles.okButtonText}>{t('common.ok')}</Text>
+                </TouchableOpacity>
               </View>
-              <Text style={styles.successTitle}>
-                {t('professions.verification.success_title')}
-              </Text>
-              <Text style={styles.successDescription}>
-                {t('professions.verification.success_description')}
-              </Text>
-              <TouchableOpacity style={styles.okButton} onPress={handleClose}>
-                <Text style={styles.okButtonText}>{t('common.ok')}</Text>
+              <TouchableOpacity
+                onPress={handleClose}
+                style={{
+                  position: 'absolute',
+                  top: sizes.crossSpace,
+                  right: sizes.crossSpace,
+                }}
+              >
+                <Image source={icons.cross} style={styles.crossIcon} />
               </TouchableOpacity>
-            </View>
+            </>
           ) : (
             <>
               <View style={styles.header}>
                 <Text style={styles.title}>
                   {t('professions.verification.title')}
                 </Text>
-                <TouchableOpacity onPress={handleClose}>
-                  <FontAwesome6
-                    name='close'
-                    size={sizes.iconSize}
-                    color={themeController.current?.unactiveTextColor}
-                  />
-                </TouchableOpacity>
               </View>
-              <ScrollView>
+              <TouchableOpacity
+                onPress={handleClose}
+                style={{
+                  position: 'absolute',
+                  top: sizes.crossSpace,
+                  right: sizes.crossSpace,
+                }}
+              >
+                <Image source={icons.cross} style={styles.crossIcon} />
+              </TouchableOpacity>
+              <ScrollView style={{ width: '100%' }}>
                 {/* Passport Upload */}
                 <TouchableOpacity
                   style={styles.uploadRow}
                   onPress={() => handleOpenPicker('passport')}
                 >
                   <View style={styles.uploadRowInfo}>
-                    <FontAwesome6
-                      name='user'
-                      size={sizes.uploadIconSize}
-                      color={themeController.current?.textColor}
+                    <Image
+                      source={icons.passport}
+                      style={{
+                        width: sizes.uploadIconSize,
+                        height: sizes.uploadIconSize,
+                      }}
                     />
                     <Text style={styles.uploadText}>
                       {t('professions.verification.passport_photo')}
                     </Text>
                   </View>
-                  <FontAwesome6
-                    name='plus'
-                    size={sizes.uploadIconSize}
-                    color={themeController.current?.textColor}
+                  <Image
+                    source={icons.plus}
+                    style={{
+                      width: sizes.uploadIconSize,
+                      height: sizes.uploadIconSize,
+                      tintColor: themeController.current?.primaryColor,
+                    }}
                   />
                 </TouchableOpacity>
-                {renderImageGrid(passportPhotos, 'passport')}
+                {passportPhotos.length > 0 &&
+                  renderImageGrid(passportPhotos, 'passport')}
 
                 {/* Certificate Upload */}
                 <TouchableOpacity
@@ -315,22 +393,28 @@ const AddProfessionModal = ({ visible, onClose }) => {
                   onPress={() => handleOpenPicker('certificate')}
                 >
                   <View style={styles.uploadRowInfo}>
-                    <FontAwesome6
-                      name='id-card'
-                      size={sizes.uploadIconSize}
-                      color={themeController.current?.textColor}
+                    <Image
+                      source={icons.id}
+                      style={{
+                        width: sizes.uploadIconSize,
+                        height: sizes.uploadIconSize,
+                      }}
                     />
                     <Text style={styles.uploadText}>
                       {t('professions.verification.certificate_photo')}
                     </Text>
                   </View>
-                  <FontAwesome6
-                    name='plus'
-                    size={sizes.uploadIconSize}
-                    color={themeController.current?.textColor}
+                  <Image
+                    source={icons.plus}
+                    style={{
+                      width: sizes.uploadIconSize,
+                      height: sizes.uploadIconSize,
+                      tintColor: themeController.current?.primaryColor,
+                    }}
                   />
                 </TouchableOpacity>
-                {renderImageGrid(certificatePhotos, 'certificate')}
+                {certificatePhotos.length > 0 &&
+                  renderImageGrid(certificatePhotos, 'certificate')}
               </ScrollView>
               <TouchableOpacity
                 style={styles.submitButton}

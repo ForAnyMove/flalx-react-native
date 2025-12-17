@@ -8,14 +8,15 @@ import {
   Platform,
   useWindowDimensions,
   TextInput,
+  Image,
 } from 'react-native';
 import { useWindowInfo } from '../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
-import { FontAwesome6 } from '@expo/vector-icons';
 import AutocompletePicker from './ui/AutocompletePicker';
 import { JOB_TYPES } from '../constants/jobTypes';
 import { useComponentContext } from '../context/globalAppContext';
+import { icons } from '../constants/icons';
 
 const RegisterProfessionModal = ({ visible, onClose }) => {
   const { themeController, languageController } = useComponentContext();
@@ -35,21 +36,27 @@ const RegisterProfessionModal = ({ visible, onClose }) => {
     const scale = isWebLandscape ? web : mobile;
 
     return {
-      modalWidth: isWebLandscape ? width * 0.35 : width * 0.9,
-      modalMaxHeight: isWebLandscape ? height * 0.7 : height * 0.8,
-      borderRadius: scale(12),
+      modalWidth: isWebLandscape ? scale(450) : width,
+      modalMaxHeight: isWebLandscape ? height * 0.8 : height,
+      borderRadius: scale(8),
       padding: scale(24),
+      paddingVertical: scale(40),
+      paddingHorizontal: scale(60),
       headerBottomMargin: scale(16),
-      titleSize: scale(20),
-      iconSize: scale(18),
+      titleSize: scale(24),
+      iconSize: scale(24),
+      crossSpace: scale(8),
       descriptionSize: scale(14),
-      descriptionMarginBottom: scale(24),
-      inputHeight: scale(56),
+      successDescriptionSize: scale(18),
+      descriptionMarginBottom: scale(32),
+      inputHeight: scale(64),
+      inputWidth: isWebLandscape ? scale(330) : '100%',
       inputGap: scale(16),
-      buttonHeight: scale(50),
-      buttonFontSize: scale(16),
-      successIconContainerSize: scale(72),
-      successIconSize: scale(36),
+      buttonHeight: scale(62),
+      buttonWidth: isWebLandscape ? scale(330) : '100%',
+      buttonFontSize: scale(20),
+      successIconContainerSize: scale(112),
+      successIconSize: scale(112),
       successTitleMarginTop: scale(24),
       successDescriptionMarginTop: scale(8),
       successButtonMarginTop: scale(32),
@@ -91,6 +98,9 @@ const RegisterProfessionModal = ({ visible, onClose }) => {
       shadowOpacity: 0.25,
       shadowRadius: 20,
       elevation: 20,
+      alignItems: 'center',
+      position: 'relative',
+      boxSizing: 'border-box',
     },
     header: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
@@ -105,15 +115,21 @@ const RegisterProfessionModal = ({ visible, onClose }) => {
       flex: 1,
       textAlign: isRTL ? 'right' : 'left',
     },
+    crossIcon: {
+      width: sizes.iconSize,
+      height: sizes.iconSize,
+      tintColor: themeController.current?.textColor,
+    },
     description: {
       fontSize: sizes.descriptionSize,
       color: themeController.current?.unactiveTextColor,
       marginBottom: sizes.descriptionMarginBottom,
-      lineHeight: sizes.descriptionSize * 1.5,
-      textAlign: isRTL ? 'right' : 'left',
+      lineHeight: sizes.descriptionSize * 1.25,
+      textAlign: 'center',
     },
     inputContainer: {
       height: sizes.inputHeight,
+      width: sizes.inputWidth,
       backgroundColor: themeController.current?.formInputBackground,
       borderRadius: sizes.borderRadius,
       justifyContent: 'center',
@@ -138,6 +154,7 @@ const RegisterProfessionModal = ({ visible, onClose }) => {
     },
     sendButton: {
       height: sizes.buttonHeight,
+      width: sizes.buttonWidth,
       backgroundColor: themeController.current?.buttonColorPrimaryDefault,
       borderRadius: sizes.borderRadius,
       justifyContent: 'center',
@@ -147,7 +164,6 @@ const RegisterProfessionModal = ({ visible, onClose }) => {
     sendButtonText: {
       color: themeController.current?.buttonTextColorPrimary,
       fontSize: sizes.buttonFontSize,
-      fontWeight: 'bold',
     },
     // Success view styles
     successContainer: {
@@ -166,16 +182,16 @@ const RegisterProfessionModal = ({ visible, onClose }) => {
     successTitle: {
       fontSize: sizes.titleSize,
       fontWeight: 'bold',
-      color: themeController.current?.textColor,
+      color: themeController.current?.primaryColor,
       marginTop: sizes.successTitleMarginTop,
       textAlign: 'center',
     },
     successDescription: {
-      fontSize: sizes.descriptionSize,
+      fontSize: sizes.successDescriptionSize,
       color: themeController.current?.unactiveTextColor,
       marginTop: sizes.successDescriptionMarginTop,
       textAlign: 'center',
-      lineHeight: sizes.descriptionSize * 1.5,
+      lineHeight: sizes.successDescriptionSize * 1.5,
     },
     okButton: {
       height: sizes.buttonHeight,
@@ -198,40 +214,57 @@ const RegisterProfessionModal = ({ visible, onClose }) => {
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           {isSubmitted ? (
-            <View style={styles.successContainer}>
-              <View style={styles.successIconContainer}>
-                <FontAwesome6
-                  name='check'
-                  size={sizes.successIconSize}
-                  color={themeController.current?.buttonColorPrimaryDefault}
-                />
-              </View>
-              <Text style={styles.successTitle}>
-                {t('professions.register_modal.success_title')}
-              </Text>
-              <Text style={styles.successDescription}>
-                {t('professions.register_modal.success_description')}
-              </Text>
-              <TouchableOpacity style={styles.okButton} onPress={handleClose}>
-                <Text style={styles.okButtonText}>
-                  {t('professions.register_modal.ok_button')}
+            <>
+              <View style={styles.successContainer}>
+                <View style={styles.successIconContainer}>
+                  <Image
+                    source={icons.checkDefault}
+                    style={{
+                      width: sizes.successIconSize,
+                      height: sizes.successIconSize,
+                    }}
+                  />
+                </View>
+                <Text style={styles.successTitle}>
+                  {t('professions.register_modal.success_title')}
                 </Text>
+                <Text style={styles.successDescription}>
+                  {t('professions.register_modal.success_description')}
+                </Text>
+                <TouchableOpacity style={styles.okButton} onPress={handleClose}>
+                  <Text style={styles.okButtonText}>
+                    {t('professions.register_modal.ok_button')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                onPress={handleClose}
+                style={{
+                  position: 'absolute',
+                  top: sizes.crossSpace,
+                  right: sizes.crossSpace,
+                }}
+              >
+                <Image source={icons.cross} style={styles.crossIcon} />
               </TouchableOpacity>
-            </View>
+            </>
           ) : (
             <>
               <View style={styles.header}>
                 <Text style={styles.title}>
                   {t('professions.register_modal.title')}
                 </Text>
-                <TouchableOpacity onPress={handleClose}>
-                  <FontAwesome6
-                    name='close'
-                    size={sizes.iconSize}
-                    color={themeController.current?.unactiveTextColor}
-                  />
-                </TouchableOpacity>
               </View>
+              <TouchableOpacity
+                onPress={handleClose}
+                style={{
+                  position: 'absolute',
+                  top: sizes.crossSpace,
+                  right: sizes.crossSpace,
+                }}
+              >
+                <Image source={icons.cross} style={styles.crossIcon} />
+              </TouchableOpacity>
 
               <Text style={styles.description}>
                 {t('professions.register_modal.description')}
@@ -246,7 +279,11 @@ const RegisterProfessionModal = ({ visible, onClose }) => {
                 onValueChange={setProfession}
                 selectedValue={profession}
                 isRTL={isRTL}
-                containerStyle={{ marginBottom: sizes.inputGap }}
+                containerStyle={{
+                  marginBottom: sizes.inputGap,
+                  width: sizes.inputWidth,
+                }}
+                arrowIcon={true}
               />
 
               <View style={styles.inputContainer}>

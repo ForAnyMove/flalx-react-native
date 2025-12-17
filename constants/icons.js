@@ -58,4 +58,7 @@ export const icons = {
   rejected: require('../assets/icon/rejected.png'),
   pending: require('../assets/icon/pending.png'),
   verified_icon: require('../assets/icon/verified-icon.png'),
+  passport: require('../assets/icon/passport.png'),
+  id: require('../assets/icon/id.png'),
+  image_mock: require('../assets/icon/image_mock.png'),
 };

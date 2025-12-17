@@ -9,9 +9,11 @@ import {
   Platform,
   Keyboard,
   useWindowDimensions,
+  Image,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
+import { icons } from '../../constants/icons';
 
 const AutocompletePicker = ({
   label,
@@ -23,6 +25,7 @@ const AutocompletePicker = ({
   error,
   containerStyle = {},
   value,
+  arrowIcon = false,
 }) => {
   const { themeController } = useComponentContext();
   const { width, height } = useWindowDimensions();
@@ -41,6 +44,7 @@ const AutocompletePicker = ({
       borderRadius: isWebLandscape ? web(8) : mobile(8),
       inputContainerPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
       labelGap: scale(3),
+      iconSize: scale(24),
     };
   }, [isWebLandscape, height]);
 
@@ -60,7 +64,10 @@ const AutocompletePicker = ({
   useEffect(() => {
     const handleClickOutside = (event) => {
       // Проверяем, что клик был вне контейнера компонента
-      if (containerRef.current && !containerRef.current.contains(event.target)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
+      ) {
         setIsFocused(false);
 
         // Проверяем, является ли текущий текст в поле одним из действительных значений
@@ -196,9 +203,7 @@ const AutocompletePicker = ({
           style={[
             styles.label,
             {
-              color: error
-                ? 'red'
-                : themeController.current?.unactiveTextColor,
+              color: error ? 'red' : themeController.current?.unactiveTextColor,
               fontSize: sizes.font,
               textAlign: isRTL ? 'right' : 'left',
             },
@@ -206,23 +211,43 @@ const AutocompletePicker = ({
         >
           {label}
         </Text>
-        <TextInput
-          ref={inputRef}
-          value={inputText}
-          onChangeText={setInputText}
-          onFocus={handleFocus}
-          // onBlur больше не используется для закрытия, т.к. это делает слушатель кликов
-          placeholder={placeholder}
-          placeholderTextColor={themeController.current?.formInputLabelColor}
-          style={[
-            styles.input,
-            {
-              color: themeController.current?.textColor,
-              fontSize: sizes.baseFont,
-              textAlign: isRTL ? 'right' : 'left',
-            },
-          ]}
-        />
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TextInput
+            ref={inputRef}
+            value={inputText}
+            onChangeText={setInputText}
+            onFocus={handleFocus}
+            // onBlur больше не используется для закрытия, т.к. это делает слушатель кликов
+            placeholder={placeholder}
+            placeholderTextColor={themeController.current?.formInputLabelColor}
+            style={[
+              styles.input,
+              {
+                color: themeController.current?.textColor,
+                fontSize: sizes.baseFont,
+                textAlign: isRTL ? 'right' : 'left',
+              },
+            ]}
+          />
+          {arrowIcon && (
+            <View style={styles.arrowContainer}>
+              <Image
+                source={icons.arrowDown}
+                style={[
+                  styles.arrowIcon,
+                  {
+                    width: sizes.iconSize,
+                    height: sizes.iconSize,
+                    tintColor: themeController.current?.primaryColor,
+                    transform: isFocused
+                      ? [{ rotate: '180deg' }]
+                      : [{ rotate: '0deg' }],
+                  },
+                ]}
+              />
+            </View>
+          )}
+        </View>
       </View>
 
       {/* Выпадающий список без Modal */}
@@ -280,6 +305,9 @@ const styles = StyleSheet.create({
   },
   option: {
     // paddingHorizontal: 15, // <--- Удалено
+  },
+  arrowIcon: {
+    resizeMode: 'contain',
   },
 });
 
