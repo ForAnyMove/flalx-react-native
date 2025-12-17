@@ -22,6 +22,8 @@ const CustomPicker = ({
   isRTL,
   fullScreen = false, // Новый пропс, по умолчанию false
   containerStyle = {},
+  placeholder = null,
+  placeholderColor = null,
 }) => {
   const { themeController } = useComponentContext();
   const { width, height } = useWindowDimensions();
@@ -50,7 +52,7 @@ const CustomPicker = ({
 
   const selectedLabel =
     options.find((option) => option.value === selectedValue)?.label ||
-    options[0]?.label;
+    (placeholder ? null : options[0]?.label);
 
   const itemHeight = sizes.pickerHeight * 0.9;
   const dropdownHeight = itemHeight * (options.length > 4 ? 4 : options.length);
@@ -227,13 +229,13 @@ const CustomPicker = ({
             style={[
               // styles.value,
               {
-                color: themeController.current?.textColor,
+                color: selectedLabel ? themeController.current?.textColor : placeholderColor,
                 fontSize: sizes.baseFont,
                 textAlign: isRTL ? 'right' : 'left',
               },
             ]}
           >
-            {selectedLabel}
+            {placeholder ? placeholder : selectedLabel}
           </Text>
         </View>
         <View style={styles.arrowContainer}>

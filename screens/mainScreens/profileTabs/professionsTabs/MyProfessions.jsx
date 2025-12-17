@@ -19,15 +19,17 @@ import { useComponentContext } from '../../../../context/globalAppContext';
 import { PROFESSION_TYPES } from '../../../../constants/enums';
 import { icons } from '../../../../constants/icons';
 import AddProfessionModal from '../../../../components/AddProfessionModal';
+import RequestProfessionModal from '../../../../components/RequestProfessionModal';
 
 const MyProfessions = () => {
   const [searchValue, setSearchValue] = useState('');
-  const { height } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { height, width } = useWindowDimensions();
+  const { isLandscape, sidebarWidth } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
   const { themeController, languageController } = useComponentContext();
   const isRTL = languageController.isRTL;
 
+  const [isRequestModalVisible, setIsRequestModalVisible] = useState(false);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
 
   const sizes = useMemo(() => {
@@ -39,8 +41,8 @@ const MyProfessions = () => {
       containerPaddingV: isWebLandscape ? web(14) : mobile(14),
       scrollContainerPaddingBottom: isWebLandscape ? web(20) : mobile(20),
       plusButtonSize: isWebLandscape ? web(64) : mobile(64),
-      plusButtonLeft: isWebLandscape ? web(32) : mobile(16),
-      plusButtonRight: isWebLandscape ? web(32) : mobile(16),
+      plusButtonLeft: isWebLandscape ? width - sidebarWidth - web(96) : width - mobile(80),
+      plusButtonRight: isWebLandscape ? width - sidebarWidth - web(96) : width - mobile(80),
       plusButtonBottom: isWebLandscape ? web(16) : mobile(16),
       plusIconSize: isWebLandscape ? web(24) : mobile(24),
       plusButtonShadowColor: '#000',
@@ -52,11 +54,11 @@ const MyProfessions = () => {
       plusButtonShadowRadius: isWebLandscape ? web(5) : mobile(5),
       plusButtonElevation: isWebLandscape ? 10 : 8,
     };
-  }, [height, isWebLandscape]);
+  }, [height, width, isWebLandscape]);
 
   const add = () => {
     // Логика добавления новой профессии
-    setIsAddModalVisible(true);
+    setIsRequestModalVisible(true);
   };
 
   return (
@@ -144,10 +146,10 @@ const MyProfessions = () => {
             position: 'absolute',
             ...(isRTL
               ? {
-                  left: sizes.plusButtonLeft,
+                  right: sizes.plusButtonLeft,
                 }
               : {
-                  right: sizes.plusButtonRight,
+                  left: sizes.plusButtonRight,
                 }),
             bottom: sizes.plusButtonBottom,
             shadowColor: sizes.plusButtonShadowColor,
@@ -172,6 +174,14 @@ const MyProfessions = () => {
       <AddProfessionModal
         visible={isAddModalVisible}
         onClose={() => setIsAddModalVisible(false)}
+      />
+      <RequestProfessionModal
+        visible={isRequestModalVisible}
+        onClose={() => setIsRequestModalVisible(false)}
+        switchToCreation={() => {
+          setIsRequestModalVisible(false);
+          setIsAddModalVisible(true);
+        }}
       />
     </>
   );
