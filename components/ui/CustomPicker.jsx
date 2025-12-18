@@ -9,6 +9,7 @@ import {
   FlatList,
   Platform,
   useWindowDimensions,
+  Animated,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { icons } from '../../constants/icons';
@@ -49,6 +50,8 @@ const CustomPicker = ({
   const [pickerLayout, setPickerLayout] = useState(null);
   const pickerRef = useRef(null);
   const [hoveredValue, setHoveredValue] = useState(null);
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const [contentHeight, setContentHeight] = useState(0);
 
   const selectedLabel =
     options.find((option) => option.value === selectedValue)?.label ||
@@ -70,6 +73,40 @@ const CustomPicker = ({
         setModalVisible(true);
       });
     }
+  };
+
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    { useNativeDriver: false }
+  );
+
+  const renderCustomScrollBar = (listHeight) => {
+    if (contentHeight <= listHeight) {
+      return null;
+    }
+
+    const indicatorHeight = (listHeight / contentHeight) * listHeight;
+    const indicatorTranslateY = scrollY.interpolate({
+      inputRange: [0, contentHeight - listHeight],
+      outputRange: [0, listHeight - indicatorHeight],
+      extrapolate: 'clamp',
+    });
+
+    return (
+      <View style={styles.scrollBarTrack}>
+        <Animated.View
+          style={[
+            styles.scrollBarIndicator,
+            {
+              height: indicatorHeight,
+              transform: [{ translateY: indicatorTranslateY }],
+              opacity: 0.5,
+              backgroundColor: themeController.current?.formInputLabelColor,
+            },
+          ]}
+        />
+      </View>
+    );
   };
 
   const renderOption = ({ item }) => {
@@ -142,13 +179,18 @@ const CustomPicker = ({
               backgroundColor: themeController.current?.formInputBackground,
             },
           ]}
+          onLayout={(e) => setContentHeight(e.nativeEvent.layout.height)}
         >
           <FlatList
             data={options}
             keyExtractor={(item) => item.value}
             renderItem={renderOption}
             showsVerticalScrollIndicator={false}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            onContentSizeChange={(_, height) => setContentHeight(height)}
           />
+          {renderCustomScrollBar(dropdownHeight)}
         </View>
       </TouchableOpacity>
     </Modal>
@@ -186,7 +228,11 @@ const CustomPicker = ({
               keyExtractor={(item) => item.value}
               renderItem={renderOption}
               showsVerticalScrollIndicator={false}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+              onContentSizeChange={(width, height) => setContentHeight(height)}
             />
+            {renderCustomScrollBar(dropdownHeight)}
           </View>
         )}
       </TouchableOpacity>
@@ -291,6 +337,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+    flexDirection: 'row', // Для размещения скроллбара
   },
   dropdownContent: {
     position: 'absolute',
@@ -301,9 +348,24 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     zIndex: 999,
+    flexDirection: 'row', // Для размещения скроллбара
   },
   option: {
     // paddingHorizontal: 15,
+  },
+  scrollBarTrack: {
+    width: 6,
+    height: '100%',
+    backgroundColor: 'transparent', // Прозрачный фон
+    borderRadius: 3,
+    position: 'absolute',
+    right: 2,
+    top: 0,
+    bottom: 0,
+  },
+  scrollBarIndicator: {
+    width: 6,
+    borderRadius: 3,
   },
 });
 
