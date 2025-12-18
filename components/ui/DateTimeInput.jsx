@@ -78,7 +78,8 @@ export default function DateTimeInput({
         >
           {label}
         </Text>
-        {value || inputActive ? (
+        {/* {value || inputActive ? ( */}
+        { true ? (
           <input
             disabled={readOnly}
             type='datetime-local'
