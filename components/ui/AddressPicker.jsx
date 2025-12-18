@@ -106,11 +106,11 @@ const AddressPicker = ({
     suggestionText: {
       main: {
         fontSize: sizes.baseFont,
-        color: themeController.current.textColor,
+        color: themeController.current.formInputLabelColor,
       },
       secondary: {
         fontSize: sizes.secondaryFont,
-        color: themeController.current.unactiveTextColor,
+        color: themeController.current.formInputLabelColor,
       }
     },
     loadingIndicator: {
@@ -152,7 +152,7 @@ const AddressPicker = ({
           apiKey={GOOGLE_PLACES_API_KEY}
           onPlaceSelected={handleSelect}
           clearButtonMode='never'
-          placeholder={placeholder}
+          placeHolderText={placeholder}
           clearElement={<></>}
           style={customStyles}
           fetchDetails={true}
