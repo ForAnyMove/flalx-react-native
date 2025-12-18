@@ -35,7 +35,7 @@ export default function NewJobTemplateCard({
       cardWidth: isWebLandscape
         ? scaleByHeight(242, height)
         : (width - scaleByHeightMobile(20, height)) / 2 -
-          scaleByHeightMobile(17, height),
+        scaleByHeightMobile(17, height),
       cardHeight: isWebLandscape
         ? scaleByHeight(212, height)
         : scaleByHeightMobile(164, height),
@@ -129,7 +129,7 @@ export default function NewJobTemplateCard({
         numberOfLines={1}
         ellipsizeMode='tail'
       >
-        {t(`jobTypes.${templateTitle}`)}
+        {`${templateTitle}`}
       </Text>
       <Text style={[styles.title, dynamicStyles.readMoreText]}>
         {t(`common.readMore`)}

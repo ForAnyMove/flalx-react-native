@@ -26,7 +26,8 @@ export default function NewScreen({
   setNewJobModalVisible,
   setActiveKey,
 }) {
-  const { themeController, languageController, session } = useComponentContext();
+  const { themeController, languageController, session, jobTypesController } = useComponentContext();
+
   const { showWarning } = useNotification();
   const { openWebView } = useWebView();
   const isRTL = languageController.isRTL;
@@ -79,23 +80,23 @@ export default function NewScreen({
           ]}
         >
           <View style={styles.cardsWrapper}>
-            {Object.entries(JOB_TYPES)
-              .filter(([key, value]) =>
-                value.toLowerCase().includes(searchValue.toLowerCase())
+            {jobTypesController.jobTypesWithSubtypes && jobTypesController.jobTypesWithSubtypes
+              .filter((value) =>
+                value.name_en.toLowerCase().includes(searchValue.toLowerCase())
               )
-              .sort(([keyA], [keyB]) => {
-                const aIsLiked = likes.includes(keyA);
-                const bIsLiked = likes.includes(keyB);
+              .sort((value1, value2) => {
+                const aIsLiked = likes.includes(value1.key);
+                const bIsLiked = likes.includes(value2.key);
                 return bIsLiked - aIsLiked;
               })
-              .map(([key, label]) => (
+              .map((value) => (
                 <TouchableOpacity
-                  key={key}
+                  key={value.key}
                   onPress={async () => {
                     const pendingJobRequest = await checkHasPendingJob(session);
 
                     if (!pendingJobRequest.job) {
-                      setActiveKey(key);
+                      setActiveKey(value.key);
                       setNewJobModalVisible(true);
                     } else {
                       const url =
@@ -121,15 +122,15 @@ export default function NewScreen({
                   }}
                 >
                   <NewJobTemplateCard
-                    likeStatus={likes.includes(key)}
+                    likeStatus={likes.includes(value.key)}
                     switchLikeStatus={() => {
-                      if (likes.includes(key)) {
-                        setLikes(likes.filter((item) => item !== key));
+                      if (likes.includes(value.key)) {
+                        setLikes(likes.filter((item) => item !== value.key));
                       } else {
-                        setLikes([...likes, key]);
+                        setLikes([...likes, value.key]);
                       }
                     }}
-                    templateTitle={key}
+                    templateTitle={value.name_en}
                     imageSource={null}
                   />
                 </TouchableOpacity>

@@ -99,16 +99,16 @@ export default function ShowJobModal({
     // Определяем, какие массивы отслеживать
     const jobGroups = isCreator
       ? {
-          waiting: jobsController.creator.waiting,
-          in_progress: jobsController.creator.inProgress,
-          done: jobsController.creator.done,
-        }
+        waiting: jobsController.creator.waiting,
+        in_progress: jobsController.creator.inProgress,
+        done: jobsController.creator.done,
+      }
       : {
-          new: jobsController.executor.new,
-          waiting: jobsController.executor.waiting,
-          in_progress: jobsController.executor.inProgress,
-          done: jobsController.executor.done,
-        };
+        new: jobsController.executor.new,
+        waiting: jobsController.executor.waiting,
+        in_progress: jobsController.executor.inProgress,
+        done: jobsController.executor.done,
+      };
 
     // Поиск текущего местоположения заявки
     let currentLocation = null;
@@ -126,9 +126,8 @@ export default function ShowJobModal({
       const prev = prevJobLocation.current;
       if (prev && prev !== currentLocation) {
         const fromStatus = `${isCreator ? 'client' : 'business'}-${prev}`;
-        const toStatus = `${
-          isCreator ? 'client' : 'business'
-        }-${currentLocation}`;
+        const toStatus = `${isCreator ? 'client' : 'business'
+          }-${currentLocation}`;
         console.log(
           `Заявка ${currentJobId} переместилась: ${fromStatus} → ${toStatus}`
         );
@@ -147,16 +146,16 @@ export default function ShowJobModal({
     status,
     ...(status.startsWith('client')
       ? [
-          jobsController.creator.waiting,
-          jobsController.creator.inProgress,
-          jobsController.creator.done,
-        ]
+        jobsController.creator.waiting,
+        jobsController.creator.inProgress,
+        jobsController.creator.done,
+      ]
       : [
-          jobsController.executor.new,
-          jobsController.executor.waiting,
-          jobsController.executor.inProgress,
-          jobsController.executor.done,
-        ]),
+        jobsController.executor.new,
+        jobsController.executor.waiting,
+        jobsController.executor.inProgress,
+        jobsController.executor.done,
+      ]),
   ]);
 
   const sizes = useMemo(
@@ -444,7 +443,7 @@ export default function ShowJobModal({
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
-    () => {}
+    () => { }
   );
 
   const [plansModalVisible, setPlansModalVisible] = useState(false);
@@ -926,8 +925,8 @@ export default function ShowJobModal({
                   editableCommentState
                     ? editableCommentValue
                     : currentJobInfo?.job_comment
-                    ? currentJobInfo?.job_comment.comment
-                    : null
+                      ? currentJobInfo?.job_comment.comment
+                      : null
                 }
                 placeholder={t('showJob.fields.myCommentsPlaceholder', {
                   defaultValue: 'Write a comment on the completed work...',
@@ -1300,7 +1299,7 @@ export default function ShowJobModal({
         {t('showJob.fields.type', { defaultValue: 'Type' })}
       </Text>
       <TextInput
-        value={JOB_TYPES[currentJobInfo?.type] || '-'}
+        value={currentJobInfo?.type?.name_en || '-'}
         style={[
           styles.input,
           dynamicStyles.input,
@@ -1327,7 +1326,7 @@ export default function ShowJobModal({
         {t('showJob.fields.subType', { defaultValue: 'Sub type' })}
       </Text>
       <TextInput
-        value={JOB_SUB_TYPES[currentJobInfo?.subType] || '-'}
+        value={currentJobInfo?.subType?.name_en || '-'}
         style={[
           styles.input,
           dynamicStyles.input,
@@ -1336,33 +1335,33 @@ export default function ShowJobModal({
         readOnly
       />
     </View>,
-    <View
-      style={[
-        styles.inputBlock,
-        dynamicStyles.inputBlock,
-        { backgroundColor: themeController.current?.formInputBackground },
-      ]}
-      key='profession'
-    >
-      <Text
-        style={[
-          styles.label,
-          dynamicStyles.label,
-          isRTL && { textAlign: 'right' },
-        ]}
-      >
-        {t('showJob.fields.profession', { defaultValue: 'Profession' })}
-      </Text>
-      <TextInput
-        value={LICENSES[currentJobInfo?.profession] || '-'}
-        style={[
-          styles.input,
-          dynamicStyles.input,
-          isRTL && { textAlign: 'right' },
-        ]}
-        readOnly
-      />
-    </View>,
+    // <View
+    //   style={[
+    //     styles.inputBlock,
+    //     dynamicStyles.inputBlock,
+    //     { backgroundColor: themeController.current?.formInputBackground },
+    //   ]}
+    //   key='profession'
+    // >
+    //   <Text
+    //     style={[
+    //       styles.label,
+    //       dynamicStyles.label,
+    //       isRTL && { textAlign: 'right' },
+    //     ]}
+    //   >
+    //     {t('showJob.fields.profession', { defaultValue: 'Profession' })}
+    //   </Text>
+    //   <TextInput
+    //     value={LICENSES[currentJobInfo?.profession] || '-'}
+    //     style={[
+    //       styles.input,
+    //       dynamicStyles.input,
+    //       isRTL && { textAlign: 'right' },
+    //     ]}
+    //     readOnly
+    //   />
+    // </View>,
     <View
       style={[
         styles.inputBlock,
@@ -1709,7 +1708,7 @@ export default function ShowJobModal({
                         {t('showJob.fields.type', { defaultValue: 'Type' })}
                       </Text>
                       <TextInput
-                        value={JOB_TYPES[currentJobInfo?.type] || '-'}
+                        value={currentJobInfo?.type?.name_en || '-'}
                         style={{
                           fontWeight: '500',
                           padding: 0,
@@ -1813,7 +1812,7 @@ export default function ShowJobModal({
                         })}
                       </Text>
                       <TextInput
-                        value={JOB_SUB_TYPES[currentJobInfo?.subType] || '-'}
+                        value={currentJobInfo?.subType?.name_en || '-'}
                         style={{
                           fontWeight: '500',
                           padding: 0,
@@ -1835,7 +1834,7 @@ export default function ShowJobModal({
                       gridArea: isRTL ? '3 / 2 / 4 / 3' : '3 / 1 / 4 / 2',
                     }}
                   >
-                    <View
+                    {/* <View
                       style={[
                         styles.inputBlock,
                         {
@@ -1878,7 +1877,7 @@ export default function ShowJobModal({
                         }}
                         readOnly
                       />
-                    </View>
+                    </View> */}
                   </View>
 
                   {/* Price */}
@@ -2449,10 +2448,10 @@ export default function ShowJobModal({
                   setPlansModalVisible(true);
                   setConfirmInterestModal(false);
                 }}
-                // onPress={() => {
-                //   setConfirmInterestModal(false);
-                //   setInterestedRequest(true);
-                // }}
+              // onPress={() => {
+              //   setConfirmInterestModal(false);
+              //   setInterestedRequest(true);
+              // }}
               >
                 <Text
                   style={{
@@ -2600,7 +2599,7 @@ export default function ShowJobModal({
       <JobHistoryModal
         visible={showHistoryModal}
         onClose={() => setHistoryModal(false)}
-        history={currentJobInfo?.changes_history}
+        history={currentJobInfo?.changes_history == null ? [] : currentJobInfo.changes_history}
       />
       <SubscriptionsModal
         visible={plansModalVisible}

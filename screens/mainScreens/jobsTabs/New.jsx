@@ -57,12 +57,12 @@ export default function NewScreen({
     };
   }, [height, isWebLandscape]);
 
-  const filteredJobsList = jobsController.executor.new
+  const filteredJobsList = jobsController == null || jobsController.executor == null || jobsController.executor.new == null ? [] : jobsController.executor.new
     .filter((job) =>
-      filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
+      filteredJobs.length > 0 ? filteredJobs.includes(job.type.name_en) : true
     )
     .filter((job) =>
-      [t(`jobTypes.${job.type}`), job.description].some((field) =>
+      [job.type.name_en, job.description].some((field) =>
         field.toLowerCase().includes(searchValue.toLowerCase())
       )
     );
@@ -207,22 +207,22 @@ export default function NewScreen({
                               ?.defaultBlocksMockBackground,
                           ...(isRTL
                             ? {
-                                marginLeft: sizes.imageMargin,
-                                marginRight: 0,
-                              }
+                              marginLeft: sizes.imageMargin,
+                              marginRight: 0,
+                            }
                             : {
-                                marginRight: sizes.imageMargin,
-                                marginLeft: 0,
-                              }),
+                              marginRight: sizes.imageMargin,
+                              marginLeft: 0,
+                            }),
                           ...(isRTL && Platform.OS === 'web'
                             ? {
-                                borderTopRightRadius: sizes.cardRadius * 0.6,
-                                borderBottomRightRadius: sizes.cardRadius * 0.6,
-                              }
+                              borderTopRightRadius: sizes.cardRadius * 0.6,
+                              borderBottomRightRadius: sizes.cardRadius * 0.6,
+                            }
                             : {
-                                borderTopLeftRadius: sizes.cardRadius * 0.6,
-                                borderBottomLeftRadius: sizes.cardRadius * 0.6,
-                              }),
+                              borderTopLeftRadius: sizes.cardRadius * 0.6,
+                              borderBottomLeftRadius: sizes.cardRadius * 0.6,
+                            }),
                         },
                       ]}
                     >
@@ -254,7 +254,7 @@ export default function NewScreen({
                           },
                         ]}
                       >
-                        {t(`jobTypes.${job.type}`)}
+                        {job.type.name_en}
                       </Text>
                       {job.description ? (
                         <Text
@@ -286,19 +286,19 @@ export default function NewScreen({
                           },
                           isRTL
                             ? {
-                                left: 0,
-                                borderBottomRightRadius: isWebLandscape
-                                  ? sizes.personalMarkerBottomAngleRadius
-                                  : 0,
-                                borderBottomLeftRadius: isWebLandscape
-                                  ? 0
-                                  : sizes.personalMarkerBottomAngleRadius,
-                              }
+                              left: 0,
+                              borderBottomRightRadius: isWebLandscape
+                                ? sizes.personalMarkerBottomAngleRadius
+                                : 0,
+                              borderBottomLeftRadius: isWebLandscape
+                                ? 0
+                                : sizes.personalMarkerBottomAngleRadius,
+                            }
                             : {
-                                right: 0,
-                                borderBottomLeftRadius:
-                                  sizes.personalMarkerBottomAngleRadius,
-                              },
+                              right: 0,
+                              borderBottomLeftRadius:
+                                sizes.personalMarkerBottomAngleRadius,
+                            },
                         ]}
                       >
                         <Text

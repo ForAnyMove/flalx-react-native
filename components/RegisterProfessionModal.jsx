@@ -14,21 +14,30 @@ import { useWindowInfo } from '../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
 import AutocompletePicker from './ui/AutocompletePicker';
-import { JOB_TYPES } from '../constants/jobTypes';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
+import { useNotification } from '../src/render';
 
-const RegisterProfessionModal = ({ visible, onClose }) => {
-  const { themeController, languageController } = useComponentContext();
+const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
+  const { themeController, languageController, jobTypesController, setAppLoading } = useComponentContext();
+  const { showWarning, showError } = useNotification();
   const { height, width } = useWindowDimensions();
   const { isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 
-  const [profession, setProfession] = useState(null);
+  const [type, setType] = useState(null);
   const [subtype, setSubtype] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const jobTypesOptions = useMemo(() => {
+    const options = {};
+    jobTypesController.jobTypesWithSubtypes?.forEach(type => {
+      options[type.key] = type.name_en;
+    });
+    return options;
+  }, [jobTypesController.jobTypesWithSubtypes]);
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -63,11 +72,42 @@ const RegisterProfessionModal = ({ visible, onClose }) => {
     };
   }, [height, width, isWebLandscape]);
 
+  const validateForm = () => {
+    return type !== null && type !== '' && subtype.trim() !== '';
+  }
+
   const handleSend = async () => {
-    console.log('Registering profession:', { profession, subtype });
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitted(true);
+    if (!validateForm()) {
+      showWarning('Invalid Input', [
+        {
+          title: 'OK',
+          backgroundColor: '#3B82F6',
+          textColor: '#FFFFFF'
+        },
+      ]);
+      return;
+    }
+
+    setAppLoading(true);
+
+    jobTypesController.userToSystemRequest.makeRequest({
+      requested_type_name: jobTypesOptions[type] || type,
+      requested_subtype_name: subtype.trim(),
+      selected_type_id: jobTypesOptions[type] ? jobTypesController.jobTypesWithSubtypes.find(t => t.key === type)?.id : null,
+    }).then((data) => {
+      setIsSubmitted(true);
+      onRequestDone && onRequestDone(data);
+    }).catch((error) => {
+      showError(`Error\nFailed to send request. Please try again later.\n${error}`, [
+        {
+          title: 'OK',
+          backgroundColor: '#EF4444',
+          textColor: '#FFFFFF'
+        },
+      ]);
+    }).finally(() => {
+      setAppLoading(false);
+    });
   };
 
   const handleClose = () => {
@@ -75,10 +115,18 @@ const RegisterProfessionModal = ({ visible, onClose }) => {
     // Reset state after a short delay to allow closing animation to finish
     setTimeout(() => {
       setIsSubmitted(false);
-      setProfession(null);
+      setType(null);
       setSubtype('');
     }, 300);
   };
+
+  const applySelectedType = (typeKey) => {
+    setType(typeKey);
+  }
+
+  const applySelectedSubtype = (subtypeText) => {
+    setSubtype(subtypeText);
+  }
 
   const styles = StyleSheet.create({
     modalOverlay: {
@@ -275,15 +323,17 @@ const RegisterProfessionModal = ({ visible, onClose }) => {
                 placeholder={t(
                   'professions.register_modal.profession_placeholder'
                 )}
-                options={JOB_TYPES}
-                onValueChange={setProfession}
-                selectedValue={profession}
+                setValue={applySelectedType}
+                options={jobTypesOptions}
+                onValueChange={applySelectedType}
+                selectedValue={type}
                 isRTL={isRTL}
                 containerStyle={{
                   marginBottom: sizes.inputGap,
                   width: sizes.inputWidth,
                 }}
                 arrowIcon={true}
+                allowCustomText={true}
               />
 
               <View style={styles.inputContainer}>
@@ -299,7 +349,7 @@ const RegisterProfessionModal = ({ visible, onClose }) => {
                     themeController.current?.formInputPlaceholderColor
                   }
                   value={subtype}
-                  onChangeText={setSubtype}
+                  onChangeText={applySelectedSubtype}
                 />
               </View>
 

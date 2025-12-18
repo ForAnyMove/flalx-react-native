@@ -12,6 +12,7 @@ import providersManager from '../managers/providersManager';
 import { View, ActivityIndicator } from 'react-native';
 import { getSubscriptionPlans } from '../src/api/subscriptions';
 import authTabsManager from '../managers/authTabsManager';
+import jobTypeManager from '../managers/jobTypeManager';
 
 const ComponentContext = createContext();
 
@@ -45,6 +46,8 @@ export const ComponentProvider = ({ children }) => {
   const { registerControl, authControl, forgotPassControl } = authTabsManager();
 
   const jobsController = jobsManager({ session, user });
+  const jobTypesController = jobTypeManager({ session });
+
   const providersController = providersManager({ session });
   const [loadingCounter, setLoadingCounter] = useState(0);
   const [subscriptionPlans, setSubscriptionPlans] = useState(null);
@@ -86,6 +89,7 @@ export const ComponentProvider = ({ children }) => {
         appTabController,
         profileTabController,
         jobsController,
+        jobTypesController,
         providersController,
         setAppLoading,
         subscriptionPlans,

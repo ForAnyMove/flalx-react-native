@@ -53,10 +53,10 @@ export default function DoneScreen({
 
   const filteredJobsList = jobsController.executor.done
     .filter((job) =>
-      filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
+      filteredJobs.length > 0 ? filteredJobs.includes(job.type.name_en) : true
     )
     .filter((job) =>
-      [t(`jobTypes.${job.type}`), job.description].some((field) =>
+      [job.type.name_en, job.description].some((field) =>
         field.toLowerCase().includes(searchValue.toLowerCase())
       )
     );
@@ -128,22 +128,22 @@ export default function DoneScreen({
                           themeController.current?.defaultBlocksMockBackground,
                         ...(isRTL
                           ? {
-                              marginLeft: sizes.imageMargin,
-                              marginRight: 0,
-                            }
+                            marginLeft: sizes.imageMargin,
+                            marginRight: 0,
+                          }
                           : {
-                              marginRight: sizes.imageMargin,
-                              marginLeft: 0,
-                            }),
+                            marginRight: sizes.imageMargin,
+                            marginLeft: 0,
+                          }),
                         ...(isRTL && Platform.OS === 'web'
                           ? {
-                              borderTopRightRadius: sizes.cardRadius,
-                              borderBottomRightRadius: sizes.cardRadius,
-                            }
+                            borderTopRightRadius: sizes.cardRadius,
+                            borderBottomRightRadius: sizes.cardRadius,
+                          }
                           : {
-                              borderTopLeftRadius: sizes.cardRadius,
-                              borderBottomLeftRadius: sizes.cardRadius,
-                            }),
+                            borderTopLeftRadius: sizes.cardRadius,
+                            borderBottomLeftRadius: sizes.cardRadius,
+                          }),
                       },
                     ]}
                   >
@@ -175,7 +175,7 @@ export default function DoneScreen({
                         },
                       ]}
                     >
-                      {t(`jobTypes.${job.type}`)}
+                      {job.type.name_en}
                     </Text>
                     {job.description ? (
                       <Text

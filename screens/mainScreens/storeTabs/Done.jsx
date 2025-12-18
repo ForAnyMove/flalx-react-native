@@ -64,10 +64,10 @@ export default function DoneScreen({
 
   const filteredJobsList = jobsController.creator.done
     .filter((job) =>
-      filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
+      filteredJobs.length > 0 ? filteredJobs.includes(job.type.name_en) : true
     )
     .filter((job) =>
-      [t(`jobTypes.${job.type}`), job.description].some((field) =>
+      [job.type.name_en, job.description].some((field) =>
         field.toLowerCase().includes(searchValue.toLowerCase())
       )
     );
@@ -201,7 +201,7 @@ export default function DoneScreen({
                         },
                       ]}
                     >
-                      {t(`jobTypes.${job.type}`)}
+                      {job.type.name_en}
                     </Text>
                     {job.description ? (
                       <Text

@@ -17,16 +17,53 @@ import { useWindowInfo } from '../../../../context/windowContext';
 import { useComponentContext } from '../../../../context/globalAppContext';
 import RegisterProfessionModal from '../../../../components/RegisterProfessionModal';
 import { icons } from '../../../../constants/icons';
+import UniversalProfessionComponent from '../../../../components/ui/UniversalProfessionComponent';
+import { PROFESSION_TYPES } from '../../../../constants/enums';
 
 const SystemProfessions = () => {
   const [searchValue, setSearchValue] = useState('');
   const { height } = useWindowDimensions();
   const { isLandscape } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
-  const { themeController, languageController } = useComponentContext();
+  const { themeController, languageController, jobTypesController } = useComponentContext();
   const isRTL = languageController.isRTL;
 
   const [isAdding, setIsAdding] = useState(false);
+
+  const formattedUserRequests = useMemo(() => {
+    const requests = [];
+    jobTypesController.userToSystemRequest.list.forEach((request) => {
+      const reuqestObject = {
+        title: request.final_type_name || request.requested_type_name,
+        subtitle: request.final_subtype_name || request.requested_subtype_name,
+        type: (() => {
+          switch (request.status) {
+            case "pending":
+              return PROFESSION_TYPES.PENDING;
+            case "approved":
+              return PROFESSION_TYPES.VERIFIED;
+            case "rejected":
+              return PROFESSION_TYPES.REJECTED;
+            default:
+              return '';
+          }
+        })()
+      };
+
+      if (request.rejection_reason != null && request.rejection_reason.length > 0) {
+        reuqestObject.extra = {
+          comment: {
+            title: 'Rejection reason:',
+            content: request.rejection_reason,
+          },
+        };
+      }
+
+      requests.push(reuqestObject);
+    });
+
+    return requests;
+  }, [jobTypesController.userToSystemRequest.list]);
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -82,7 +119,19 @@ const SystemProfessions = () => {
             styles.scrollContainer,
             { paddingBottom: sizes.scrollContainerPaddingBottom },
           ]}
-        ></ScrollView>
+        >
+          {formattedUserRequests.map((request, index) =>
+            <UniversalProfessionComponent
+              key={index}
+              item={{
+                type: request.type,
+                title: request.title,
+                subtitle: request.subtitle,
+                extra: request.extra || null,
+              }}
+              onPress={() => { }}
+            />)}
+        </ScrollView>
         {/* Кнопка + */}
         <TouchableOpacity
           style={{
@@ -95,11 +144,11 @@ const SystemProfessions = () => {
             position: 'absolute',
             ...(isRTL
               ? {
-                  left: sizes.plusButtonLeft,
-                }
+                left: sizes.plusButtonLeft,
+              }
               : {
-                  right: sizes.plusButtonRight,
-                }),
+                right: sizes.plusButtonRight,
+              }),
             bottom: sizes.plusButtonBottom,
             shadowColor: sizes.plusButtonShadowColor,
             shadowOffset: sizes.plusButtonShadowOffset,

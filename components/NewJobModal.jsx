@@ -12,9 +12,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { JOB_SUB_TYPES } from '../constants/jobSubTypes';
-import { JOB_TYPES } from '../constants/jobTypes';
-import { LICENSES } from '../constants/licenses';
 import { useComponentContext } from '../context/globalAppContext';
 import CustomFlatList from './ui/CustomFlatList';
 import DateTimeInput from './ui/DateTimeInput';
@@ -122,11 +119,41 @@ export default function NewJobModal({
     languageController,
     setAppLoading,
     subscription,
+    jobTypesController,
   } = useComponentContext();
   const { width, height, isLandscape, sidebarWidth = 0 } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  // Объявляем состояния сначала, чтобы они были доступны в useMemo
+  const [type, setType] = useState(
+    initialJob ? initialJob.type.key || '' : activeKey || ''
+  );
+
+  const [subType, setSubType] = useState(initialJob?.subType.key || '');
+
+  // Преобразуем данные из jobTypesController в нужный формат
+  const jobTypesOptions = useMemo(() => {
+    const options = {};
+    jobTypesController.jobTypesWithSubtypes?.forEach(type => {
+      options[type.key] = type.name_en;
+    });
+    return options;
+  }, [jobTypesController.jobTypesWithSubtypes]);
+
+  const jobSubTypesOptions = useMemo(() => {
+    const options = {};
+    if (type && jobTypesController.jobTypesWithSubtypes) {
+      const selectedType = jobTypesController.jobTypesWithSubtypes.find(t => t.key === type);
+      if (selectedType?.subtypes) {
+        selectedType.subtypes.forEach(subtype => {
+          options[subtype.key] = subtype.name_en;
+        });
+      }
+    }
+    return options;
+  }, [jobTypesController.jobTypesWithSubtypes, type]);
 
   const [statusOptions, setStatusOptions] = useState(STATUS_OPTIONS);
 
@@ -201,16 +228,32 @@ export default function NewJobModal({
     };
   }, [isWebLandscape, height]);
 
-  const [filteredTypes, setFilteredTypes] = useState(JOB_TYPES);
-  const [filteredSubTypes, setFilteredSubTypes] = useState(JOB_SUB_TYPES);
-  const [filteredProfessions, setFilteredProfessions] = useState(LICENSES);
-  // локальные стейты не зависят от async-данных при создании
-  const [type, setType] = useState(
-    initialJob ? initialJob.type || '' : activeKey || ''
-  );
+  const [filteredTypes, setFilteredTypes] = useState({});
+  const [filteredSubTypes, setFilteredSubTypes] = useState({});
 
-  const [subType, setSubType] = useState(initialJob?.subType || '');
-  const [profession, setProfession] = useState(initialJob?.profession || '');
+  // Обновляем фильтрованные данные при изменении исходных данных
+  useEffect(() => {
+    setFilteredTypes(jobTypesOptions);
+  }, [jobTypesOptions]);
+
+  useEffect(() => {
+    setFilteredSubTypes(jobSubTypesOptions);
+    // Очищаем выбранный подтип если он не принадлежит текущему типу
+    if (subType && Object.keys(jobSubTypesOptions).length > 0) {
+      if (!jobSubTypesOptions[subType]) {
+        setSubType('');
+      }
+    }
+  }, [jobSubTypesOptions]);
+
+  // Очищаем подтип при смене типа
+  useEffect(() => {
+    if (type !== (initialJob?.type?.key || activeKey || '')) {
+      setSubType('');
+    }
+  }, [type]);
+
+  // Остальные локальные стейты
   const [description, setDescription] = useState(initialJob?.description || '');
   const [price, setPrice] = useState(initialJob?.price || '');
   const [images, setImages] = useState(initialJob?.images || []); // тут будут уже public URLs
@@ -237,16 +280,31 @@ export default function NewJobModal({
   const [fieldErrors, setFieldErrors] = useState({
     type: false,
     subType: false,
-    profession: false,
   });
 
   const { openWebView } = useWebView();
+
+  // Функция для получения ID типа по ключу
+  const getTypeIdByKey = (typeKey) => {
+    if (!typeKey || !jobTypesController.jobTypesWithSubtypes) return null;
+    const foundType = jobTypesController.jobTypesWithSubtypes.find(t => t.key === typeKey);
+    return foundType?.id || null;
+  };
+
+  // Функция для получения ID подтипа по ключу
+  const getSubTypeIdByKey = (subTypeKey) => {
+    if (!subTypeKey || !jobTypesController.jobTypesWithSubtypes) return null;
+    for (const jobType of jobTypesController.jobTypesWithSubtypes) {
+      const foundSubType = jobType.subtypes?.find(st => st.key === subTypeKey);
+      if (foundSubType) return foundSubType.id;
+    }
+    return null;
+  };
 
   const handleCreate = () => {
     const newErrors = {
       type: !type,
       subType: !subType,
-      // profession: !profession,
     };
 
     setFieldErrors(newErrors);
@@ -258,10 +316,8 @@ export default function NewJobModal({
     if (editMode && currentJobId) {
       const jobChanges = {};
 
-      if (type !== initialJob.type) jobChanges.type = type;
-      if (subType !== initialJob.subType) jobChanges.subType = subType;
-      if (profession !== initialJob.profession)
-        jobChanges.profession = profession;
+      if (type !== initialJob.type) jobChanges.type = getTypeIdByKey(type);
+      if (subType !== initialJob.subType) jobChanges.subType = getSubTypeIdByKey(subType);
       if (description !== initialJob.description)
         jobChanges.description = description;
       if (JSON.stringify(images) !== JSON.stringify(initialJob.images))
@@ -291,9 +347,8 @@ export default function NewJobModal({
       }
     } else {
       const newJob = {
-        type,
-        subType,
-        profession,
+        type: getTypeIdByKey(type),
+        subType: getSubTypeIdByKey(subType),
         description,
         price,
         images,
@@ -378,10 +433,14 @@ export default function NewJobModal({
         if (fieldErrors.type && text) {
           setFieldErrors((prev) => ({ ...prev, type: false }));
         }
+        // Сбрасываем ошибку подтипа при смене типа
+        if (fieldErrors.subType) {
+          setFieldErrors((prev) => ({ ...prev, subType: false }));
+        }
       }}
       filtered={filteredTypes}
       setFiltered={setFilteredTypes}
-      options={JOB_TYPES}
+      options={jobTypesOptions}
       placeholder={t('newJob.selectOrType', {
         defaultValue: 'Select or type...',
       })}
@@ -406,7 +465,7 @@ export default function NewJobModal({
       }}
       filtered={filteredSubTypes}
       setFiltered={setFilteredSubTypes}
-      options={JOB_SUB_TYPES}
+      options={jobSubTypesOptions}
       placeholder={t('newJob.selectOrType', {
         defaultValue: 'Select or type...',
       })}
@@ -837,10 +896,14 @@ export default function NewJobModal({
                         if (fieldErrors.type && text) {
                           setFieldErrors((prev) => ({ ...prev, type: false }));
                         }
+                        // Сбрасываем ошибку подтипа при смене типа
+                        if (fieldErrors.subType) {
+                          setFieldErrors((prev) => ({ ...prev, subType: false }));
+                        }
                       }}
                       filtered={filteredTypes}
                       setFiltered={setFilteredTypes}
-                      options={JOB_TYPES}
+                      options={jobTypesOptions}
                       placeholder={t('newJob.selectOrType', {
                         defaultValue: 'Select or type...',
                       })}
@@ -944,7 +1007,7 @@ export default function NewJobModal({
                       }}
                       filtered={filteredSubTypes}
                       setFiltered={setFilteredSubTypes}
-                      options={JOB_SUB_TYPES}
+                      options={jobSubTypesOptions}
                       placeholder={t('newJob.selectOrType', {
                         defaultValue: 'Select or type...',
                       })}
@@ -1558,12 +1621,12 @@ export default function NewJobModal({
                             borderWidth: 1,
                             borderColor: active
                               ? themeController.current
-                                  ?.buttonColorPrimaryDefault
+                                ?.buttonColorPrimaryDefault
                               : themeController.current
-                                  ?.formInputPlaceholderColor,
+                                ?.formInputPlaceholderColor,
                             backgroundColor: active
                               ? themeController.current
-                                  ?.buttonColorPrimaryDefault
+                                ?.buttonColorPrimaryDefault
                               : 'transparent',
                             flexDirection: isRTL ? 'row-reverse' : 'row',
                             alignItems: 'center',
@@ -1577,7 +1640,7 @@ export default function NewJobModal({
                             color: active
                               ? themeController.current?.buttonTextColorPrimary
                               : themeController.current
-                                  ?.formInputPlaceholderColor,
+                                ?.formInputPlaceholderColor,
                           }}
                         >
                           {t(
@@ -1646,10 +1709,10 @@ export default function NewJobModal({
                       defaultValue: 'Publish for {{price}}',
                       price:
                         subscription.current != null &&
-                        selectedOption.type == 'normal'
+                          selectedOption.type == 'normal'
                           ? t('newJob.statusModal.free', {
-                              defaultValue: 'Free',
-                            })
+                            defaultValue: 'Free',
+                          })
                           : `$${selectedOption?.price.toFixed(2)}`,
                     })}
                   </Text>

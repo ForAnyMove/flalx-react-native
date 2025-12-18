@@ -20,7 +20,7 @@ import JobModalWrapper from './JobModalWrapper';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 
-function CustomModal({isWebLandscape, visible, transparent, animationType, children}) {
+function CustomModal({ isWebLandscape, visible, transparent, animationType, children }) {
   if (isWebLandscape) {
     return (
       <JobModalWrapper visible={visible} main={false}>
@@ -36,7 +36,7 @@ function CustomModal({isWebLandscape, visible, transparent, animationType, child
 }
 
 export default function JobHistoryModal({ visible, onClose, history = [] }) {
-  const { themeController, languageController } = useComponentContext();
+  const { themeController, languageController, jobTypesController } = useComponentContext();
   const { t } = useTranslation();
   const { height } = useWindowDimensions();
   const { isLandscape } = useWindowInfo();
@@ -89,8 +89,6 @@ export default function JobHistoryModal({ visible, onClose, history = [] }) {
         return t('showJob.fields.type', { defaultValue: 'Type' });
       case 'subType':
         return t('showJob.fields.subType', { defaultValue: 'Sub type' });
-      case 'profession':
-        return t('showJob.fields.profession', { defaultValue: 'Profession' });
       case 'description':
         return t('showJob.fields.description', { defaultValue: 'Description' });
       case 'price':
@@ -119,11 +117,9 @@ export default function JobHistoryModal({ visible, onClose, history = [] }) {
     function getSpecialValue(type) {
       switch (type) {
         case 'type':
-          return JOB_TYPES[item.changes[type]];
+          return item?.changes[type] ? jobTypesController.jobTypesWithSubtypes.find(t => t.id === item.changes[type])?.name_en || '-' : '-';
         case 'subType':
-          return JOB_SUB_TYPES[item.changes[type]];
-        case 'profession':
-          return LICENSES[item.changes[type]];
+          return item?.changes[type] ? jobTypesController.jobTypesWithSubtypes.flatMap(t => t.subtypes || []).find(st => st.id === item.changes[type])?.name_en || '-' : '-';
         default:
           return item.changes[type];
       }

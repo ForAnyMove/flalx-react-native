@@ -58,10 +58,10 @@ export default function WaitingScreen({
 
   const filteredJobsList = jobsController.executor.waiting
     .filter((job) =>
-      filteredJobs.length > 0 ? filteredJobs.includes(job.type) : true
+      filteredJobs.length > 0 ? filteredJobs.includes(job.type.name_en) : true
     )
     .filter((job) =>
-      [t(`jobTypes.${job.type}`), job.description].some((field) =>
+      [job.type.name_en, job.description].some((field) =>
         field.toLowerCase().includes(searchValue.toLowerCase())
       )
     );
@@ -141,22 +141,22 @@ export default function WaitingScreen({
                           themeController.current?.defaultBlocksMockBackground,
                         ...(isRTL
                           ? {
-                              marginLeft: sizes.imageMargin,
-                              marginRight: 0,
-                            }
+                            marginLeft: sizes.imageMargin,
+                            marginRight: 0,
+                          }
                           : {
-                              marginRight: sizes.imageMargin,
-                              marginLeft: 0,
-                            }),
+                            marginRight: sizes.imageMargin,
+                            marginLeft: 0,
+                          }),
                         ...(isRTL && Platform.OS === 'web'
                           ? {
-                              borderTopRightRadius: sizes.cardRadius,
-                              borderBottomRightRadius: sizes.cardRadius,
-                            }
+                            borderTopRightRadius: sizes.cardRadius,
+                            borderBottomRightRadius: sizes.cardRadius,
+                          }
                           : {
-                              borderTopLeftRadius: sizes.cardRadius,
-                              borderBottomLeftRadius: sizes.cardRadius,
-                            }),
+                            borderTopLeftRadius: sizes.cardRadius,
+                            borderBottomLeftRadius: sizes.cardRadius,
+                          }),
                       },
                     ]}
                   >
@@ -188,7 +188,7 @@ export default function WaitingScreen({
                         },
                       ]}
                     >
-                      {t(`jobTypes.${job.type}`)}
+                      {job.type.name_en}
                     </Text>
                     {job.description ? (
                       <Text
@@ -219,19 +219,19 @@ export default function WaitingScreen({
                         },
                         isRTL
                           ? {
-                              left: 0,
-                              borderBottomRightRadius: isWebLandscape
-                                ? sizes.personalMarkerBottomAngleRadius
-                                : 0,
-                              borderBottomLeftRadius: isWebLandscape
-                                ? 0
-                                : sizes.personalMarkerBottomAngleRadius,
-                            }
+                            left: 0,
+                            borderBottomRightRadius: isWebLandscape
+                              ? sizes.personalMarkerBottomAngleRadius
+                              : 0,
+                            borderBottomLeftRadius: isWebLandscape
+                              ? 0
+                              : sizes.personalMarkerBottomAngleRadius,
+                          }
                           : {
-                              right: 0,
-                              borderBottomLeftRadius:
-                                sizes.personalMarkerBottomAngleRadius,
-                            },
+                            right: 0,
+                            borderBottomLeftRadius:
+                              sizes.personalMarkerBottomAngleRadius,
+                          },
                       ]}
                     >
                       <Text

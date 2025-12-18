@@ -26,6 +26,7 @@ const AutocompletePicker = ({
   containerStyle = {},
   value,
   arrowIcon = false,
+  allowCustomText = false, // Новый пропс для разрешения кастомного текста
 }) => {
   const { themeController } = useComponentContext();
   const { width, height } = useWindowDimensions();
@@ -73,11 +74,23 @@ const AutocompletePicker = ({
         // Проверяем, является ли текущий текст в поле одним из действительных значений
         const isValidOption = Object.values(options).includes(inputText);
 
-        // Если текст недействителен, сбрасываем его к последнему выбранному значению
         if (!isValidOption) {
-          setInputText(options[selectedValue] || '');
+          if (allowCustomText) {
+            // Если разрешен кастомный текст и значение изменилось, передаем его
+            if (inputText !== selectedValue) {
+              setValue(inputText);
+            }
+          } else {
+            // Если кастомный текст не разрешен, сбрасываем к последнему выбранному значению
+            setInputText(options[selectedValue] || '');
+          }
+        } else {
+          // Если текст валиден из опций, проверяем нужно ли обновить значение
+          const foundKey = Object.keys(options).find(key => options[key] === inputText);
+          if (foundKey && foundKey !== selectedValue) {
+            setValue(foundKey);
+          }
         }
-        // Если текст действителен, мы его не трогаем.
       }
     };
 
@@ -92,7 +105,7 @@ const AutocompletePicker = ({
         document.removeEventListener('mousedown', handleClickOutside);
       }
     };
-  }, [selectedValue, options, inputText]); // Добавляем inputText в зависимости
+  }, [selectedValue, options, inputText, allowCustomText]);
 
   // Синхронизация текста в инпуте, если он меняется извне
   useEffect(() => {
@@ -130,6 +143,14 @@ const AutocompletePicker = ({
     Keyboard.dismiss(); // Скрываем клавиатуру
   };
 
+  const handleSubmitEditing = () => {
+    if (allowCustomText && inputText !== selectedValue) {
+      setValue(inputText);
+    }
+    setIsFocused(false);
+    Keyboard.dismiss();
+  };
+
   // --- Рендер опции ---
   const renderOption = ({ item: [value, label] }) => {
     const isSelected = selectedValue === value;
@@ -138,9 +159,9 @@ const AutocompletePicker = ({
     const webHoverProps =
       Platform.OS === 'web'
         ? {
-            onMouseEnter: () => setHoveredValue(value),
-            onMouseLeave: () => setHoveredValue(null),
-          }
+          onMouseEnter: () => setHoveredValue(value),
+          onMouseLeave: () => setHoveredValue(null),
+        }
         : {};
 
     return (
@@ -152,8 +173,8 @@ const AutocompletePicker = ({
             backgroundColor: isSelected
               ? themeController.current?.selectedItemBackground
               : isHovered
-              ? themeController.current?.profileDefaultBackground
-              : 'transparent',
+                ? themeController.current?.profileDefaultBackground
+                : 'transparent',
             height: sizes.pickerHeight * 0.9,
             justifyContent: 'center',
           },
@@ -217,6 +238,7 @@ const AutocompletePicker = ({
             value={inputText}
             onChangeText={setInputText}
             onFocus={handleFocus}
+            onSubmitEditing={handleSubmitEditing}
             // onBlur больше не используется для закрытия, т.к. это делает слушатель кликов
             placeholder={placeholder}
             placeholderTextColor={themeController.current?.formInputLabelColor}
