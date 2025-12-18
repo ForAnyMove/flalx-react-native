@@ -4,6 +4,7 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -19,6 +20,7 @@ import RegisterProfessionModal from '../../../../components/RegisterProfessionMo
 import { icons } from '../../../../constants/icons';
 import UniversalProfessionComponent from '../../../../components/ui/UniversalProfessionComponent';
 import { PROFESSION_TYPES } from '../../../../constants/enums';
+import { useTranslation } from 'react-i18next';
 
 const SystemProfessions = () => {
   const [searchValue, setSearchValue] = useState('');
@@ -27,6 +29,7 @@ const SystemProfessions = () => {
   const isWebLandscape = isLandscape && Platform.OS === 'web';
   const { themeController, languageController, jobTypesController } = useComponentContext();
   const isRTL = languageController.isRTL;
+  const { t } = useTranslation();
 
   const [isAdding, setIsAdding] = useState(false);
 
@@ -76,6 +79,7 @@ const SystemProfessions = () => {
       plusButtonSize: isWebLandscape ? web(64) : mobile(64),
       plusButtonLeft: isWebLandscape ? web(32) : mobile(16),
       plusButtonRight: isWebLandscape ? web(32) : mobile(16),
+
       plusButtonBottom: isWebLandscape ? web(16) : mobile(16),
       plusIconSize: isWebLandscape ? web(24) : mobile(24),
       plusButtonShadowColor: '#000',
@@ -86,6 +90,8 @@ const SystemProfessions = () => {
       plusButtonShadowOpacity: 0.3,
       plusButtonShadowRadius: isWebLandscape ? web(5) : mobile(5),
       plusButtonElevation: isWebLandscape ? 10 : 8,
+      chooseTextFontSize: isWebLandscape ? web(18) : mobile(18),
+      chooseTextMarginBottom: isWebLandscape ? web(25) : mobile(25),
     };
   }, [height, isWebLandscape]);
 
@@ -133,43 +139,106 @@ const SystemProfessions = () => {
             />)}
         </ScrollView>
         {/* Кнопка + */}
-        <TouchableOpacity
-          style={{
-            backgroundColor: themeController.current?.mainBadgeBackground,
-            width: sizes.plusButtonSize,
-            height: sizes.plusButtonSize,
-            borderRadius: sizes.plusButtonSize,
-            justifyContent: 'center',
-            alignItems: 'center',
-            position: 'absolute',
-            ...(isRTL
-              ? {
-                left: sizes.plusButtonLeft,
-              }
-              : {
-                right: sizes.plusButtonRight,
-              }),
-            bottom: sizes.plusButtonBottom,
-            shadowColor: sizes.plusButtonShadowColor,
-            shadowOffset: sizes.plusButtonShadowOffset,
-            shadowOpacity: sizes.plusButtonShadowOpacity,
-            shadowRadius: sizes.plusButtonShadowRadius,
-            elevation: sizes.plusButtonElevation,
-          }}
-          onPress={add}
-        >
-          <Image
-            source={icons.plus}
-            style={{
-              width: sizes.plusIconSize,
-              height: sizes.plusIconSize,
-              tintColor: themeController.current?.buttonTextColorPrimary,
-            }}
-            resizeMode='contain'
-          />
-        </TouchableOpacity>
+        {formattedUserRequests.length > 0 ? (
+          <>
+            <TouchableOpacity
+              style={{
+                backgroundColor: themeController.current?.mainBadgeBackground,
+                width: sizes.plusButtonSize,
+                height: sizes.plusButtonSize,
+                borderRadius: sizes.plusButtonSize,
+                justifyContent: 'center',
+                alignItems: 'center',
+                position: 'absolute',
+                ...(isRTL
+                  ? {
+                    left: sizes.plusButtonLeft,
+                  }
+                  : {
+                    right: sizes.plusButtonRight,
+                  }),
+                bottom: sizes.plusButtonBottom,
+                shadowColor: sizes.plusButtonShadowColor,
+                shadowOffset: sizes.plusButtonShadowOffset,
+                shadowOpacity: sizes.plusButtonShadowOpacity,
+                shadowRadius: sizes.plusButtonShadowRadius,
+                elevation: sizes.plusButtonElevation,
+              }}
+              onPress={add}
+            >
+              <Image
+                source={icons.plus}
+                style={{
+                  width: sizes.plusIconSize,
+                  height: sizes.plusIconSize,
+                  tintColor: themeController.current?.buttonTextColorPrimary,
+                }}
+                resizeMode='contain'
+              />
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <View
+              style={{
+                position: 'absolute',
+                ...(isRTL
+                  ? {
+                    left: sizes.plusButtonLeft,
+                  }
+                  : {
+                    right: sizes.plusButtonRight,
+                  }),
+                bottom: '50%',
+                alignItems: 'center',
+                width: '100%',
+              }}
+            >
+              <Text
+                style={{
+                  color: themeController.current?.textColor,
+                  textAlign: 'center',
+                  fontFamily: 'Rubik-SemiBold',
+                  fontSize: sizes.chooseTextFontSize,
+                  marginBottom: sizes.chooseTextMarginBottom,
+                }}
+              >
+                {t('professions.choose_profession')}
+              </Text>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: themeController.current?.mainBadgeBackground,
+                  width: sizes.plusButtonSize,
+                  height: sizes.plusButtonSize,
+                  borderRadius: sizes.plusButtonSize,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  shadowColor: sizes.plusButtonShadowColor,
+                  shadowOffset: sizes.plusButtonShadowOffset,
+                  shadowOpacity: sizes.plusButtonShadowOpacity,
+                  shadowRadius: sizes.plusButtonShadowRadius,
+                  elevation: sizes.plusButtonElevation,
+                }}
+                onPress={add}
+              >
+                <Image
+                  source={icons.plus}
+                  style={{
+                    width: sizes.plusIconSize,
+                    height: sizes.plusIconSize,
+                    tintColor: themeController.current?.buttonTextColorPrimary,
+                  }}
+                  resizeMode='contain'
+                />
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
       </View>
-      <RegisterProfessionModal visible={isAdding} onClose={() => setIsAdding(false)} />
+      <RegisterProfessionModal
+        visible={isAdding}
+        onClose={() => setIsAdding(false)}
+      />
     </>
   );
 };

@@ -204,6 +204,7 @@ const AutocompletePicker = ({
   const dropdownHeight =
     itemHeight * (filteredEntries.length > 4 ? 4 : filteredEntries.length);
 
+console.log(filteredEntries,inputText, options[value] );
   return (
     <View
       ref={containerRef}
@@ -273,7 +274,7 @@ const AutocompletePicker = ({
       </View>
 
       {/* Выпадающий список без Modal */}
-      {isFocused && filteredEntries.length > 0 && (
+      {isFocused && filteredEntries.length > 0 && inputText !== filteredEntries[0][1] && (
         <View
           style={[
             styles.dropdownContent,

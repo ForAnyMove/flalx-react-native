@@ -15,6 +15,7 @@ import AppMainScreen from './AppMainScreen';
 import AppProfileScreen from './AppProfileScreen';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
+import { useWindowInfo } from '../context/windowContext';
 
 export default function AppScreen() {
   const {
@@ -29,9 +30,10 @@ export default function AppScreen() {
   const isRTL = languageController.isRTL;
 
   const { width, height } = useWindowDimensions();
+  const { sidebarWidth } = useWindowInfo();
   const isLandscape = width > height;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
-  const sidebarWidth = isWebLandscape ? Math.max(200, width * 0.15) : 0;
+  // const sidebarWidth = isWebLandscape ? Math.max(200, width * 0.15) : 0;
   const theme = themeController.current;
   const tabController =
     screenName === 'app' ? appTabController : profileTabController;

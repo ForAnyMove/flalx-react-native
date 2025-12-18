@@ -19,15 +19,68 @@ import { useComponentContext } from '../../../../context/globalAppContext';
 import { PROFESSION_TYPES } from '../../../../constants/enums';
 import { icons } from '../../../../constants/icons';
 import AddProfessionModal from '../../../../components/AddProfessionModal';
+import RequestProfessionModal from '../../../../components/RequestProfessionModal';
+import { useTranslation } from 'react-i18next';
 
 const MyProfessions = () => {
   const [searchValue, setSearchValue] = useState('');
-  const { height } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { height, width } = useWindowDimensions();
+  const { isLandscape, sidebarWidth } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
   const { themeController, languageController } = useComponentContext();
   const isRTL = languageController.isRTL;
+  const { t } = useTranslation();
 
+  const [professionsList, setProfessionsList] = useState([
+    <UniversalProfessionComponent
+      item={{
+        type: PROFESSION_TYPES.VERIFIED,
+        title: 'Certified Electrician',
+        subtitle: 'Electrical infrastructure',
+      }}
+      onPress={() => {}}
+    />,
+    <UniversalProfessionComponent
+      item={{
+        type: PROFESSION_TYPES.REJECTED,
+        title: 'Certified Electrician',
+        subtitle: 'Electrical infrastructure',
+        extra: {
+          comment: {
+            title: 'Rejection reason:',
+            content:
+              'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem',
+          },
+        },
+      }}
+      onPress={() => {}}
+    />,
+    <UniversalProfessionComponent
+      item={{
+        type: PROFESSION_TYPES.PENDING,
+        title: 'Certified Electrician',
+        subtitle: 'Electrical infrastructure',
+        extra: {
+          comment: {
+            title: 'Comment:',
+            content:
+              'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem',
+          },
+        },
+      }}
+      onPress={() => {}}
+    />,
+    <UniversalProfessionComponent
+      item={{
+        type: PROFESSION_TYPES.NEW,
+        title: 'Certified Electrician',
+        subtitle: 'Electrical infrastructure',
+      }}
+      onPress={() => {}}
+    />,
+  ]);
+
+  const [isRequestModalVisible, setIsRequestModalVisible] = useState(false);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
 
   const sizes = useMemo(() => {
@@ -39,8 +92,8 @@ const MyProfessions = () => {
       containerPaddingV: isWebLandscape ? web(14) : mobile(14),
       scrollContainerPaddingBottom: isWebLandscape ? web(20) : mobile(20),
       plusButtonSize: isWebLandscape ? web(64) : mobile(64),
-      plusButtonLeft: isWebLandscape ? web(32) : mobile(16),
-      plusButtonRight: isWebLandscape ? web(32) : mobile(16),
+      plusButtonLeft: isWebLandscape ? web(36) : mobile(16),
+      plusButtonRight: isWebLandscape ? web(36) : mobile(16),
       plusButtonBottom: isWebLandscape ? web(16) : mobile(16),
       plusIconSize: isWebLandscape ? web(24) : mobile(24),
       plusButtonShadowColor: '#000',
@@ -51,12 +104,14 @@ const MyProfessions = () => {
       plusButtonShadowOpacity: 0.3,
       plusButtonShadowRadius: isWebLandscape ? web(5) : mobile(5),
       plusButtonElevation: isWebLandscape ? 10 : 8,
+      chooseTextFontSize: isWebLandscape ? web(18) : mobile(18),
+      chooseTextMarginBottom: isWebLandscape ? web(25) : mobile(25),
     };
-  }, [height, isWebLandscape]);
+  }, [height, width, isWebLandscape]);
 
   const add = () => {
     // Логика добавления новой профессии
-    setIsAddModalVisible(true);
+    setIsRequestModalVisible(true);
   };
 
   return (
@@ -85,93 +140,116 @@ const MyProfessions = () => {
             { paddingBottom: sizes.scrollContainerPaddingBottom },
           ]}
         >
-          <UniversalProfessionComponent
-            item={{
-              type: PROFESSION_TYPES.VERIFIED,
-              title: 'Certified Electrician',
-              subtitle: 'Electrical infrastructure',
-            }}
-            onPress={() => {}}
-          />
-          <UniversalProfessionComponent
-            item={{
-              type: PROFESSION_TYPES.REJECTED,
-              title: 'Certified Electrician',
-              subtitle: 'Electrical infrastructure',
-              extra: {
-                comment: {
-                  title: 'Rejection reason:',
-                  content:
-                    'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem',
-                },
-              },
-            }}
-            onPress={() => {}}
-          />
-          <UniversalProfessionComponent
-            item={{
-              type: PROFESSION_TYPES.PENDING,
-              title: 'Certified Electrician',
-              subtitle: 'Electrical infrastructure',
-              extra: {
-                comment: {
-                  title: 'Comment:',
-                  content:
-                    'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem',
-                },
-              },
-            }}
-            onPress={() => {}}
-          />
-          <UniversalProfessionComponent
-            item={{
-              type: PROFESSION_TYPES.NEW,
-              title: 'Certified Electrician',
-              subtitle: 'Electrical infrastructure',
-            }}
-            onPress={() => {}}
-          />
+          {professionsList.map((item, index) => item)}
         </ScrollView>
         {/* Кнопка + */}
-        <TouchableOpacity
-          style={{
-            backgroundColor: themeController.current?.mainBadgeBackground,
-            width: sizes.plusButtonSize,
-            height: sizes.plusButtonSize,
-            borderRadius: sizes.plusButtonSize,
-            justifyContent: 'center',
-            alignItems: 'center',
-            position: 'absolute',
-            ...(isRTL
-              ? {
-                  left: sizes.plusButtonLeft,
-                }
-              : {
-                  right: sizes.plusButtonRight,
-                }),
-            bottom: sizes.plusButtonBottom,
-            shadowColor: sizes.plusButtonShadowColor,
-            shadowOffset: sizes.plusButtonShadowOffset,
-            shadowOpacity: sizes.plusButtonShadowOpacity,
-            shadowRadius: sizes.plusButtonShadowRadius,
-            elevation: sizes.plusButtonElevation,
-          }}
-          onPress={add}
-        >
-          <Image
-            source={icons.plus}
-            style={{
-              width: sizes.plusIconSize,
-              height: sizes.plusIconSize,
-              tintColor: themeController.current?.buttonTextColorPrimary,
-            }}
-            resizeMode='contain'
-          />
-        </TouchableOpacity>
+        {professionsList.length > 0 ? (
+          <>
+            <TouchableOpacity
+              style={{
+                backgroundColor: themeController.current?.mainBadgeBackground,
+                width: sizes.plusButtonSize,
+                height: sizes.plusButtonSize,
+                borderRadius: sizes.plusButtonSize,
+                justifyContent: 'center',
+                alignItems: 'center',
+                position: 'absolute',
+                ...(isRTL
+                  ? {
+                      left: sizes.plusButtonLeft,
+                    }
+                  : {
+                      right: sizes.plusButtonRight,
+                    }),
+                bottom: sizes.plusButtonBottom,
+                shadowColor: sizes.plusButtonShadowColor,
+                shadowOffset: sizes.plusButtonShadowOffset,
+                shadowOpacity: sizes.plusButtonShadowOpacity,
+                shadowRadius: sizes.plusButtonShadowRadius,
+                elevation: sizes.plusButtonElevation,
+              }}
+              onPress={add}
+            >
+              <Image
+                source={icons.plus}
+                style={{
+                  width: sizes.plusIconSize,
+                  height: sizes.plusIconSize,
+                  tintColor: themeController.current?.buttonTextColorPrimary,
+                }}
+                resizeMode='contain'
+              />
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <View
+              style={{
+                position: 'absolute',
+                ...(isRTL
+                  ? {
+                      left: sizes.plusButtonLeft,
+                    }
+                  : {
+                      right: sizes.plusButtonRight,
+                    }),
+                bottom: '50%',
+                alignItems: 'center',
+                width: '100%',
+              }}
+            >
+              <Text
+                style={{
+                  color: themeController.current?.textColor,
+                  textAlign: 'center',
+                  fontFamily: 'Rubik-SemiBold',
+                  fontSize: sizes.chooseTextFontSize,
+                  marginBottom: sizes.chooseTextMarginBottom,
+                }}
+              >
+                {t('professions.choose_profession')}
+              </Text>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: themeController.current?.mainBadgeBackground,
+                  width: sizes.plusButtonSize,
+                  height: sizes.plusButtonSize,
+                  borderRadius: sizes.plusButtonSize,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  shadowColor: sizes.plusButtonShadowColor,
+                  shadowOffset: sizes.plusButtonShadowOffset,
+                  shadowOpacity: sizes.plusButtonShadowOpacity,
+                  shadowRadius: sizes.plusButtonShadowRadius,
+                  elevation: sizes.plusButtonElevation,
+                }}
+                onPress={add}
+              >
+                <Image
+                  source={icons.plus}
+                  style={{
+                    width: sizes.plusIconSize,
+                    height: sizes.plusIconSize,
+                    tintColor: themeController.current?.buttonTextColorPrimary,
+                  }}
+                  resizeMode='contain'
+                />
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
       </View>
       <AddProfessionModal
         visible={isAddModalVisible}
         onClose={() => setIsAddModalVisible(false)}
+      />
+      <RequestProfessionModal
+        visible={isRequestModalVisible}
+        onClose={() => setIsRequestModalVisible(false)}
+        switchToCreation={() => {
+          setIsRequestModalVisible(false);
+          setIsAddModalVisible(true);
+        }}
       />
     </>
   );
