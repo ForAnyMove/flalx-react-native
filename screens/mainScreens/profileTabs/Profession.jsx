@@ -305,7 +305,7 @@ export default function Profession() {
               key={index}
               style={{
                 width: screenWidthRef.current,
-                flex: 1,
+                // flex: 1,
               }}
             >
               <Component />

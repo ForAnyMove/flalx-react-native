@@ -401,6 +401,7 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         success_button: 'Continue',
       },
       professions: {
+        choose_profession: 'Choose your first profession',
         register_modal: {
           title: 'Register of a new profession',
           description: `If you don\'t find the type/subtype you need in the app,
@@ -421,10 +422,10 @@ or reject it. Please adhere to the platform rules.`,
           title: 'Request Profession',
           profession_label: 'Profession',
           profession_placeholder: 'Select profession',
-          profession_not_found: 'I didn\'t find my profession',
+          profession_not_found: "I didn't find my profession",
           subtype_label: 'Subtype',
           subtype_placeholder: 'Select subtype',
-          subtype_not_found: 'I didn\'t find my subtype',
+          subtype_not_found: "I didn't find my subtype",
           send_button: 'Request',
           success_title: 'Submission Successful',
           success_description:
@@ -844,6 +845,7 @@ or reject it. Please adhere to the platform rules.`,
         success_button: 'המשך',
       },
       professions: {
+        choose_profession: 'בחר את המקצוע הראשון שלך',
         register_modal: {
           title: 'רישום מקצוע חדש',
           description:
@@ -875,8 +877,7 @@ or reject it. Please adhere to the platform rules.`,
           passport_photo: 'תמונת דרכון',
           certificate_photo: 'תמונת תעודת זהות/תעודה',
           success_title: 'ההגשה הצליחה',
-          success_description:
-            'המקצוע שלך נשלח לבדיקה ויפורסם לאחר אימות.',
+          success_description: 'המקצוע שלך נשלח לבדיקה ויפורסם לאחר אימות.',
         },
       },
     },
