@@ -18,7 +18,7 @@ import ImagePickerModal from './ui/ImagePickerModal';
 import { icons } from '../constants/icons';
 import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
 
-const AddProfessionModal = ({ visible, onClose }) => {
+const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
   const { themeController, languageController, user } = useComponentContext();
   const { height, width } = useWindowDimensions();
   const { isLandscape } = useWindowInfo();
@@ -119,14 +119,13 @@ const AddProfessionModal = ({ visible, onClose }) => {
     }
   };
 
-  const handleSubmit = async () => {
-    console.log('Submitting verification:', {
-      passportPhotos,
-      certificatePhotos,
-    });
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitted(true);
+  const handleSubmit = () => {
+    const requestData = {
+      passport_photos: passportPhotos,
+      certificate_photos: certificatePhotos,
+    };
+
+    onSubmit(requestData);
   };
 
   const handleClose = () => {

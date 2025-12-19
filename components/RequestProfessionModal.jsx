@@ -7,29 +7,49 @@ import {
   StyleSheet,
   Platform,
   useWindowDimensions,
-  TextInput,
   Image,
 } from 'react-native';
 import { useWindowInfo } from '../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
 import AutocompletePicker from './ui/AutocompletePicker';
-import { JOB_TYPES } from '../constants/jobTypes';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
-import { JOB_SUB_TYPES } from '../constants/jobSubTypes';
 
-const RequestProfessionModal = ({ visible, onClose, switchToCreation }) => {
-  const { themeController, languageController } = useComponentContext();
+const RequestProfessionModal = ({ visible, onClose, onRequested }) => {
+  const { themeController, languageController, jobTypesController } = useComponentContext();
   const { height, width } = useWindowDimensions();
   const { isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 
-  const [profession, setProfession] = useState(null);
-  const [subtype, setSubtype] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const [type, setType] = useState(null);
+  const [subType, setSubType] = useState(null);
+
+  const jobTypesOptions = useMemo(() => {
+    const options = {};
+    jobTypesController.jobTypesWithSubtypes?.forEach(type => {
+      options[type.key] = type.name_en;
+    });
+    return options;
+  }, [jobTypesController.jobTypesWithSubtypes]);
+
+  const jobSubTypesOptions = useMemo(() => {
+    setSubType(null);
+    const options = {};
+    if (type && jobTypesController.jobTypesWithSubtypes) {
+      const selectedType = jobTypesController.jobTypesWithSubtypes.find(t => t.key === type);
+      if (selectedType?.subtypes) {
+        selectedType.subtypes.forEach(subtype => {
+          options[subtype.key] = subtype.name_en;
+        });
+      }
+    }
+    return options;
+  }, [jobTypesController.jobTypesWithSubtypes, type]);
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -65,10 +85,14 @@ const RequestProfessionModal = ({ visible, onClose, switchToCreation }) => {
   }, [height, width, isWebLandscape]);
 
   const handleSend = async () => {
-    console.log('Registering profession:', { profession, subtype });
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitted(true);
+    const data = {
+      job_type_id: type ? jobTypesController.jobTypesWithSubtypes.find(t => t.key === type)?.id : null,
+      job_subtype_id: type && subType ? jobTypesController.jobTypesWithSubtypes.find(t => t.key === type)?.subtypes.find(st => st.key === subType)?.id : null,
+      passport_photo_urls: null,
+      certificate_photo_urls: null,
+    }
+
+    onRequested(data);
   };
 
   const handleClose = () => {
@@ -76,8 +100,8 @@ const RequestProfessionModal = ({ visible, onClose, switchToCreation }) => {
     // Reset state after a short delay to allow closing animation to finish
     setTimeout(() => {
       setIsSubmitted(false);
-      setProfession(null);
-      setSubtype('');
+      setType(null);
+      setSubType(null);
     }, 300);
   };
 
@@ -272,9 +296,10 @@ const RequestProfessionModal = ({ visible, onClose, switchToCreation }) => {
                 placeholder={t(
                   'professions.request_modal.profession_placeholder'
                 )}
-                options={JOB_TYPES}
-                onValueChange={setProfession}
-                selectedValue={profession}
+                options={jobTypesOptions}
+                onValueChange={setType}
+                setValue={setType}
+                selectedValue={type}
                 isRTL={isRTL}
                 containerStyle={{
                   marginBottom: sizes.inputGap,
@@ -289,7 +314,7 @@ const RequestProfessionModal = ({ visible, onClose, switchToCreation }) => {
                   alignItems: isRTL ? 'flex-end' : 'flex-start',
                 }}
               >
-                <TouchableOpacity onPress={switchToCreation}>
+                <TouchableOpacity>
                   <Text style={styles.didntFindText}>
                     {t('professions.request_modal.profession_not_found')}
                   </Text>
@@ -298,9 +323,10 @@ const RequestProfessionModal = ({ visible, onClose, switchToCreation }) => {
               <AutocompletePicker
                 label={t('professions.request_modal.subtype_label')}
                 placeholder={t('professions.request_modal.subtype_placeholder')}
-                options={JOB_SUB_TYPES}
-                onValueChange={setSubtype}
-                selectedValue={subtype}
+                options={jobSubTypesOptions}
+                onValueChange={setSubType}
+                setValue={setSubType}
+                selectedValue={subType}
                 isRTL={isRTL}
                 containerStyle={{
                   marginBottom: sizes.inputGap,
@@ -315,14 +341,21 @@ const RequestProfessionModal = ({ visible, onClose, switchToCreation }) => {
                   alignItems: isRTL ? 'flex-end' : 'flex-start',
                 }}
               >
-                <TouchableOpacity onPress={switchToCreation}>
+                <TouchableOpacity>
                   <Text style={styles.didntFindText}>
                     {t('professions.request_modal.subtype_not_found')}
                   </Text>
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+              <TouchableOpacity
+                disabled={!type || !subType || type === '' || subType === ''}
+                style={[
+                  styles.sendButton,
+                  (!type || !subType || type === '' || subType === '') && { opacity: 0.5 },
+                ]}
+                onPress={handleSend}
+              >
                 <Text style={styles.sendButtonText}>
                   {t('professions.request_modal.send_button')}
                 </Text>

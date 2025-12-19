@@ -17,6 +17,7 @@ import { useComponentContext } from '../../../context/globalAppContext';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
+import { Divider } from 'react-native-paper';
 
 export default function WaitingScreen({
   setShowJobModalVisible,
@@ -107,6 +108,122 @@ export default function WaitingScreen({
             { width: sizes.scrollContainerWidth },
           ]}
         >
+          <View style={{
+            paddingLeft: 10,
+            paddingRight: 10,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <Text
+              style={[
+                styles.title,
+                {
+                  color: themeController.current?.primaryColor,
+                  fontSize: sizes.fontTitle,
+                },
+              ]}
+            >
+              Unpublished
+            </Text>
+            <Text
+              style={[
+                styles.title,
+                {
+                  color: themeController.current?.unactiveTextColor,
+                  fontSize: sizes.badgeFont,
+                },
+              ]}
+            >
+              {/* waiting for moderation */}
+              waiting for payment
+            </Text>
+          </View>
+          <View style={{ height: 10 }} />
+          <TouchableOpacity
+            style={[styles.cardContainer, { marginBottom: sizes.cardMarginBottom }]}
+          >
+            <View
+              style={[
+                styles.cardContent,
+                {
+                  backgroundColor:
+                    themeController.current?.formInputBackground,
+                  borderRadius: sizes.cardRadius,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.imageContainer,
+                  {
+                    width: sizes.imageWidth,
+                    height: sizes.imageHeight,
+                    backgroundColor:
+                      themeController.current?.defaultBlocksMockBackground,
+                    ...(isRTL
+                      ? {
+                        marginLeft: sizes.imageMargin,
+                        marginRight: 0,
+                      }
+                      : {
+                        marginRight: sizes.imageMargin,
+                        marginLeft: 0,
+                      }),
+                    ...(isRTL && Platform.OS === 'web'
+                      ? {
+                        borderTopRightRadius: sizes.cardRadius,
+                        borderBottomRightRadius: sizes.cardRadius,
+                      }
+                      : {
+                        borderTopLeftRadius: sizes.cardRadius,
+                        borderBottomLeftRadius: sizes.cardRadius,
+                      }),
+                  },
+                ]}
+              >
+                <View style={styles.placeholderImage}>
+                  <FontAwesome6
+                    name='image'
+                    size={sizes.fontTitle}
+                    color={
+                      themeController.current?.defaultBlocksMockColor
+                    }
+                  />
+                </View>
+              </View>
+              <View style={styles.textContent}>
+                <Text
+                  style={[
+                    styles.title,
+                    {
+                      color: themeController.current?.primaryColor,
+                      fontSize: sizes.fontTitle,
+                    },
+                  ]}
+                >
+                  Cleaner
+                </Text>
+                <Text
+                  style={[
+                    styles.description,
+                    {
+                      color: themeController.current?.unactiveTextColor,
+                      textAlign:
+                        isRTL && Platform.OS === 'web' ? 'right' : 'left',
+                      fontSize: sizes.fontDescription,
+                      marginTop: sizes.descriptionMarginTop,
+                    },
+                  ]}
+                >
+                  Default job description text
+                </Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+          <View style={{ height: 10 }} />
+          <Divider />
+          <View style={{ height: 20 }} />
           {filteredJobsList.map((job, index) => {
             const hasImage = job.images && job.images.length > 0;
             return (

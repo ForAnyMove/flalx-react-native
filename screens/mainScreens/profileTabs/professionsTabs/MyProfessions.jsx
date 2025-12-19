@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   View,
+  Text
 } from 'react-native';
 import SearchPanel from '../../../../components/SearchPanel';
 import {
@@ -21,67 +22,59 @@ import { icons } from '../../../../constants/icons';
 import AddProfessionModal from '../../../../components/AddProfessionModal';
 import RequestProfessionModal from '../../../../components/RequestProfessionModal';
 import { useTranslation } from 'react-i18next';
+import { SubmitModal } from '../../../../components/modals/misc/SubmitModal';
+import { useNotification } from '../../../../src/render';
 
 const MyProfessions = () => {
   const [searchValue, setSearchValue] = useState('');
   const { height, width } = useWindowDimensions();
   const { isLandscape, sidebarWidth } = useWindowInfo();
+  const { showWarning } = useNotification();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
-  const { themeController, languageController } = useComponentContext();
+  const { themeController, languageController, jobTypesController, setAppLoading } = useComponentContext();
   const isRTL = languageController.isRTL;
   const { t } = useTranslation();
 
-  const [professionsList, setProfessionsList] = useState([
-    <UniversalProfessionComponent
-      item={{
-        type: PROFESSION_TYPES.VERIFIED,
-        title: 'Certified Electrician',
-        subtitle: 'Electrical infrastructure',
-      }}
-      onPress={() => {}}
-    />,
-    <UniversalProfessionComponent
-      item={{
-        type: PROFESSION_TYPES.REJECTED,
-        title: 'Certified Electrician',
-        subtitle: 'Electrical infrastructure',
-        extra: {
+  const [requestProfessionData, setRequestProfessionData] = useState(null);
+
+  const formattedUserRequests = useMemo(() => {
+    const requests = [];
+    jobTypesController.userToUserRequest.list.forEach((request) => {
+      const reuqestObject = {
+        title: jobTypesController.jobTypesWithSubtypes.find(t => t.id === request.job_type_id)?.name_en || request.requested_type_name,
+        subtitle: jobTypesController.jobTypesWithSubtypes.find(t => t.id === request.job_type_id)?.subtypes.find(st => st.id === request.job_subtype_id)?.name_en || request.requested_subtype_name,
+        type: (() => {
+          switch (request.status) {
+            case "pending":
+              return PROFESSION_TYPES.PENDING;
+            case "approved":
+              return PROFESSION_TYPES.VERIFIED;
+            case "rejected":
+              return PROFESSION_TYPES.REJECTED;
+            default:
+              return '';
+          }
+        })()
+      };
+
+      if (request.rejection_reason != null && request.rejection_reason.length > 0) {
+        reuqestObject.extra = {
           comment: {
             title: 'Rejection reason:',
-            content:
-              'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem',
+            content: request.rejection_reason,
           },
-        },
-      }}
-      onPress={() => {}}
-    />,
-    <UniversalProfessionComponent
-      item={{
-        type: PROFESSION_TYPES.PENDING,
-        title: 'Certified Electrician',
-        subtitle: 'Electrical infrastructure',
-        extra: {
-          comment: {
-            title: 'Comment:',
-            content:
-              'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem',
-          },
-        },
-      }}
-      onPress={() => {}}
-    />,
-    <UniversalProfessionComponent
-      item={{
-        type: PROFESSION_TYPES.NEW,
-        title: 'Certified Electrician',
-        subtitle: 'Electrical infrastructure',
-      }}
-      onPress={() => {}}
-    />,
-  ]);
+        };
+      }
+
+      requests.push(reuqestObject);
+    });
+
+    return requests;
+  }, [jobTypesController.userToUserRequest.list]);
 
   const [isRequestModalVisible, setIsRequestModalVisible] = useState(false);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [isSubmitModalVisible, setIsSubmitModalVisible] = useState(false);
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -114,6 +107,105 @@ const MyProfessions = () => {
     setIsRequestModalVisible(true);
   };
 
+  //#region Methods
+
+  const handleProfessionRequested = (data) => {
+    if (jobTypesController.checkIfVerificationNeeded({ typeId: data.job_type_id, subTypeId: data.job_subtype_id })) {
+      setRequestProfessionData(data);
+      setIsRequestModalVisible(false);
+      setIsAddModalVisible(true);
+    } else {
+
+      setAppLoading(true);
+
+      jobTypesController.userToUserRequest.makeRequest(data)
+        .then(() => {
+          setIsRequestModalVisible(false);
+          setIsSubmitModalVisible(true);
+        }).catch((err) => {
+          if (err?.response?.status === 400) {
+            showWarning(`Validation failed`, [
+              {
+                title: 'OK',
+                backgroundColor: '#F59E0B',
+                textColor: '#FFFFFF'
+              },
+            ]);
+          } else if (err?.response?.status === 409) {
+            showWarning(`You have already requested this profession.`, [
+              {
+                title: 'OK',
+                backgroundColor: '#F59E0B',
+                textColor: '#FFFFFF'
+              },
+            ]);
+          } else {
+            showWarning(`Unexpected error occurred. Please try again later.`, [
+              {
+                title: 'OK',
+                backgroundColor: '#F59E0B',
+                textColor: '#FFFFFF'
+              },
+            ]);
+          }
+        }).finally(() => {
+          setAppLoading(false);
+        });
+    }
+  }
+
+  const handleDocumentsProvided = (data) => {
+    const requestData = {
+      job_type_id: requestProfessionData?.job_type_id,
+      job_subtype_id: requestProfessionData?.job_subtype_id,
+      passport_photo_urls: data.passport_photos,
+      certificate_photo_urls: data.certificate_photos,
+    }
+
+    if (!requestData.job_type_id || !requestData.job_subtype_id) {
+      console.error('Missing job type or subtype ID for profession request.');
+      return;
+    }
+
+    setAppLoading(true);
+
+    jobTypesController.userToUserRequest.makeRequest(requestData)
+      .then(() => {
+        setIsAddModalVisible(false);
+        setIsSubmitModalVisible(true);
+      }).catch((err) => {
+        if (err?.response?.status === 400) {
+          showWarning(`Validation failed`, [
+            {
+              title: 'OK',
+              backgroundColor: '#F59E0B',
+              textColor: '#FFFFFF'
+            },
+          ]);
+        } else if (err?.response?.status === 409) {
+          showWarning(`You have already requested this profession.`, [
+            {
+              title: 'OK',
+              backgroundColor: '#F59E0B',
+              textColor: '#FFFFFF'
+            },
+          ]);
+        } else {
+          showWarning(`Unexpected error occurred. Please try again later.`, [
+            {
+              title: 'OK',
+              backgroundColor: '#F59E0B',
+              textColor: '#FFFFFF'
+            },
+          ]);
+        }
+      }).finally(() => {
+        setAppLoading(false);
+      });
+  }
+
+  //#endregion
+
   return (
     <>
       <View
@@ -140,10 +232,20 @@ const MyProfessions = () => {
             { paddingBottom: sizes.scrollContainerPaddingBottom },
           ]}
         >
-          {professionsList.map((item, index) => item)}
+          {formattedUserRequests.map((request, index) =>
+            <UniversalProfessionComponent
+              key={index}
+              item={{
+                type: request.type,
+                title: request.title,
+                subtitle: request.subtitle,
+                extra: request.extra || null,
+              }}
+              onPress={() => { }}
+            />)}
         </ScrollView>
         {/* Кнопка + */}
-        {professionsList.length > 0 ? (
+        {formattedUserRequests.length > 0 ? (
           <>
             <TouchableOpacity
               style={{
@@ -156,11 +258,11 @@ const MyProfessions = () => {
                 position: 'absolute',
                 ...(isRTL
                   ? {
-                      left: sizes.plusButtonLeft,
-                    }
+                    left: sizes.plusButtonLeft,
+                  }
                   : {
-                      right: sizes.plusButtonRight,
-                    }),
+                    right: sizes.plusButtonRight,
+                  }),
                 bottom: sizes.plusButtonBottom,
                 shadowColor: sizes.plusButtonShadowColor,
                 shadowOffset: sizes.plusButtonShadowOffset,
@@ -188,11 +290,11 @@ const MyProfessions = () => {
                 position: 'absolute',
                 ...(isRTL
                   ? {
-                      left: sizes.plusButtonLeft,
-                    }
+                    left: sizes.plusButtonLeft,
+                  }
                   : {
-                      right: sizes.plusButtonRight,
-                    }),
+                    right: sizes.plusButtonRight,
+                  }),
                 bottom: '50%',
                 alignItems: 'center',
                 width: '100%',
@@ -242,14 +344,20 @@ const MyProfessions = () => {
       <AddProfessionModal
         visible={isAddModalVisible}
         onClose={() => setIsAddModalVisible(false)}
+        onSubmit={handleDocumentsProvided}
       />
       <RequestProfessionModal
         visible={isRequestModalVisible}
-        onClose={() => setIsRequestModalVisible(false)}
-        switchToCreation={() => {
+        onClose={() => {
           setIsRequestModalVisible(false);
-          setIsAddModalVisible(true);
+          setRequestProfessionData(null);
         }}
+        onRequested={handleProfessionRequested}
+      />
+      <SubmitModal
+        visible={isSubmitModalVisible}
+        onClose={() => setIsSubmitModalVisible(false)}
+        onSubmitted={() => setIsSubmitModalVisible(false)}
       />
     </>
   );
