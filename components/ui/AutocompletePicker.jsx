@@ -204,7 +204,6 @@ const AutocompletePicker = ({
   const dropdownHeight =
     itemHeight * (filteredEntries.length > 4 ? 4 : filteredEntries.length);
 
-console.log(filteredEntries,inputText, options[value] );
   return (
     <View
       ref={containerRef}

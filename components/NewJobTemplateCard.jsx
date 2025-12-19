@@ -62,6 +62,9 @@ export default function NewJobTemplateCard({
       likeIconSize: isWebLandscape
         ? scaleByHeight(40, height)
         : scaleByHeightMobile(25, height),
+      cardGap: isWebLandscape
+        ? scaleByHeight(10, height)
+        : scaleByHeightMobile(10, height),
     }),
     [isWebLandscape, height, width]
   );
@@ -75,6 +78,7 @@ export default function NewJobTemplateCard({
           height: sizes.cardHeight,
           borderRadius: sizes.cardRadius,
           backgroundColor: themeController.current?.formInputBackground,
+          gap: sizes.cardGap,
         },
         imageContainer: {
           height: sizes.imageContainerHeight,
@@ -91,8 +95,8 @@ export default function NewJobTemplateCard({
           fontSize: sizes.font,
           color: themeController.current?.primaryColor,
           paddingHorizontal: sizes.textPaddingHorizontal,
-          paddingTop: sizes.textPaddingVertical,
-          marginBottom: sizes.textMarginBottom,
+          // paddingTop: sizes.textPaddingVertical,
+          // marginBottom: sizes.textMarginBottom,
         },
         readMoreText: {
           fontSize: sizes.font,
