@@ -247,6 +247,7 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         change: 'Change',
         submit: 'Submit',
         ok: 'OK',
+        none: 'None',
       },
       profile: {
         professions: 'License levels I work at',
@@ -692,6 +693,7 @@ or reject it. Please adhere to the platform rules.`,
         change: 'שנה',
         submit: 'שלח',
         ok: 'אוקיי',
+        none: 'ללא',
       },
       profile: {
         professions: 'רמות רישוי שאני עובד בהן',
