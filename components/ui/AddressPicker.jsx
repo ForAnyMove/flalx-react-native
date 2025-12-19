@@ -10,9 +10,7 @@ import GooglePlacesTextInput from 'react-native-google-places-textinput';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import themeManager from '../../managers/themeManager';
-
-// ВАЖНО: Замените на ваш API ключ. Лучше хранить его в переменных окружения.
-const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY || '';
+import { API_BASE_URL } from '../../utils/config';
 
 const AddressPicker = ({
   label,
@@ -51,7 +49,7 @@ const AddressPicker = ({
 
   const handleSelect = (place) => {
     console.log('Place: ', place);
-    
+
     // if (place?.geometry?.location) {
     //   const location = {
     //     latitude: place.geometry.location.lat,
@@ -121,6 +119,14 @@ const AddressPicker = ({
     }
   };
 
+  const PROXY_CONFIG = {
+    baseUrl: API_BASE_URL,
+    endpoints: {
+      autocomplete: '/api/google-places/autocomplete',
+      details: '/api/google-places/details'
+    }
+  };
+
   return (
     <View
       style={[
@@ -149,7 +155,8 @@ const AddressPicker = ({
           {label}
         </Text>
         <GooglePlacesTextInput
-          apiKey={GOOGLE_PLACES_API_KEY}
+          proxyUrl={PROXY_CONFIG.baseUrl + PROXY_CONFIG.endpoints.autocomplete}
+          detailsProxyHeaders={PROXY_CONFIG.baseUrl + PROXY_CONFIG.endpoints.details}
           onPlaceSelected={handleSelect}
           clearButtonMode='never'
           placeHolderText={placeholder}
