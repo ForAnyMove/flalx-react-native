@@ -108,7 +108,7 @@ export default function WaitingScreen({
             { width: sizes.scrollContainerWidth },
           ]}
         >
-          <View style={{
+          {/* <View style={{
             paddingLeft: 10,
             paddingRight: 10,
             flexDirection: 'row',
@@ -135,7 +135,6 @@ export default function WaitingScreen({
                 },
               ]}
             >
-              {/* waiting for moderation */}
               waiting for payment
             </Text>
           </View>
@@ -223,7 +222,7 @@ export default function WaitingScreen({
           </TouchableOpacity>
           <View style={{ height: 10 }} />
           <Divider />
-          <View style={{ height: 20 }} />
+          <View style={{ height: 20 }} /> */}
           {filteredJobsList.map((job, index) => {
             const hasImage = job.images && job.images.length > 0;
             return (
