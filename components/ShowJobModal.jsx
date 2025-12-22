@@ -99,16 +99,16 @@ export default function ShowJobModal({
     // Определяем, какие массивы отслеживать
     const jobGroups = isCreator
       ? {
-        waiting: jobsController.creator.waiting,
-        in_progress: jobsController.creator.inProgress,
-        done: jobsController.creator.done,
-      }
+          waiting: jobsController.creator.waiting,
+          in_progress: jobsController.creator.inProgress,
+          done: jobsController.creator.done,
+        }
       : {
-        new: jobsController.executor.new,
-        waiting: jobsController.executor.waiting,
-        in_progress: jobsController.executor.inProgress,
-        done: jobsController.executor.done,
-      };
+          new: jobsController.executor.new,
+          waiting: jobsController.executor.waiting,
+          in_progress: jobsController.executor.inProgress,
+          done: jobsController.executor.done,
+        };
 
     // Поиск текущего местоположения заявки
     let currentLocation = null;
@@ -126,8 +126,9 @@ export default function ShowJobModal({
       const prev = prevJobLocation.current;
       if (prev && prev !== currentLocation) {
         const fromStatus = `${isCreator ? 'client' : 'business'}-${prev}`;
-        const toStatus = `${isCreator ? 'client' : 'business'
-          }-${currentLocation}`;
+        const toStatus = `${
+          isCreator ? 'client' : 'business'
+        }-${currentLocation}`;
         console.log(
           `Заявка ${currentJobId} переместилась: ${fromStatus} → ${toStatus}`
         );
@@ -146,16 +147,16 @@ export default function ShowJobModal({
     status,
     ...(status.startsWith('client')
       ? [
-        jobsController.creator.waiting,
-        jobsController.creator.inProgress,
-        jobsController.creator.done,
-      ]
+          jobsController.creator.waiting,
+          jobsController.creator.inProgress,
+          jobsController.creator.done,
+        ]
       : [
-        jobsController.executor.new,
-        jobsController.executor.waiting,
-        jobsController.executor.inProgress,
-        jobsController.executor.done,
-      ]),
+          jobsController.executor.new,
+          jobsController.executor.waiting,
+          jobsController.executor.inProgress,
+          jobsController.executor.done,
+        ]),
   ]);
 
   const sizes = useMemo(
@@ -250,7 +251,9 @@ export default function ShowJobModal({
       modalPadding: isWebLandscape
         ? scaleByHeight(32, height)
         : scaleByHeightMobile(16, height),
-      modalLineHeight: isWebLandscape ? scaleByHeight(32, height) : scaleByHeightMobile(22, height),
+      modalLineHeight: isWebLandscape
+        ? scaleByHeight(32, height)
+        : scaleByHeightMobile(22, height),
       modalCloseBtnTopRightPosition: isWebLandscape
         ? scaleByHeight(7, height)
         : scaleByHeightMobile(5, height),
@@ -443,7 +446,7 @@ export default function ShowJobModal({
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
-    () => { }
+    () => {}
   );
 
   const [plansModalVisible, setPlansModalVisible] = useState(false);
@@ -925,8 +928,8 @@ export default function ShowJobModal({
                   editableCommentState
                     ? editableCommentValue
                     : currentJobInfo?.job_comment
-                      ? currentJobInfo?.job_comment.comment
-                      : null
+                    ? currentJobInfo?.job_comment.comment
+                    : null
                 }
                 placeholder={t('showJob.fields.myCommentsPlaceholder', {
                   defaultValue: 'Write a comment on the completed work...',
@@ -1368,6 +1371,33 @@ export default function ShowJobModal({
         dynamicStyles.inputBlock,
         { backgroundColor: themeController.current?.formInputBackground },
       ]}
+      key='location'
+    >
+      <Text
+        style={[
+          styles.label,
+          dynamicStyles.label,
+          isRTL && { textAlign: 'right' },
+        ]}
+      >
+        {t('showJob.fields.location', { defaultValue: 'Location' })}
+      </Text>
+      <TextInput
+        value={currentJobInfo?.location || '-'}
+        style={[
+          styles.input,
+          dynamicStyles.input,
+          isRTL && { textAlign: 'right' },
+        ]}
+        readOnly
+      />
+    </View>,
+    <View
+      style={[
+        styles.inputBlock,
+        dynamicStyles.inputBlock,
+        { backgroundColor: themeController.current?.formInputBackground },
+      ]}
       key='description'
     >
       <Text
@@ -1500,33 +1530,6 @@ export default function ShowJobModal({
           )}
         </ScrollView>
       </View>
-    </View>,
-    <View
-      style={[
-        styles.inputBlock,
-        dynamicStyles.inputBlock,
-        { backgroundColor: themeController.current?.formInputBackground },
-      ]}
-      key='location'
-    >
-      <Text
-        style={[
-          styles.label,
-          dynamicStyles.label,
-          isRTL && { textAlign: 'right' },
-        ]}
-      >
-        {t('showJob.fields.location', { defaultValue: 'Location' })}
-      </Text>
-      <TextInput
-        value={currentJobInfo?.location || '-'}
-        style={[
-          styles.input,
-          dynamicStyles.input,
-          isRTL && { textAlign: 'right' },
-        ]}
-        readOnly
-      />
     </View>,
     <View
       style={[
@@ -1669,7 +1672,6 @@ export default function ShowJobModal({
                         ${scaleByHeight(64, height)}px 
                         ${scaleByHeight(75, height)}px 
                         ${scaleByHeight(75, height)}px 
-                        ${scaleByHeight(64, height)}px 
                         ${scaleByHeight(64, height)}px 
                       `,
                     },
@@ -1834,6 +1836,50 @@ export default function ShowJobModal({
                       gridArea: isRTL ? '3 / 2 / 4 / 3' : '3 / 1 / 4 / 2',
                     }}
                   >
+                    {/* Location */}
+                    <View
+                      style={[
+                        styles.inputBlock,
+                        {
+                          backgroundColor: bg,
+                          paddingVertical: sizes.inputContainerPaddingVertical,
+                          paddingHorizontal:
+                            sizes.inputContainerPaddingHorizontal,
+                          borderRadius: sizes.borderRadius,
+                          marginBottom: 0,
+                          height: sizes.inputHeight,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.label,
+                          {
+                            color: themeController.current?.unactiveTextColor,
+                          },
+                          isRTL && { textAlign: 'right' },
+                          { fontSize: sizes.font },
+                        ]}
+                      >
+                        {t('showJob.fields.location', {
+                          defaultValue: 'Location',
+                        })}
+                      </Text>
+                      <TextInput
+                        value={currentJobInfo?.location || '-'}
+                        style={{
+                          fontWeight: '500',
+                          color: themeController.current?.textColor,
+                          padding: 0,
+                          paddingVertical: sizes.padding,
+                          fontSize: sizes.inputFont,
+                          borderRadius: sizes.borderRadius,
+                          backgroundColor: 'transparent',
+                          textAlign: isRTL ? 'right' : 'left',
+                        }}
+                        readOnly
+                      />
+                    </View>
                     {/* <View
                       style={[
                         styles.inputBlock,
@@ -2015,61 +2061,10 @@ export default function ShowJobModal({
                     </View>
                   </View>
 
-                  {/* Location */}
-                  <View
-                    style={{
-                      gridArea: isRTL ? '6 / 2 / 7 / 3' : '6 / 1 / 7 / 2',
-                    }}
-                  >
-                    <View
-                      style={[
-                        styles.inputBlock,
-                        {
-                          backgroundColor: bg,
-                          paddingVertical: sizes.inputContainerPaddingVertical,
-                          paddingHorizontal:
-                            sizes.inputContainerPaddingHorizontal,
-                          borderRadius: sizes.borderRadius,
-                          marginBottom: 0,
-                          height: sizes.inputHeight,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.label,
-                          {
-                            color: themeController.current?.unactiveTextColor,
-                          },
-                          isRTL && { textAlign: 'right' },
-                          { fontSize: sizes.font },
-                        ]}
-                      >
-                        {t('showJob.fields.location', {
-                          defaultValue: 'Location',
-                        })}
-                      </Text>
-                      <TextInput
-                        value={currentJobInfo?.location || '-'}
-                        style={{
-                          fontWeight: '500',
-                          color: themeController.current?.textColor,
-                          padding: 0,
-                          paddingVertical: sizes.padding,
-                          fontSize: sizes.inputFont,
-                          borderRadius: sizes.borderRadius,
-                          backgroundColor: 'transparent',
-                          textAlign: isRTL ? 'right' : 'left',
-                        }}
-                        readOnly
-                      />
-                    </View>
-                  </View>
-
                   {/* Start date */}
                   <View
                     style={{
-                      gridArea: isRTL ? '7 / 2 / 8 / 3' : '7 / 1 / 8 / 2',
+                      gridArea: isRTL ? '6 / 2 / 8 / 3' : '6 / 1 / 8 / 2',
                     }}
                   >
                     <View
@@ -2099,7 +2094,7 @@ export default function ShowJobModal({
                   {/* End date */}
                   <View
                     style={{
-                      gridArea: isRTL ? '7 / 1 / 8 / 2' : '7 / 2 / 8 / 3',
+                      gridArea: isRTL ? '6 / 1 / 8 / 2' : '6 / 2 / 8 / 3',
                     }}
                   >
                     <View
@@ -2448,10 +2443,10 @@ export default function ShowJobModal({
                   setPlansModalVisible(true);
                   setConfirmInterestModal(false);
                 }}
-              // onPress={() => {
-              //   setConfirmInterestModal(false);
-              //   setInterestedRequest(true);
-              // }}
+                // onPress={() => {
+                //   setConfirmInterestModal(false);
+                //   setInterestedRequest(true);
+                // }}
               >
                 <Text
                   style={{
@@ -2599,7 +2594,11 @@ export default function ShowJobModal({
       <JobHistoryModal
         visible={showHistoryModal}
         onClose={() => setHistoryModal(false)}
-        history={currentJobInfo?.changes_history == null ? [] : currentJobInfo.changes_history}
+        history={
+          currentJobInfo?.changes_history == null
+            ? []
+            : currentJobInfo.changes_history
+        }
       />
       <SubscriptionsModal
         visible={plansModalVisible}
@@ -2640,13 +2639,11 @@ const styles = StyleSheet.create({
   logo: {
     fontFamily: 'Rubik-Bold',
   },
-  closeButton: {
-  },
+  closeButton: {},
   modalCloseTouchableArea: {
     alignSelf: 'flex-end',
   },
-  modalCloseButton: {
-  },
+  modalCloseButton: {},
   inputBlock: {
     ...Platform.select({
       web: {
@@ -2661,8 +2658,7 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  label: {
-  },
+  label: {},
   input: {
     width: '100%',
     fontFamily: 'Rubik-Medium',
@@ -2681,8 +2677,7 @@ const styles = StyleSheet.create({
   imageScrollContainer: {
     flexDirection: 'row',
   },
-  imageThumbnail: {
-  },
+  imageThumbnail: {},
   imageWrapper: {
     position: 'relative',
   },

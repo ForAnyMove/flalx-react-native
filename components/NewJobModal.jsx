@@ -136,7 +136,7 @@ export default function NewJobModal({
   // Преобразуем данные из jobTypesController в нужный формат
   const jobTypesOptions = useMemo(() => {
     const options = {};
-    jobTypesController.jobTypesWithSubtypes?.forEach(type => {
+    jobTypesController.jobTypesWithSubtypes?.forEach((type) => {
       options[type.key] = type.name_en;
     });
     return options;
@@ -145,9 +145,11 @@ export default function NewJobModal({
   const jobSubTypesOptions = useMemo(() => {
     const options = {};
     if (type && jobTypesController.jobTypesWithSubtypes) {
-      const selectedType = jobTypesController.jobTypesWithSubtypes.find(t => t.key === type);
+      const selectedType = jobTypesController.jobTypesWithSubtypes.find(
+        (t) => t.key === type
+      );
       if (selectedType?.subtypes) {
-        selectedType.subtypes.forEach(subtype => {
+        selectedType.subtypes.forEach((subtype) => {
           options[subtype.key] = subtype.name_en;
         });
       }
@@ -277,17 +279,26 @@ export default function NewJobModal({
   // Состояния для управления фокусом на полях ввода
   const [focusStates, setFocusStates] = useState([false, false, false]);
 
-  const [fieldErrors, setFieldErrors] = useState({
-    type: false,
-    subType: false,
-  });
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  // Список обязательных для заполнения полей.
+  // Просто добавьте или удалите названия полей для изменения логики валидации.
+  const requiredFields = [
+    'type',
+    'subType',
+    'price',
+    'location',
+    // 'description',
+  ];
 
   const { openWebView } = useWebView();
 
   // Функция для получения ID типа по ключу
   const getTypeIdByKey = (typeKey) => {
     if (!typeKey || !jobTypesController.jobTypesWithSubtypes) return null;
-    const foundType = jobTypesController.jobTypesWithSubtypes.find(t => t.key === typeKey);
+    const foundType = jobTypesController.jobTypesWithSubtypes.find(
+      (t) => t.key === typeKey
+    );
     return foundType?.id || null;
   };
 
@@ -295,21 +306,32 @@ export default function NewJobModal({
   const getSubTypeIdByKey = (subTypeKey) => {
     if (!subTypeKey || !jobTypesController.jobTypesWithSubtypes) return null;
     for (const jobType of jobTypesController.jobTypesWithSubtypes) {
-      const foundSubType = jobType.subtypes?.find(st => st.key === subTypeKey);
+      const foundSubType = jobType.subtypes?.find(
+        (st) => st.key === subTypeKey
+      );
       if (foundSubType) return foundSubType.id;
     }
     return null;
   };
 
   const handleCreate = () => {
-    const newErrors = {
-      type: !type,
-      subType: !subType,
-    };
+    const newErrors = {};
+    requiredFields.forEach((field) => {
+      // Проверяем, заполнено ли поле. Для location нужна особая проверка.
+      if (field === 'location') {
+        newErrors[field] = !location || !location.address;
+      } else {
+        // Для других полей (type, subType, description и т.д.)
+        // используется преобразование в булев тип.
+        // Пустая строка, null или undefined дадут false, что после "!" станет true (ошибка).
+        newErrors[field] = !eval(field);
+      }
+    });
 
     setFieldErrors(newErrors);
 
     const hasErrors = Object.values(newErrors).some((e) => e);
+    console.log('error fields ', newErrors);
 
     if (hasErrors) return;
 
@@ -317,7 +339,8 @@ export default function NewJobModal({
       const jobChanges = {};
 
       if (type !== initialJob.type) jobChanges.type = getTypeIdByKey(type);
-      if (subType !== initialJob.subType) jobChanges.subType = getSubTypeIdByKey(subType);
+      if (subType !== initialJob.subType)
+        jobChanges.subType = getSubTypeIdByKey(subType);
       if (description !== initialJob.description)
         jobChanges.description = description;
       if (JSON.stringify(images) !== JSON.stringify(initialJob.images))
@@ -486,6 +509,7 @@ export default function NewJobModal({
       onLocationSelect={setLocation}
       placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
       isRTL={isRTL}
+      error={fieldErrors.location}
     />,
     <View
       style={[
@@ -500,6 +524,7 @@ export default function NewJobModal({
         isWebLandscape && {
           marginBottom: sizes.margin,
         },
+        fieldErrors.description && styles.errorBorder,
       ]}
       key='description'
     >
@@ -507,7 +532,9 @@ export default function NewJobModal({
         style={[
           styles.label,
           {
-            color: themeController.current?.unactiveTextColor,
+            color: fieldErrors.description
+              ? 'red'
+              : themeController.current?.unactiveTextColor,
             fontSize: sizes.font,
           },
           isRTL && { textAlign: 'right' },
@@ -551,6 +578,7 @@ export default function NewJobModal({
           height: sizes.inputHeight,
           backgroundColor: themeController.current?.formInputBackground,
         },
+        fieldErrors.price && styles.errorBorder,
       ]}
       key='price'
     >
@@ -558,7 +586,9 @@ export default function NewJobModal({
         style={[
           styles.label,
           {
-            color: themeController.current?.unactiveTextColor,
+            color: fieldErrors.price
+              ? 'red'
+              : themeController.current?.unactiveTextColor,
             fontSize: sizes.font,
           },
           isRTL && { textAlign: 'right' },
@@ -691,52 +721,52 @@ export default function NewJobModal({
         onAdd={handleImageAdd}
       />
     </View>,
-    <View
-      style={[
-        styles.inputBlock,
-        {
-          backgroundColor: themeController.current?.formInputBackground,
-          padding: 0,
-          paddingHorizontal: sizes.inputContainerPaddingHorizontal,
-          paddingVertical: sizes.inputContainerPaddingVertical,
-          borderRadius: sizes.borderRadius,
-          height: sizes.inputHeight,
-        },
-      ]}
-      key='location'
-    >
-      <Text
-        style={[
-          styles.label,
-          {
-            color: themeController.current?.unactiveTextColor,
-            fontSize: sizes.font,
-          },
-          isRTL && { textAlign: 'right' },
-          isWebLandscape && { fontSize: sizes.font },
-        ]}
-      >
-        {t('newJob.location', { defaultValue: 'Location' })}
-      </Text>
-      <TextInput
-        value={location}
-        onChangeText={setLocation}
-        placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
-        placeholderTextColor={
-          themeController.current?.formInputPlaceholderColor
-        }
-        style={[
-          styles.input,
-          {
-            color: themeController.current?.textColor,
-            fontSize: sizes.inputFont,
-            borderRadius: sizes.borderRadius,
-            fontFamily: 'Rubik-Regular',
-          },
-          isRTL && { textAlign: 'right' },
-        ]}
-      />
-    </View>,
+    // <View
+    //   style={[
+    //     styles.inputBlock,
+    //     {
+    //       backgroundColor: themeController.current?.formInputBackground,
+    //       padding: 0,
+    //       paddingHorizontal: sizes.inputContainerPaddingHorizontal,
+    //       paddingVertical: sizes.inputContainerPaddingVertical,
+    //       borderRadius: sizes.borderRadius,
+    //       height: sizes.inputHeight,
+    //     },
+    //   ]}
+    //   key='location'
+    // >
+    //   <Text
+    //     style={[
+    //       styles.label,
+    //       {
+    //         color: themeController.current?.unactiveTextColor,
+    //         fontSize: sizes.font,
+    //       },
+    //       isRTL && { textAlign: 'right' },
+    //       isWebLandscape && { fontSize: sizes.font },
+    //     ]}
+    //   >
+    //     {t('newJob.location', { defaultValue: 'Location' })}
+    //   </Text>
+    //   <TextInput
+    //     value={location}
+    //     onChangeText={setLocation}
+    //     placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
+    //     placeholderTextColor={
+    //       themeController.current?.formInputPlaceholderColor
+    //     }
+    //     style={[
+    //       styles.input,
+    //       {
+    //         color: themeController.current?.textColor,
+    //         fontSize: sizes.inputFont,
+    //         borderRadius: sizes.borderRadius,
+    //         fontFamily: 'Rubik-Regular',
+    //       },
+    //       isRTL && { textAlign: 'right' },
+    //     ]}
+    //   />
+    // </View>,
     <View
       style={[
         styles.row,
@@ -872,7 +902,6 @@ export default function NewJobModal({
                         ${scaleByHeight(75, height)}px 
                         ${scaleByHeight(64, height)}px 
                         ${scaleByHeight(64, height)}px 
-                        ${scaleByHeight(64, height)}px
                       `,
                     },
                   ]}
@@ -898,7 +927,10 @@ export default function NewJobModal({
                         }
                         // Сбрасываем ошибку подтипа при смене типа
                         if (fieldErrors.subType) {
-                          setFieldErrors((prev) => ({ ...prev, subType: false }));
+                          setFieldErrors((prev) => ({
+                            ...prev,
+                            subType: false,
+                          }));
                         }
                       }}
                       filtered={filteredTypes}
@@ -942,13 +974,16 @@ export default function NewJobModal({
                           marginBottom: 0,
                           height: '100%',
                         },
+                        fieldErrors.description && styles.errorBorder,
                       ]}
                     >
                       <Text
                         style={[
                           styles.label,
                           {
-                            color: themeController.current?.unactiveTextColor,
+                            color: fieldErrors.description
+                              ? 'red'
+                              : themeController.current?.unactiveTextColor,
                             fontSize: sizes.font,
                           },
                           isRTL && { textAlign: 'right' },
@@ -968,7 +1003,6 @@ export default function NewJobModal({
                           themeController.current?.formInputLabelColor
                         }
                         style={{
-                          fontWeight: '500',
                           padding: 0,
                           paddingVertical: sizes.padding,
                           color: themeController.current?.textColor,
@@ -1044,6 +1078,7 @@ export default function NewJobModal({
                         defaultValue: 'Type...',
                       })}
                       isRTL={isRTL}
+                      error={fieldErrors.location}
                     />
                   </View>
 
@@ -1071,6 +1106,7 @@ export default function NewJobModal({
                           marginBottom: 0,
                           height: sizes.inputHeight,
                         },
+                        fieldErrors.price && styles.errorBorder,
                       ]}
                     >
                       <Text
@@ -1079,7 +1115,7 @@ export default function NewJobModal({
                           isRTL && { textAlign: 'right' },
                           {
                             fontSize: sizes.font,
-                            color: themeController.current?.unactiveTextColor,
+                            color: fieldErrors.price ? 'red' : themeController.current?.unactiveTextColor,
                           },
                         ]}
                       >
@@ -1096,10 +1132,11 @@ export default function NewJobModal({
                           themeController.current?.formInputPlaceholderColor
                         }
                         style={{
-                          fontWeight: '500',
                           padding: 0,
                           paddingVertical: sizes.padding,
-                          color: themeController.current?.textColor,
+                          color: fieldErrors.price
+                            ? 'red'
+                            : themeController.current?.textColor,
                           fontSize: sizes.inputFont,
                           borderRadius: sizes.borderRadius,
                           backgroundColor: 'transparent',
@@ -1233,7 +1270,7 @@ export default function NewJobModal({
                     onAdd={handleImageAdd}
                   />
 
-                  <View
+                  {/* <View
                     style={[
                       styles.gridHalf,
                       {
@@ -1289,7 +1326,7 @@ export default function NewJobModal({
                         }}
                       />
                     </View>
-                  </View>
+                  </View> */}
 
                   {/* Row 5: Start/End date (1/2 + 1/2) */}
                   <View
@@ -1298,7 +1335,7 @@ export default function NewJobModal({
                       {
                         // marginBottom: sizes.margin,
                         zIndex: 3,
-                        gridArea: isRTL ? '7 / 2 / 8 / 3' : '7 / 1 / 8 / 2',
+                        gridArea: isRTL ? '6 / 2 / 7 / 3' : '6 / 1 / 7 / 2',
                       },
                       { flexDirection: isRTL ? 'row-reverse' : 'row' },
                     ]}
@@ -1329,7 +1366,7 @@ export default function NewJobModal({
                       {
                         // marginBottom: sizes.margin,
                         zIndex: 2,
-                        gridArea: isRTL ? '7 / 1 / 8 / 2' : '7 / 2 / 8 / 3',
+                        gridArea: isRTL ? '6 / 1 / 7 / 2' : '6 / 2 / 7 / 3',
                       },
                       { flexDirection: isRTL ? 'row-reverse' : 'row' },
                     ]}
@@ -1362,7 +1399,7 @@ export default function NewJobModal({
                         backgroundColor:
                           themeController.current?.backgroundColor,
                         zIndex: 1,
-                        gridArea: isRTL ? '8 / 1 / 9 / 3' : '8 / 1 / 9 / 3',
+                        gridArea: isRTL ? '7 / 1 / 9 / 3' : '7 / 1 / 9 / 3',
                       },
                     ]}
                   >
@@ -1621,12 +1658,12 @@ export default function NewJobModal({
                             borderWidth: 1,
                             borderColor: active
                               ? themeController.current
-                                ?.buttonColorPrimaryDefault
+                                  ?.buttonColorPrimaryDefault
                               : themeController.current
-                                ?.formInputPlaceholderColor,
+                                  ?.formInputPlaceholderColor,
                             backgroundColor: active
                               ? themeController.current
-                                ?.buttonColorPrimaryDefault
+                                  ?.buttonColorPrimaryDefault
                               : 'transparent',
                             flexDirection: isRTL ? 'row-reverse' : 'row',
                             alignItems: 'center',
@@ -1640,7 +1677,7 @@ export default function NewJobModal({
                             color: active
                               ? themeController.current?.buttonTextColorPrimary
                               : themeController.current
-                                ?.formInputPlaceholderColor,
+                                  ?.formInputPlaceholderColor,
                           }}
                         >
                           {t(
@@ -1709,10 +1746,10 @@ export default function NewJobModal({
                       defaultValue: 'Publish for {{price}}',
                       price:
                         subscription.current != null &&
-                          selectedOption.type == 'normal'
+                        selectedOption.type == 'normal'
                           ? t('newJob.statusModal.free', {
-                            defaultValue: 'Free',
-                          })
+                              defaultValue: 'Free',
+                            })
                           : `$${selectedOption?.price.toFixed(2)}`,
                     })}
                   </Text>
@@ -1926,6 +1963,7 @@ const styles = StyleSheet.create({
     shadowRadius: 0,
     elevation: 4,
   },
+  errorBorder: { borderColor: 'red', borderWidth: 1 },
   gridContainer: {
     width: '100%',
     display: 'grid',

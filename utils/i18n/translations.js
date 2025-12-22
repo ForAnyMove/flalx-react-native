@@ -248,6 +248,7 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         submit: 'Submit',
         ok: 'OK',
         none: 'None',
+        create_request: 'Create Request',
       },
       profile: {
         professions: 'License levels I work at',
@@ -694,6 +695,7 @@ or reject it. Please adhere to the platform rules.`,
         submit: 'שלח',
         ok: 'אוקיי',
         none: 'ללא',
+        create_request: 'צור בקשה',
       },
       profile: {
         professions: 'רמות רישוי שאני עובד בהן',

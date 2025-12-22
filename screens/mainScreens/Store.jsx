@@ -269,9 +269,9 @@ export default function Store() {
       titlePaddingHorizontal: isWebLandscape ? web(4) : mobile(4),
       underlineBorderRadius: isWebLandscape ? web(2) : mobile(2),
       plusButtonSize: isWebLandscape ? web(64) : mobile(64),
-      plusButtonLeft: isWebLandscape ? web(32) : mobile(16),
-      plusButtonRight: isWebLandscape ? web(32) : mobile(16),
-      plusButtonBottom: isWebLandscape ? web(16) : mobile(16),
+      plusButtonLeft: isWebLandscape ? web(24) : mobile(16),
+      plusButtonRight: isWebLandscape ? web(24) : mobile(16),
+      plusButtonBottom: isWebLandscape ? web(24) : mobile(24),
       plusIconSize: isWebLandscape ? web(24) : mobile(24),
       plusButtonShadowColor: '#000',
       plusButtonShadowOffset: {
@@ -281,6 +281,8 @@ export default function Store() {
       plusButtonShadowOpacity: 0.3,
       plusButtonShadowRadius: isWebLandscape ? web(5) : mobile(5),
       plusButtonElevation: isWebLandscape ? 10 : 8,
+      plusButtonLabelFontSize: isWebLandscape ? web(12) : mobile(12),
+      plusButtonLabelMarginTop: isWebLandscape ? web(8) : mobile(8),
     };
   }, [height, isWebLandscape]);
 
@@ -418,14 +420,8 @@ export default function Store() {
       </View>
 
       {/* Кнопка + */}
-      <TouchableOpacity
+      <View
         style={{
-          backgroundColor: themeController.current?.mainBadgeBackground,
-          width: sizes.plusButtonSize,
-          height: sizes.plusButtonSize,
-          borderRadius: sizes.plusButtonSize,
-          justifyContent: 'center',
-          alignItems: 'center',
           position: 'absolute',
           ...(isRTL
             ? {
@@ -435,49 +431,71 @@ export default function Store() {
                 right: sizes.plusButtonRight,
               }),
           bottom: sizes.plusButtonBottom,
-          shadowColor: sizes.plusButtonShadowColor,
-          shadowOffset: sizes.plusButtonShadowOffset,
-          shadowOpacity: sizes.plusButtonShadowOpacity,
-          shadowRadius: sizes.plusButtonShadowRadius,
-          elevation: sizes.plusButtonElevation,
-        }}
-        onPress={async () => {
-          const pendingJobRequest = await checkHasPendingJob(session);
-          if (!pendingJobRequest.job) {
-            setActiveKey(null);
-            setNewJobModalVisible(true);
-          } else {
-            const url =
-              pendingJobRequest.payment?.paymentMetadata?.paypalApproval?.href;
-            const message = [
-              t('subscriptions.messages.pendingJob'),
-              '',
-              t('subscriptions.messages.paymentURL', { url: url }),
-              '',
-              t('subscriptions.messages.cancelPendingJob'),
-            ].join('\n');
-
-            showWarning(message, [
-              {
-                title: t('subscriptions.messages.moveToPayment'),
-                backgroundColor: '#3B82F6',
-                textColor: '#FFFFFF',
-                onPress: () => openWebView(url),
-              },
-            ]);
-          }
+          alignItems: 'center',
         }}
       >
-        <Image
-          source={icons.plus}
+        <TouchableOpacity
           style={{
-            width: sizes.plusIconSize,
-            height: sizes.plusIconSize,
-            tintColor: themeController.current?.buttonTextColorPrimary,
+            backgroundColor: themeController.current?.mainBadgeBackground,
+            width: sizes.plusButtonSize,
+            height: sizes.plusButtonSize,
+            borderRadius: sizes.plusButtonSize,
+            justifyContent: 'center',
+            alignItems: 'center',
+            shadowColor: sizes.plusButtonShadowColor,
+            shadowOffset: sizes.plusButtonShadowOffset,
+            shadowOpacity: sizes.plusButtonShadowOpacity,
+            shadowRadius: sizes.plusButtonShadowRadius,
+            elevation: sizes.plusButtonElevation,
           }}
-          resizeMode='contain'
-        />
-      </TouchableOpacity>
+          onPress={async () => {
+            const pendingJobRequest = await checkHasPendingJob(session);
+            if (!pendingJobRequest.job) {
+              setActiveKey(null);
+              setNewJobModalVisible(true);
+            } else {
+              const url =
+                pendingJobRequest.payment?.paymentMetadata?.paypalApproval
+                  ?.href;
+              const message = [
+                t('subscriptions.messages.pendingJob'),
+                '',
+                t('subscriptions.messages.paymentURL', { url: url }),
+                '',
+                t('subscriptions.messages.cancelPendingJob'),
+              ].join('\n');
+
+              showWarning(message, [
+                {
+                  title: t('subscriptions.messages.moveToPayment'),
+                  backgroundColor: '#3B82F6',
+                  textColor: '#FFFFFF',
+                  onPress: () => openWebView(url),
+                },
+              ]);
+            }
+          }}
+        >
+          <Image
+            source={icons.plus}
+            style={{
+              width: sizes.plusIconSize,
+              height: sizes.plusIconSize,
+              tintColor: themeController.current?.buttonTextColorPrimary,
+            }}
+            resizeMode='contain'
+          />
+        </TouchableOpacity>
+        <Text
+          style={{
+            color: themeController.current?.formInputLabelColor,
+            fontSize: sizes.plusButtonLabelFontSize,
+            marginTop: sizes.plusButtonLabelMarginTop,
+          }}
+        >
+          {t('common.create_request')}
+        </Text>
+      </View>
 
       {isWebLandscape ? (
         <JobModalWrapper visible={newJobModalVisible} main={true}>
