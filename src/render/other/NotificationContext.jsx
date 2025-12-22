@@ -16,14 +16,16 @@ export const NotificationProvider = ({ children }) => {
         type: 'info',
         message: '',
         buttons: [],
+        onClose: null,
     });
 
-    const showNotification = ({ type = 'info', message, buttons = [] }) => {
+    const showNotification = ({ type = 'info', message, buttons = [], onClose = null }) => {
         setNotification({
             visible: true,
             type,
             message,
             buttons,
+            onClose,
         });
     };
 
@@ -32,19 +34,23 @@ export const NotificationProvider = ({ children }) => {
             ...prev,
             visible: false,
         }));
+
+        if (notification.onClose) {
+            notification.onClose();
+        }
     };
 
     // Удобные методы для разных типов уведомлений
-    const showInfo = (message, buttons = []) => {
-        showNotification({ type: 'info', message, buttons });
+    const showInfo = (message, buttons = [], onClose = null) => {
+        showNotification({ type: 'info', message, buttons, onClose });
     };
 
-    const showWarning = (message, buttons = []) => {
-        showNotification({ type: 'warning', message, buttons });
+    const showWarning = (message, buttons = [], onClose = null) => {
+        showNotification({ type: 'warning', message, buttons, onClose });
     };
 
-    const showError = (message, buttons = []) => {
-        showNotification({ type: 'error', message, buttons });
+    const showError = (message, buttons = [], onClose = null) => {
+        showNotification({ type: 'error', message, buttons, onClose });
     };
 
     // Метод для быстрого показа с кнопкой OK

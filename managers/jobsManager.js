@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { addSelfToJobProviders, getJobProducts, isProviderInJob, removeSelfFromJobProviders } from "../src/api/jobs";
+import { useGeolocation } from "./useGeolocation";
 
 /**
  * jobsManager — агрегирует все списки заявок для вкладок:
@@ -24,6 +25,7 @@ export default function jobsManager({ session, user }) {
 
   const [loadingCreator, setLoadingCreator] = useState(false);
   const [loadingExecutor, setLoadingExecutor] = useState(false);
+  const { enabled, getCurrentLocation, getCurrentLocationDirect, location } = useGeolocation();
   const [error, setError] = useState(null);
 
   const serverURL = session?.serverURL;
@@ -68,8 +70,25 @@ export default function jobsManager({ session, user }) {
     return safeFetch(`${serverURL}/jobs/as-creator/done`, { headers: authHeaders });
   }
 
-  async function loadExecNew() {
-    return safeFetch(`${serverURL}/jobs/as-executor/new`, { headers: authHeaders });
+  async function loadExecNew(forceLocation = null) {
+    const currentLocation = forceLocation || (enabled && location ? location : null);
+    console.log('loadExecNew using location:', currentLocation);
+
+    let url = `${serverURL}/jobs/as-executor/new`;
+    if (currentLocation) {
+      const params = new URLSearchParams({
+        lat: currentLocation.latitude,
+        lng: currentLocation.longitude,
+        radius: 50
+      });
+      url += `?${params.toString()}`;
+    }
+    return safeFetch(url, {
+      headers: {
+        ...authHeaders,
+        'Content-Type': 'application/json'
+      }
+    });
   }
 
   async function loadExecWaiting() {
@@ -89,6 +108,24 @@ export default function jobsManager({ session, user }) {
   }
 
   // ------- публичные методы -------
+
+  async function updateLocationAndReloadExecutor() {
+    if (!enabled) {
+      console.log('Геолокация отключена');
+      return await reloadExecutor();
+    }
+
+    try {
+      console.log('Обновляем геолокацию...');
+      await getCurrentLocationDirect();
+      console.log('Геолокация обновлена, перезагружаем задачи...');
+      await reloadExecutor();
+    } catch (error) {
+      console.log('Ошибка обновления геолокации:', error.message);
+      // Загружаем задачи без геолокации
+      await reloadExecutor();
+    }
+  }
 
   async function reloadCreator() {
     if (!serverURL || !token || !userId) return;
@@ -119,9 +156,19 @@ export default function jobsManager({ session, user }) {
     if (!serverURL || !token || !userId) return;
     setLoadingExecutor(true);
     setError(null);
+
+    let freshLocation = null;
+
     try {
+      if (enabled && !location) {
+        try {
+          freshLocation = await getCurrentLocationDirect();
+        } catch (error) {
+        }
+      }
+
       const [n, waiting, inProgress, done] = await Promise.all([
-        loadExecNew(),
+        loadExecNew(freshLocation),
         loadExecWaiting(),
         loadExecInProgress(),
         loadExecDone(),
@@ -256,6 +303,7 @@ export default function jobsManager({ session, user }) {
     reloadAll,
     reloadCreator,
     reloadExecutor,
+    updateLocationAndReloadExecutor,
     loading: {
       any: loadingCreator || loadingExecutor,
       creator: loadingCreator,
@@ -273,6 +321,11 @@ export default function jobsManager({ session, user }) {
       getJobById,
       checkIsProviderInJob
     },
-    products
+    products,
+    geolocation: {
+      enabled,
+      location,
+      hasLocation: enabled && !!location
+    }
   };
 }

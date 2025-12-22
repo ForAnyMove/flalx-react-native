@@ -13,6 +13,7 @@ import { View, ActivityIndicator } from 'react-native';
 import { getSubscriptionPlans } from '../src/api/subscriptions';
 import authTabsManager from '../managers/authTabsManager';
 import jobTypeManager from '../managers/jobTypeManager';
+import { useGeolocation } from '../managers/useGeolocation';
 
 const ComponentContext = createContext();
 
@@ -47,6 +48,7 @@ export const ComponentProvider = ({ children }) => {
 
   const jobsController = jobsManager({ session, user });
   const jobTypesController = jobTypeManager({ session });
+  const geolocationController = useGeolocation();
 
   const providersController = providersManager({ session });
   const [loadingCounter, setLoadingCounter] = useState(0);
@@ -97,6 +99,7 @@ export const ComponentProvider = ({ children }) => {
         registerControl,
         authControl,
         forgotPassControl,
+        geolocationController
       }}
     >
       {children}

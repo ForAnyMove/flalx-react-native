@@ -11,6 +11,7 @@ import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import themeManager from '../../managers/themeManager';
 import { API_BASE_URL } from '../../utils/config';
+import { useNotification } from '../../src/render';
 
 const AddressPicker = ({
   label,
@@ -23,6 +24,7 @@ const AddressPicker = ({
 }) => {
   const { themeController } = useComponentContext();
   const { width, height } = useWindowDimensions();
+  const { showError } = useNotification();
   const isWebLandscape = Platform.OS === 'web' && width > height;
 
   // --- Размеры и стили ---
@@ -50,14 +52,31 @@ const AddressPicker = ({
   const handleSelect = (place) => {
     console.log('Place: ', place);
 
-    // if (place?.geometry?.location) {
-    //   const location = {
-    //     latitude: place.geometry.location.lat,
-    //     longitude: place.geometry.location.lng,
-    //     address: place.formatted_address,
-    //   };
-    //   onLocationSelect(location);
-    // }
+    if (place?.details) {
+      const location = {
+        latitude: place.details.location.latitude,
+        longitude: place.details.location.longitude,
+        address: place.details.displayName.text,
+        formatterAddress: place.details.formattedAddress,
+      };
+      onLocationSelect(location);
+    }
+  };
+
+  const handleError = (error) => {
+    console.error('Places API Error:', error);
+
+    let errorMessage = 'There is a problem connecting to the server';
+
+    if (error.message?.includes('Network request failed')) {
+      errorMessage = 'Proxy server is unavailable. Please run: cd proxy-server && npm start';
+    } else if (error.message?.includes('Too many requests')) {
+      errorMessage = 'Too many requests. Please try again later.';
+    } else if (error.message?.includes('API key')) {
+      errorMessage = 'There is a problem with the API key on the server';
+    }
+
+    showError(`Address pick error: ${errorMessage}`);
   };
 
   const customStyles = {
@@ -155,14 +174,31 @@ const AddressPicker = ({
           {label}
         </Text>
         <GooglePlacesTextInput
-          proxyUrl={PROXY_CONFIG.baseUrl + PROXY_CONFIG.endpoints.autocomplete}
-          detailsProxyHeaders={PROXY_CONFIG.baseUrl + PROXY_CONFIG.endpoints.details}
-          onPlaceSelected={handleSelect}
+          proxyUrl={`${PROXY_CONFIG.baseUrl}${PROXY_CONFIG.endpoints.autocomplete}`}
+          detailsProxyUrl={`${PROXY_CONFIG.baseUrl}${PROXY_CONFIG.endpoints.details}`}
+          onPlaceSelect={handleSelect}
           clearButtonMode='never'
           placeHolderText={placeholder}
           clearElement={<></>}
           style={customStyles}
           fetchDetails={true}
+          detailsFields={['location']}
+          onError={(error) => {
+            handleError(error);
+          }}
+          onSuggestionsReceived={(suggestions) => {
+            console.log('🔍 Suggestions received:', suggestions);
+            console.log('🔢 Count:', suggestions?.length);
+          }}
+          onSearching={(searching) => {
+            console.log('🔄 Searching state:', searching);
+          }}
+          onTextChange={(text) => {
+            console.log('📝 Text changed:', text);
+          }}
+
+          debounceDelay={300}
+          minCharsToFetch={3}
         />
       </View>
     </View>

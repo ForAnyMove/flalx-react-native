@@ -319,7 +319,7 @@ export default function NewJobModal({
     requiredFields.forEach((field) => {
       // Проверяем, заполнено ли поле. Для location нужна особая проверка.
       if (field === 'location') {
-        newErrors[field] = !location || !location.address;
+        newErrors[field] = !location || !location?.address;
       } else {
         // Для других полей (type, subType, description и т.д.)
         // используется преобразование в булев тип.
@@ -1658,12 +1658,12 @@ export default function NewJobModal({
                             borderWidth: 1,
                             borderColor: active
                               ? themeController.current
-                                  ?.buttonColorPrimaryDefault
+                                ?.buttonColorPrimaryDefault
                               : themeController.current
-                                  ?.formInputPlaceholderColor,
+                                ?.formInputPlaceholderColor,
                             backgroundColor: active
                               ? themeController.current
-                                  ?.buttonColorPrimaryDefault
+                                ?.buttonColorPrimaryDefault
                               : 'transparent',
                             flexDirection: isRTL ? 'row-reverse' : 'row',
                             alignItems: 'center',
@@ -1677,7 +1677,7 @@ export default function NewJobModal({
                             color: active
                               ? themeController.current?.buttonTextColorPrimary
                               : themeController.current
-                                  ?.formInputPlaceholderColor,
+                                ?.formInputPlaceholderColor,
                           }}
                         >
                           {t(
@@ -1746,10 +1746,10 @@ export default function NewJobModal({
                       defaultValue: 'Publish for {{price}}',
                       price:
                         subscription.current != null &&
-                        selectedOption.type == 'normal'
+                          selectedOption.type == 'normal'
                           ? t('newJob.statusModal.free', {
-                              defaultValue: 'Free',
-                            })
+                            defaultValue: 'Free',
+                          })
                           : `$${selectedOption?.price.toFixed(2)}`,
                     })}
                   </Text>
