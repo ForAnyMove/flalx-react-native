@@ -108,6 +108,8 @@ export default function jobTypeManager({ session }) {
 
         try {
             const data = await getSystemTypesWithSubtypes(session);
+            console.log(data);
+            
             if (data.typesWithSubtypes)
                 setJobTypesWithSubtypes(data.typesWithSubtypes);
         }

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, use } from 'react';
 import {
   View,
   Text,
@@ -61,6 +61,20 @@ const AutocompletePicker = ({
 
   // --- Эффекты ---
 
+  const optionsRef = useRef(options);
+  const selectedValueRef = useRef(selectedValue);
+  const valueRef = useRef(value);
+
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
+  useEffect(() => {
+    selectedValueRef.current = selectedValue;
+  }, [selectedValue]);
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
+
   // Эффект для отслеживания кликов вне компонента (для закрытия списка)
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -72,22 +86,31 @@ const AutocompletePicker = ({
         setIsFocused(false);
 
         // Проверяем, является ли текущий текст в поле одним из действительных значений
-        const isValidOption = Object.values(options).includes(inputText);
+        const isValidOption = Object.values(optionsRef.current).includes(
+          inputText
+        );
 
         if (!isValidOption) {
           if (allowCustomText) {
             // Если разрешен кастомный текст и значение изменилось, передаем его
-            if (inputText !== selectedValue) {
+            if (inputText !== valueRef.current) {
               setValue(inputText);
             }
           } else {
-            // Если кастомный текст не разрешен, сбрасываем к последнему выбранному значению
-            setInputText(options[selectedValue] || '');
+            if (inputText === '') {
+              setValue(null); // Сбрасываем значение, если поле пустое
+              setInputText(''); // Очищаем текстовое поле
+            } else {
+              // Если кастомный текст не разрешен, сбрасываем к последнему выбранному значению
+              setInputText(optionsRef.current[valueRef.current] || '');
+            }
           }
         } else {
           // Если текст валиден из опций, проверяем нужно ли обновить значение
-          const foundKey = Object.keys(options).find(key => options[key] === inputText);
-          if (foundKey && foundKey !== selectedValue) {
+          const foundKey = Object.keys(optionsRef.current).find(
+            (key) => optionsRef.current[key] === inputText
+          );
+          if (foundKey && foundKey !== valueRef.current) {
             setValue(foundKey);
           }
         }
@@ -105,7 +128,7 @@ const AutocompletePicker = ({
         document.removeEventListener('mousedown', handleClickOutside);
       }
     };
-  }, [selectedValue, options, inputText, allowCustomText]);
+  }, [selectedValue, options, inputText, allowCustomText, value, setValue]);
 
   // Синхронизация текста в инпуте, если он меняется извне
   useEffect(() => {
@@ -118,10 +141,10 @@ const AutocompletePicker = ({
       setFilteredOptions(options);
       return;
     }
-    const lowercasedInput = inputText.toLowerCase();
+    const lowercasedInput = inputText?.toLowerCase();
     const filtered = Object.entries(options)
       .filter(([, optionLabel]) =>
-        optionLabel.toLowerCase().includes(lowercasedInput)
+        optionLabel?.toLowerCase().includes(lowercasedInput)
       )
       .reduce((obj, [value, label]) => {
         obj[value] = label;
@@ -159,9 +182,9 @@ const AutocompletePicker = ({
     const webHoverProps =
       Platform.OS === 'web'
         ? {
-          onMouseEnter: () => setHoveredValue(value),
-          onMouseLeave: () => setHoveredValue(null),
-        }
+            onMouseEnter: () => setHoveredValue(value),
+            onMouseLeave: () => setHoveredValue(null),
+          }
         : {};
 
     return (
@@ -173,8 +196,8 @@ const AutocompletePicker = ({
             backgroundColor: isSelected
               ? themeController.current?.selectedItemBackground
               : isHovered
-                ? themeController.current?.profileDefaultBackground
-                : 'transparent',
+              ? themeController.current?.profileDefaultBackground
+              : 'transparent',
             height: sizes.pickerHeight * 0.9,
             justifyContent: 'center',
           },
@@ -273,30 +296,32 @@ const AutocompletePicker = ({
       </View>
 
       {/* Выпадающий список без Modal */}
-      {isFocused && filteredEntries.length > 0 && inputText !== filteredEntries[0][1] && (
-        <View
-          style={[
-            styles.dropdownContent,
-            {
-              top: sizes.pickerHeight, // Позиционируем относительно родителя
-              left: 0,
-              right: 0,
-              backgroundColor: themeController.current?.formInputBackground,
-              borderBottomLeftRadius: sizes.borderRadius,
-              borderBottomRightRadius: sizes.borderRadius,
-            },
-          ]}
-        >
-          <FlatList
-            data={filteredEntries}
-            keyExtractor={([value]) => value}
-            renderItem={renderOption}
-            style={{ maxHeight: dropdownHeight }}
-            showsVerticalScrollIndicator={false}
-            nestedScrollEnabled={true}
-          />
-        </View>
-      )}
+      {isFocused &&
+        filteredEntries.length > 0 &&
+        inputText !== filteredEntries[0][1] && (
+          <View
+            style={[
+              styles.dropdownContent,
+              {
+                top: sizes.pickerHeight, // Позиционируем относительно родителя
+                left: 0,
+                right: 0,
+                backgroundColor: themeController.current?.formInputBackground,
+                borderBottomLeftRadius: sizes.borderRadius,
+                borderBottomRightRadius: sizes.borderRadius,
+              },
+            ]}
+          >
+            <FlatList
+              data={filteredEntries}
+              keyExtractor={([value]) => value}
+              renderItem={renderOption}
+              style={{ maxHeight: dropdownHeight }}
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled={true}
+            />
+          </View>
+        )}
     </View>
   );
 };

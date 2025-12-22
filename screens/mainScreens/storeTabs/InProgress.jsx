@@ -60,7 +60,7 @@ export default function InProgressScreen({
     )
     .filter((job) =>
       [job.type.name_en, job.description].some((field) =>
-        field.toLowerCase().includes(searchValue.toLowerCase())
+        field?.toLowerCase()?.includes(searchValue?.toLowerCase())
       )
     );
 

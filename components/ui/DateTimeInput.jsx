@@ -14,7 +14,6 @@ import { useTranslation } from 'react-i18next';
 function DateTimeDisplay({ value, placeholder, style, textStyle, placeholderColor }) {
   let display = placeholder;
   let textColor = placeholderColor || textStyle?.color || '#000';
-  console.log(value);
 
   if (value) {
     const date = new Date(value);

@@ -22,7 +22,7 @@ import UniversalProfessionComponent from '../../../../components/ui/UniversalPro
 import { PROFESSION_TYPES } from '../../../../constants/enums';
 import { useTranslation } from 'react-i18next';
 
-const SystemProfessions = () => {
+const SystemProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible, setSystemAddingPopupVisible }) => {
   const [searchValue, setSearchValue] = useState('');
   const { height } = useWindowDimensions();
   const { isLandscape } = useWindowInfo();
@@ -30,8 +30,6 @@ const SystemProfessions = () => {
   const { themeController, languageController, jobTypesController } = useComponentContext();
   const isRTL = languageController.isRTL;
   const { t } = useTranslation();
-
-  const [isAdding, setIsAdding] = useState(false);
 
   const formattedUserRequests = useMemo(() => {
     const requests = [];
@@ -97,7 +95,7 @@ const SystemProfessions = () => {
 
   const add = () => {
     // Логика добавления новой профессии
-    setIsAdding(true);
+    setSystemAddingPopupVisible(true);
   };
 
   return (
@@ -236,8 +234,8 @@ const SystemProfessions = () => {
         )}
       </View>
       <RegisterProfessionModal
-        visible={isAdding}
-        onClose={() => setIsAdding(false)}
+        visible={systemAddingPopupVisible}
+        onClose={() => setSystemAddingPopupVisible(false)}
       />
     </>
   );

@@ -82,7 +82,7 @@ export default function NewScreen({
           <View style={styles.cardsWrapper}>
             {jobTypesController.jobTypesWithSubtypes && jobTypesController.jobTypesWithSubtypes
               .filter((value) =>
-                value.name_en.toLowerCase().includes(searchValue.toLowerCase())
+                value.name_en?.toLowerCase()?.includes(searchValue?.toLowerCase())
               )
               .sort((value1, value2) => {
                 const aIsLiked = likes.includes(value1.key);

@@ -16,8 +16,14 @@ import AutocompletePicker from './ui/AutocompletePicker';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
 
-const RequestProfessionModal = ({ visible, onClose, onRequested }) => {
-  const { themeController, languageController, jobTypesController } = useComponentContext();
+const RequestProfessionModal = ({
+  visible,
+  onClose,
+  onRequested,
+  onSwitchToSystemProfessions,
+}) => {
+  const { themeController, languageController, jobTypesController } =
+    useComponentContext();
   const { height, width } = useWindowDimensions();
   const { isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -31,7 +37,7 @@ const RequestProfessionModal = ({ visible, onClose, onRequested }) => {
 
   const jobTypesOptions = useMemo(() => {
     const options = {};
-    jobTypesController.jobTypesWithSubtypes?.forEach(type => {
+    jobTypesController.jobTypesWithSubtypes?.forEach((type) => {
       options[type.key] = type.name_en;
     });
     return options;
@@ -41,9 +47,11 @@ const RequestProfessionModal = ({ visible, onClose, onRequested }) => {
     setSubType(null);
     const options = {};
     if (type && jobTypesController.jobTypesWithSubtypes) {
-      const selectedType = jobTypesController.jobTypesWithSubtypes.find(t => t.key === type);
+      const selectedType = jobTypesController.jobTypesWithSubtypes.find(
+        (t) => t.key === type
+      );
       if (selectedType?.subtypes) {
-        selectedType.subtypes.forEach(subtype => {
+        selectedType.subtypes.forEach((subtype) => {
           options[subtype.key] = subtype.name_en;
         });
       }
@@ -86,11 +94,19 @@ const RequestProfessionModal = ({ visible, onClose, onRequested }) => {
 
   const handleSend = async () => {
     const data = {
-      job_type_id: type ? jobTypesController.jobTypesWithSubtypes.find(t => t.key === type)?.id : null,
-      job_subtype_id: type && subType ? jobTypesController.jobTypesWithSubtypes.find(t => t.key === type)?.subtypes.find(st => st.key === subType)?.id : null,
+      job_type_id: type
+        ? jobTypesController.jobTypesWithSubtypes.find((t) => t.key === type)
+            ?.id
+        : null,
+      job_subtype_id:
+        type && subType
+          ? jobTypesController.jobTypesWithSubtypes
+              .find((t) => t.key === type)
+              ?.subtypes.find((st) => st.key === subType)?.id
+          : null,
       passport_photo_urls: null,
       certificate_photo_urls: null,
-    }
+    };
 
     onRequested(data);
   };
@@ -314,7 +330,12 @@ const RequestProfessionModal = ({ visible, onClose, onRequested }) => {
                   alignItems: isRTL ? 'flex-end' : 'flex-start',
                 }}
               >
-                <TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    onSwitchToSystemProfessions();
+                    onClose();
+                  }}
+                >
                   <Text style={styles.didntFindText}>
                     {t('professions.request_modal.profession_not_found')}
                   </Text>
@@ -341,7 +362,12 @@ const RequestProfessionModal = ({ visible, onClose, onRequested }) => {
                   alignItems: isRTL ? 'flex-end' : 'flex-start',
                 }}
               >
-                <TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    onSwitchToSystemProfessions();
+                    onClose();
+                  }}
+                >
                   <Text style={styles.didntFindText}>
                     {t('professions.request_modal.subtype_not_found')}
                   </Text>
@@ -352,7 +378,9 @@ const RequestProfessionModal = ({ visible, onClose, onRequested }) => {
                 disabled={!type || !subType || type === '' || subType === ''}
                 style={[
                   styles.sendButton,
-                  (!type || !subType || type === '' || subType === '') && { opacity: 0.5 },
+                  (!type || !subType || type === '' || subType === '') && {
+                    opacity: 0.5,
+                  },
                 ]}
                 onPress={handleSend}
               >

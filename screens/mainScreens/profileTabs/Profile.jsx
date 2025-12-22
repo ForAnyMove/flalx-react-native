@@ -112,7 +112,7 @@ export default function Profile() {
       console.error('Ошибка загрузки аватара:', err.message);
     }
   }
-
+  const firstBtnsRow = isWebLandscape ? ['cupons', 'subscription', 'payment'] : ['cupons', 'subscription'];
   return (
     <ScrollView
       style={[
@@ -254,7 +254,7 @@ export default function Profile() {
             direction: isRTL ? 'rtl' : 'ltr',
           }}
         >
-          {['cupons', 'subscription', 'payment'].map((key) => (
+          {firstBtnsRow.map((key) => (
             <TouchableOpacity
               key={key}
               style={[
@@ -267,6 +267,7 @@ export default function Profile() {
                   width: sizes.btnWidth,
                   borderRadius: sizes.infoFieldBorderRadius,
                 },
+                key === 'payment' && isWebLandscape && { visibility: 'hidden'}
               ]}
               onPress={() => {
                 /* Навигация по кнопкам */

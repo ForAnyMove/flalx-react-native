@@ -30,6 +30,9 @@ export default function Profession() {
   const { sidebarWidth, isLandscape } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
 
+  const [systemAddingPopupVisible, setSystemAddingPopupVisible] =
+    useState(false);
+
   const orderedTabs = isRTL ? TAB_TITLES_RTL : TAB_TITLES;
   const orderedScreens = isRTL
     ? [SystemProfessions, MyProfessions]
@@ -179,6 +182,12 @@ export default function Profession() {
     });
   };
 
+  function switchToSystemProfessions() {
+    const newIndex = orderedTabs.indexOf('system_professions');
+    handleTabPress(newIndex);
+    setSystemAddingPopupVisible(true);
+  }
+
   useEffect(() => {
     if (appTabController.activeSubTab) {
       const newIndex = orderedTabs.indexOf(appTabController.activeSubTab);
@@ -308,7 +317,11 @@ export default function Profession() {
                 // flex: 1,
               }}
             >
-              <Component />
+              <Component
+                switchToSystemProfessions={switchToSystemProfessions}
+                systemAddingPopupVisible={systemAddingPopupVisible}
+                setSystemAddingPopupVisible={setSystemAddingPopupVisible}
+              />
             </View>
           ))}
         </Animated.View>

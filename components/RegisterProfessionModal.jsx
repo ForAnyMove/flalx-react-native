@@ -98,7 +98,7 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
       setIsSubmitted(true);
       onRequestDone && onRequestDone(data);
     }).catch((error) => {
-      showError(`Error\nFailed to send request. Please try again later.\n${error}`, [
+      showError(t('professions.errors.failed_to_send_request', { error }), [
         {
           title: 'OK',
           backgroundColor: '#EF4444',

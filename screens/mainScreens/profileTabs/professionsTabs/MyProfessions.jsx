@@ -25,7 +25,7 @@ import { useTranslation } from 'react-i18next';
 import { SubmitModal } from '../../../../components/modals/misc/SubmitModal';
 import { useNotification } from '../../../../src/render';
 
-const MyProfessions = () => {
+const MyProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible, setSystemAddingPopupVisible }) => {
   const [searchValue, setSearchValue] = useState('');
   const { height, width } = useWindowDimensions();
   const { isLandscape, sidebarWidth } = useWindowInfo();
@@ -124,7 +124,7 @@ const MyProfessions = () => {
           setIsSubmitModalVisible(true);
         }).catch((err) => {
           if (err?.response?.status === 400) {
-            showWarning(`Validation failed`, [
+            showWarning(t('professions.warnings.validation_failed'), [
               {
                 title: 'OK',
                 backgroundColor: '#F59E0B',
@@ -132,7 +132,7 @@ const MyProfessions = () => {
               },
             ]);
           } else if (err?.response?.status === 409) {
-            showWarning(`You have already requested this profession.`, [
+            showWarning(t('professions.warnings.already_requested'), [
               {
                 title: 'OK',
                 backgroundColor: '#F59E0B',
@@ -140,7 +140,7 @@ const MyProfessions = () => {
               },
             ]);
           } else {
-            showWarning(`Unexpected error occurred. Please try again later.`, [
+            showWarning(t('professions.warnings.unexpected_error'), [
               {
                 title: 'OK',
                 backgroundColor: '#F59E0B',
@@ -175,7 +175,7 @@ const MyProfessions = () => {
         setIsSubmitModalVisible(true);
       }).catch((err) => {
         if (err?.response?.status === 400) {
-          showWarning(`Validation failed`, [
+          showWarning(t('professions.warnings.validation_failed'), [
             {
               title: 'OK',
               backgroundColor: '#F59E0B',
@@ -183,7 +183,7 @@ const MyProfessions = () => {
             },
           ]);
         } else if (err?.response?.status === 409) {
-          showWarning(`You have already requested this profession.`, [
+          showWarning(t('professions.warnings.already_requested'), [
             {
               title: 'OK',
               backgroundColor: '#F59E0B',
@@ -191,7 +191,7 @@ const MyProfessions = () => {
             },
           ]);
         } else {
-          showWarning(`Unexpected error occurred. Please try again later.`, [
+          showWarning(t('professions.warnings.unexpected_error'), [
             {
               title: 'OK',
               backgroundColor: '#F59E0B',
@@ -353,6 +353,7 @@ const MyProfessions = () => {
           setRequestProfessionData(null);
         }}
         onRequested={handleProfessionRequested}
+        onSwitchToSystemProfessions={switchToSystemProfessions}
       />
       <SubmitModal
         visible={isSubmitModalVisible}

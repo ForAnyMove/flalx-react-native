@@ -442,6 +442,16 @@ or reject it. Please adhere to the platform rules.`,
           success_description:
             'Your profession has been sent for moderation and will be published after verification.',
         },
+        warnings: {
+          validation_failed: 'Validation failed',
+          already_requested:
+            'You have already requested this profession',
+          unexpected_error: 'Unexpected error occurred. Please try again later.',
+          invalid_input: 'Invalid Input',
+        },
+        errors: {
+          failed_to_send_request: `Error\nFailed to send request. Please try again later.\n{{error}}`,
+        },
       },
     },
   },
@@ -882,6 +892,15 @@ or reject it. Please adhere to the platform rules.`,
           certificate_photo: 'תמונת תעודת זהות/תעודה',
           success_title: 'ההגשה הצליחה',
           success_description: 'המקצוע שלך נשלח לבדיקה ויפורסם לאחר אימות.',
+        },
+        warnings: {
+          validation_failed: 'האימות נכשל',
+          already_requested: 'כבר ביקשת מקצוע זה',
+          unexpected_error: 'אירעה שגיאה בלתי צפויה. אנא נסה שוב מאוחר יותר.',
+          invalid_input: 'קלט לא חוקי',
+        },
+        errors: {
+          failed_to_send_request: `שגיאה\nשליחת הבקשה נכשלה. אנא נסה שוב מאוחר יותר.\n{{error}}`,
         },
       },
     },
