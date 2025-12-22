@@ -58,7 +58,7 @@ export default function WaitingScreen({
 
   const filteredJobsList = jobsController.executor.waiting
     .filter((job) =>
-      filteredJobs.length > 0 ? filteredJobs.includes(job.type.name_en) : true
+      filteredJobs.length > 0 ? filteredJobs.includes(job.type.key) || filteredJobs.includes(job.subType.key) : true
     )
     .filter((job) =>
       [job.type.name_en, job.description].some((field) =>

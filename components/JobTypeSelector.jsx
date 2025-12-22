@@ -22,7 +22,7 @@ export default function JobTypeSelector({
   const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
-  const { themeController, languageController } = useComponentContext();
+  const { themeController, languageController, jobTypesController } = useComponentContext();
 
   const scrollRef = useRef(null);
   const isRTL = languageController?.isRTL;
@@ -100,8 +100,18 @@ export default function JobTypeSelector({
 
   const clearAll = () => setSelectedTypes([]);
 
-  // объект переведённых значений: { job_1: '...', job_2: '...', ... }
-  const jobTypes = t('jobTypes', { returnObjects: true });
+  const jobSubTypesOptions = useMemo(() => {
+    const options = {};
+    if (jobTypesController.jobTypesWithSubtypes) {
+      jobTypesController.jobTypesWithSubtypes.forEach(type => {
+        options[type.key] = type.name_en;
+        type.subtypes.forEach((subtype) => {
+          options[subtype.key] = subtype.name_en;
+        });
+      });
+    }
+    return options;
+  }, [jobTypesController.jobTypesWithSubtypes]);
 
   useEffect(() => {
     const scrollElement = scrollRef.current;
@@ -176,7 +186,7 @@ export default function JobTypeSelector({
           onLayout={handleContainerLayout}
           style={[styles.tagWrapper, dynamicStyles.tagWrapper]}
         >
-          {Object.entries(jobTypes || {})?.map(([key, label]) => {
+          {Object.entries(jobSubTypesOptions || {})?.map(([key, label]) => {
             const active = isSelected(key);
             return (
               <TouchableOpacity

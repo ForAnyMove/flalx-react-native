@@ -1,5 +1,5 @@
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Image,
   Platform,
@@ -32,6 +32,14 @@ export default function NewScreen({
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
+  useEffect(() => {
+    if (jobsController && jobsController.reloadExecutor) {
+      console.log('Reloading executor jobs for New tab');
+
+      jobsController.reloadExecutor();
+    }
+  }, []);
+
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
     const mobile = (size) => scaleByHeightMobile(size, height);
@@ -57,9 +65,10 @@ export default function NewScreen({
     };
   }, [height, isWebLandscape]);
 
+
   const filteredJobsList = jobsController == null || jobsController.executor == null || jobsController.executor.new == null ? [] : jobsController.executor.new
     .filter((job) =>
-      filteredJobs.length > 0 ? filteredJobs.includes(job.type.name_en) : true
+      filteredJobs.length > 0 ? filteredJobs.includes(job.type.key) || filteredJobs.includes(job.subType.key) : true
     )
     .filter((job) =>
       [job.type.name_en, job.description].some((field) =>

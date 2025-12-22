@@ -56,7 +56,7 @@ export default function InProgressScreen({
 
   const filteredJobsList = jobsController.creator.inProgress
     .filter((job) =>
-      filteredJobs.length > 0 ? filteredJobs.includes(job.type.name_en) : true
+      filteredJobs.length > 0 ? filteredJobs.includes(job.type.key) || filteredJobs.includes(job.subType.key) : true
     )
     .filter((job) =>
       [job.type.name_en, job.description].some((field) =>
