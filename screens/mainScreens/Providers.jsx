@@ -47,7 +47,7 @@ export default function Providers() {
   const filteredProviders = providersController.providers?.filter(
     (user) =>
       (filteredJobs.length > 0
-        ? user?.jobTypes?.some((jobType) => filteredJobs.includes(jobType))
+        ? user?.professions?.some((profession) => filteredJobs.includes(profession?.job_subtype?.key))
         : user) &&
       (user?.name?.toLowerCase().includes(searchValue.toLowerCase()) ||
         user?.surname?.toLowerCase().includes(searchValue.toLowerCase()))
@@ -74,6 +74,7 @@ export default function Providers() {
         <JobTypeSelector
           selectedTypes={filteredJobs}
           setSelectedTypes={setFilteredJobs}
+          subtypesOnly={true}
         />
       </View>
       {providersController.providers.length <= 0 ? (

@@ -18,6 +18,7 @@ export default function JobTypeSelector({
   selectedTypes,
   setSelectedTypes,
   numberOfRows = 2,
+  subtypesOnly = false,
 }) {
   const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
@@ -104,7 +105,8 @@ export default function JobTypeSelector({
     const options = {};
     if (jobTypesController.jobTypesWithSubtypes) {
       jobTypesController.jobTypesWithSubtypes.forEach(type => {
-        options[type.key] = type.name_en;
+        if (!subtypesOnly) options[type.key] = type.name_en;
+
         type.subtypes.forEach((subtype) => {
           options[subtype.key] = subtype.name_en;
         });

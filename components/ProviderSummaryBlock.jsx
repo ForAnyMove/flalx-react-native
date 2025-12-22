@@ -521,7 +521,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                               ]}
                             >
                               <Text style={dynamicStyles.badgeText}>
-                                {LICENSES[p]}
+                                {p.job_subtype?.name_en}
                               </Text>
                             </View>
                           ))}
