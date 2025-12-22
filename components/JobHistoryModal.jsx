@@ -117,9 +117,9 @@ export default function JobHistoryModal({ visible, onClose, history = [] }) {
     function getSpecialValue(type) {
       switch (type) {
         case 'type':
-          return item?.changes[type] ? jobTypesController.jobTypesWithSubtypes.find(t => t.id === item.changes[type])?.name_en || '-' : '-';
+          return item?.changes[type] ? jobTypesController.jobTypesWithSubtypes.find(t => t.id === item.changes[type])?.name || '-' : '-';
         case 'subType':
-          return item?.changes[type] ? jobTypesController.jobTypesWithSubtypes.flatMap(t => t.subtypes || []).find(st => st.id === item.changes[type])?.name_en || '-' : '-';
+          return item?.changes[type] ? jobTypesController.jobTypesWithSubtypes.flatMap(t => t.subtypes || []).find(st => st.id === item.changes[type])?.name || '-' : '-';
         default:
           return item.changes[type];
       }

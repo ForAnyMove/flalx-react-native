@@ -38,6 +38,7 @@ import { useWebView } from '../context/webViewContext';
 import SubscriptionsModal from './SubscriptionsModal';
 import CommentsSection from './CommentsSection';
 import CompleteJobModal from './CompleteJobModal';
+import { useLocalization } from '../src/services/useLocalization';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -78,6 +79,7 @@ export default function ShowJobModal({
     setAppLoading,
     subscription,
   } = useComponentContext();
+  const { tField } = useLocalization(languageController.current);
   const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
@@ -99,16 +101,16 @@ export default function ShowJobModal({
     // Определяем, какие массивы отслеживать
     const jobGroups = isCreator
       ? {
-          waiting: jobsController.creator.waiting,
-          in_progress: jobsController.creator.inProgress,
-          done: jobsController.creator.done,
-        }
+        waiting: jobsController.creator.waiting,
+        in_progress: jobsController.creator.inProgress,
+        done: jobsController.creator.done,
+      }
       : {
-          new: jobsController.executor.new,
-          waiting: jobsController.executor.waiting,
-          in_progress: jobsController.executor.inProgress,
-          done: jobsController.executor.done,
-        };
+        new: jobsController.executor.new,
+        waiting: jobsController.executor.waiting,
+        in_progress: jobsController.executor.inProgress,
+        done: jobsController.executor.done,
+      };
 
     // Поиск текущего местоположения заявки
     let currentLocation = null;
@@ -126,9 +128,8 @@ export default function ShowJobModal({
       const prev = prevJobLocation.current;
       if (prev && prev !== currentLocation) {
         const fromStatus = `${isCreator ? 'client' : 'business'}-${prev}`;
-        const toStatus = `${
-          isCreator ? 'client' : 'business'
-        }-${currentLocation}`;
+        const toStatus = `${isCreator ? 'client' : 'business'
+          }-${currentLocation}`;
         console.log(
           `Заявка ${currentJobId} переместилась: ${fromStatus} → ${toStatus}`
         );
@@ -147,16 +148,16 @@ export default function ShowJobModal({
     status,
     ...(status.startsWith('client')
       ? [
-          jobsController.creator.waiting,
-          jobsController.creator.inProgress,
-          jobsController.creator.done,
-        ]
+        jobsController.creator.waiting,
+        jobsController.creator.inProgress,
+        jobsController.creator.done,
+      ]
       : [
-          jobsController.executor.new,
-          jobsController.executor.waiting,
-          jobsController.executor.inProgress,
-          jobsController.executor.done,
-        ]),
+        jobsController.executor.new,
+        jobsController.executor.waiting,
+        jobsController.executor.inProgress,
+        jobsController.executor.done,
+      ]),
   ]);
 
   const sizes = useMemo(
@@ -431,7 +432,6 @@ export default function ShowJobModal({
       }),
     [sizes, themeController]
   );
-
   const [newJobModalVisible, setNewJobModalVisible] = useState(false);
   const [isInterestedRequest, setInterestedRequest] = useState(
     status === 'jobs-waiting'
@@ -446,13 +446,18 @@ export default function ShowJobModal({
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
-    () => {}
+    () => { }
   );
 
   const [plansModalVisible, setPlansModalVisible] = useState(false);
 
   const [currentJobInfo, setCurrentJobInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const location = useMemo(() => {
+    if (!currentJobInfo?.location) return null;
+    return JSON.parse(currentJobInfo.location);
+  }, [currentJobInfo?.location])
 
   // Подгружаем job при редактировании
   useEffect(() => {
@@ -928,8 +933,8 @@ export default function ShowJobModal({
                   editableCommentState
                     ? editableCommentValue
                     : currentJobInfo?.job_comment
-                    ? currentJobInfo?.job_comment.comment
-                    : null
+                      ? currentJobInfo?.job_comment.comment
+                      : null
                 }
                 placeholder={t('showJob.fields.myCommentsPlaceholder', {
                   defaultValue: 'Write a comment on the completed work...',
@@ -1302,7 +1307,7 @@ export default function ShowJobModal({
         {t('showJob.fields.type', { defaultValue: 'Type' })}
       </Text>
       <TextInput
-        value={currentJobInfo?.type?.name_en || '-'}
+        value={tField(currentJobInfo?.type, 'name') || '-'}
         style={[
           styles.input,
           dynamicStyles.input,
@@ -1329,7 +1334,7 @@ export default function ShowJobModal({
         {t('showJob.fields.subType', { defaultValue: 'Sub type' })}
       </Text>
       <TextInput
-        value={currentJobInfo?.subType?.name_en || '-'}
+        value={tField(currentJobInfo?.subType, 'name') || '-'}
         style={[
           styles.input,
           dynamicStyles.input,
@@ -1383,7 +1388,7 @@ export default function ShowJobModal({
         {t('showJob.fields.location', { defaultValue: 'Location' })}
       </Text>
       <TextInput
-        value={currentJobInfo?.location || '-'}
+        value={location?.address || '-'}
         style={[
           styles.input,
           dynamicStyles.input,
@@ -1710,7 +1715,7 @@ export default function ShowJobModal({
                         {t('showJob.fields.type', { defaultValue: 'Type' })}
                       </Text>
                       <TextInput
-                        value={currentJobInfo?.type?.name_en || '-'}
+                        value={tField(currentJobInfo?.type, 'name') || '-'}
                         style={{
                           fontWeight: '500',
                           padding: 0,
@@ -1814,7 +1819,7 @@ export default function ShowJobModal({
                         })}
                       </Text>
                       <TextInput
-                        value={currentJobInfo?.subType?.name_en || '-'}
+                        value={tField(currentJobInfo?.subType, 'name') || '-'}
                         style={{
                           fontWeight: '500',
                           padding: 0,
@@ -1866,7 +1871,7 @@ export default function ShowJobModal({
                         })}
                       </Text>
                       <TextInput
-                        value={currentJobInfo?.location || '-'}
+                        value={location?.address || '-'}
                         style={{
                           fontWeight: '500',
                           color: themeController.current?.textColor,
@@ -2443,10 +2448,10 @@ export default function ShowJobModal({
                   setPlansModalVisible(true);
                   setConfirmInterestModal(false);
                 }}
-                // onPress={() => {
-                //   setConfirmInterestModal(false);
-                //   setInterestedRequest(true);
-                // }}
+              // onPress={() => {
+              //   setConfirmInterestModal(false);
+              //   setInterestedRequest(true);
+              // }}
               >
                 <Text
                   style={{

@@ -19,8 +19,8 @@ export default function languageManager() {
       saved = await AsyncStorage.getItem("app_language");
     }
 
-    const lang = saved || (Platform.OS === "web" 
-      ? navigator.language.split("-")[0] 
+    const lang = saved || (Platform.OS === "web"
+      ? navigator.language.split("-")[0]
       : "en");
 
     applyLang(lang);
@@ -44,7 +44,7 @@ export default function languageManager() {
       AsyncStorage.setItem("app_language", lang);
     }
   }
-  
+
   return {
     current: currentLang,
     isRTL: rtl,

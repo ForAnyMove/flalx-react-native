@@ -14,17 +14,19 @@ import {
 import { useComponentContext } from '../../../context/globalAppContext';
 import CustomPicker from '../../../components/ui/CustomPicker';
 import { icons } from '../../../constants/icons';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import { sendFeedback, sendMessage } from '../../../src/api/support';
+import { useNotification } from '../../../src/render';
 
 // getResponsiveSize helper was unused and removed
 
 export default function Settings() {
-  const { themeController, languageController } = useComponentContext();
+  const { themeController, languageController, geolocationController } = useComponentContext();
+  const { showError, showInfo } = useNotification();
   const { height } = useWindowDimensions();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
@@ -32,7 +34,6 @@ export default function Settings() {
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   // Toggles
-  const [locationEnabled, setLocationEnabled] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // Modals
@@ -117,6 +118,26 @@ export default function Settings() {
       checkboxIconBorderRadius: isWebLandscape ? web(3) : mobile(3),
     };
   }, [height, isWebLandscape, isRTL]);
+
+  useEffect(() => {
+    if (geolocationController.error) {
+      showError(geolocationController.error, [], () => {
+        geolocationController.clearError();
+      });
+    }
+  }, [geolocationController.error]);
+
+  useEffect(() => {
+    if (geolocationController.dialog) {
+      showInfo(geolocationController.dialog.message, geolocationController.dialog.buttons, () => {
+        geolocationController.dialog.buttons.forEach(btn => {
+          if (btn.key == 'deny') btn.onPress();
+        });
+        geolocationController.clearDialog();
+        geolocationController.clearError();
+      });
+    }
+  }, [geolocationController.dialog]);
 
   // помощник для контейнеров-строк
   const rowStyle = {
@@ -222,8 +243,8 @@ export default function Settings() {
               {t('settings.location')}
             </Text>
             <Switch
-              value={locationEnabled}
-              onValueChange={setLocationEnabled}
+              value={geolocationController.enabled}
+              onValueChange={geolocationController.toggleGeolocation}
               trackColor={{
                 false: themeController.current?.switchTrackColor,
                 true: themeController.current?.switchTrackColor,

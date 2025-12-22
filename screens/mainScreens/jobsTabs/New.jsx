@@ -1,5 +1,5 @@
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Image,
   Platform,
@@ -15,6 +15,7 @@ import { useComponentContext } from '../../../context/globalAppContext';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
+import { useLocalization } from '../../../src/services/useLocalization';
 
 export default function NewScreen({
   setShowJobModalVisible,
@@ -23,6 +24,7 @@ export default function NewScreen({
 }) {
   const { themeController, jobsController, languageController } =
     useComponentContext();
+  const { tField } = useLocalization(languageController.current);
   const { height } = useWindowDimensions();
   const { isLandscape } = useWindowInfo();
   const { t } = useTranslation();
@@ -31,6 +33,14 @@ export default function NewScreen({
   const [searchValue, setSearchValue] = useState('');
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  useEffect(() => {
+    if (jobsController && jobsController.reloadExecutor) {
+      console.log('Reloading executor jobs for New tab');
+
+      jobsController.reloadExecutor();
+    }
+  }, []);
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -57,12 +67,13 @@ export default function NewScreen({
     };
   }, [height, isWebLandscape]);
 
+
   const filteredJobsList = jobsController == null || jobsController.executor == null || jobsController.executor.new == null ? [] : jobsController.executor.new
     .filter((job) =>
-      filteredJobs.length > 0 ? filteredJobs.includes(job.type.name_en) : true
+      filteredJobs.length > 0 ? filteredJobs.includes(job.type.key) || filteredJobs.includes(job.subType.key) : true
     )
     .filter((job) =>
-      [job.type.name_en, job.description].some((field) =>
+      [tField(job.type, 'name'), job.description].some((field) =>
         field?.toLowerCase()?.includes(searchValue?.toLowerCase())
       )
     );
@@ -254,7 +265,7 @@ export default function NewScreen({
                           },
                         ]}
                       >
-                        {job.type.name_en}
+                        {tField(job.type, 'name')}
                       </Text>
                       {job.description ? (
                         <Text

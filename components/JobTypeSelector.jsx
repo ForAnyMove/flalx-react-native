@@ -13,16 +13,19 @@ import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocalization } from '../src/services/useLocalization';
 
 export default function JobTypeSelector({
   selectedTypes,
   setSelectedTypes,
   numberOfRows = 2,
+  subtypesOnly = false,
 }) {
   const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
-  const { themeController, languageController } = useComponentContext();
+  const { themeController, languageController, jobTypesController } = useComponentContext();
+  const { tField } = useLocalization(languageController.current);
 
   const scrollRef = useRef(null);
   const isRTL = languageController?.isRTL;
@@ -100,8 +103,19 @@ export default function JobTypeSelector({
 
   const clearAll = () => setSelectedTypes([]);
 
-  // объект переведённых значений: { job_1: '...', job_2: '...', ... }
-  const jobTypes = t('jobTypes', { returnObjects: true });
+  const jobSubTypesOptions = useMemo(() => {
+    const options = {};
+    if (jobTypesController.jobTypesWithSubtypes) {
+      jobTypesController.jobTypesWithSubtypes.forEach(type => {
+        if (!subtypesOnly) options[type.key] = tField(type, 'name');
+
+        type.subtypes.forEach((subtype) => {
+          options[subtype.key] = tField(subtype, 'name');
+        });
+      });
+    }
+    return options;
+  }, [jobTypesController.jobTypesWithSubtypes, languageController.current]);
 
   useEffect(() => {
     const scrollElement = scrollRef.current;
@@ -176,7 +190,7 @@ export default function JobTypeSelector({
           onLayout={handleContainerLayout}
           style={[styles.tagWrapper, dynamicStyles.tagWrapper]}
         >
-          {Object.entries(jobTypes || {})?.map(([key, label]) => {
+          {Object.entries(jobSubTypesOptions || {})?.map(([key, label]) => {
             const active = isSelected(key);
             return (
               <TouchableOpacity

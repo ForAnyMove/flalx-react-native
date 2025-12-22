@@ -28,6 +28,7 @@ import { createJob } from '../src/api/jobs';
 import { useWebView } from '../context/webViewContext';
 import AutocompletePicker from './ui/AutocompletePicker';
 import AddressPicker from './ui/AddressPicker';
+import { useLocalization } from '../src/services/useLocalization';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -110,6 +111,7 @@ export default function NewJobModal({
   currentJobId = null,
   initialJob = null,
   executorId,
+  executor
 }) {
   const {
     themeController,
@@ -121,6 +123,7 @@ export default function NewJobModal({
     subscription,
     jobTypesController,
   } = useComponentContext();
+  const { tField } = useLocalization(languageController.current);
   const { width, height, isLandscape, sidebarWidth = 0 } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
@@ -136,29 +139,46 @@ export default function NewJobModal({
   // Преобразуем данные из jobTypesController в нужный формат
   const jobTypesOptions = useMemo(() => {
     const options = {};
-    jobTypesController.jobTypesWithSubtypes?.forEach((type) => {
-      options[type.key] = type.name_en;
-    });
+    if (executor != null) {
+      executor.professions.forEach((profession) => {
+        const { job_type, job_subtype } = profession;
+        options[job_type.key] = tField(job_type, 'name');
+      });
+    } else {
+      jobTypesController.jobTypesWithSubtypes?.forEach((type) => {
+        options[type.key] = tField(type, 'name');
+      });
+    }
     return options;
-  }, [jobTypesController.jobTypesWithSubtypes]);
+  }, [jobTypesController.jobTypesWithSubtypes, languageController.current]);
 
   const jobSubTypesOptions = useMemo(() => {
     const options = {};
-    if (type && jobTypesController.jobTypesWithSubtypes) {
-      const selectedType = jobTypesController.jobTypesWithSubtypes.find(
-        (t) => t.key === type
-      );
-      if (selectedType?.subtypes) {
-        selectedType.subtypes.forEach((subtype) => {
-          options[subtype.key] = subtype.name_en;
+    if (type) {
+      if (executor != null) {
+        executor.professions.forEach((profession) => {
+          const { job_type, job_subtype } = profession;
+          if (job_type.key === type) {
+            options[job_subtype.key] = tField(job_subtype, 'name');
+          }
         });
+      }
+      else if (jobTypesController.jobTypesWithSubtypes) {
+        const selectedType = jobTypesController.jobTypesWithSubtypes.find(
+          (t) => t.key === type
+        );
+        if (selectedType?.subtypes) {
+          selectedType.subtypes.forEach((subtype) => {
+            options[subtype.key] = tField(subtype, 'name');
+          });
+        }
       }
     }
     return options;
-  }, [jobTypesController.jobTypesWithSubtypes, type]);
+  }, [jobTypesController.jobTypesWithSubtypes, type, languageController.current]);
+
 
   const [statusOptions, setStatusOptions] = useState(STATUS_OPTIONS);
-
   const sizes = useMemo(() => {
     const webLandscapeScale = (size) => scaleByHeight(size, height);
     const mobileScale = (size) => scaleByHeightMobile(size, height);
@@ -319,7 +339,7 @@ export default function NewJobModal({
     requiredFields.forEach((field) => {
       // Проверяем, заполнено ли поле. Для location нужна особая проверка.
       if (field === 'location') {
-        newErrors[field] = !location || !location.address;
+        newErrors[field] = !location || !location?.address;
       } else {
         // Для других полей (type, subType, description и т.д.)
         // используется преобразование в булев тип.
@@ -1643,6 +1663,7 @@ export default function NewJobModal({
                 >
                   {jobsController.products.map((opt) => {
                     const productType = opt.type;
+                    const productName = tField(opt, 'name');
                     const active = jobType === productType;
 
                     return (
@@ -1658,12 +1679,12 @@ export default function NewJobModal({
                             borderWidth: 1,
                             borderColor: active
                               ? themeController.current
-                                  ?.buttonColorPrimaryDefault
+                                ?.buttonColorPrimaryDefault
                               : themeController.current
-                                  ?.formInputPlaceholderColor,
+                                ?.formInputPlaceholderColor,
                             backgroundColor: active
                               ? themeController.current
-                                  ?.buttonColorPrimaryDefault
+                                ?.buttonColorPrimaryDefault
                               : 'transparent',
                             flexDirection: isRTL ? 'row-reverse' : 'row',
                             alignItems: 'center',
@@ -1677,15 +1698,10 @@ export default function NewJobModal({
                             color: active
                               ? themeController.current?.buttonTextColorPrimary
                               : themeController.current
-                                  ?.formInputPlaceholderColor,
+                                ?.formInputPlaceholderColor,
                           }}
                         >
-                          {t(
-                            `newJob.statusModal.option.${STATUS_OPTIONS[productType].i18n}`,
-                            {
-                              defaultValue: STATUS_OPTIONS[productType].default,
-                            }
-                          )}
+                          {productName}
                         </Text>
 
                         {/* маленький PRO-бейдж для некоторых опций */}
@@ -1746,10 +1762,10 @@ export default function NewJobModal({
                       defaultValue: 'Publish for {{price}}',
                       price:
                         subscription.current != null &&
-                        selectedOption.type == 'normal'
+                          selectedOption.type == 'normal'
                           ? t('newJob.statusModal.free', {
-                              defaultValue: 'Free',
-                            })
+                            defaultValue: 'Free',
+                          })
                           : `$${selectedOption?.price.toFixed(2)}`,
                     })}
                   </Text>

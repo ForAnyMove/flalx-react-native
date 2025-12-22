@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { addSelfToJobProviders, getJobProducts, isProviderInJob, removeSelfFromJobProviders } from "../src/api/jobs";
+import { useGeolocation } from "./useGeolocation";
 
 /**
  * jobsManager — агрегирует все списки заявок для вкладок:
@@ -11,7 +12,7 @@ import { addSelfToJobProviders, getJobProducts, isProviderInJob, removeSelfFromJ
  *   error: string|null
  * }
  */
-export default function jobsManager({ session, user }) {
+export default function jobsManager({ session, user, geolocation }) {
   const [creatorWaiting, setCreatorWaiting] = useState([]);
   const [creatorInProgress, setCreatorInProgress] = useState([]);
   const [creatorDone, setCreatorDone] = useState([]);
@@ -29,6 +30,15 @@ export default function jobsManager({ session, user }) {
   const serverURL = session?.serverURL;
   const token = session?.token?.access_token;
   const userId = user?.current?.id;
+
+  const getLocation = useCallback(async () => {
+    if (!geolocation.enabled) return null;
+    if (geolocation.location == null) {
+      return await geolocation.getCurrentLocationDirect();
+    } else {
+      return geolocation.location;
+    }
+  }, [geolocation]);
 
   // защита от гонок
   const alive = useRef(true);
@@ -69,7 +79,23 @@ export default function jobsManager({ session, user }) {
   }
 
   async function loadExecNew() {
-    return safeFetch(`${serverURL}/jobs/as-executor/new`, { headers: authHeaders });
+    const currentLocation = await getLocation();
+
+    let url = `${serverURL}/jobs/as-executor/new`;
+    if (currentLocation) {
+      const params = new URLSearchParams({
+        lat: currentLocation.latitude,
+        lng: currentLocation.longitude,
+        radius: 50
+      });
+      url += `?${params.toString()}`;
+    }
+    return safeFetch(url, {
+      headers: {
+        ...authHeaders,
+        'Content-Type': 'application/json'
+      }
+    });
   }
 
   async function loadExecWaiting() {
@@ -87,8 +113,6 @@ export default function jobsManager({ session, user }) {
   async function loadJobProducts() {
     return getJobProducts(session);
   }
-
-  // ------- публичные методы -------
 
   async function reloadCreator() {
     if (!serverURL || !token || !userId) return;
@@ -119,6 +143,7 @@ export default function jobsManager({ session, user }) {
     if (!serverURL || !token || !userId) return;
     setLoadingExecutor(true);
     setError(null);
+
     try {
       const [n, waiting, inProgress, done] = await Promise.all([
         loadExecNew(),
@@ -127,7 +152,6 @@ export default function jobsManager({ session, user }) {
         loadExecDone(),
       ]);
       if (!alive.current) return;
-      console.log(n);
 
       setExecNew(n);
       setExecWaiting(waiting);
