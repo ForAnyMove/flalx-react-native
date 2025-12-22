@@ -22,12 +22,12 @@ export const ComponentProvider = ({ children }) => {
   const languageController = languageManager();
   const appTabController = tabsManager({ name: 'app', defaultTab: appTabsList[0], list: appTabsList });
   const profileTabController = tabsManager({ name: 'profile', defaultTab: profileTabsList[0], list: profileTabsList });
+  const geolocationController = useGeolocation();
 
   const { registerControl, authControl, forgotPassControl } = authTabsManager();
 
-  const jobsController = jobsManager({ session, user });
+  const jobsController = jobsManager({ session, user, geolocation: geolocationController });
   const jobTypesController = jobTypeManager({ session });
-  const geolocationController = useGeolocation();
 
   const providersController = providersManager({ session });
   const [loadingCounter, setLoadingCounter] = useState(0);

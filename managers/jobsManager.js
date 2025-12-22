@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { addSelfToJobProviders, getJobProducts, isProviderInJob, removeSelfFromJobProviders } from "../src/api/jobs";
 import { useGeolocation } from "./useGeolocation";
 
@@ -12,7 +12,7 @@ import { useGeolocation } from "./useGeolocation";
  *   error: string|null
  * }
  */
-export default function jobsManager({ session, user }) {
+export default function jobsManager({ session, user, geolocation }) {
   const [creatorWaiting, setCreatorWaiting] = useState([]);
   const [creatorInProgress, setCreatorInProgress] = useState([]);
   const [creatorDone, setCreatorDone] = useState([]);
@@ -25,12 +25,20 @@ export default function jobsManager({ session, user }) {
 
   const [loadingCreator, setLoadingCreator] = useState(false);
   const [loadingExecutor, setLoadingExecutor] = useState(false);
-  const { enabled, getCurrentLocation, getCurrentLocationDirect, location } = useGeolocation();
   const [error, setError] = useState(null);
 
   const serverURL = session?.serverURL;
   const token = session?.token?.access_token;
   const userId = user?.current?.id;
+
+  const getLocation = useCallback(async () => {
+    if (!geolocation.enabled) return null;
+    if (geolocation.location == null) {
+      return await geolocation.getCurrentLocationDirect();
+    } else {
+      return geolocation.location;
+    }
+  }, [geolocation]);
 
   // защита от гонок
   const alive = useRef(true);
@@ -70,9 +78,8 @@ export default function jobsManager({ session, user }) {
     return safeFetch(`${serverURL}/jobs/as-creator/done`, { headers: authHeaders });
   }
 
-  async function loadExecNew(forceLocation = null) {
-    const currentLocation = forceLocation || (enabled && location ? location : null);
-    console.log('loadExecNew using location:', currentLocation);
+  async function loadExecNew() {
+    const currentLocation = await getLocation();
 
     let url = `${serverURL}/jobs/as-executor/new`;
     if (currentLocation) {
@@ -107,26 +114,6 @@ export default function jobsManager({ session, user }) {
     return getJobProducts(session);
   }
 
-  // ------- публичные методы -------
-
-  async function updateLocationAndReloadExecutor() {
-    if (!enabled) {
-      console.log('Геолокация отключена');
-      return await reloadExecutor();
-    }
-
-    try {
-      console.log('Обновляем геолокацию...');
-      await getCurrentLocationDirect();
-      console.log('Геолокация обновлена, перезагружаем задачи...');
-      await reloadExecutor();
-    } catch (error) {
-      console.log('Ошибка обновления геолокации:', error.message);
-      // Загружаем задачи без геолокации
-      await reloadExecutor();
-    }
-  }
-
   async function reloadCreator() {
     if (!serverURL || !token || !userId) return;
     setLoadingCreator(true);
@@ -157,24 +144,14 @@ export default function jobsManager({ session, user }) {
     setLoadingExecutor(true);
     setError(null);
 
-    let freshLocation = null;
-
     try {
-      if (enabled && !location) {
-        try {
-          freshLocation = await getCurrentLocationDirect();
-        } catch (error) {
-        }
-      }
-
       const [n, waiting, inProgress, done] = await Promise.all([
-        loadExecNew(freshLocation),
+        loadExecNew(),
         loadExecWaiting(),
         loadExecInProgress(),
         loadExecDone(),
       ]);
       if (!alive.current) return;
-      console.log(n);
 
       setExecNew(n);
       setExecWaiting(waiting);
@@ -303,7 +280,6 @@ export default function jobsManager({ session, user }) {
     reloadAll,
     reloadCreator,
     reloadExecutor,
-    updateLocationAndReloadExecutor,
     loading: {
       any: loadingCreator || loadingExecutor,
       creator: loadingCreator,
@@ -321,11 +297,6 @@ export default function jobsManager({ session, user }) {
       getJobById,
       checkIsProviderInJob
     },
-    products,
-    geolocation: {
-      enabled,
-      location,
-      hasLocation: enabled && !!location
-    }
+    products
   };
 }
