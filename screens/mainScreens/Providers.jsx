@@ -26,6 +26,7 @@ export default function Providers() {
   const isRTL = languageController.isRTL;
   const [newJobModalVisible, setNewJobModalVisible] = useState(false);
   const [chosenUserId, setChosenUserId] = useState(null);
+  const [chosenUser, setChosenUser] = useState(null);
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
@@ -101,6 +102,7 @@ export default function Providers() {
               user={user}
               chooseUser={() => {
                 setChosenUserId(user?.id);
+                setChosenUser(user);
                 setNewJobModalVisible(true);
               }}
             />
@@ -112,6 +114,7 @@ export default function Providers() {
           <NewJobModal
             closeModal={() => setNewJobModalVisible(false)}
             executorId={chosenUserId}
+            executor={chosenUser}
           />
         </JobModalWrapper>
       ) : (
@@ -119,6 +122,7 @@ export default function Providers() {
           <NewJobModal
             closeModal={() => setNewJobModalVisible(false)}
             executorId={chosenUserId}
+            executor={chosenUser}
           />
         </Modal>
       )}

@@ -111,6 +111,7 @@ export default function NewJobModal({
   currentJobId = null,
   initialJob = null,
   executorId,
+  executor
 }) {
   const {
     themeController,
@@ -138,22 +139,39 @@ export default function NewJobModal({
   // Преобразуем данные из jobTypesController в нужный формат
   const jobTypesOptions = useMemo(() => {
     const options = {};
-    jobTypesController.jobTypesWithSubtypes?.forEach((type) => {
-      options[type.key] = tField(type, 'name');
-    });
+    if (executor != null) {
+      executor.professions.forEach((profession) => {
+        const { job_type, job_subtype } = profession;
+        options[job_type.key] = tField(job_type, 'name');
+      });
+    } else {
+      jobTypesController.jobTypesWithSubtypes?.forEach((type) => {
+        options[type.key] = tField(type, 'name');
+      });
+    }
     return options;
   }, [jobTypesController.jobTypesWithSubtypes, languageController.current]);
 
   const jobSubTypesOptions = useMemo(() => {
     const options = {};
-    if (type && jobTypesController.jobTypesWithSubtypes) {
-      const selectedType = jobTypesController.jobTypesWithSubtypes.find(
-        (t) => t.key === type
-      );
-      if (selectedType?.subtypes) {
-        selectedType.subtypes.forEach((subtype) => {
-          options[subtype.key] = tField(subtype, 'name');
+    if (type) {
+      if (executor != null) {
+        executor.professions.forEach((profession) => {
+          const { job_type, job_subtype } = profession;
+          if (job_type.key === type) {
+            options[job_subtype.key] = tField(job_subtype, 'name');
+          }
         });
+      }
+      else if (jobTypesController.jobTypesWithSubtypes) {
+        const selectedType = jobTypesController.jobTypesWithSubtypes.find(
+          (t) => t.key === type
+        );
+        if (selectedType?.subtypes) {
+          selectedType.subtypes.forEach((subtype) => {
+            options[subtype.key] = tField(subtype, 'name');
+          });
+        }
       }
     }
     return options;
