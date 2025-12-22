@@ -41,8 +41,8 @@ const MyProfessions = () => {
     const requests = [];
     jobTypesController.userToUserRequest.list.forEach((request) => {
       const reuqestObject = {
-        title: jobTypesController.jobTypesWithSubtypes.find(t => t.id === request.job_type_id)?.name_en || request.requested_type_name,
-        subtitle: jobTypesController.jobTypesWithSubtypes.find(t => t.id === request.job_type_id)?.subtypes.find(st => st.id === request.job_subtype_id)?.name_en || request.requested_subtype_name,
+        title: jobTypesController.jobTypesWithSubtypes.find(t => t.id === request.job_type_id)?.name || request.requested_type_name,
+        subtitle: jobTypesController.jobTypesWithSubtypes.find(t => t.id === request.job_type_id)?.subtypes.find(st => st.id === request.job_subtype_id)?.name || request.requested_subtype_name,
         type: (() => {
           switch (request.status) {
             case "pending":

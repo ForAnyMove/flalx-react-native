@@ -19,6 +19,7 @@ import { checkHasPendingJob } from '../../../src/api/jobs';
 import { useNotification } from '../../../src/render';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
+import { useLocalization } from '../../../src/services/useLocalization';
 // import JobModalWrapper from '../../../components/JobModalWrapper';
 
 export default function NewScreen({
@@ -27,6 +28,7 @@ export default function NewScreen({
   setActiveKey,
 }) {
   const { themeController, languageController, session, jobTypesController } = useComponentContext();
+  const { tField } = useLocalization(languageController.current);
 
   const { showWarning } = useNotification();
   const { openWebView } = useWebView();
@@ -82,7 +84,7 @@ export default function NewScreen({
           <View style={styles.cardsWrapper}>
             {jobTypesController.jobTypesWithSubtypes && jobTypesController.jobTypesWithSubtypes
               .filter((value) =>
-                value.name_en.toLowerCase().includes(searchValue.toLowerCase())
+                value.name.toLowerCase().includes(searchValue.toLowerCase())
               )
               .sort((value1, value2) => {
                 const aIsLiked = likes.includes(value1.key);
@@ -130,7 +132,7 @@ export default function NewScreen({
                         setLikes([...likes, value.key]);
                       }
                     }}
-                    templateTitle={value.name_en}
+                    templateTitle={tField(value, 'name')}
                     imageSource={null}
                   />
                 </TouchableOpacity>

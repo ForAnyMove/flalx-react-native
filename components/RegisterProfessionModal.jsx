@@ -34,7 +34,7 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
   const jobTypesOptions = useMemo(() => {
     const options = {};
     jobTypesController.jobTypesWithSubtypes?.forEach(type => {
-      options[type.key] = type.name_en;
+      options[type.key] = type.name;
     });
     return options;
   }, [jobTypesController.jobTypesWithSubtypes]);

@@ -15,6 +15,7 @@ import SearchPanel from '../../../components/SearchPanel';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
+import { useLocalization } from '../../../src/services/useLocalization';
 
 export default function InProgressScreen({
   setShowJobModalVisible,
@@ -23,6 +24,7 @@ export default function InProgressScreen({
 }) {
   const { themeController, jobsController, languageController } =
     useComponentContext();
+  const { tField } = useLocalization(languageController.current);
   const { t } = useTranslation();
   const { height } = useWindowDimensions();
   const { isLandscape } = useWindowInfo();
@@ -59,7 +61,7 @@ export default function InProgressScreen({
       filteredJobs.length > 0 ? filteredJobs.includes(job.type.key) || filteredJobs.includes(job.subType.key) : true
     )
     .filter((job) =>
-      [job.type.name_en, job.description].some((field) =>
+      [tField(job.type, 'name'), job.description].some((field) =>
         field.toLowerCase().includes(searchValue.toLowerCase())
       )
     );
@@ -178,7 +180,7 @@ export default function InProgressScreen({
                         },
                       ]}
                     >
-                      {job.type.name_en}
+                      {tField(job.type, 'name')}
                     </Text>
                     {job.description ? (
                       <Text

@@ -32,7 +32,7 @@ const RequestProfessionModal = ({ visible, onClose, onRequested }) => {
   const jobTypesOptions = useMemo(() => {
     const options = {};
     jobTypesController.jobTypesWithSubtypes?.forEach(type => {
-      options[type.key] = type.name_en;
+      options[type.key] = type.name;
     });
     return options;
   }, [jobTypesController.jobTypesWithSubtypes]);
@@ -44,7 +44,7 @@ const RequestProfessionModal = ({ visible, onClose, onRequested }) => {
       const selectedType = jobTypesController.jobTypesWithSubtypes.find(t => t.key === type);
       if (selectedType?.subtypes) {
         selectedType.subtypes.forEach(subtype => {
-          options[subtype.key] = subtype.name_en;
+          options[subtype.key] = subtype.name;
         });
       }
     }

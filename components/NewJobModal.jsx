@@ -28,6 +28,7 @@ import { createJob } from '../src/api/jobs';
 import { useWebView } from '../context/webViewContext';
 import AutocompletePicker from './ui/AutocompletePicker';
 import AddressPicker from './ui/AddressPicker';
+import { useLocalization } from '../src/services/useLocalization';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -121,6 +122,7 @@ export default function NewJobModal({
     subscription,
     jobTypesController,
   } = useComponentContext();
+  const { tField } = useLocalization(languageController.current);
   const { width, height, isLandscape, sidebarWidth = 0 } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
@@ -137,10 +139,10 @@ export default function NewJobModal({
   const jobTypesOptions = useMemo(() => {
     const options = {};
     jobTypesController.jobTypesWithSubtypes?.forEach((type) => {
-      options[type.key] = type.name_en;
+      options[type.key] = tField(type, 'name');
     });
     return options;
-  }, [jobTypesController.jobTypesWithSubtypes]);
+  }, [jobTypesController.jobTypesWithSubtypes, languageController.current]);
 
   const jobSubTypesOptions = useMemo(() => {
     const options = {};
@@ -150,15 +152,15 @@ export default function NewJobModal({
       );
       if (selectedType?.subtypes) {
         selectedType.subtypes.forEach((subtype) => {
-          options[subtype.key] = subtype.name_en;
+          options[subtype.key] = tField(subtype, 'name');
         });
       }
     }
     return options;
-  }, [jobTypesController.jobTypesWithSubtypes, type]);
+  }, [jobTypesController.jobTypesWithSubtypes, type, languageController.current]);
+
 
   const [statusOptions, setStatusOptions] = useState(STATUS_OPTIONS);
-
   const sizes = useMemo(() => {
     const webLandscapeScale = (size) => scaleByHeight(size, height);
     const mobileScale = (size) => scaleByHeightMobile(size, height);
@@ -1643,6 +1645,7 @@ export default function NewJobModal({
                 >
                   {jobsController.products.map((opt) => {
                     const productType = opt.type;
+                    const productName = tField(opt, 'name');
                     const active = jobType === productType;
 
                     return (
@@ -1680,12 +1683,7 @@ export default function NewJobModal({
                                 ?.formInputPlaceholderColor,
                           }}
                         >
-                          {t(
-                            `newJob.statusModal.option.${STATUS_OPTIONS[productType].i18n}`,
-                            {
-                              defaultValue: STATUS_OPTIONS[productType].default,
-                            }
-                          )}
+                          {productName}
                         </Text>
 
                         {/* маленький PRO-бейдж для некоторых опций */}

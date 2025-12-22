@@ -23,6 +23,7 @@ import {
 import { useWebView } from '../context/webViewContext';
 import { useNotification } from '../src/render';
 import { useMemo } from 'react';
+import { useLocalization } from '../src/services/useLocalization';
 
 function SubscriptionsModalContent({ closeModal }) {
   const {
@@ -33,6 +34,7 @@ function SubscriptionsModalContent({ closeModal }) {
     session,
     setAppLoading,
   } = useComponentContext();
+  const { tField } = useLocalization(languageController?.current);
   const { showWarning, showInfo, showError } = useNotification();
   const { openWebView } = useWebView();
   const { width, height } = useWindowDimensions();
@@ -313,7 +315,7 @@ function SubscriptionsModalContent({ closeModal }) {
                     fontFamily: 'Rubik-Bold',
                   }}
                 >
-                  {value.name}
+                  {tField(value, 'name')}
                 </Text>
                 <Text
                   style={{
@@ -322,9 +324,9 @@ function SubscriptionsModalContent({ closeModal }) {
                     color: themeController.current?.unactiveTextColor,
                   }}
                 >
-                  {value.description}
+                  {tField(value, 'description')}
                 </Text>
-                {value.features.map((feature, index) => (
+                {tField(value, 'features').map((feature, index) => (
                   <Text
                     key={index}
                     style={{

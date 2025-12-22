@@ -14,7 +14,6 @@ import {
 // import { RFValue } from 'react-native-responsive-fontsize';
 import { useComponentContext } from '../context/globalAppContext';
 import { JOB_TYPES } from '../constants/jobTypes';
-import { JOB_SUB_TYPES } from '../constants/jobSubTypes';
 import { LICENSES } from '../constants/licenses';
 import { icons } from '../constants/icons';
 import { useWindowInfo } from '../context/windowContext';
@@ -22,11 +21,13 @@ import { useTranslation } from 'react-i18next';
 import CommentsSection from './CommentsSection';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useWebView } from '../context/webViewContext';
+import { useLocalization } from '../src/services/useLocalization';
 
 const ProviderSummaryBlock = ({ user, chooseUser }) => {
   const { t } = useTranslation();
   const { themeController, languageController, usersReveal, setAppLoading } =
     useComponentContext();
+  const { tField } = useLocalization(languageController.current);
   const { openWebView } = useWebView();
   const { height, isLandscape, width, sidebarWidth } = useWindowInfo();
   const isRTL = languageController.isRTL;
@@ -521,7 +522,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                               ]}
                             >
                               <Text style={dynamicStyles.badgeText}>
-                                {p.job_subtype?.name_en}
+                                {tField(p.job_subtype, 'name')}
                               </Text>
                             </View>
                           ))}

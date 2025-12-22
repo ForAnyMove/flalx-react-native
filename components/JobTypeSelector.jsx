@@ -13,6 +13,7 @@ import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocalization } from '../src/services/useLocalization';
 
 export default function JobTypeSelector({
   selectedTypes,
@@ -24,6 +25,7 @@ export default function JobTypeSelector({
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
   const { themeController, languageController, jobTypesController } = useComponentContext();
+  const { tField } = useLocalization(languageController.current);
 
   const scrollRef = useRef(null);
   const isRTL = languageController?.isRTL;
@@ -105,15 +107,15 @@ export default function JobTypeSelector({
     const options = {};
     if (jobTypesController.jobTypesWithSubtypes) {
       jobTypesController.jobTypesWithSubtypes.forEach(type => {
-        if (!subtypesOnly) options[type.key] = type.name_en;
+        if (!subtypesOnly) options[type.key] = tField(type, 'name');
 
         type.subtypes.forEach((subtype) => {
-          options[subtype.key] = subtype.name_en;
+          options[subtype.key] = tField(subtype, 'name');
         });
       });
     }
     return options;
-  }, [jobTypesController.jobTypesWithSubtypes]);
+  }, [jobTypesController.jobTypesWithSubtypes, languageController.current]);
 
   useEffect(() => {
     const scrollElement = scrollRef.current;

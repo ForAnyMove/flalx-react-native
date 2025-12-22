@@ -38,6 +38,7 @@ import { useWebView } from '../context/webViewContext';
 import SubscriptionsModal from './SubscriptionsModal';
 import CommentsSection from './CommentsSection';
 import CompleteJobModal from './CompleteJobModal';
+import { useLocalization } from '../src/services/useLocalization';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -78,6 +79,7 @@ export default function ShowJobModal({
     setAppLoading,
     subscription,
   } = useComponentContext();
+  const { tField } = useLocalization(languageController.current);
   const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
@@ -1305,7 +1307,7 @@ export default function ShowJobModal({
         {t('showJob.fields.type', { defaultValue: 'Type' })}
       </Text>
       <TextInput
-        value={currentJobInfo?.type?.name_en || '-'}
+        value={tField(currentJobInfo?.type, 'name') || '-'}
         style={[
           styles.input,
           dynamicStyles.input,
@@ -1332,7 +1334,7 @@ export default function ShowJobModal({
         {t('showJob.fields.subType', { defaultValue: 'Sub type' })}
       </Text>
       <TextInput
-        value={currentJobInfo?.subType?.name_en || '-'}
+        value={tField(currentJobInfo?.subType, 'name') || '-'}
         style={[
           styles.input,
           dynamicStyles.input,
@@ -1713,7 +1715,7 @@ export default function ShowJobModal({
                         {t('showJob.fields.type', { defaultValue: 'Type' })}
                       </Text>
                       <TextInput
-                        value={currentJobInfo?.type?.name_en || '-'}
+                        value={tField(currentJobInfo?.type, 'name') || '-'}
                         style={{
                           fontWeight: '500',
                           padding: 0,
@@ -1817,7 +1819,7 @@ export default function ShowJobModal({
                         })}
                       </Text>
                       <TextInput
-                        value={currentJobInfo?.subType?.name_en || '-'}
+                        value={tField(currentJobInfo?.subType, 'name') || '-'}
                         style={{
                           fontWeight: '500',
                           padding: 0,
