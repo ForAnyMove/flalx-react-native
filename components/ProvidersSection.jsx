@@ -130,6 +130,7 @@ export default function ProvidersSection({
         ? scaleByHeight(isShortProviderBlock ? 330 : 1040, height)
         : '100%',
       sectionMaxHeight: isWebLandscape ? height * 0.25 : 200,
+      sectionMinHeight: isWebLandscape ? scaleByHeight(136, height) : 50,
       headerGap: isWebLandscape ? margin / 2 : staticScale(8, height),
       headerInnerHeight: isWebLandscape
         ? scaleByHeight(32, height)
@@ -223,6 +224,7 @@ export default function ProvidersSection({
           {
             backgroundColor: themeController.current?.formInputBackground,
             maxHeight: sizes.sectionMaxHeight,
+            minHeight: sizes.sectionMinHeight,
             overflow: 'hidden',
             // paddingHorizontal: sizes.containerPaddingHorizontal,
             paddingVertical: sizes.containerPaddingVertical,

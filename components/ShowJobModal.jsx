@@ -101,16 +101,16 @@ export default function ShowJobModal({
     // Определяем, какие массивы отслеживать
     const jobGroups = isCreator
       ? {
-        waiting: jobsController.creator.waiting,
-        in_progress: jobsController.creator.inProgress,
-        done: jobsController.creator.done,
-      }
+          waiting: jobsController.creator.waiting,
+          in_progress: jobsController.creator.inProgress,
+          done: jobsController.creator.done,
+        }
       : {
-        new: jobsController.executor.new,
-        waiting: jobsController.executor.waiting,
-        in_progress: jobsController.executor.inProgress,
-        done: jobsController.executor.done,
-      };
+          new: jobsController.executor.new,
+          waiting: jobsController.executor.waiting,
+          in_progress: jobsController.executor.inProgress,
+          done: jobsController.executor.done,
+        };
 
     // Поиск текущего местоположения заявки
     let currentLocation = null;
@@ -128,8 +128,9 @@ export default function ShowJobModal({
       const prev = prevJobLocation.current;
       if (prev && prev !== currentLocation) {
         const fromStatus = `${isCreator ? 'client' : 'business'}-${prev}`;
-        const toStatus = `${isCreator ? 'client' : 'business'
-          }-${currentLocation}`;
+        const toStatus = `${
+          isCreator ? 'client' : 'business'
+        }-${currentLocation}`;
         console.log(
           `Заявка ${currentJobId} переместилась: ${fromStatus} → ${toStatus}`
         );
@@ -148,16 +149,16 @@ export default function ShowJobModal({
     status,
     ...(status.startsWith('client')
       ? [
-        jobsController.creator.waiting,
-        jobsController.creator.inProgress,
-        jobsController.creator.done,
-      ]
+          jobsController.creator.waiting,
+          jobsController.creator.inProgress,
+          jobsController.creator.done,
+        ]
       : [
-        jobsController.executor.new,
-        jobsController.executor.waiting,
-        jobsController.executor.inProgress,
-        jobsController.executor.done,
-      ]),
+          jobsController.executor.new,
+          jobsController.executor.waiting,
+          jobsController.executor.inProgress,
+          jobsController.executor.done,
+        ]),
   ]);
 
   const sizes = useMemo(
@@ -314,7 +315,7 @@ export default function ShowJobModal({
         input: {
           width: '100%',
           fontFamily: 'Rubik-Regular',
-          fontWeight: '500',
+          // fontWeight: '500',
           color: themeController.current?.textColor,
           fontSize: sizes.inputFont,
           ...Platform.select({
@@ -446,7 +447,7 @@ export default function ShowJobModal({
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
-    () => { }
+    () => {}
   );
 
   const [plansModalVisible, setPlansModalVisible] = useState(false);
@@ -457,7 +458,7 @@ export default function ShowJobModal({
   const location = useMemo(() => {
     if (!currentJobInfo?.location) return null;
     return JSON.parse(currentJobInfo.location);
-  }, [currentJobInfo?.location])
+  }, [currentJobInfo?.location]);
 
   // Подгружаем job при редактировании
   useEffect(() => {
@@ -583,10 +584,12 @@ export default function ShowJobModal({
                 {
                   backgroundColor: themeController.current?.formInputBackground,
                   borderRadius: sizes.borderRadius,
+                  paddingHorizontal: sizes.inputContainerPaddingHorizontal,
+                  paddingVertical: sizes.inputContainerPaddingVertical,
                 },
                 isWebLandscape && {
                   width: scaleByHeight(330, height),
-                  height: scaleByHeight(131, height),
+                  height: scaleByHeight(136, height),
                 },
               ]}
               key='provider-comments'
@@ -618,6 +621,8 @@ export default function ShowJobModal({
                   {
                     color: themeController.current?.textColor,
                     fontSize: sizes.inputFont,
+                    padding: 0,
+                    paddingVertical: sizes.padding,
                   },
                   isWebLandscape && { height: '100%', padding: 0 },
                   isRTL && { textAlign: 'right' },
@@ -933,8 +938,8 @@ export default function ShowJobModal({
                   editableCommentState
                     ? editableCommentValue
                     : currentJobInfo?.job_comment
-                      ? currentJobInfo?.job_comment.comment
-                      : null
+                    ? currentJobInfo?.job_comment.comment
+                    : null
                 }
                 placeholder={t('showJob.fields.myCommentsPlaceholder', {
                   defaultValue: 'Write a comment on the completed work...',
@@ -1717,7 +1722,8 @@ export default function ShowJobModal({
                       <TextInput
                         value={tField(currentJobInfo?.type, 'name') || '-'}
                         style={{
-                          fontWeight: '500',
+                          // fontWeight: '500',
+                          fontFamily: 'Rubik-Medium',
                           padding: 0,
                           paddingVertical: sizes.padding,
                           color: themeController.current?.textColor,
@@ -1768,7 +1774,8 @@ export default function ShowJobModal({
                       <TextInput
                         value={currentJobInfo?.description || ''}
                         style={{
-                          fontWeight: '500',
+                          // fontWeight: '500',
+                          fontFamily: 'Rubik-Medium',
                           padding: 0,
                           paddingVertical: sizes.padding,
                           color: themeController.current?.textColor,
@@ -1821,7 +1828,8 @@ export default function ShowJobModal({
                       <TextInput
                         value={tField(currentJobInfo?.subType, 'name') || '-'}
                         style={{
-                          fontWeight: '500',
+                          // fontWeight: '500',
+                          fontFamily: 'Rubik-Medium',
                           padding: 0,
                           paddingVertical: sizes.padding,
                           color: themeController.current?.textColor,
@@ -1873,7 +1881,8 @@ export default function ShowJobModal({
                       <TextInput
                         value={location?.address || '-'}
                         style={{
-                          fontWeight: '500',
+                          // fontWeight: '500',
+                          fontFamily: 'Rubik-Medium',
                           color: themeController.current?.textColor,
                           padding: 0,
                           paddingVertical: sizes.padding,
@@ -1967,7 +1976,8 @@ export default function ShowJobModal({
                       <TextInput
                         value={currentJobInfo?.price || '-'}
                         style={{
-                          fontWeight: '500',
+                          // fontWeight: '500',
+                          fontFamily: 'Rubik-Medium',
                           padding: 0,
                           paddingVertical: sizes.padding,
                           color: themeController.current?.textColor,
@@ -2448,10 +2458,10 @@ export default function ShowJobModal({
                   setPlansModalVisible(true);
                   setConfirmInterestModal(false);
                 }}
-              // onPress={() => {
-              //   setConfirmInterestModal(false);
-              //   setInterestedRequest(true);
-              // }}
+                // onPress={() => {
+                //   setConfirmInterestModal(false);
+                //   setInterestedRequest(true);
+                // }}
               >
                 <Text
                   style={{
@@ -2667,7 +2677,7 @@ const styles = StyleSheet.create({
   input: {
     width: '100%',
     fontFamily: 'Rubik-Medium',
-    fontWeight: '500',
+    // fontWeight: '500',
   },
   addImageButton: {
     backgroundColor: '#84B0F4',
@@ -2729,7 +2739,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   message: {
-    fontWeight: '500',
+    // fontWeight: '500',
+    fontFamily: 'Rubik-Medium',
     textAlign: 'center',
   },
   buttonRow: {

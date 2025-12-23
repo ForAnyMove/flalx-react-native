@@ -49,7 +49,7 @@ export default function DoneScreen({
       badgeFont: isWebLandscape ? web(12) : mobile(12),
       scrollContainerWidth: isWebLandscape ? '60%' : '100%',
       badgePosition: isWebLandscape ? web(5) : mobile(5),
-      personalMarkerBorderWidth: isWebLandscape ? web(3) : mobile(3),
+      personalMarkerBorderWidth: isWebLandscape ? web(2) : mobile(2),
       personalMarkerVP: isWebLandscape ? web(3) : mobile(3),
       personalMarkerHP: isWebLandscape ? web(12) : mobile(12),
       personalMarkerBottomAngleRadius: isWebLandscape ? web(8) : mobile(8),
@@ -222,7 +222,7 @@ export default function DoneScreen({
                       </Text>
                     ) : null}
                   </View>
-                  {!job?.comments?.length == 0 && (
+                  {job?.comments?.length == 0 && (
                     <View
                       style={[
                         styles.specialMarkerContainer,
