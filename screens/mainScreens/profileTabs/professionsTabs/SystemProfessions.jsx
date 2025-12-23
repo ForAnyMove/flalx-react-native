@@ -66,6 +66,21 @@ const SystemProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible
     return requests;
   }, [jobTypesController.userToSystemRequest.list]);
 
+  const filteredFormattedUserRequests = useMemo(() => {
+    if (searchValue.trim() === '') {
+      return formattedUserRequests;
+    }
+    return formattedUserRequests.filter((request) => {
+      const searchLower = searchValue.toLowerCase();
+      return (
+        request.title.toLowerCase().includes(searchLower) ||
+        request.subtitle.toLowerCase().includes(searchLower) ||
+        (request.extra?.comment?.content &&
+          request.extra.comment.content.toLowerCase().includes(searchLower))
+      );
+    });
+  }, [formattedUserRequests, searchValue]);
+
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
     const mobile = (size) => scaleByHeightMobile(size, height);
@@ -124,7 +139,7 @@ const SystemProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible
             { paddingBottom: sizes.scrollContainerPaddingBottom },
           ]}
         >
-          {formattedUserRequests.map((request, index) =>
+          {filteredFormattedUserRequests.map((request, index) =>
             <UniversalProfessionComponent
               key={index}
               item={{

@@ -107,6 +107,12 @@ export default function AuthScreenWithPass() {
 
       const res = await session.createUser(email.trim(), password);
 
+      if (res.isUserExists) {
+        setEmailError(t('register.email_busy'));
+        setLoading(false);
+        return;
+      }
+
       if (!res.success) {
         const err = String(res.error || '').toLowerCase();
 
@@ -256,7 +262,7 @@ export default function AuthScreenWithPass() {
       webLandscapeLabelMarginBottom: scaleByHeight(7, height),
       webLandscapeInputMarginBottom: scaleByHeight(3, height),
       multilineInputMarginBottom: isWebLandscape
-        ? scaleByHeight(10, height)
+        ? scaleByHeight(11, height)
         : scaleByHeightMobile(25, height),
       finishTitleMarginBottom: isWebLandscape
         ? scaleByHeight(18, height)
@@ -417,7 +423,7 @@ export default function AuthScreenWithPass() {
                   textAlign: 'center',
                   fontSize: dynamicStyles.title.fontSize * 1.5,
                   marginBottom: sizes.finishTitleMarginBottom,
-                  fontWeight: '500',
+                  fontFamily: 'Rubik-SemiBold',
                 },
               ]}
             >
@@ -430,7 +436,6 @@ export default function AuthScreenWithPass() {
                 {
                   color: theme.unactiveTextColor,
                   textAlign: 'center',
-                  fontWeight: '500',
                 },
               ]}
             >

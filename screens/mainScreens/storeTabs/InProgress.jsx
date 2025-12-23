@@ -44,6 +44,7 @@ export default function InProgressScreen({
       imageHeight: isWebLandscape ? web(120) : mobile(90),
       imageWidth: isWebLandscape ? web(153) : '25%',
       fontTitle: isWebLandscape ? web(18) : mobile(18),
+      fontLoading: isWebLandscape ? web(20) : mobile(20),
       fontDescription: isWebLandscape ? web(16) : mobile(16),
       badgeSize: isWebLandscape ? web(20) : mobile(20),
       badgeFont: isWebLandscape ? web(12) : mobile(12),
@@ -91,7 +92,14 @@ export default function InProgressScreen({
         />
       </View>
       {jobsController.loading.any ? (
-        <Text>Loading...</Text>
+        <Text
+          style={{
+            color: themeController.current?.unactiveTextColor,
+            fontSize: sizes.fontLoading,
+          }}
+        >
+          {t('common.loading')}
+        </Text>
       ) : jobsController.error ? (
         <Text>{jobsController.error}</Text>
       ) : (

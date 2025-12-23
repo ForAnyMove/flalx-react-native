@@ -51,6 +51,7 @@ export default function NewScreen({
       imageHeight: isWebLandscape ? web(120) : mobile(90),
       imageWidth: isWebLandscape ? web(153) : '25%',
       fontTitle: isWebLandscape ? web(18) : mobile(18),
+      fontLoading: isWebLandscape ? web(20) : mobile(20),
       fontDescription: isWebLandscape ? web(16) : mobile(16),
       scrollContainerWidth: isWebLandscape ? '60%' : '100%',
       personalMarkerBorderWidth: isWebLandscape ? web(2) : mobile(2),
@@ -67,16 +68,23 @@ export default function NewScreen({
     };
   }, [height, isWebLandscape]);
 
-
-  const filteredJobsList = jobsController == null || jobsController.executor == null || jobsController.executor.new == null ? [] : jobsController.executor.new
-    .filter((job) =>
-      filteredJobs.length > 0 ? filteredJobs.includes(job.type.key) || filteredJobs.includes(job.subType.key) : true
-    )
-    .filter((job) =>
-      [tField(job.type, 'name'), job.description].some((field) =>
-        field?.toLowerCase()?.includes(searchValue?.toLowerCase())
-      )
-    );
+  const filteredJobsList =
+    jobsController == null ||
+    jobsController.executor == null ||
+    jobsController.executor.new == null
+      ? []
+      : jobsController.executor.new
+          .filter((job) =>
+            filteredJobs.length > 0
+              ? filteredJobs.includes(job.type.key) ||
+                filteredJobs.includes(job.subType.key)
+              : true
+          )
+          .filter((job) =>
+            [tField(job.type, 'name'), job.description].some((field) =>
+              field?.toLowerCase()?.includes(searchValue?.toLowerCase())
+            )
+          );
 
   return (
     <View
@@ -103,7 +111,14 @@ export default function NewScreen({
         />
       </View>
       {jobsController.loading.any ? (
-        <Text>Loading...</Text>
+        <Text
+          style={{
+            color: themeController.current?.unactiveTextColor,
+            fontSize: sizes.fontLoading,
+          }}
+        >
+          {t('common.loading')}
+        </Text>
       ) : jobsController.error ? (
         <Text>{jobsController.error}</Text>
       ) : (
@@ -142,7 +157,7 @@ export default function NewScreen({
                   case 'top':
                     isMarkerExist = true;
                     extraMarkerColor = themeController.current?.topMarkerColor;
-                    extraMarkerText = 'TOP';
+                    extraMarkerText = t('extra_markers.top');
                     extraMarkerStyle = {
                       borderWidth: sizes.personalMarkerBorderWidth,
                       borderColor: themeController.current?.topMarkerColor,
@@ -152,7 +167,7 @@ export default function NewScreen({
                     isMarkerExist = true;
                     extraMarkerColor =
                       themeController.current?.verifiedMarkerColor;
-                    extraMarkerText = 'Verified';
+                    extraMarkerText = t('extra_markers.verified');
                     extraMarkerStyle = {
                       borderWidth: sizes.personalMarkerBorderWidth,
                       borderColor: themeController.current?.verifiedMarkerColor,
@@ -162,7 +177,7 @@ export default function NewScreen({
                     isMarkerExist = true;
                     extraMarkerColor =
                       themeController.current?.quickMarkerColor;
-                    extraMarkerText = 'Quickly';
+                    extraMarkerText = t('extra_markers.quickly');
                     extraMarkerStyle = {
                       borderWidth: sizes.personalMarkerBorderWidth,
                       borderColor: themeController.current?.quickMarkerColor,
@@ -172,7 +187,7 @@ export default function NewScreen({
                     isMarkerExist = true;
                     extraMarkerColor =
                       themeController.current?.forProMarkerColor;
-                    extraMarkerText = 'For PRO';
+                    extraMarkerText = t('extra_markers.pro');
                     extraMarkerStyle = {
                       borderWidth: sizes.personalMarkerBorderWidth,
                       borderColor: themeController.current?.forProMarkerColor,
@@ -218,22 +233,22 @@ export default function NewScreen({
                               ?.defaultBlocksMockBackground,
                           ...(isRTL
                             ? {
-                              marginLeft: sizes.imageMargin,
-                              marginRight: 0,
-                            }
+                                marginLeft: sizes.imageMargin,
+                                marginRight: 0,
+                              }
                             : {
-                              marginRight: sizes.imageMargin,
-                              marginLeft: 0,
-                            }),
+                                marginRight: sizes.imageMargin,
+                                marginLeft: 0,
+                              }),
                           ...(isRTL && Platform.OS === 'web'
                             ? {
-                              borderTopRightRadius: sizes.cardRadius * 0.6,
-                              borderBottomRightRadius: sizes.cardRadius * 0.6,
-                            }
+                                borderTopRightRadius: sizes.cardRadius * 0.6,
+                                borderBottomRightRadius: sizes.cardRadius * 0.6,
+                              }
                             : {
-                              borderTopLeftRadius: sizes.cardRadius * 0.6,
-                              borderBottomLeftRadius: sizes.cardRadius * 0.6,
-                            }),
+                                borderTopLeftRadius: sizes.cardRadius * 0.6,
+                                borderBottomLeftRadius: sizes.cardRadius * 0.6,
+                              }),
                         },
                       ]}
                     >
@@ -297,19 +312,19 @@ export default function NewScreen({
                           },
                           isRTL
                             ? {
-                              left: 0,
-                              borderBottomRightRadius: isWebLandscape
-                                ? sizes.personalMarkerBottomAngleRadius
-                                : 0,
-                              borderBottomLeftRadius: isWebLandscape
-                                ? 0
-                                : sizes.personalMarkerBottomAngleRadius,
-                            }
+                                left: 0,
+                                borderBottomRightRadius: isWebLandscape
+                                  ? sizes.personalMarkerBottomAngleRadius
+                                  : 0,
+                                borderBottomLeftRadius: isWebLandscape
+                                  ? 0
+                                  : sizes.personalMarkerBottomAngleRadius,
+                              }
                             : {
-                              right: 0,
-                              borderBottomLeftRadius:
-                                sizes.personalMarkerBottomAngleRadius,
-                            },
+                                right: 0,
+                                borderBottomLeftRadius:
+                                  sizes.personalMarkerBottomAngleRadius,
+                              },
                         ]}
                       >
                         <Text

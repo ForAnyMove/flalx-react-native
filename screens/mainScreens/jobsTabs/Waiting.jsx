@@ -43,6 +43,7 @@ export default function WaitingScreen({
       imageHeight: isWebLandscape ? web(120) : mobile(90),
       imageWidth: isWebLandscape ? web(153) : '25%',
       fontTitle: isWebLandscape ? web(18) : mobile(18),
+      fontLoading: isWebLandscape ? web(20) : mobile(20),
       fontDescription: isWebLandscape ? web(16) : mobile(16),
       scrollContainerWidth: isWebLandscape ? '60%' : '100%',
       personalMarkerBorderWidth: isWebLandscape ? web(2) : mobile(2),
@@ -67,6 +68,20 @@ export default function WaitingScreen({
         field?.toLowerCase()?.includes(searchValue?.toLowerCase())
       )
     );
+
+  // const filteredJobsList2 = useMemo(() => {
+  //   let list = jobsController.waiting.list;
+  //   if (filteredJobs.length > 0) {
+  //     list = list.filter((job) => filteredJobs.includes(job.type.id));
+  //   }
+  //   if (searchValue.length > 0) {
+  //     const lowerSearch = searchValue.toLowerCase();
+  //     list = list.filter((job) =>
+  //       job.type.name.toLowerCase().includes(lowerSearch)
+  //     );
+  //   }
+  //   return list;
+  // }, [jobsController.waiting.list, filteredJobs, searchValue]);
 
   return (
     <View
@@ -93,7 +108,14 @@ export default function WaitingScreen({
         />
       </View>
       {jobsController.loading.any ? (
-        <Text>Loading...</Text>
+        <Text
+          style={{
+            color: themeController.current?.unactiveTextColor,
+            fontSize: sizes.fontLoading,
+          }}
+        >
+          {t('common.loading')}
+        </Text>
       ) : jobsController.error ? (
         <Text>{jobsController.error}</Text>
       ) : (
@@ -245,7 +267,7 @@ export default function WaitingScreen({
                           },
                         ]}
                       >
-                        {'For you'}
+                        {t('extra_markers.for_you')}
                       </Text>
                     </View>
                   )}

@@ -447,6 +447,23 @@ export default function sessionManager() {
   // Создание пользователя по email + password
   async function createUser(email, password, profileData = {}) {
     try {
+      // 0. Проверяем, существует ли пользователь
+      const { data: existingUser, error: checkError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password: 'invalid-password-check', // Пытаемся войти с неверным паролем
+        });
+
+      // Если signInWithPassword вернула ошибку 'Invalid login credentials',
+      // это может означать, что пользователь СУЩЕСТВУЕТ.
+      if (checkError && checkError.message.includes('Invalid login')) {
+        return {
+          success: false,
+          error: 'User with this email already exists.',
+          isUserExists: true,
+        };
+      }
+
       // 1. Регистрируем пользователя в Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -454,6 +471,14 @@ export default function sessionManager() {
       });
 
       if (error) {
+        // Явная ошибка от Supabase, например, "User already registered"
+        if (error.message.toLowerCase().includes('already registered')) {
+          return {
+            success: false,
+            error: error.message,
+            isUserExists: true,
+          };
+        }
         console.error('Ошибка регистрации в Supabase:', error.message);
         return { success: false, error: error.message };
       }
@@ -465,6 +490,15 @@ export default function sessionManager() {
 
       if (!sessionData) {
         // Если сессия не вернулась — пользователь должен подтвердить email
+        // Это может быть как новый пользователь, так и существующий неподтвержденный
+        if (data.user && data.user.identities && data.user.identities.length === 0) {
+           return {
+            success: false,
+            error: 'User with this email already exists.',
+            isUserExists: true,
+          };
+        }
+        
         return {
           success: true,
           requiresEmailConfirmation: true,

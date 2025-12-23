@@ -72,6 +72,21 @@ const MyProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible, se
     return requests;
   }, [jobTypesController.userToUserRequest.list]);
 
+  const filteredFormattedUserRequests = useMemo(() => {
+    if (searchValue.trim() === '') {
+      return formattedUserRequests;
+    }
+    return formattedUserRequests.filter((request) => {
+      const searchLower = searchValue.toLowerCase();
+      return (
+        request.title.toLowerCase().includes(searchLower) ||
+        request.subtitle.toLowerCase().includes(searchLower) ||
+        (request.extra?.comment?.content &&
+          request.extra.comment.content.toLowerCase().includes(searchLower))
+      );
+    });
+  }, [formattedUserRequests, searchValue]);
+
   const [isRequestModalVisible, setIsRequestModalVisible] = useState(false);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [isSubmitModalVisible, setIsSubmitModalVisible] = useState(false);
@@ -232,7 +247,7 @@ const MyProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible, se
             { paddingBottom: sizes.scrollContainerPaddingBottom },
           ]}
         >
-          {formattedUserRequests.map((request, index) =>
+          {filteredFormattedUserRequests.map((request, index) =>
             <UniversalProfessionComponent
               key={index}
               item={{

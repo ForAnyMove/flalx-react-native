@@ -15,10 +15,12 @@ import { useComponentContext } from '../../context/globalAppContext';
 import JobModalWrapper from '../../components/JobModalWrapper';
 import NewJobModal from '../../components/NewJobModal';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
+import { useTranslation } from 'react-i18next';
 
 export default function Providers() {
   const { themeController, providersController, languageController } =
     useComponentContext();
+  const { t } = useTranslation();
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');
   const { width, height } = useWindowDimensions();
@@ -39,6 +41,7 @@ export default function Providers() {
       paddingHorizontal: isWebLandscape ? web(10) : mobile(10),
       scrollViewColumnGap: web(23),
       scrollViewRowGap: isWebLandscape ? web(23) : mobile(10),
+      fontLoading: isWebLandscape ? web(20) : mobile(20),
     };
   }, [isWebLandscape, height]);
 
@@ -80,7 +83,14 @@ export default function Providers() {
       </View>
       {providersController.providers.length <= 0 ? (
         <View>
-          <Text>Loading...</Text>
+          <Text
+            style={{
+              color: themeController.current?.unactiveTextColor,
+              fontSize: sizes.fontLoading,
+            }}
+          >
+            {t('common.loading')}
+          </Text>
         </View>
       ) : (
         <ScrollView

@@ -852,6 +852,8 @@ export default function ShowJobModal({
                 {
                   backgroundColor: themeController.current?.formInputBackground,
                   borderRadius: sizes.borderRadius,
+                  paddingHorizontal: sizes.inputContainerPaddingHorizontal,
+                  paddingVertical: sizes.inputContainerPaddingVertical,
                 },
                 isWebLandscape && {
                   width: scaleByHeight(330, height),
@@ -953,6 +955,8 @@ export default function ShowJobModal({
                     height: sizes.commentFieldHeight,
                     color: themeController.current?.textColor,
                     fontSize: sizes.inputFont,
+                    padding: 0,
+                    paddingVertical: sizes.padding,
                   },
                   isWebLandscape && { padding: 0 },
                   isRTL && { textAlign: 'right' },
