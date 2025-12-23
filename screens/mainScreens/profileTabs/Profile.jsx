@@ -10,6 +10,8 @@ import {
   Platform,
   Modal,
   useWindowDimensions,
+  PermissionsAndroid,
+  Alert
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
 import { useMemo, useState } from 'react';
@@ -20,6 +22,7 @@ import ImagePickerModal from '../../../components/ui/ImagePickerModal';
 import { uploadImageToSupabase } from '../../../utils/supabase/uploadImageToSupabase';
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import SubscriptionsModal from '../../../components/SubscriptionsModal';
+import { getUserExportData } from '../../../src/api/dataExport';
 
 export default function Profile() {
   const { user, themeController, languageController, session } =
@@ -28,7 +31,7 @@ export default function Profile() {
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
-    () => () => {}
+    () => () => { }
   );
   const [changePasswordModal, showPasswordModal] = useState(false);
 
@@ -112,6 +115,53 @@ export default function Profile() {
       console.error('Ошибка загрузки аватара:', err.message);
     }
   }
+
+  async function downloadExportData() {
+    try {
+      const res = await getUserExportData(session);
+      if (res && typeof res === 'object') {
+        const json = JSON.stringify(res, null, 2);
+        if (Platform.OS === 'web') {
+          const blob = new Blob([json], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'export.json';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        } else {
+          let hasPermission = true;
+          if (Platform.OS === 'android') {
+            const granted = await PermissionsAndroid.request(
+              PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+              {
+                title: 'Storage Permission',
+                message: 'App needs access to your storage to save export data.',
+                buttonNeutral: 'Ask Me Later',
+                buttonNegative: 'Cancel',
+                buttonPositive: 'OK',
+              }
+            );
+            hasPermission = granted === PermissionsAndroid.RESULTS.GRANTED;
+          }
+
+          if (hasPermission) {
+            const RNFS = require('react-native-fs');
+            const path = `${RNFS.DownloadDirectoryPath}/export.json`;
+            await RNFS.writeFile(path, json, 'utf8');
+            Alert.alert('Success', t('my_profile.export_success', { path }));
+          } else {
+            Alert.alert('Permission denied', t('my_profile.export_permission_denied'));
+          }
+        }
+      }
+    } catch (err) {
+      showError(t('errors.unexpected_error'));
+    }
+  }
+
   const firstBtnsRow = isWebLandscape ? ['cupons', 'subscription', 'payment'] : ['cupons', 'subscription'];
   return (
     <ScrollView
@@ -267,7 +317,7 @@ export default function Profile() {
                   width: sizes.btnWidth,
                   borderRadius: sizes.infoFieldBorderRadius,
                 },
-                key === 'payment' && isWebLandscape && { visibility: 'hidden'}
+                key === 'payment' && isWebLandscape && { visibility: 'hidden' }
               ]}
               onPress={() => {
                 /* Навигация по кнопкам */
@@ -357,7 +407,7 @@ export default function Profile() {
               bg: themeController.current?.buttonTextColorSecondary,
               color: themeController.current?.buttonColorSecondaryDefault,
               border: themeController.current?.buttonColorSecondaryDefault,
-              onPress: () => {},
+              onPress: downloadExportData,
             },
           ].map((btn) => (
             <TouchableOpacity

@@ -170,6 +170,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
       },
       errors: {
         passwords_not_match: 'Passwords do not match',
+        unexpected_error: 'An unexpected error occurred. Please try again later.',
       },
       settings: {
         sent: 'Sent',
@@ -462,6 +463,9 @@ or reject it. Please adhere to the platform rules.`,
           failed_to_send_request: `Error\nFailed to send request. Please try again later.\n{{error}}`,
         },
       },
+      misc: {
+        search_request_by_location: 'You can only see requests based on your approximate location.'
+      }
     },
   },
   he: {
@@ -633,6 +637,7 @@ or reject it. Please adhere to the platform rules.`,
       },
       errors: {
         passwords_not_match: 'הסיסמאות אינן תואמות',
+        unexpected_error: 'אירעה שגיאה בלתי צפויה. אנא נסה שוב מאוחר יותר.',
       },
       settings: {
         sent: 'נשלח',
@@ -921,6 +926,9 @@ or reject it. Please adhere to the platform rules.`,
           failed_to_send_request: `שגיאה\nשליחת הבקשה נכשלה. אנא נסה שוב מאוחר יותר.\n{{error}}`,
         },
       },
+      misc: {
+        search_request_by_location: 'אתה יכול לראות בקשות רק על בסיס המיקום המשוער שלך.'
+      }
     },
   },
 };

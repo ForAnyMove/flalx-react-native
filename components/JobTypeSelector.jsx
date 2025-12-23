@@ -48,11 +48,11 @@ export default function JobTypeSelector({
         ? scaleByHeight(4, height)
         : scaleByHeightMobile(4, height),
       rowGap: isWebLandscape
-        ? scaleByHeight(10, height)
-        : scaleByHeightMobile(10, height),
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(8, height),
       colGap: isWebLandscape
-        ? scaleByHeight(10, height)
-        : scaleByHeightMobile(10, height),
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(8, height),
       trashSize: isWebLandscape
         ? scaleByHeight(32, height)
         : scaleByHeightMobile(24, height),

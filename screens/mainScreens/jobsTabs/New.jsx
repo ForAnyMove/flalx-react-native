@@ -22,7 +22,7 @@ export default function NewScreen({
   setCurrentJobId,
   setJobModalStatus,
 }) {
-  const { themeController, jobsController, languageController } =
+  const { themeController, jobsController, languageController, geolocationController } =
     useComponentContext();
   const { tField } = useLocalization(languageController.current);
   const { height } = useWindowDimensions();
@@ -110,6 +110,7 @@ export default function NewScreen({
           setSelectedTypes={setFilteredJobs}
         />
       </View>
+      {geolocationController.enabled && <Text style={{ color: themeController.current?.textColor, marginBottom: sizes.containerMarginTop / 2 }}>{t('misc.search_request_by_location')}</Text>}
       {jobsController.loading.any ? (
         <Text
           style={{
