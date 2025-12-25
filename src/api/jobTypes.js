@@ -29,7 +29,6 @@ export async function getSystemTypesWithSubtypes(session) {
 
         if (status == 200) {
             returnData.typesWithSubtypes = response.data;
-            console.log(response.data);
         }
 
         return returnData;

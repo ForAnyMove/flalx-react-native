@@ -65,6 +65,16 @@ export default function WaitingScreen({
     };
   }, [height, isWebLandscape]);
 
+  const pendingJobsList = jobsController.creator.pending
+    .filter((job) =>
+      filteredJobs.length > 0 ? filteredJobs.includes(job.type.key) || filteredJobs.includes(job.subType.key) : true
+    )
+    .filter((job) =>
+      [tField(job.type, 'name'), job.description].some((field) =>
+        field.toLowerCase().includes(searchValue.toLowerCase())
+      )
+    );
+
   const filteredJobsList = jobsController.creator.waiting
     .filter((job) =>
       filteredJobs.length > 0 ? filteredJobs.includes(job.type.key) || filteredJobs.includes(job.subType.key) : true
@@ -74,6 +84,172 @@ export default function WaitingScreen({
         field.toLowerCase().includes(searchValue.toLowerCase())
       )
     );
+
+
+
+  const drawJobCard = (job, index) => {
+    const hasImage = job.images && job.images.length > 0;
+    return <TouchableOpacity
+      key={index}
+      style={[styles.cardContainer, { marginBottom: sizes.cardMarginBottom }]}
+      onPress={() => {
+        setCurrentJobId(job.id);
+        setShowJobModalVisible(true);
+        setJobModalStatus('store-waiting');
+      }}
+    >
+      <View
+        style={[
+          styles.cardContent,
+          {
+            backgroundColor:
+              themeController.current?.formInputBackground,
+            borderRadius: sizes.cardRadius,
+          },
+        ]}
+      >
+        <View
+          style={[
+            styles.imageContainer,
+            {
+              width: sizes.imageWidth,
+              height: sizes.imageHeight,
+              backgroundColor:
+                themeController.current?.defaultBlocksMockBackground,
+              ...(isRTL
+                ? {
+                  marginLeft: sizes.imageMargin,
+                  marginRight: 0,
+                }
+                : {
+                  marginRight: sizes.imageMargin,
+                  marginLeft: 0,
+                }),
+              ...(isRTL && Platform.OS === 'web'
+                ? {
+                  borderTopRightRadius: sizes.cardRadius,
+                  borderBottomRightRadius: sizes.cardRadius,
+                }
+                : {
+                  borderTopLeftRadius: sizes.cardRadius,
+                  borderBottomLeftRadius: sizes.cardRadius,
+                }),
+            },
+          ]}
+        >
+          {hasImage ? (
+            <Image
+              source={{ uri: job.images[0] }}
+              style={styles.image}
+              resizeMode='cover'
+            />
+          ) : (
+            <View style={styles.placeholderImage}>
+              <FontAwesome6
+                name='image'
+                size={sizes.fontTitle}
+                color={
+                  themeController.current?.defaultBlocksMockColor
+                }
+              />
+            </View>
+          )}
+        </View>
+        <View style={styles.textContent}>
+          <Text
+            style={[
+              styles.title,
+              {
+                color: themeController.current?.primaryColor,
+                fontSize: sizes.fontTitle,
+              },
+            ]}
+          >
+            {tField(job.type, 'name')}
+          </Text>
+          {job.description ? (
+            <Text
+              style={[
+                styles.description,
+                {
+                  color: themeController.current?.unactiveTextColor,
+                  textAlign:
+                    isRTL && Platform.OS === 'web' ? 'right' : 'left',
+                  fontSize: sizes.fontDescription,
+                  marginTop: sizes.descriptionMarginTop,
+                },
+              ]}
+            >
+              {job.description}
+            </Text>
+          ) : null}
+        </View>
+        {job.providers?.length > 0 && (
+          <View
+            style={[
+              styles.badge,
+              {
+                backgroundColor:
+                  themeController.current?.secondaryBadgeBackground,
+                minWidth: sizes.badgeSize,
+                height: sizes.badgeSize,
+                borderRadius: sizes.badgeSize / 2,
+                top: sizes.badgePosition,
+                paddingHorizontal: sizes.badgePadding,
+                paddingVertical: sizes.badgePadding,
+                ...(isRTL
+                  ? { left: sizes.badgePosition }
+                  : { right: sizes.badgePosition }),
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.badgeText,
+                {
+                  color: themeController.current?.badgeTextColor,
+                  fontSize: sizes.badgeFont,
+                },
+              ]}
+            >
+              {job.providers.length}
+            </Text>
+          </View>
+        )}
+        {(job.status === 'pending' || job.status === 'pending_moderation') &&
+          <View
+            style={[
+              styles.badge,
+              {
+                backgroundColor:
+                  themeController.current?.mainBadgeBackground,
+                minWidth: sizes.badgeSize,
+                height: sizes.badgeSize,
+                borderRadius: sizes.badgeSize / 4,
+                top: sizes.badgePosition,
+                paddingHorizontal: sizes.badgePadding,
+                paddingVertical: sizes.badgePadding,
+                ...(isRTL
+                  ? { left: sizes.badgePosition }
+                  : { right: sizes.badgePosition }),
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.badgeText,
+                {
+                  color: themeController.current?.badgeTextColor,
+                  fontSize: sizes.badgeFont,
+                },
+              ]}
+            >
+              {job.status === 'pending_moderation' ? t('common.pending_moderation') : t('common.waiting_payment')}
+            </Text>
+          </View>}
+      </View>
+    </TouchableOpacity>
+  }
 
   return (
     <View
@@ -233,139 +409,12 @@ export default function WaitingScreen({
           <View style={{ height: 10 }} />
           <Divider />
           <View style={{ height: 20 }} /> */}
+          {pendingJobsList.map((job, index) => {
+            return drawJobCard(job, index);
+          })}
+          {pendingJobsList.length > 0 && <Divider style={{ marginBottom: sizes.cardMarginBottom }} />}
           {filteredJobsList.map((job, index) => {
-            const hasImage = job.images && job.images.length > 0;
-            return (
-              <TouchableOpacity
-                key={index}
-                style={[styles.cardContainer, { marginBottom: sizes.cardMarginBottom }]}
-                onPress={() => {
-                  setCurrentJobId(job.id);
-                  setShowJobModalVisible(true);
-                  setJobModalStatus('store-waiting');
-                }}
-              >
-                <View
-                  style={[
-                    styles.cardContent,
-                    {
-                      backgroundColor:
-                        themeController.current?.formInputBackground,
-                      borderRadius: sizes.cardRadius,
-                    },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.imageContainer,
-                      {
-                        width: sizes.imageWidth,
-                        height: sizes.imageHeight,
-                        backgroundColor:
-                          themeController.current?.defaultBlocksMockBackground,
-                        ...(isRTL
-                          ? {
-                            marginLeft: sizes.imageMargin,
-                            marginRight: 0,
-                          }
-                          : {
-                            marginRight: sizes.imageMargin,
-                            marginLeft: 0,
-                          }),
-                        ...(isRTL && Platform.OS === 'web'
-                          ? {
-                            borderTopRightRadius: sizes.cardRadius,
-                            borderBottomRightRadius: sizes.cardRadius,
-                          }
-                          : {
-                            borderTopLeftRadius: sizes.cardRadius,
-                            borderBottomLeftRadius: sizes.cardRadius,
-                          }),
-                      },
-                    ]}
-                  >
-                    {hasImage ? (
-                      <Image
-                        source={{ uri: job.images[0] }}
-                        style={styles.image}
-                        resizeMode='cover'
-                      />
-                    ) : (
-                      <View style={styles.placeholderImage}>
-                        <FontAwesome6
-                          name='image'
-                          size={sizes.fontTitle}
-                          color={
-                            themeController.current?.defaultBlocksMockColor
-                          }
-                        />
-                      </View>
-                    )}
-                  </View>
-                  <View style={styles.textContent}>
-                    <Text
-                      style={[
-                        styles.title,
-                        {
-                          color: themeController.current?.primaryColor,
-                          fontSize: sizes.fontTitle,
-                        },
-                      ]}
-                    >
-                      {tField(job.type, 'name')}
-                    </Text>
-                    {job.description ? (
-                      <Text
-                        style={[
-                          styles.description,
-                          {
-                            color: themeController.current?.unactiveTextColor,
-                            textAlign:
-                              isRTL && Platform.OS === 'web' ? 'right' : 'left',
-                            fontSize: sizes.fontDescription,
-                            marginTop: sizes.descriptionMarginTop,
-                          },
-                        ]}
-                      >
-                        {job.description}
-                      </Text>
-                    ) : null}
-                  </View>
-                  {job.providers?.length > 0 && (
-                    <View
-                      style={[
-                        styles.badge,
-                        {
-                          backgroundColor:
-                            themeController.current?.secondaryBadgeBackground,
-                          minWidth: sizes.badgeSize,
-                          height: sizes.badgeSize,
-                          borderRadius: sizes.badgeSize / 2,
-                          top: sizes.badgePosition,
-                          paddingHorizontal: sizes.badgePadding,
-                          paddingVertical: sizes.badgePadding,
-                          ...(isRTL
-                            ? { left: sizes.badgePosition }
-                            : { right: sizes.badgePosition }),
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.badgeText,
-                          {
-                            color: themeController.current?.badgeTextColor,
-                            fontSize: sizes.badgeFont,
-                          },
-                        ]}
-                      >
-                        {job.providers.length}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-            );
+            return drawJobCard(job, index);
           })}
         </ScrollView>
       )}

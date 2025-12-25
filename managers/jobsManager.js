@@ -13,6 +13,7 @@ import { useGeolocation } from "./useGeolocation";
  * }
  */
 export default function jobsManager({ session, user, geolocation }) {
+  const [creatorPending, setCreatorPending] = useState([]);
   const [creatorWaiting, setCreatorWaiting] = useState([]);
   const [creatorInProgress, setCreatorInProgress] = useState([]);
   const [creatorDone, setCreatorDone] = useState([]);
@@ -65,6 +66,10 @@ export default function jobsManager({ session, user, geolocation }) {
   }
 
   // ------- загрузчики -------
+
+  async function loadCreatorPending() {
+    return safeFetch(`${serverURL}/jobs/as-creator/pending`, { headers: authHeaders });
+  }
 
   async function loadCreatorWaiting() {
     return safeFetch(`${serverURL}/jobs/as-creator/waiting`, { headers: authHeaders });
@@ -119,13 +124,15 @@ export default function jobsManager({ session, user, geolocation }) {
     setLoadingCreator(true);
     setError(null);
     try {
-      const [waiting, inProgress, done, products] = await Promise.all([
+      const [pending, waiting, inProgress, done, products] = await Promise.all([
+        loadCreatorPending(),
         loadCreatorWaiting(),
         loadCreatorInProgress(),
         loadCreatorDone(),
         loadJobProducts(),
       ]);
       if (!alive.current) return;
+      setCreatorPending(pending);
       setCreatorWaiting(waiting);
       setCreatorInProgress(inProgress);
       setCreatorDone(done);
@@ -160,6 +167,23 @@ export default function jobsManager({ session, user, geolocation }) {
     } catch (e) {
       if (!alive.current) return;
       setError(e.message || "Executor lists load error");
+    } finally {
+      if (alive.current) setLoadingExecutor(false);
+    }
+  }
+
+  async function reloadExecutorNew() {
+    if (!serverURL || !token || !userId) return;
+    setLoadingExecutor(true);
+    setError(null);
+
+    try {
+      const n = await loadExecNew();
+      if (!alive.current) return;
+      setExecNew(n);
+    } catch (e) {
+      if (!alive.current) return;
+      setError(e.message || "Executor new list load error");
     } finally {
       if (alive.current) setLoadingExecutor(false);
     }
@@ -267,6 +291,7 @@ export default function jobsManager({ session, user, geolocation }) {
 
   return {
     creator: {
+      pending: creatorPending,
       waiting: creatorWaiting,
       inProgress: creatorInProgress,
       done: creatorDone,
@@ -280,6 +305,7 @@ export default function jobsManager({ session, user, geolocation }) {
     reloadAll,
     reloadCreator,
     reloadExecutor,
+    reloadExecutorNew,
     loading: {
       any: loadingCreator || loadingExecutor,
       creator: loadingCreator,
