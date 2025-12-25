@@ -95,32 +95,34 @@ export default function NewScreen({
                 <TouchableOpacity
                   key={value.key}
                   onPress={async () => {
-                    const pendingJobRequest = await checkHasPendingJob(session);
+                    // const pendingJobRequest = await checkHasPendingJob(session);
+                    setActiveKey(value.key);
+                    setNewJobModalVisible(true);
 
-                    if (!pendingJobRequest.job) {
-                      setActiveKey(value.key);
-                      setNewJobModalVisible(true);
-                    } else {
-                      const url =
-                        pendingJobRequest.payment?.paymentMetadata
-                          ?.paypalApproval?.href;
-                      const message = [
-                        t('subscriptions.messages.pendingJob'),
-                        '',
-                        t('subscriptions.messages.paymentURL', { url: url }),
-                        '',
-                        t('subscriptions.messages.cancelPendingJob'),
-                      ].join('\n');
+                    // if (!pendingJobRequest.job) {
+                    //   setActiveKey(value.key);
+                    //   setNewJobModalVisible(true);
+                    // } else {
+                    //   const url =
+                    //     pendingJobRequest.payment?.paymentMetadata
+                    //       ?.paypalApproval?.href;
+                    //   const message = [
+                    //     t('subscriptions.messages.pendingJob'),
+                    //     '',
+                    //     t('subscriptions.messages.paymentURL', { url: url }),
+                    //     '',
+                    //     t('subscriptions.messages.cancelPendingJob'),
+                    //   ].join('\n');
 
-                      showWarning(message, [
-                        {
-                          title: t('subscriptions.messages.moveToPayment'),
-                          backgroundColor: '#3B82F6',
-                          textColor: '#FFFFFF',
-                          onPress: () => openWebView(url),
-                        },
-                      ]);
-                    }
+                    //   showWarning(message, [
+                    //     {
+                    //       title: t('subscriptions.messages.moveToPayment'),
+                    //       backgroundColor: '#3B82F6',
+                    //       textColor: '#FFFFFF',
+                    //       onPress: () => openWebView(url),
+                    //     },
+                    //   ]);
+                    // }
                   }}
                 >
                   <NewJobTemplateCard

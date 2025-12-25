@@ -447,7 +447,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                     ]}
                   >
                     {/* Job Types */}
-                    {jobTypes && jobTypes?.length > 0 && (
+                    {professions && professions?.length > 0 && (
                       <View
                         style={[
                           isWebLandscape && {
@@ -471,7 +471,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                             isRTL && { justifyContent: 'flex-end' },
                           ]}
                         >
-                          {jobTypes?.map((type, i) => (
+                          {professions?.map((p, i) => (
                             <View
                               key={i}
                               style={[
@@ -480,7 +480,48 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                               ]}
                             >
                               <Text style={dynamicStyles.badgeText}>
-                                {JOB_TYPES[type]}
+                                {tField(p.job_type, 'name')}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
+                    )}
+
+                    {professions && professions?.length > 0 && (
+                      <View
+                        style={[
+                          isWebLandscape && {
+                            width: '48%',
+                            marginBottom: sizes.infoSectionMarginBottom,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.sectionTitle,
+                            dynamicStyles.sectionTitle,
+                          ]}
+                        >
+                          {t('profile.job_subtypes')}
+                        </Text>
+                        <View
+                          style={[
+                            styles.wrapRow,
+                            { gap: sizes.badgeGap },
+                            isRTL && { justifyContent: 'flex-end' },
+                          ]}
+                        >
+                          {professions?.map((p, i) => (
+                            <View
+                              key={i}
+                              style={[
+                                styles.typeBadge,
+                                dynamicStyles.typeBadge,
+                              ]}
+                            >
+                              <Text style={dynamicStyles.badgeText}>
+                                {tField(p.job_subtype, 'name')}
                               </Text>
                             </View>
                           ))}
@@ -489,7 +530,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                     )}
 
                     {/* Professions */}
-                    {professions && professions?.length > 0 && (
+                    {/* {professions && professions?.length > 0 && (
                       <View
                         style={[
                           isWebLandscape && {
@@ -528,7 +569,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                           ))}
                         </View>
                       </View>
-                    )}
+                    )} */}
 
                     {/* Sub Types */}
                     {/* <Text style={[styles.sectionTitle, { fontSize: sizes.sectionTitleSize , color: themeController.current?.textColor}]}>

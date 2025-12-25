@@ -32,6 +32,7 @@ import JobModalWrapper from './JobModalWrapper';
 import {
   addSelfToJobProviders,
   completeJob,
+  payForJob,
   updateJobComment,
 } from '../src/api/jobs';
 import { useWebView } from '../context/webViewContext';
@@ -39,6 +40,7 @@ import SubscriptionsModal from './SubscriptionsModal';
 import CommentsSection from './CommentsSection';
 import CompleteJobModal from './CompleteJobModal';
 import { useLocalization } from '../src/services/useLocalization';
+import { useNotification } from '../src/render';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -80,6 +82,7 @@ export default function ShowJobModal({
     subscription,
   } = useComponentContext();
   const { tField } = useLocalization(languageController.current);
+  const { showError } = useNotification();
   const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
@@ -101,16 +104,16 @@ export default function ShowJobModal({
     // Определяем, какие массивы отслеживать
     const jobGroups = isCreator
       ? {
-          waiting: jobsController.creator.waiting,
-          in_progress: jobsController.creator.inProgress,
-          done: jobsController.creator.done,
-        }
+        waiting: jobsController.creator.waiting,
+        in_progress: jobsController.creator.inProgress,
+        done: jobsController.creator.done,
+      }
       : {
-          new: jobsController.executor.new,
-          waiting: jobsController.executor.waiting,
-          in_progress: jobsController.executor.inProgress,
-          done: jobsController.executor.done,
-        };
+        new: jobsController.executor.new,
+        waiting: jobsController.executor.waiting,
+        in_progress: jobsController.executor.inProgress,
+        done: jobsController.executor.done,
+      };
 
     // Поиск текущего местоположения заявки
     let currentLocation = null;
@@ -128,9 +131,8 @@ export default function ShowJobModal({
       const prev = prevJobLocation.current;
       if (prev && prev !== currentLocation) {
         const fromStatus = `${isCreator ? 'client' : 'business'}-${prev}`;
-        const toStatus = `${
-          isCreator ? 'client' : 'business'
-        }-${currentLocation}`;
+        const toStatus = `${isCreator ? 'client' : 'business'
+          }-${currentLocation}`;
         console.log(
           `Заявка ${currentJobId} переместилась: ${fromStatus} → ${toStatus}`
         );
@@ -149,16 +151,16 @@ export default function ShowJobModal({
     status,
     ...(status.startsWith('client')
       ? [
-          jobsController.creator.waiting,
-          jobsController.creator.inProgress,
-          jobsController.creator.done,
-        ]
+        jobsController.creator.waiting,
+        jobsController.creator.inProgress,
+        jobsController.creator.done,
+      ]
       : [
-          jobsController.executor.new,
-          jobsController.executor.waiting,
-          jobsController.executor.inProgress,
-          jobsController.executor.done,
-        ]),
+        jobsController.executor.new,
+        jobsController.executor.waiting,
+        jobsController.executor.inProgress,
+        jobsController.executor.done,
+      ]),
   ]);
 
   const sizes = useMemo(
@@ -447,7 +449,7 @@ export default function ShowJobModal({
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
-    () => {}
+    () => { }
   );
 
   const [plansModalVisible, setPlansModalVisible] = useState(false);
@@ -541,15 +543,46 @@ export default function ShowJobModal({
   function extraUiByStatus(status) {
     switch (status) {
       case 'store-waiting':
-        return [
-          <ProvidersSection
-            key='providers'
-            styles={styles}
-            currentJobInfo={currentJobInfo}
-            status={status}
-            closeAllModal={closeModal}
-          />,
-        ];
+        switch (currentJobInfo?.status) {
+          case 'pending':
+            return [<Text
+              style={[
+                {
+                  alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                  verticalAlign: 'center',
+                  color: themeController.current?.unactiveTextColor,
+                  marginBottom: sizes.margin / 2,
+                },
+              ]}
+            >
+              {t('showJob.messages.waitingForPayment', {
+                defaultValue: 'Waiting for payment...',
+              })}
+            </Text>]
+          case 'pending_moderation':
+            return [<Text
+              style={[
+                {
+                  alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                  verticalAlign: 'center',
+                  color: themeController.current?.unactiveTextColor,
+                  marginBottom: sizes.margin / 2,
+                },
+              ]}
+            >
+              {t('showJob.messages.waitingForModeration', {
+                defaultValue: 'Waiting for moderation...',
+              })}
+            </Text>]
+          default:
+            return [<ProvidersSection
+              key='providers'
+              styles={styles}
+              currentJobInfo={currentJobInfo}
+              status={status}
+              closeAllModal={closeModal}
+            />]
+        }
       case 'store-in-progress':
         return [
           <ProvidersSection
@@ -940,8 +973,8 @@ export default function ShowJobModal({
                   editableCommentState
                     ? editableCommentValue
                     : currentJobInfo?.job_comment
-                    ? currentJobInfo?.job_comment.comment
-                    : null
+                      ? currentJobInfo?.job_comment.comment
+                      : null
                 }
                 placeholder={t('showJob.fields.myCommentsPlaceholder', {
                   defaultValue: 'Write a comment on the completed work...',
@@ -985,7 +1018,39 @@ export default function ShowJobModal({
               flexDirection: isRTL ? 'row-reverse' : 'row',
             }}
           >
-            <TouchableOpacity
+            {currentJobInfo.status == 'pending' && <TouchableOpacity
+              key='payButton'
+              style={[
+                styles.createButton,
+                {
+                  backgroundColor:
+                    themeController.current?.buttonColorPrimaryDefault,
+                  borderRadius: sizes.borderRadius,
+                  width: sizes.saveBtnWidthHalf * 1.2,
+                  height: sizes.saveBtnHeight,
+                },
+              ]}
+              onPress={payToPublish}
+            >
+              <Text
+                style={{
+                  color: 'white',
+                  textAlign: 'center',
+                  fontSize: sizes.saveBtnFont,
+                }}
+              >
+                {t('newJob.statusModal.buttons.confirmWithPrice', {
+                  defaultValue: 'Publish for {{price}}',
+                  price: subscription.current != null &&
+                    currentJobInfo.type == 'normal' ? t('newJob.statusModal.free', {
+                      defaultValue: 'Free',
+                    }) : `$${jobsController.products.find(e => {
+                      return e.type === currentJobInfo.jobType;
+                    })?.price.toFixed(2)}`
+                })}
+              </Text>
+            </TouchableOpacity>}
+            {currentJobInfo.status != 'pending' && currentJobInfo.status != 'pending_moderation' && <TouchableOpacity
               key='updateButton'
               style={[
                 styles.createButton,
@@ -1008,7 +1073,7 @@ export default function ShowJobModal({
               >
                 {t('showJob.buttons.update', { defaultValue: 'Update' })}
               </Text>
-            </TouchableOpacity>
+            </TouchableOpacity>}
             <TouchableOpacity
               key='closeButton'
               style={[
@@ -1294,6 +1359,26 @@ export default function ShowJobModal({
         ];
       default:
         return [];
+    }
+  }
+
+  async function payToPublish() {
+    try {
+      setAppLoading(true);
+
+      const data = await payForJob(currentJobInfo.id, session);
+      if (data.paymentUrl) {
+        openWebView(data.paymentUrl, () => { });
+      } else {
+        jobsController.reloadCreator();
+      }
+
+      setAppLoading(false);
+    } catch (e) {
+      console.error('Error paying for job:', e);
+      showError(t('errors.unexpected_error'));
+
+      setAppLoading(false);
     }
   }
 
@@ -2143,7 +2228,10 @@ export default function ShowJobModal({
 
                 {/* Остальные элементы ВНЕ сетки, обычной колонкой */}
                 <View
-                  style={{ marginTop: sizes.margin, gap: sizes.margin / 2 }}
+                  style={{
+                    marginTop: currentJobInfo.status === 'pending' || currentJobInfo.status === 'pending_moderation' ? 0 : sizes.margin,
+                    gap: sizes.margin / 2
+                  }}
                 >
                   {extraUiByStatus(status).map((node, idx) => (
                     <View key={`extra-${idx}`}>{node}</View>
@@ -2462,10 +2550,10 @@ export default function ShowJobModal({
                   setPlansModalVisible(true);
                   setConfirmInterestModal(false);
                 }}
-                // onPress={() => {
-                //   setConfirmInterestModal(false);
-                //   setInterestedRequest(true);
-                // }}
+              // onPress={() => {
+              //   setConfirmInterestModal(false);
+              //   setInterestedRequest(true);
+              // }}
               >
                 <Text
                   style={{

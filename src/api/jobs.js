@@ -1,8 +1,6 @@
 import axios from 'axios';
 
 async function createJob(jobData, session) {
-    console.log(jobData);
-
     try {
         const token = session?.token?.access_token;
         const url = session?.serverURL || 'http://localhost:3000';
@@ -22,27 +20,42 @@ async function createJob(jobData, session) {
 
         const response = await axios.post(`${url}/api/jobs/create`, { job: jobData, paymentMethod: 'paypal' }, { headers });
 
-        const status = response.status;
-        const returnData = {};
+        const returnData = {
+            paymentUrl: response.data?.payment?.paymentMetadata?.paypalApproval?.href,
+            job: response.data?.job
+        };
 
-        if (status == 200) {
-            // job created successfully
+        return returnData;
+    } catch (error) {
+        console.error('Error creating new job:', error);
+        throw error;
+    }
+}
 
-            const { job } = response.data;
-            returnData.job = job;
+async function payForJob(jobDataId, session) {
+    try {
+        const token = session?.token?.access_token;
+        const url = session?.serverURL || 'http://localhost:3000';
 
-        } else if (status == 201) {
-            // payment required
-
-            const { payment } = response.data;
-            console.log(payment);
-
-            const paypalApprovalUrl = payment?.paymentMetadata?.paypalApproval?.href;
-
-            if (paypalApprovalUrl) {
-                returnData.paymentUrl = paypalApprovalUrl;
-            }
+        if (!token) {
+            throw new Error('No valid session token found');
         }
+
+        if (!url) {
+            throw new Error('No valid server URL found in session');
+        }
+
+        const headers = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+        };
+
+        const response = await axios.post(`${url}/api/jobs/${jobDataId}/pay`, { paymentMethod: 'paypal' }, { headers });
+
+        const returnData = {
+            paymentUrl: response.data?.payment?.paymentMetadata?.paypalApproval?.href,
+            job: response.data?.job
+        };
 
         return returnData;
     } catch (error) {
@@ -256,4 +269,4 @@ async function updateJobComment(jobId, comment, session) {
     }
 }
 
-export { createJob, checkHasPendingJob, getJobProducts, addSelfToJobProviders, removeSelfFromJobProviders, isProviderInJob, completeJob, updateJobComment };
+export { createJob, checkHasPendingJob, getJobProducts, addSelfToJobProviders, removeSelfFromJobProviders, isProviderInJob, completeJob, updateJobComment, payForJob };

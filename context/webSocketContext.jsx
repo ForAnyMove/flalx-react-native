@@ -82,15 +82,15 @@ export const WebSocketProvider = ({ children }) => {
         break;
       }
       case 'JOB_CREATED': { // notify all users
-        const jobId = message.payload?.jobId;
-        const job = message.payload?.job;
-        jobsController.reloadExecutor();
+        // const jobId = message.payload?.jobId;
+        // const job = message.payload?.job;
+        // jobsController.reloadExecutor();
         break;
       }
       case 'JOB_DELETED': { // notify all users
         const jobId = message.payload?.jobId;
         const deletedBy = message.payload?.deletedBy;
-        jobsController.reloadExecutor();
+        jobsController.reloadExecutorNew();
         break;
       }
       case 'JOB_EXECUTOR_ASSIGNED': {
@@ -371,6 +371,12 @@ export const WebSocketProvider = ({ children }) => {
         const resetTime = message.payload?.resetTime;
 
         // notify user about approaching rate limit (development mode)
+        break;
+      }
+      case 'JOB_CREATED_BY_YOU':
+      case 'JOB_APPROVED':
+      case 'JOB_REJECTED': {
+        jobsController.reloadCreator();
         break;
       }
       default:

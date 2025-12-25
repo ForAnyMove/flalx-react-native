@@ -60,9 +60,7 @@ async function createNewJob(jobData, session, openWebView, updateJobsList) {
   try {
     const data = await createJob(jobData, session);
     if (data.paymentUrl) {
-      openWebView(data.paymentUrl, () => {
-        // reload jobs after closing webview
-      });
+      openWebView(data.paymentUrl, () => { });
     } else if (data.job) {
       updateJobsList?.();
     }
@@ -214,8 +212,8 @@ export default function NewJobModal({
       chipPadH: isWebLandscape ? webLandscapeScale(11) : mobileScale(12),
       chipGap: isWebLandscape ? webLandscapeScale(8) : mobileScale(8),
       chipMarginBottom: isWebLandscape
-        ? webLandscapeScale(40)
-        : mobileScale(12),
+        ? webLandscapeScale(40 / 3)
+        : mobileScale(12 / 3),
       modalCardW: isWebLandscape ? webLandscapeScale(450) : '88%',
       btnH: isWebLandscape ? webLandscapeScale(62) : mobileScale(42),
       btnW: isWebLandscape ? webLandscapeScale(300) : '100%',
@@ -1734,6 +1732,37 @@ export default function NewJobModal({
                   })}
                 </View>
 
+                <Text
+                  style={{
+                    fontSize: sizes.modalSub,
+                    color: themeController.current?.buttonColorPrimaryDefault,
+                    marginBottom: sizes.chipMarginBottom,
+                  }}
+                >
+                  {t('', {
+                    defaultValue: '{{price}}',
+                    price:
+                      subscription.current != null &&
+                        selectedOption.type == 'normal'
+                        ? t('newJob.statusModal.free', {
+                          defaultValue: 'Free',
+                        })
+                        : `$${selectedOption?.price.toFixed(2)}`,
+                  })}
+                </Text>
+
+                {(subscription.current == null ||
+                  selectedOption.type != 'normal') && <Text
+                    style={{
+                      fontSize: sizes.chipFont,
+                      color: themeController.current?.formInputLabelColor,
+                      marginBottom: sizes.chipMarginBottom,
+                      textAlign: 'center',
+                    }}
+                  >
+                    You must pay for publishing this type of ad after moderation.
+                  </Text>}
+
                 {/* кнопка подтверждения с ценой */}
                 <TouchableOpacity
                   onPress={() => {
@@ -1751,22 +1780,14 @@ export default function NewJobModal({
                       themeController.current?.buttonColorPrimaryDefault,
                     marginBottom: sizes.borderRadius,
                   }}
+                ><Text
+                  style={{
+                    fontSize: sizes.modalSub,
+                    color: themeController.current?.buttonColorPrimaryDefault,
+                  }}
                 >
-                  <Text
-                    style={{
-                      fontSize: sizes.modalSub,
-                      color: themeController.current?.buttonColorPrimaryDefault,
-                    }}
-                  >
-                    {t('newJob.statusModal.buttons.confirmWithPrice', {
-                      defaultValue: 'Publish for {{price}}',
-                      price:
-                        subscription.current != null &&
-                          selectedOption.type == 'normal'
-                          ? t('newJob.statusModal.free', {
-                            defaultValue: 'Free',
-                          })
-                          : `$${selectedOption?.price.toFixed(2)}`,
+                    {t('newJob.statusModal.buttons.sendToModeration', {
+                      defaultValue: 'Send to moderation',
                     })}
                   </Text>
                 </TouchableOpacity>

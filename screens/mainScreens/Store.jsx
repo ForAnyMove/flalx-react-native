@@ -426,11 +426,11 @@ export default function Store() {
           position: 'absolute',
           ...(isRTL
             ? {
-                left: sizes.plusButtonLeft,
-              }
+              left: sizes.plusButtonLeft,
+            }
             : {
-                right: sizes.plusButtonRight,
-              }),
+              right: sizes.plusButtonRight,
+            }),
           bottom: sizes.plusButtonBottom,
           alignItems: 'center',
         }}
@@ -450,31 +450,33 @@ export default function Store() {
             elevation: sizes.plusButtonElevation,
           }}
           onPress={async () => {
-            const pendingJobRequest = await checkHasPendingJob(session);
-            if (!pendingJobRequest.job) {
-              setActiveKey(null);
-              setNewJobModalVisible(true);
-            } else {
-              const url =
-                pendingJobRequest.payment?.paymentMetadata?.paypalApproval
-                  ?.href;
-              const message = [
-                t('subscriptions.messages.pendingJob'),
-                '',
-                t('subscriptions.messages.paymentURL', { url: url }),
-                '',
-                t('subscriptions.messages.cancelPendingJob'),
-              ].join('\n');
+            setActiveKey(null);
+            setNewJobModalVisible(true);
+            // const pendingJobRequest = await checkHasPendingJob(session);
+            // if (!pendingJobRequest.job) {
+            //   setActiveKey(null);
+            //   setNewJobModalVisible(true);
+            // } else {
+            //   const url =
+            //     pendingJobRequest.payment?.paymentMetadata?.paypalApproval
+            //       ?.href;
+            //   const message = [
+            //     t('subscriptions.messages.pendingJob'),
+            //     '',
+            //     t('subscriptions.messages.paymentURL', { url: url }),
+            //     '',
+            //     t('subscriptions.messages.cancelPendingJob'),
+            //   ].join('\n');
 
-              showWarning(message, [
-                {
-                  title: t('subscriptions.messages.moveToPayment'),
-                  backgroundColor: '#3B82F6',
-                  textColor: '#FFFFFF',
-                  onPress: () => openWebView(url),
-                },
-              ]);
-            }
+            //   showWarning(message, [
+            //     {
+            //       title: t('subscriptions.messages.moveToPayment'),
+            //       backgroundColor: '#3B82F6',
+            //       textColor: '#FFFFFF',
+            //       onPress: () => openWebView(url),
+            //     },
+            //   ]);
+            // }
           }}
         >
           <Image
