@@ -857,7 +857,7 @@ export default function ShowJobModal({
                 },
                 isWebLandscape && {
                   width: scaleByHeight(330, height),
-                  height: scaleByHeight(131, height),
+                  height: scaleByHeight(136, height),
                 },
               ]}
               key='provider-comments'
@@ -900,7 +900,7 @@ export default function ShowJobModal({
                       <MaterialIcons
                         name='cancel'
                         size={sizes.icon}
-                        color='#00000080'
+                      color={themeController.current?.unactiveTextColor}
                       />
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -919,7 +919,7 @@ export default function ShowJobModal({
                       <MaterialIcons
                         name='check-circle'
                         size={sizes.icon}
-                        color='#00000080'
+                      color={themeController.current?.unactiveTextColor}
                       />
                     </TouchableOpacity>
                   </View>
@@ -930,7 +930,7 @@ export default function ShowJobModal({
                     <MaterialCommunityIcons
                       name='pencil'
                       size={sizes.icon}
-                      color='#00000080'
+                      color={themeController.current?.unactiveTextColor}
                     />
                   </TouchableOpacity>
                 )}

@@ -318,6 +318,7 @@ export default function Store() {
                     source={icons[`${title}-dark`]}
                     style={{ width: sizes.iconSize, height: sizes.iconSize }}
                     resizeMode='contain'
+                    tintColor={themeController?.current.textColor}
                   />
                 </Animated.View>
                 {/* Badge */}

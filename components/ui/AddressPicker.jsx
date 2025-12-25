@@ -93,6 +93,7 @@ const AddressPicker = ({
       fontSize: sizes.baseFont,
       backgroundColor: 'transparent',
       width: '100%',
+      color: themeController.current?.textColor,
     },
     suggestionsContainer: {
       backgroundColor: themeController.current?.formInputBackground,

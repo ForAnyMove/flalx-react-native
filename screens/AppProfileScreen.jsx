@@ -75,6 +75,7 @@ export default function AppProfileScreen({ switchToApp }) {
             style={{
               width: sizes.iconSize,
               height: sizes.iconSize,
+              tintColor: themeController.current?.textColor,
             }}
           />
         </TouchableOpacity>

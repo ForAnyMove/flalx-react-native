@@ -34,6 +34,7 @@ export const icons = {
   arrowRight: require('../assets/icon/arrow-right.png'),
   arrowLeft: require('../assets/icon/arrow-left.png'),
   defaultAvatar: require('../assets/register/UserImages/avatar-default.png'),
+  monotoneAvatar: require('../assets/register/UserImages/avatar-monotone.png'),
   defaultAvatarInverse: require('../assets/register/UserImages/avatar-inverse.png'),
   camera: require('../assets/icon/photo-camera.png'),
   emailClear: require('../assets/icon/email-clear.png'),

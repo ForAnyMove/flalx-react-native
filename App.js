@@ -198,7 +198,7 @@ function App() {
   
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: themeController.current.backgroundColor }]}>
         <WebViewProvider>
           {isLoader ? <LoadingStub /> : content}
           <GlobalWebScreen />

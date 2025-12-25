@@ -1,11 +1,13 @@
 import { Modal, Platform, View, Animated, Easing, useWindowDimensions } from 'react-native';
 import { useEffect, useRef } from 'react';
 import { useComponentContext } from '../context/globalAppContext';
+import { useWindowInfo } from '../context/windowContext';
 
 export default function JobModalWrapper({ visible, children, main=true}) {
   const { height, width } = useWindowDimensions();
   const { themeController, languageController } = useComponentContext();
   const isRTL = languageController.isRTL;
+  const { sidebarWidth } = useWindowInfo();
 
   const isWebLandscape = Platform.OS === 'web' && width > height;
 
@@ -72,6 +74,7 @@ export default function JobModalWrapper({ visible, children, main=true}) {
         left: 0,
         right: 0,
         backgroundColor: 'rgba(0,0,0,0.4)',
+        width:isWebLandscape ? width - sidebarWidth : width,
         zIndex: 999,
       }}
     >

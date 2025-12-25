@@ -142,8 +142,10 @@ export default function CommentsSection({
                     style={{
                       width: sizes.icon,
                       height: sizes.icon,
-                      tintColor: ratio >= 50 ? 'green' : 'red',
                       marginRight: sizes.iconMargin,
+                      tintColor: ratio >= 50
+                        ? themeController?.current.primaryColor
+                        : themeController?.current.errorTextColor,
                     }}
                   />
                   <Text
@@ -233,7 +235,7 @@ export default function CommentsSection({
                       width: sizes.icon,
                       height: sizes.icon,
                       tintColor:
-                        rating > 0
+                        c.rating > 0
                           ? themeController?.current.primaryColor
                           : themeController?.current.errorTextColor,
                     }}

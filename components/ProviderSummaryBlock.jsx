@@ -301,7 +301,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                 ]}
               >
                 <Image
-                  source={icons.defaultAvatar}
+                  source={themeController.current.isTheme ? icons.defaultAvatar : icons.monotoneAvatar}
                   style={{ width: '100%', height: '100%' }}
                 />
               </View>
@@ -397,7 +397,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                       ]}
                     >
                       <Image
-                        source={icons.defaultAvatar}
+                        source={themeController.current.isTheme ? icons.defaultAvatar : icons.monotoneAvatar}
                         style={{ width: '100%', height: '100%' }}
                       />
                     </View>

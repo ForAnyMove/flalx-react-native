@@ -24,6 +24,7 @@ import { useWebView } from '../context/webViewContext';
 import { useNotification } from '../src/render';
 import { useMemo } from 'react';
 import { useLocalization } from '../src/services/useLocalization';
+import { useWindowInfo } from '../context/windowContext';
 
 function SubscriptionsModalContent({ closeModal }) {
   const {
@@ -38,9 +39,10 @@ function SubscriptionsModalContent({ closeModal }) {
   const { showWarning, showInfo, showError } = useNotification();
   const { openWebView } = useWebView();
   const { width, height } = useWindowDimensions();
+  const { sidebarWidth, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController?.isRTL;
-  const isWebLandscape = Platform.OS === 'web' && width > height;
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const tryPurchaseSubscription = async (planId) => {
     try {
@@ -213,7 +215,7 @@ function SubscriptionsModalContent({ closeModal }) {
         activeOpacity={1}
         style={{
           height: height,
-          width: width,
+          width: isWebLandscape ? width - sidebarWidth : width,
           backgroundColor: themeController.current?.backgroundColor,
           alignSelf: isRTL ? 'flex-start' : 'flex-end',
           paddingHorizontal: sizes.containerPaddingHorizontal,
@@ -401,7 +403,9 @@ function SubscriptionsModalContent({ closeModal }) {
 }
 
 export default function SubscriptionsModal({ visible, main, closeModal }) {
-  const { isWebLandscape } = useComponentContext();
+  const { isLandscape } = useWindowInfo();
+  // const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const isWebLandscape = false;
   return (
     <>
       {isWebLandscape ? (

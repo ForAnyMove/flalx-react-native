@@ -370,7 +370,7 @@ export default function Profile() {
                 : 'create_password',
               style: styles.primaryReverseBtn,
               textStyle: styles.primaryText,
-              bg: themeController.current?.buttonTextColorPrimary,
+              bg: themeController.current?.backgroundColor,
               color: themeController.current?.buttonColorPrimaryDefault,
               border: themeController.current?.buttonColorPrimaryDefault,
               onPress: () => {
@@ -384,7 +384,7 @@ export default function Profile() {
               key: 'logout',
               style: styles.secondaryReverseBtn,
               textStyle: styles.secondaryText,
-              bg: themeController.current?.buttonTextColorSecondary,
+              bg: themeController.current?.backgroundColor,
               color: themeController.current?.buttonColorSecondaryDefault,
               border: themeController.current?.buttonColorSecondaryDefault,
               onPress: () => {
@@ -404,7 +404,7 @@ export default function Profile() {
               key: 'export_data',
               style: styles.secondaryReverseBtn,
               textStyle: styles.secondaryText,
-              bg: themeController.current?.buttonTextColorSecondary,
+              bg: themeController.current?.backgroundColor,
               color: themeController.current?.buttonColorSecondaryDefault,
               border: themeController.current?.buttonColorSecondaryDefault,
               onPress: downloadExportData,
@@ -573,7 +573,7 @@ export default function Profile() {
                   styles.modalBtn,
                   {
                     backgroundColor:
-                      themeController.current?.buttonTextColorPrimary,
+                      themeController.current?.backgroundColor,
                     height: sizes.modalBtnHeight,
                     width: sizes.modalBtnWidth,
                     borderRadius: sizes.modalBtnBorderRadius,
@@ -920,6 +920,7 @@ export default function Profile() {
             await uploadAvatar(uris[0]);
           }
         }}
+        theme={themeController.current}
       />
 
       {/* Subscriptions */}
@@ -1023,7 +1024,7 @@ function InfoField({
                 width: iconSize,
                 height: iconSize,
                 resizeMode: 'contain',
-                tintColor: '#00000080',
+                tintColor: themeController.current?.unactiveTextColor,
               }}
             />
           </TouchableOpacity>
@@ -1039,7 +1040,7 @@ function InfoField({
                 width: iconSize,
                 height: iconSize,
                 resizeMode: 'contain',
-                tintColor: '#00000080',
+                tintColor: themeController.current?.unactiveTextColor,
               }}
             />
           </TouchableOpacity>
@@ -1052,7 +1053,7 @@ function InfoField({
               width: iconSize,
               height: iconSize,
               resizeMode: 'contain',
-              tintColor: '#00000080',
+              tintColor: themeController.current?.unactiveTextColor,
             }}
           />
         </TouchableOpacity>

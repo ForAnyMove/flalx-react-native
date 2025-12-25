@@ -174,7 +174,7 @@ const UserSummaryBlock = ({
               ]}
             >
               <Image
-                source={icons.defaultAvatar}
+                source={themeController.current.isTheme ? icons.defaultAvatar : icons.monotoneAvatar}
                 style={{ width: '100%', height: '100%' }}
               />
             </View>
@@ -296,7 +296,7 @@ const UserSummaryBlock = ({
 
                 <ScrollView contentContainerStyle={{}}>
                   <Image
-                    source={avatar ? { uri: avatar } : icons.defaultAvatar}
+                    source={avatar ? { uri: avatar } : themeController.current.isTheme ? icons.defaultAvatar : icons.monotoneAvatar}
                     style={[
                       styles.modalAvatar,
                       {

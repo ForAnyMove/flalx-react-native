@@ -309,6 +309,7 @@ const AutocompletePicker = ({
                 backgroundColor: themeController.current?.formInputBackground,
                 borderBottomLeftRadius: sizes.borderRadius,
                 borderBottomRightRadius: sizes.borderRadius,
+                borderColor: themeController.current?.dropdownBorderColor,
               },
             ]}
           >
@@ -348,7 +349,6 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     zIndex: 9999, // Устанавливаем высокий zIndex
     borderWidth: 1,
-    borderColor: '#ddd',
   },
   option: {
     // paddingHorizontal: 15, // <--- Удалено
