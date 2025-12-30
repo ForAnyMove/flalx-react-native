@@ -154,7 +154,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         location: 'Location',
         email: 'Email',
         phone: 'Phone Number',
-        cupons: 'Cupons',
+        coupons: 'Coupons',
         subscription: 'Subscription',
         payment: 'Payment method',
         change_password: 'Change Password',
@@ -470,6 +470,17 @@ or reject it. Please adhere to the platform rules.`,
       },
       misc: {
         search_request_by_location: 'You can only see requests based on your approximate location.'
+      },
+      coupons: {
+        title: 'Coupons',
+        count: 'You have {{count}} coupons',
+        description: `Earn coupons for every new community 
+member and use them in the app. To get a coupon, 
+copy your referral link and send it to a friend.
+After they register, you'll receive coupons.`,
+        copy_link_label: 'Copy your affiliate link',
+        referral_link: 'Referral link',
+        link_copied: 'Link copied',
       }
     },
   },
@@ -626,7 +637,7 @@ or reject it. Please adhere to the platform rules.`,
         location: 'מיקום',
         email: 'אימייל',
         phone: 'טלפון',
-        cupons: 'קופונים',
+        coupons: 'קופונים',
         subscription: 'מנוי',
         payment: 'אמצעי תשלום',
         change_password: 'שנה סיסמה',
@@ -938,6 +949,17 @@ or reject it. Please adhere to the platform rules.`,
       },
       misc: {
         search_request_by_location: 'אתה יכול לראות בקשות רק על בסיס המיקום המשוער שלך.'
+      },
+      coupons: {
+        title: 'קופונים',
+        count: 'יש לך {{count}} קופונים',
+        description: `הרוויח קופונים עבור כל חבר חדש בקהילה
+והשתמש בהם באפליקציה. כדי לקבל קופון,
+העתק את קישור ההפניה שלך ושלח אותו לחבר.
+לאחר ההרשמה שלו, תקבל קופונים.`,
+        copy_link_label: 'העתק את קישור השותפים שלך',
+        referral_link: 'קישור הפניה',
+        link_copied: 'הקישור הועתק',
       }
     },
   },

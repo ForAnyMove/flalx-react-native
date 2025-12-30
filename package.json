@@ -33,6 +33,7 @@
     "axios": "^1.12.2",
     "base64-arraybuffer": "^1.0.2",
     "expo": "~53.0.24",
+    "expo-clipboard": "^8.0.8",
     "expo-constants": "~17.1.7",
     "expo-dev-client": "~5.2.4",
     "expo-file-system": "^18.1.11",

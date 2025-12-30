@@ -62,4 +62,6 @@ export const icons = {
   passport: require('../assets/icon/passport.png'),
   id: require('../assets/icon/id.png'),
   image_mock: require('../assets/icon/image_mock.png'),
+  coupon: require('../assets/icon/coupon.png'),
+  copy: require('../assets/icon/copy.png'),
 };

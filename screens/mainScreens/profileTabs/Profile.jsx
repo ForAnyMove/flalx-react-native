@@ -23,6 +23,7 @@ import { uploadImageToSupabase } from '../../../utils/supabase/uploadImageToSupa
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import SubscriptionsModal from '../../../components/SubscriptionsModal';
 import { getUserExportData } from '../../../src/api/dataExport';
+import CouponsModal from '../../../components/CouponsModal';
 
 export default function Profile() {
   const { user, themeController, languageController, session } =
@@ -49,6 +50,7 @@ export default function Profile() {
   const isRTL = languageController.isRTL;
 
   const [subscriptionsModal, setSubscriptionsModal] = useState(false);
+  const [couponsModalVisible, setCouponsModalVisible] = useState(false);
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
@@ -162,7 +164,7 @@ export default function Profile() {
     }
   }
 
-  const firstBtnsRow = isWebLandscape ? ['cupons', 'subscription', 'payment'] : ['cupons', 'subscription'];
+  const firstBtnsRow = isWebLandscape ? ['coupons', 'subscription', 'payment'] : ['coupons', 'subscription'];
   return (
     <ScrollView
       style={[
@@ -324,6 +326,9 @@ export default function Profile() {
                 if (key === 'subscription') {
                   // Открыть модалку подписок
                   setSubscriptionsModal(true);
+                }
+                if (key === 'coupons') {
+                  setCouponsModalVisible(true);
                 }
               }}
             >
@@ -930,6 +935,11 @@ export default function Profile() {
         closeModal={() => {
           setSubscriptionsModal(false);
         }}
+      />
+
+      <CouponsModal
+        visible={couponsModalVisible}
+        onClose={() => setCouponsModalVisible(false)}
       />
     </ScrollView>
   );
