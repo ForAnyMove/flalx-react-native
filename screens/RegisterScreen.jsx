@@ -116,7 +116,6 @@ export default function RegisterScreen() {
   const [selectedJobTypes, setSelectedJobTypes] = useState([]);
   const [selectedLicenseTypes, setSelectedLicenseTypes] = useState([]);
   const [qualificationLevel, setQualificationLevel] = useState(null);
-  const [experience, setExperience] = useState(null);
 
   const isNameValid = form.name.trim().length > 1;
   const isSurnameValid = form.surname.trim().length > 1;
@@ -146,7 +145,7 @@ export default function RegisterScreen() {
         updatedUser.professions = selectedLicenseTypes;
       if (qualificationLevel)
         updatedUser.qualificationLevel = qualificationLevel;
-      if (experience) updatedUser.experience = experience;
+      // if (experience) updatedUser.experience = experience;
 
       await user.update({ ...updatedUser, is_password_exist: true });
       setFinished(true);
@@ -299,13 +298,13 @@ export default function RegisterScreen() {
     { label: t('register.qualifications.expert'), value: 'expert' },
   ];
 
-  const experienceLevels = [
-    { label: t('register.experience.none'), value: 'none' },
-    { label: t('register.experience.less_1'), value: 'less_1' },
-    { label: t('register.experience.1_3'), value: '1_3' },
-    { label: t('register.experience.3_5'), value: '3_5' },
-    { label: t('register.experience.5_plus'), value: '5_plus' },
-  ];
+  // const experienceLevels = [
+  //   { label: t('register.experience.none'), value: 'none' },
+  //   { label: t('register.experience.less_1'), value: 'less_1' },
+  //   { label: t('register.experience.1_3'), value: '1_3' },
+  //   { label: t('register.experience.3_5'), value: '3_5' },
+  //   { label: t('register.experience.5_plus'), value: '5_plus' },
+  // ];
 
   return (
     <View
@@ -758,7 +757,7 @@ export default function RegisterScreen() {
                       marginBottom: sizes.typeTagsSelectorMarginBottom,
                     }}
                   />
-                  <CustomPicker
+                  {/* <CustomPicker
                     label={t('register.experience_label')}
                     options={experienceLevels}
                     selectedValue={experience}
@@ -767,7 +766,7 @@ export default function RegisterScreen() {
                     containerStyle={{
                       marginBottom: sizes.typeTagsSelectorMarginBottom,
                     }}
-                  />
+                  /> */}
                   <View
                     style={[
                       styles.inputBlock,

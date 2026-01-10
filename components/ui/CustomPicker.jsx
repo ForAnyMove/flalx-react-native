@@ -25,6 +25,7 @@ const CustomPicker = ({
   containerStyle = {},
   placeholder = null,
   placeholderColor = null,
+  bottomDropdown = true,
 }) => {
   const { themeController } = useComponentContext();
   const { width, height } = useWindowDimensions();
@@ -66,7 +67,7 @@ const CustomPicker = ({
     } else {
       pickerRef.current.measure((fx, fy, width, height, px, py) => {
         setPickerLayout({
-          top: py + height,
+          top: bottomDropdown ? py + height : py - dropdownHeight,
           left: px,
           width: width,
         });
@@ -218,8 +219,15 @@ const CustomPicker = ({
                 width: pickerLayout.width,
                 height: dropdownHeight,
                 backgroundColor: themeController.current?.formInputBackground,
-                borderBottomLeftRadius: sizes.borderRadius,
-                borderBottomRightRadius: sizes.borderRadius,
+                ...(bottomDropdown
+                  ? {
+                      borderBottomLeftRadius: sizes.borderRadius,
+                      borderBottomRightRadius: sizes.borderRadius,
+                    }
+                  : {
+                      borderTopLeftRadius: sizes.borderRadius,
+                      borderTopRightRadius: sizes.borderRadius,
+                    }),
               },
             ]}
           >

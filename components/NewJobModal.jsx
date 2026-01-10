@@ -29,6 +29,8 @@ import { useWebView } from '../context/webViewContext';
 import AutocompletePicker from './ui/AutocompletePicker';
 import AddressPicker from './ui/AddressPicker';
 import { useLocalization } from '../src/services/useLocalization';
+import CustomPicker from './ui/CustomPicker';
+import CustomExperiencePicker from './ui/CustomExperiencePicker';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -60,7 +62,7 @@ async function createNewJob(jobData, session, openWebView, updateJobsList) {
   try {
     const data = await createJob(jobData, session);
     if (data.paymentUrl) {
-      openWebView(data.paymentUrl, () => { });
+      openWebView(data.paymentUrl, () => {});
     } else if (data.job) {
       updateJobsList?.();
     }
@@ -109,7 +111,7 @@ export default function NewJobModal({
   currentJobId = null,
   initialJob = null,
   executorId,
-  executor
+  executor,
 }) {
   const {
     themeController,
@@ -160,8 +162,7 @@ export default function NewJobModal({
             options[job_subtype.key] = tField(job_subtype, 'name');
           }
         });
-      }
-      else if (jobTypesController.jobTypesWithSubtypes) {
+      } else if (jobTypesController.jobTypesWithSubtypes) {
         const selectedType = jobTypesController.jobTypesWithSubtypes.find(
           (t) => t.key === type
         );
@@ -173,8 +174,11 @@ export default function NewJobModal({
       }
     }
     return options;
-  }, [jobTypesController.jobTypesWithSubtypes, type, languageController.current]);
-
+  }, [
+    jobTypesController.jobTypesWithSubtypes,
+    type,
+    languageController.current,
+  ]);
 
   const [statusOptions, setStatusOptions] = useState(STATUS_OPTIONS);
   const sizes = useMemo(() => {
@@ -289,6 +293,8 @@ export default function NewJobModal({
     jobsController.products.find((o) => o.type === jobType) ||
     jobsController.products[0];
 
+  const [experience, setExperience] = useState(null);
+
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [plansModalVisible, setPlansModalVisible] = useState(false);
 
@@ -369,6 +375,7 @@ export default function NewJobModal({
       if (JSON.stringify(location) !== JSON.stringify(initialJob.location))
         jobChanges.location = location;
       // сравнение дат (если обе существуют и разные)
+      if (experience !== initialJob.experience) jobChanges.experience = experience;
       if (
         startDateTime &&
         new Date(startDateTime).toISOString() !== initialJob.startDateTime
@@ -394,6 +401,7 @@ export default function NewJobModal({
         price,
         images,
         location,
+        experience,
         // Преобразуем даты в ISO формат
         startDateTime: startDateTime
           ? new Date(startDateTime).toISOString()
@@ -785,6 +793,16 @@ export default function NewJobModal({
     //     ]}
     //   />
     // </View>,
+    <CustomExperiencePicker
+      label={t('register.experience_label')}
+      selectedValue={experience}
+      onValueChange={setExperience}
+      isRTL={isRTL}
+      containerStyle={{
+        marginBottom: sizes.typeTagsSelectorMarginBottom,
+      }}
+      bottomDropdown={false}
+    />,
     <View
       style={[
         styles.row,
@@ -918,6 +936,7 @@ export default function NewJobModal({
                         ${scaleByHeight(64, height)}px 
                         ${scaleByHeight(75, height)}px 
                         ${scaleByHeight(75, height)}px 
+                        ${scaleByHeight(64, height)}px 
                         ${scaleByHeight(64, height)}px 
                         ${scaleByHeight(64, height)}px 
                       `,
@@ -1133,7 +1152,9 @@ export default function NewJobModal({
                           isRTL && { textAlign: 'right' },
                           {
                             fontSize: sizes.font,
-                            color: fieldErrors.price ? 'red' : themeController.current?.unactiveTextColor,
+                            color: fieldErrors.price
+                              ? 'red'
+                              : themeController.current?.unactiveTextColor,
                           },
                         ]}
                       >
@@ -1288,7 +1309,7 @@ export default function NewJobModal({
                     onAdd={handleImageAdd}
                   />
 
-                  {/* <View
+                  <View
                     style={[
                       styles.gridHalf,
                       {
@@ -1298,53 +1319,16 @@ export default function NewJobModal({
                       },
                     ]}
                   >
-                    <View
-                      style={[
-                        styles.inputBlock,
-                        { backgroundColor: bg },
-                        {
-                          padding: 0,
-                          paddingHorizontal:
-                            sizes.inputContainerPaddingHorizontal,
-                          paddingVertical: sizes.inputContainerPaddingVertical,
-                          borderRadius: sizes.borderRadius,
-                          marginBottom: 0,
-                          height: sizes.inputHeight,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.label,
-                          isRTL && { textAlign: 'right' },
-                          {
-                            fontSize: sizes.font,
-                            color: themeController.current?.unactiveTextColor,
-                          },
-                        ]}
-                      >
-                        {t('newJob.location', { defaultValue: 'Location' })}
-                      </Text>
-                      <TextInput
-                        value={location}
-                        onChangeText={setLocation}
-                        placeholder={t('newJob.typePlaceholder', {
-                          defaultValue: 'Type...',
-                        })}
-                        placeholderTextColor={'#999'}
-                        style={{
-                          fontWeight: '500',
-                          color: themeController.current?.textColor,
-                          padding: 0,
-                          paddingVertical: sizes.padding,
-                          fontSize: sizes.inputFont,
-                          borderRadius: sizes.borderRadius,
-                          backgroundColor: 'transparent',
-                          textAlign: isRTL ? 'right' : 'left',
-                        }}
-                      />
-                    </View>
-                  </View> */}
+                    <CustomExperiencePicker
+                      label={t('register.experience_label')}
+                      selectedValue={experience}
+                      onValueChange={setExperience}
+                      isRTL={isRTL}
+                      containerStyle={{
+                        marginBottom: sizes.typeTagsSelectorMarginBottom,
+                      }}
+                    />
+                  </View>
 
                   {/* Row 5: Start/End date (1/2 + 1/2) */}
                   <View
@@ -1353,7 +1337,7 @@ export default function NewJobModal({
                       {
                         // marginBottom: sizes.margin,
                         zIndex: 3,
-                        gridArea: isRTL ? '6 / 2 / 7 / 3' : '6 / 1 / 7 / 2',
+                        gridArea: isRTL ? '7 / 2 / 8 / 3' : '7 / 1 / 8 / 2',
                       },
                       { flexDirection: isRTL ? 'row-reverse' : 'row' },
                     ]}
@@ -1384,7 +1368,7 @@ export default function NewJobModal({
                       {
                         // marginBottom: sizes.margin,
                         zIndex: 2,
-                        gridArea: isRTL ? '6 / 1 / 7 / 2' : '6 / 2 / 7 / 3',
+                        gridArea: isRTL ? '7 / 1 / 8 / 2' : '7 / 2 / 8 / 3',
                       },
                       { flexDirection: isRTL ? 'row-reverse' : 'row' },
                     ]}
@@ -1417,7 +1401,7 @@ export default function NewJobModal({
                         backgroundColor:
                           themeController.current?.backgroundColor,
                         zIndex: 1,
-                        gridArea: isRTL ? '7 / 1 / 9 / 3' : '7 / 1 / 9 / 3',
+                        gridArea: isRTL ? '8 / 1 / 9 / 3' : '8 / 1 / 9 / 3',
                       },
                     ]}
                   >
@@ -1677,12 +1661,12 @@ export default function NewJobModal({
                             borderWidth: 1,
                             borderColor: active
                               ? themeController.current
-                                ?.buttonColorPrimaryDefault
+                                  ?.buttonColorPrimaryDefault
                               : themeController.current
-                                ?.formInputPlaceholderColor,
+                                  ?.formInputPlaceholderColor,
                             backgroundColor: active
                               ? themeController.current
-                                ?.buttonColorPrimaryDefault
+                                  ?.buttonColorPrimaryDefault
                               : 'transparent',
                             flexDirection: isRTL ? 'row-reverse' : 'row',
                             alignItems: 'center',
@@ -1696,7 +1680,7 @@ export default function NewJobModal({
                             color: active
                               ? themeController.current?.buttonTextColorPrimary
                               : themeController.current
-                                ?.formInputPlaceholderColor,
+                                  ?.formInputPlaceholderColor,
                           }}
                         >
                           {productName}
@@ -1743,16 +1727,17 @@ export default function NewJobModal({
                     defaultValue: '{{price}}',
                     price:
                       subscription.current != null &&
-                        selectedOption.type == 'normal'
+                      selectedOption.type == 'normal'
                         ? t('newJob.statusModal.free', {
-                          defaultValue: 'Free',
-                        })
+                            defaultValue: 'Free',
+                          })
                         : `$${selectedOption?.price.toFixed(2)}`,
                   })}
                 </Text>
 
                 {(subscription.current == null ||
-                  selectedOption.type != 'normal') && <Text
+                  selectedOption.type != 'normal') && (
+                  <Text
                     style={{
                       fontSize: sizes.chipFont,
                       color: themeController.current?.formInputLabelColor,
@@ -1760,8 +1745,10 @@ export default function NewJobModal({
                       textAlign: 'center',
                     }}
                   >
-                    You must pay for publishing this type of ad after moderation.
-                  </Text>}
+                    You must pay for publishing this type of ad after
+                    moderation.
+                  </Text>
+                )}
 
                 {/* кнопка подтверждения с ценой */}
                 <TouchableOpacity
@@ -1780,12 +1767,13 @@ export default function NewJobModal({
                       themeController.current?.buttonColorPrimaryDefault,
                     marginBottom: sizes.borderRadius,
                   }}
-                ><Text
-                  style={{
-                    fontSize: sizes.modalSub,
-                    color: themeController.current?.buttonColorPrimaryDefault,
-                  }}
                 >
+                  <Text
+                    style={{
+                      fontSize: sizes.modalSub,
+                      color: themeController.current?.buttonColorPrimaryDefault,
+                    }}
+                  >
                     {t('newJob.statusModal.buttons.sendToModeration', {
                       defaultValue: 'Send to moderation',
                     })}
@@ -1794,7 +1782,7 @@ export default function NewJobModal({
 
                 {/* кнопка тарифов */}
                 {subscription.current == null &&
-                  selectedOption.type == 'normal' && (
+                  selectedOption?.type == 'normal' && (
                     <TouchableOpacity
                       onPress={() => {
                         setPlansModalVisible(true);

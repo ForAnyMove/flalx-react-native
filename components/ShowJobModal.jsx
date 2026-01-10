@@ -94,6 +94,17 @@ export default function ShowJobModal({
 
   const prevJobLocation = useRef(null);
 
+  const experienceLevels = [
+    { label: t('register.experience.none'), value: 'none' },
+    { label: t('register.experience.month'), value: 'month' },
+    { label: t('register.experience.months', {months: 3}), value: '3_months' },
+    { label: t('register.experience.months', {months: 6}), value: '6_months' },
+    { label: t('register.experience.year'), value: 'year' },
+    { label: t('register.experience.years', {years: 2}), value: '2_years' },
+    { label: t('register.experience.years', {years: 3}), value: '3_years' },
+    { label: t('register.experience.other'), value: 'other' },
+  ];
+
   useEffect(() => {
     if (!currentJobId) return;
 
@@ -1632,6 +1643,33 @@ export default function ShowJobModal({
     </View>,
     <View
       style={[
+        styles.inputBlock,
+        dynamicStyles.inputBlock,
+        { backgroundColor: themeController.current?.formInputBackground },
+      ]}
+      key='experience'
+    >
+      <Text
+        style={[
+          styles.label,
+          dynamicStyles.label,
+          isRTL && { textAlign: 'right' },
+        ]}
+      >
+        {t('showJob.fields.experience', { defaultValue: 'Experience' })}
+      </Text>
+      <TextInput
+        value={experienceLevels.find(level => level.value === currentJobInfo?.experience)?.label || '-'}
+        style={[
+          styles.input,
+          dynamicStyles.input,
+          isRTL && { textAlign: 'right' },
+        ]}
+        readOnly
+      />
+    </View>,
+    <View
+      style={[
         styles.row,
         {
           gap: sizes.dateTimeGapMobile,
@@ -1771,6 +1809,7 @@ export default function ShowJobModal({
                         ${scaleByHeight(64, height)}px 
                         ${scaleByHeight(75, height)}px 
                         ${scaleByHeight(75, height)}px 
+                        ${scaleByHeight(64, height)}px
                         ${scaleByHeight(64, height)}px 
                       `,
                     },
@@ -2165,10 +2204,62 @@ export default function ShowJobModal({
                     </View>
                   </View>
 
+                  {/* Experience */}
+                  <View
+                    style={{
+                      gridArea: isRTL ? '6 / 2 / 7 / 3' : '6 / 1 / 7 / 2',
+                    }}
+                  >
+                    <View
+                      style={[
+                        styles.inputBlock,
+                        {
+                          backgroundColor: bg,
+                          padding: 0,
+                          paddingHorizontal:
+                            sizes.inputContainerPaddingHorizontal,
+                          paddingVertical: sizes.inputContainerPaddingVertical,
+                          borderRadius: sizes.borderRadius,
+                          marginBottom: 0,
+                          height: sizes.inputHeight,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.label,
+                          {
+                            color: themeController.current?.unactiveTextColor,
+                          },
+                          isRTL && { textAlign: 'right' },
+                          { fontSize: sizes.font },
+                        ]}
+                      >
+                        {t('showJob.fields.experience')}
+                      </Text>
+                      <TextInput
+                        value={experienceLevels.find(level => level.value === currentJobInfo?.experience)?.label || '-'}
+                        style={{
+                          // fontWeight: '500',
+                          fontFamily: 'Rubik-Medium',
+                          padding: 0,
+                          paddingVertical: sizes.padding,
+                          color: themeController.current?.textColor,
+                          fontSize: sizes.inputFont,
+                          borderRadius: sizes.borderRadius,
+                          backgroundColor: 'transparent',
+                          textAlign: isRTL ? 'right' : 'left',
+                        }}
+                        keyboardType='numeric'
+                        readOnly
+                      />
+                    </View>
+                  </View>
+
                   {/* Start date */}
                   <View
                     style={{
-                      gridArea: isRTL ? '6 / 2 / 8 / 3' : '6 / 1 / 8 / 2',
+                      gridArea: isRTL ? '7 / 2 / 8 / 3' : '7 / 1 / 8 / 2',
                     }}
                   >
                     <View
@@ -2198,7 +2289,7 @@ export default function ShowJobModal({
                   {/* End date */}
                   <View
                     style={{
-                      gridArea: isRTL ? '6 / 1 / 8 / 2' : '6 / 2 / 8 / 3',
+                      gridArea: isRTL ? '7 / 1 / 8 / 2' : '7 / 2 / 8 / 3',
                     }}
                   >
                     <View
