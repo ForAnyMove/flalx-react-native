@@ -28,7 +28,7 @@ export const translations = {
       register: {
         terms_title: 'Regulations',
         terms_text: `- A three and a half year old man, a minor from the village of Havitz, a Dalmatian from Yassab, Hana won the Nimrgi Shachim Tok, a Hatsh that appeared to be Hitidam Khair and Klorum Ipsum Dolor Sit Emet, a constructor of the Adipiscing Elite Hoinav who lives in the wilderness of Simchat - three and told the education of Othlasach and Tlalshu. A minor from the village of Havitz, a Dalmatian from Yassab, Hana won the Nimrgi Shachim Tok, a Hatsh that appeared to be Hitidam Khair and Klorum Ipsum Dolor Sit Emet, a constructor of the Education Elite Hoinav who lives in the wilderness of Simchat - Shushia and told the Shloh of Othlasach and Tlalshu. Zuta from the clean summer of Havits, a dry summer, Hana won Nimrgi Shachim Tok, Hatsh Shanra Hitidam Khair and K. Lorem Ipsum Dolor Sit Emet, Constructor of Elite Education Huinab Sits Shammat Simhit - Shushia and Telbro Shloh Uthlasach and Telbro Shloh Uthlasach and Teltlasach. Zuta from the summer Clean summer, dry summer, Kahana. \n
-The one who sits sits on a tailor's bed - a man of three and a half years, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef.`,
+The one who sits sits on a tailor's bed - a man of three and a half years, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef. Zota from the summer sitting on a tailor's bed - a man of three and a half years old, and chait novas arashshef.`,
         terms_accept: 'I accept the Terms of Use',
         next: 'Next',
         previous: 'Previous',
@@ -107,6 +107,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         otp_label: 'Security code',
         confirm: 'Confirm',
         back_to_email: 'Change email',
+        back_to_phone: 'Change phone number',
         resend_code: "I didn't receive a code",
         resend_modal_text: 'A new code has been sent to your email.',
         otp_sign_in: 'Sign in with OTP',
@@ -116,6 +117,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         back_to_sign_in: 'Back to sign in',
         forgot_pass_title: 'Do you forget your password?',
         forgot_pass_subtitle: 'Enter your email for sending reset code.',
+        forgot_pass_subtitle_sms: 'Enter your phone number for sending reset code.',
         ok: 'OK',
         invalid_email: 'Enter a valid email',
         invalid_password: 'Enter a valid password',
@@ -123,6 +125,8 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         invalid_code: 'Invalid code',
         email_description:
           'Search for already sent me a verification code.\nYou agree to the terms of use and privacy.',
+        sms_description:
+          'We will send a verification code to your phone number.\nYou agree to the terms of use and privacy.',
         sent_code_timer_standard_text:
           'Code sent. Check your email {{count}} sec...',
         sent_code_timer_error_text:
@@ -599,9 +603,10 @@ After they register, you'll receive coupons.`,
         send_reset_code: 'שליחת קוד איפוס',
         otp_title: 'שלחנו קוד לאימייל',
         otp_subtitle: 'הזן את הקוד בן 6 הספרות שקיבלת',
-        otp_label: 'קוד אימות',
-        confirm: 'אשר',
+        otp_label: 'Security code',
+        confirm: 'Confirm',
         back_to_email: 'שנה אימייל',
+        back_to_phone: 'שנה מספר טלפון',
         resend_code: 'לא קיבלתי קוד',
         resend_modal_text: 'קוד חדש נשלח לאימייל שלך.',
         otp_sign_in: 'התחבר באמצעות קוד חד-פעמי',
@@ -611,6 +616,7 @@ After they register, you'll receive coupons.`,
         back_to_sign_in: 'חזרה להתחברות',
         forgot_pass_title: 'שכחת את הסיסמה שלך?',
         forgot_pass_subtitle: 'הזן את האימייל שלך לקבלת קוד לאיפוס הסיסמה.',
+        forgot_pass_subtitle_sms: 'הזן את מספר הטלפון שלך לקבלת קוד איפוס.',
         ok: 'אוקיי',
         invalid_email: 'הזן אימייל תקין',
         invalid_password: 'הזן סיסמה תקינה',
@@ -618,6 +624,8 @@ After they register, you'll receive coupons.`,
         invalid_code: 'קוד שגוי',
         email_description:
           'חפש כבר שלח לי קוד אימות.\nאתה מסכים לתנאי השימוש והפרטיות.',
+        sms_description:
+          'אנו נשלח קוד אימות למספר הטלפון שלך.\nאתה מסכים לתנאי השימוש והפרטיות.',
         sent_code_timer_standard_text:
           'הקוד נשלח. בדוק את האימייל שלך בעוד {{count}} שניות...',
         sent_code_timer_error_text:

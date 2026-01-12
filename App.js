@@ -27,6 +27,8 @@ import RegisterScreenWithPass from './screens/RegisterScreenWithPass';
 import LoadingStub from './screens/LoaderScreen';
 import ForgottenPasswordScreen from './screens/ForgottenPasswordScreen';
 import ResetPasswordScreen from './screens/ResetPasswordScreen';
+import ForgottenPasswordScreenSms from './screens/ForgottenPasswordScreenSms';
+import RegisterScreenWithPassSms from './screens/RegisterScreenWithPassSms';
 
 // --- Глобальное применение шрифта ---
 const originalTextRender = Text.render;
@@ -185,10 +187,16 @@ function App() {
   }
 
   // Регистрация перед входом
+  // if (registerControl.state) {
+  //   content = <RegisterScreenWithPass />;
+  // }
   if (registerControl.state) {
-    content = <RegisterScreenWithPass />;
+    content = <RegisterScreenWithPassSms />;
   }
   // Регистрация перед входом
+  // if (forgotPassControl.state) {
+  //   content = <ForgottenPasswordScreenSms />;
+  // }
   if (forgotPassControl.state) {
     content = <ForgottenPasswordScreen />;
   }

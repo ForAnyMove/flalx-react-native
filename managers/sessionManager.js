@@ -17,6 +17,7 @@ export default function sessionManager() {
   const [subscription, setSubscription] = useState(null);
   const [revealedUsers, setRevealedUsers] = useState([]); // для хранения ID пользователей с раскрытыми контактами
   const [email, setEmail] = useState(null); // для verifyOtp
+  const [phone, setPhone] = useState(null); // для verifyOtp с телефоном
   const [isInPasswordReset, setIsInPasswordReset] = useState(false);
   const preResetAuthCall = useRef(false);
 
@@ -170,6 +171,21 @@ export default function sessionManager() {
     }
   }
 
+  // Запросить код на телефон
+  async function resetPasswordWithPhone(userPhone) {
+    setPhone(userPhone); // сохраним телефон для дальнейшей проверки кода
+    const { error } = await supabase.auth.signInWithOtp({
+      phone: userPhone,
+    });
+    if (error) {
+      console.error('Ошибка при отправке SMS:', error.message);
+      return { success: false, error: error.message };
+    } else {
+      console.log('SMS отправлено на номер:', userPhone);
+      return { success: true };
+    }
+  }
+
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
       console.log('Пользователь открыл ссылку восстановления');
@@ -235,6 +251,32 @@ export default function sessionManager() {
       console.log('Код принят:', data);
       setTrialSession(data.session);
 
+      setIsInPasswordReset(true);
+    }
+  }
+
+  // Проверка SMS кода для сброса пароля
+  async function verifyOtpResetPasswordWithPhone(code) {
+    if (!phone) {
+      console.error(
+        'Телефон не установлен. Сначала вызови resetPasswordWithPhone().'
+      );
+      return;
+    }
+
+    preResetAuthCall.current = true;
+    const { data, error } = await supabase.auth.verifyOtp({
+      phone,
+      token: code,
+      type: 'sms',
+    });
+
+    if (error) {
+      console.error('Ошибка проверки SMS кода:', error.message);
+      throw new Error(`Ошибка проверки SMS кода: ${error.message}`);
+    } else {
+      console.log('Код принят:', data);
+      setTrialSession(data.session);
       setIsInPasswordReset(true);
     }
   }
@@ -528,6 +570,69 @@ export default function sessionManager() {
     }
   }
 
+  // Создание пользователя по номеру телефона + пароль
+  async function createUserWithPhone(phone, password) {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        phone,
+        password,
+      });
+
+      if (error) {
+        // Обработка ошибки, если пользователь уже существует
+        if (error.message.toLowerCase().includes('already registered') || error.message.toLowerCase().includes('user already exists')) {
+          return {
+            success: false,
+            error: error.message,
+            isUserExists: true,
+          };
+        }
+        console.error('Ошибка регистрации в Supabase:', error.message);
+        return { success: false, error: error.message };
+      }
+
+      // Если signUp прошел успешно, это значит, что OTP был отправлен.
+      // Сессия не создается до верификации.
+      console.log('OTP отправлен на номер:', phone);
+      return { success: true };
+
+    } catch (e) {
+      console.error('Ошибка createUserWithPhone:', e);
+      return { success: false, error: e.message };
+    }
+  }
+
+    // Проверка SMS кода
+  async function verifyPhoneOtp(phone, token) {
+    const { data, error } = await supabase.auth.verifyOtp({
+      phone,
+      token,
+      type: 'sms',
+    });
+
+    if (error) {
+      console.error('Ошибка проверки SMS кода:', error.message);
+      return { success: false, error: error.message };
+    }
+
+    console.log('Успешный вход через SMS OTP:', data);
+    await saveSession(data.session);
+
+    try {
+      // Загружаем профиль пользователя
+      await fetchUserProfile(data.session.access_token);
+      await refreshRevealedUsers(data.session);
+      return { success: true, session: data.session };
+    } catch (profileError) {
+      console.error(
+        'Ошибка загрузки профиля после входа:',
+        profileError.message
+      );
+      await signOut();
+      return { success: false, error: 'Не удалось загрузить профиль пользователя.' };
+    }
+  }
+
   // Смена существующего пароля
   async function changePassword(oldPassword, newPassword) {
     try {
@@ -624,11 +729,16 @@ export default function sessionManager() {
       signInWithPassword: (email, password) =>
         signInWithPassword(email, password),
       resetPasswordWithEmail: (email) => resetPasswordWithEmail(email),
+      resetPasswordWithPhone: (phone) => resetPasswordWithPhone(phone),
       checkCode: (code) => verifyOtp(code),
       checkCodeForPaswordReset: (code) => verifyOtpResetPassword(code),
+      checkCodeForPasswordResetWithPhone: (code) =>
+        verifyOtpResetPasswordWithPhone(code),
       signOut,
       serverURL: API_BASE_URL,
       createUser: (email, password) => createUser(email, password),
+      createUserWithPhone: (phone, password) => createUserWithPhone(phone, password),
+      verifyPhoneOtp: (phone, token) => verifyPhoneOtp(phone, token),
       changePassword: (oldPassword, newPassword) =>
         changePassword(oldPassword, newPassword),
       createPassword: (newPassword) => createPassword(newPassword),
