@@ -269,4 +269,30 @@ async function updateJobComment(jobId, comment, session) {
     }
 }
 
-export { createJob, checkHasPendingJob, getJobProducts, addSelfToJobProviders, removeSelfFromJobProviders, isProviderInJob, completeJob, updateJobComment, payForJob };
+async function noticeJobRejection(jobId, session) {
+    try {
+        const token = session?.token?.access_token;
+        const url = session?.serverURL || 'http://localhost:3000';
+
+        if (!token) {
+            throw new Error('No valid session token found');
+        }
+
+        if (!url) {
+            throw new Error('No valid server URL found in session');
+        }
+
+        const headers = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+        };
+
+        const response = await axios.patch(`${url}/jobs/as-creator/waiting/${jobId}/notice-rejection`, {}, { headers });
+        return response.data;
+    } catch (error) {
+        console.error('Error noticing job rejection:', error);
+        throw error;
+    }
+}
+
+export { createJob, checkHasPendingJob, getJobProducts, addSelfToJobProviders, removeSelfFromJobProviders, isProviderInJob, completeJob, updateJobComment, payForJob, noticeJobRejection };
