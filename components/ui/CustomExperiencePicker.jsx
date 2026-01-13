@@ -16,7 +16,6 @@ import { useComponentContext } from '../../context/globalAppContext';
 import { icons } from '../../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
-import { formatExperience } from '../../utils/experience_ulit';
 
 const CustomExperiencePicker = ({
   label,
@@ -101,6 +100,25 @@ const CustomExperiencePicker = ({
     setYears(newYears);
     setMonths(newMonths);
     onValueChange({ years: newYears, months: newMonths });
+  };
+
+  const formatExperience = (y, m) => {
+    if (!y && !m) return placeholder || '-';
+
+    const yearStr =
+      y > 0
+        ? y === 1
+          ? t('register.experience.year')
+          : t('register.experience.years', { years: y })
+        : '';
+    const monthStr =
+      m > 0
+        ? m === 1
+          ? t('register.experience.month')
+          : t('register.experience.months', { months: m })
+        : '';
+
+    return [yearStr, monthStr].filter(Boolean).join(' ');
   };
 
   const sizes = useMemo(() => {
@@ -253,7 +271,7 @@ const CustomExperiencePicker = ({
       }
 
       // Иначе форматируем кастомное значение
-      return formatExperience(selectedValue, t);
+      return formatExperience(selectedValue.years, selectedValue.months);
     }
     return placeholder ? null : '-';
   };
@@ -535,7 +553,7 @@ const CustomExperiencePicker = ({
           fontSize: sizes.font,
         }}
       >
-        {formatExperience({ years, months }, t)}
+        {formatExperience(years, months)}
       </Text>
     </View>
   );
