@@ -19,6 +19,7 @@ import { useWindowInfo } from '../context/windowContext';
 import JobModalWrapper from './JobModalWrapper';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
+import { formatExperience } from '../utils/experience_ulit';
 
 function CustomModal({ isWebLandscape, visible, transparent, animationType, children }) {
   if (isWebLandscape) {
@@ -120,7 +121,21 @@ export default function JobHistoryModal({ visible, onClose, history = [] }) {
           return item?.changes[type] ? jobTypesController.jobTypesWithSubtypes.find(t => t.id === item.changes[type])?.name || '-' : '-';
         case 'subType':
           return item?.changes[type] ? jobTypesController.jobTypesWithSubtypes.flatMap(t => t.subtypes || []).find(st => st.id === item.changes[type])?.name || '-' : '-';
+        case 'location':
+          return item.changes[type]
+            ? `${item.changes[type]?.address || '-'}` : '-';
+        case 'experience':
+          return item.changes[type]
+            ? formatExperience(item.changes[type], t)
+            : '-';
         default:
+          if (type === 'start' || type === 'startDateTime' || type === 'end' || type === 'endDateTime') {
+            const value = item.changes[type];
+            if (!value) return '-';
+            const date = new Date(value);
+            if (isNaN(date)) return value;
+            return date.toLocaleString();
+          }
           return item.changes[type];
       }
     }
