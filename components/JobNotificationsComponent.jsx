@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
+import { ActivityIndicator } from 'react-native-paper';
 
 if (
   Platform.OS === 'android' &&
@@ -28,6 +29,7 @@ const JobNotificationsComponent = ({ notifications = [], onClose }) => {
   const { width, height } = useWindowDimensions();
   const isWebLandscape = Platform.OS === 'web' && width > height;
   const [localNotifications, setLocalNotifications] = useState(notifications);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setLocalNotifications(notifications);
@@ -109,6 +111,17 @@ const JobNotificationsComponent = ({ notifications = [], onClose }) => {
     return null;
   }
 
+  const closeNotification = async (id) => {
+    try {
+      setLoading(true);
+      const closed = await onClose(id);
+    } catch (e) {
+      console.error('Error closing notification:', e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const visibleNotifications = localNotifications.slice(-3);
 
   const handleClose = (id) => {
@@ -145,12 +158,13 @@ const JobNotificationsComponent = ({ notifications = [], onClose }) => {
           <View key={notification.id} style={[styles.card, cardStyle]}>
             <Text style={styles.title}>{t('job_notifications.rejected_title')} {notification.title}</Text>
             <Text style={styles.message} numberOfLines={3} ellipsizeMode='tail'>
-              {t('job_notifications.rejected_message', { reason: notification.message, jobType: notification.jobType })}
+              {notification.message != null ? t('job_notifications.rejected_message_reason', { reason: notification.message, jobType: notification.jobType, jobSubtype: notification.jobSubtype }) :
+                t('job_notifications.rejected_message', { jobType: notification.jobType, jobSubtype: notification.jobSubtype })}
             </Text>
             {isTopCard && (
               <TouchableOpacity
                 style={styles.closeButton}
-                onPress={() => handleClose(notification.id)}
+                onPress={() => closeNotification(notification.id)}
               >
                 <Image source={icons.cross} style={styles.closeIcon} />
               </TouchableOpacity>
@@ -165,6 +179,11 @@ const JobNotificationsComponent = ({ notifications = [], onClose }) => {
                 ]}
               />
             )}
+            {loading && index === notifications.length - 1 &&
+              <View style={{ ...styles.card, ...cardStyle, position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#00000020', alignItems: 'center', justifyContent: 'center' }}>
+                <ActivityIndicator animating={true} size="large" color={themeController.current?.primaryColor} />
+              </View>
+            }
           </View>
         );
       })}

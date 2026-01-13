@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { addSelfToJobProviders, getJobProducts, isProviderInJob, removeSelfFromJobProviders } from "../src/api/jobs";
+import { addSelfToJobProviders, getJobProducts, isProviderInJob, noticeJobRejection, removeSelfFromJobProviders } from "../src/api/jobs";
 import { useGeolocation } from "./useGeolocation";
 
 /**
@@ -281,6 +281,15 @@ export default function jobsManager({ session, user, geolocation }) {
     }
   }
 
+  async function noticeJobRejectionAsCreator(jobId) {
+    try {
+      await noticeJobRejection(jobId, session);
+      setCreatorWaiting((prev) => prev.filter((job) => job.id !== jobId));
+    } catch (e) {
+      console.error('Error noticing job rejection as creator:', e);
+    }
+  }
+
   // авто-загрузка, как только есть сессия и юзер
   useEffect(() => {
     if (serverURL && token && userId) {
@@ -321,7 +330,8 @@ export default function jobsManager({ session, user, geolocation }) {
       addProvider,
       removeProvider,
       getJobById,
-      checkIsProviderInJob
+      checkIsProviderInJob,
+      noticeJobRejectionAsCreator
     },
     products
   };

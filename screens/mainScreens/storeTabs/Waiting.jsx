@@ -21,32 +21,6 @@ import { Divider } from 'react-native-paper';
 import { useLocalization } from '../../../src/services/useLocalization';
 import JobNotificationsComponent from '../../../components/JobNotificationsComponent';
 
-const TEST_NOTIFICATIONS = [
-            {
-              id: 1,
-              message: 'test notification 1',
-              title: 'Test Notification 1',
-              jobType: 'Electrician',
-            },
-            {
-              id: 2,
-              message: 'test notification 2',
-              title: 'Test Notification 2',
-              jobType: 'Plumber',
-            },
-            {
-              id: 3,
-              message: 'test notification 3',
-              title: 'Test Notification 3',
-              jobType: 'Cleaner',
-            },
-            {
-              id: 4,
-              message: 'test notification 4',
-              title: 'Test Notification 4',
-              jobType: 'Gardener',
-            },
-          ];
 
 export default function WaitingScreen({
   setShowJobModalVisible,
@@ -61,13 +35,27 @@ export default function WaitingScreen({
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 
-  const [notifications, setNotifications] = useState(TEST_NOTIFICATIONS);
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');
   // const [showJobModalVisible, setShowJobModalVisible] = useState(false);
   // const [currentJobId, setCurrentJobId] = useState(null);
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  const rejectedJobsNotifications = useMemo(() => {
+    const rejectedJobs = jobsController.creator.waiting.filter((job => job.status === 'rejected')).sort((a, b) => new Date(a.moderated_at) - new Date(b.moderated_at));
+
+    const notifications = rejectedJobs.map((job) => ({
+      id: job.id,
+      message: job.rejection_reason != null ? job.rejection_reason : null,
+      title: '',
+      jobType: tField(job.type, 'name'),
+      jobSubtype: tField(job.subType, 'name'),
+    }));
+
+    return notifications;
+
+  }, [jobsController.creator.waiting]);
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -98,7 +86,7 @@ export default function WaitingScreen({
     .filter((job) =>
       filteredJobs.length > 0
         ? filteredJobs.includes(job.type.key) ||
-          filteredJobs.includes(job.subType.key)
+        filteredJobs.includes(job.subType.key)
         : true
     )
     .filter((job) =>
@@ -111,7 +99,7 @@ export default function WaitingScreen({
     .filter((job) =>
       filteredJobs.length > 0
         ? filteredJobs.includes(job.type.key) ||
-          filteredJobs.includes(job.subType.key)
+        filteredJobs.includes(job.subType.key)
         : true
     )
     .filter((job) =>
@@ -151,22 +139,22 @@ export default function WaitingScreen({
                   themeController.current?.defaultBlocksMockBackground,
                 ...(isRTL
                   ? {
-                      marginLeft: sizes.imageMargin,
-                      marginRight: 0,
-                    }
+                    marginLeft: sizes.imageMargin,
+                    marginRight: 0,
+                  }
                   : {
-                      marginRight: sizes.imageMargin,
-                      marginLeft: 0,
-                    }),
+                    marginRight: sizes.imageMargin,
+                    marginLeft: 0,
+                  }),
                 ...(isRTL && Platform.OS === 'web'
                   ? {
-                      borderTopRightRadius: sizes.cardRadius,
-                      borderBottomRightRadius: sizes.cardRadius,
-                    }
+                    borderTopRightRadius: sizes.cardRadius,
+                    borderBottomRightRadius: sizes.cardRadius,
+                  }
                   : {
-                      borderTopLeftRadius: sizes.cardRadius,
-                      borderBottomLeftRadius: sizes.cardRadius,
-                    }),
+                    borderTopLeftRadius: sizes.cardRadius,
+                    borderBottomLeftRadius: sizes.cardRadius,
+                  }),
               },
             ]}
           >
@@ -249,38 +237,38 @@ export default function WaitingScreen({
           )}
           {(job.status === 'pending' ||
             job.status === 'pending_moderation') && (
-            <View
-              style={[
-                styles.badge,
-                {
-                  backgroundColor: themeController.current?.mainBadgeBackground,
-                  minWidth: sizes.badgeSize,
-                  height: sizes.badgeSize,
-                  borderRadius: sizes.badgeSize / 4,
-                  top: sizes.badgePosition,
-                  paddingHorizontal: sizes.badgePadding,
-                  paddingVertical: sizes.badgePadding,
-                  ...(isRTL
-                    ? { left: sizes.badgePosition }
-                    : { right: sizes.badgePosition }),
-                },
-              ]}
-            >
-              <Text
+              <View
                 style={[
-                  styles.badgeText,
+                  styles.badge,
                   {
-                    color: themeController.current?.badgeTextColor,
-                    fontSize: sizes.badgeFont,
+                    backgroundColor: themeController.current?.mainBadgeBackground,
+                    minWidth: sizes.badgeSize,
+                    height: sizes.badgeSize,
+                    borderRadius: sizes.badgeSize / 4,
+                    top: sizes.badgePosition,
+                    paddingHorizontal: sizes.badgePadding,
+                    paddingVertical: sizes.badgePadding,
+                    ...(isRTL
+                      ? { left: sizes.badgePosition }
+                      : { right: sizes.badgePosition }),
                   },
                 ]}
               >
-                {job.status === 'pending_moderation'
-                  ? t('common.pending_moderation')
-                  : t('common.waiting_payment')}
-              </Text>
-            </View>
-          )}
+                <Text
+                  style={[
+                    styles.badgeText,
+                    {
+                      color: themeController.current?.badgeTextColor,
+                      fontSize: sizes.badgeFont,
+                    },
+                  ]}
+                >
+                  {job.status === 'pending_moderation'
+                    ? t('common.pending_moderation')
+                    : t('common.waiting_payment')}
+                </Text>
+              </View>
+            )}
         </View>
       </TouchableOpacity>
     );
@@ -313,8 +301,8 @@ export default function WaitingScreen({
       </View>
       {true && (
         <JobNotificationsComponent
-          notifications={notifications}
-          onClose={(id) => setNotifications((prev) => prev.filter((n) => n.id !== id))}
+          notifications={rejectedJobsNotifications}
+          onClose={async (id) => await jobsController.actions.noticeJobRejectionAsCreator(id)}
         />
       )}
       {jobsController.loading.any ? (
