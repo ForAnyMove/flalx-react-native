@@ -95,16 +95,29 @@ export default function ShowJobModal({
 
   const prevJobLocation = useRef(null);
 
-  const experienceLevels = [
-    { label: t('register.experience.none'), value: 'none' },
-    { label: t('register.experience.month'), value: 'month' },
-    { label: t('register.experience.months', {months: 3}), value: '3_months' },
-    { label: t('register.experience.months', {months: 6}), value: '6_months' },
-    { label: t('register.experience.year'), value: 'year' },
-    { label: t('register.experience.years', {years: 2}), value: '2_years' },
-    { label: t('register.experience.years', {years: 3}), value: '3_years' },
-    { label: t('register.experience.other'), value: 'other' },
-  ];
+  const formatExperience = (exp) => {
+    if (!exp || (typeof exp === 'object' && !exp.years && !exp.months)) return '-';
+
+    const y = typeof exp === 'object' ? exp.years : 0;
+    const m = typeof exp === 'object' ? exp.months : 0;
+
+    if (!y && !m) return '-';
+
+    const yearStr =
+      y > 0
+        ? y === 1
+          ? t('register.experience.year')
+          : t('register.experience.years', { years: y })
+        : '';
+    const monthStr =
+      m > 0
+        ? m === 1
+          ? t('register.experience.month')
+          : t('register.experience.months', { months: m })
+        : '';
+
+    return [yearStr, monthStr].filter(Boolean).join(' ');
+  };
 
   useEffect(() => {
     if (!currentJobId) return;
@@ -945,7 +958,7 @@ export default function ShowJobModal({
                       <MaterialIcons
                         name='cancel'
                         size={sizes.icon}
-                      color={themeController.current?.unactiveTextColor}
+                        color={themeController.current?.unactiveTextColor}
                       />
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -964,7 +977,7 @@ export default function ShowJobModal({
                       <MaterialIcons
                         name='check-circle'
                         size={sizes.icon}
-                      color={themeController.current?.unactiveTextColor}
+                        color={themeController.current?.unactiveTextColor}
                       />
                     </TouchableOpacity>
                   </View>
@@ -1660,7 +1673,7 @@ export default function ShowJobModal({
         {t('showJob.fields.experience', { defaultValue: 'Experience' })}
       </Text>
       <TextInput
-        value={experienceLevels.find(level => level.value === currentJobInfo?.experience)?.label || '-'}
+        value={formatExperience(currentJobInfo?.experience)}
         style={[
           styles.input,
           dynamicStyles.input,
@@ -2239,7 +2252,7 @@ export default function ShowJobModal({
                         {t('showJob.fields.experience')}
                       </Text>
                       <TextInput
-                        value={experienceLevels.find(level => level.value === currentJobInfo?.experience)?.label || '-'}
+                        value={formatExperience(currentJobInfo?.experience)}
                         style={{
                           // fontWeight: '500',
                           fontFamily: 'Rubik-Medium',

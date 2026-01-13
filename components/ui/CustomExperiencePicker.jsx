@@ -35,20 +35,20 @@ const CustomExperiencePicker = ({
 
   const experienceLevels = useMemo(
     () => [
-      { label: t('register.experience.none'), value: 'none' },
-      { label: t('register.experience.month'), value: 'month' },
+      { label: t('register.experience.none'), value: { years: 0, months: 0 } },
+      { label: t('register.experience.month'), value: { years: 0, months: 1 } },
       {
         label: t('register.experience.months', { months: 3 }),
-        value: '3_months',
+        value: { years: 0, months: 3 },
       },
       {
         label: t('register.experience.months', { months: 6 }),
-        value: '6_months',
+        value: { years: 0, months: 6 },
       },
-      { label: t('register.experience.year'), value: 'year' },
-      { label: t('register.experience.years', { years: 2 }), value: '2_years' },
-      { label: t('register.experience.years', { years: 3 }), value: '3_years' },
-      { label: t('register.experience.other'), value: 'other' },
+      { label: t('register.experience.year'), value: { years: 1, months: 0 } },
+      { label: t('register.experience.years', { years: 2 }), value: { years: 2, months: 0 } },
+      { label: t('register.experience.years', { years: 3 }), value: { years: 3, months: 0 } },
+      { label: t('register.experience.other'), value: 'custom' },
     ],
     [t]
   );
@@ -58,6 +58,11 @@ const CustomExperiencePicker = ({
   const [months, setMonths] = useState(0);
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'counter'
 
+  const compareExperience = (exp1, exp2) => {
+    if (!exp1 || !exp2) return false;
+    return exp1.years === exp2.years && exp1.months === exp2.months;
+  };
+
   const parseValue = (value) => {
     if (typeof value === 'object' && value !== null) {
       return {
@@ -65,37 +70,11 @@ const CustomExperiencePicker = ({
         months: value.months || 0,
       };
     }
-    if (typeof value === 'string') {
-      if (value.startsWith('custom_')) {
-        const parts = value.replace('custom_', '').split('y');
-        const y = parseInt(parts[0], 10) || 0;
-        const m = parseInt(parts[1].replace('m', ''), 10) || 0;
-        return { years: y, months: m };
-      }
-      // Handle predefined values like '1_year', '3_months' etc.
-      const parts = value.split('_');
-      if (parts.length === 2) {
-        const num = parseInt(parts[0], 10);
-        if (parts[1].includes('year')) return { years: num, months: 0 };
-        if (parts[1].includes('month')) return { years: 0, months: num };
-      } else if (value === 'year') {
-        return { years: 1, months: 0 };
-      } else if (value === 'month') {
-        return { years: 0, months: 1 };
-      }
-    }
     return { years: 0, months: 0 };
   };
 
   useEffect(() => {
-    const isCustom =
-      (typeof selectedValue === 'string' &&
-        selectedValue.startsWith('custom_')) ||
-      typeof selectedValue === 'object';
-
-    setCustomMode(isCustom);
-
-    if (isCustom) {
+    if (selectedValue && typeof selectedValue === 'object') {
       const { years: y, months: m } = parseValue(selectedValue);
       setYears(y);
       setMonths(m);
@@ -281,17 +260,20 @@ const CustomExperiencePicker = ({
   const [contentHeight, setContentHeight] = useState(0);
 
   const getSelectedLabel = () => {
-    if (
-      typeof selectedValue === 'object' &&
-      selectedValue !== null &&
-      (selectedValue.years > 0 || selectedValue.months > 0)
-    ) {
+    if (selectedValue && typeof selectedValue === 'object') {
+      // Проверяем, есть ли предопределенная опция с таким же значением
+      const predefined = experienceLevels.find((option) =>
+        typeof option.value === 'object' && compareExperience(option.value, selectedValue)
+      );
+
+      if (predefined) {
+        return predefined.label;
+      }
+
+      // Иначе форматируем кастомное значение
       return formatExperience(selectedValue.years, selectedValue.months);
     }
-    return (
-      experienceLevels.find((option) => option.value === selectedValue)
-        ?.label || (placeholder ? null : '-')
-    );
+    return placeholder ? null : '-';
   };
 
   const itemHeight = sizes.pickerHeight * 0.9;
@@ -309,7 +291,8 @@ const CustomExperiencePicker = ({
           width: width,
         });
         // Always open in list view unless a custom value is already set
-        const isCustom = selectedValue && typeof selectedValue === 'object';
+        const isCustom = selectedValue && typeof selectedValue === 'object' &&
+          !experienceLevels.some(opt => typeof opt.value === 'object' && compareExperience(opt.value, selectedValue));
         setViewMode(isCustom ? 'counter' : 'list');
         setModalVisible(true);
       });
@@ -351,15 +334,19 @@ const CustomExperiencePicker = ({
   };
 
   const renderOption = ({ item }) => {
-    const isSelected = selectedValue === item.value;
-    const isHovered = hoveredValue === item.value;
+    const isSelected = typeof item.value === 'object'
+      ? compareExperience(selectedValue, item.value)
+      : false;
+    const isHovered = typeof item.value === 'object'
+      ? compareExperience(hoveredValue, item.value)
+      : hoveredValue === item.value;
 
     const webHoverProps =
       Platform.OS === 'web'
         ? {
-            onMouseEnter: () => setHoveredValue(item.value),
-            onMouseLeave: () => setHoveredValue(null),
-          }
+          onMouseEnter: () => setHoveredValue(item.value),
+          onMouseLeave: () => setHoveredValue(null),
+        }
         : {};
 
     return (
@@ -371,14 +358,14 @@ const CustomExperiencePicker = ({
             backgroundColor: isSelected
               ? themeController.current?.selectedItemBackground
               : isHovered
-              ? themeController.current?.profileDefaultBackground
-              : 'transparent',
+                ? themeController.current?.profileDefaultBackground
+                : 'transparent',
             height: itemHeight,
             justifyContent: 'center',
           },
         ]}
         onPress={() => {
-          if (item.value === 'other') {
+          if (item.value === 'custom') {
             setCustomMode(true);
             setViewMode('counter');
             const { years: y, months: m } = parseValue(selectedValue);
@@ -597,8 +584,8 @@ const CustomExperiencePicker = ({
                 top:
                   viewMode === 'counter' && !bottomDropdown
                     ? sizes.counterContainerHeight +
-                      pickerLayout.top -
-                      sizes.pickerHeight*1.5
+                    pickerLayout.top -
+                    sizes.pickerHeight * 1.5
                     : pickerLayout.top,
                 left: pickerLayout.left,
                 width: pickerLayout.width,
@@ -608,13 +595,13 @@ const CustomExperiencePicker = ({
                     : themeController.current?.dropdownBackground,
                 ...(bottomDropdown
                   ? {
-                      borderBottomLeftRadius: sizes.borderRadius,
-                      borderBottomRightRadius: sizes.borderRadius,
-                    }
+                    borderBottomLeftRadius: sizes.borderRadius,
+                    borderBottomRightRadius: sizes.borderRadius,
+                  }
                   : {
-                      borderTopLeftRadius: sizes.borderRadius,
-                      borderTopRightRadius: sizes.borderRadius,
-                    }),
+                    borderTopLeftRadius: sizes.borderRadius,
+                    borderTopRightRadius: sizes.borderRadius,
+                  }),
               },
             ]}
           >
