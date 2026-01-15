@@ -20,6 +20,7 @@ export const WebSocketProvider = ({ children }) => {
     providersController,
     subscription,
     jobsController,
+    couponsManagerController,
   } = useComponentContext();
 
   const wsRef = useRef(null);
@@ -379,6 +380,9 @@ export const WebSocketProvider = ({ children }) => {
         jobsController.reloadCreator();
         break;
       }
+      case 'COUPON_EARNED':
+        couponsManagerController.refreshBalance();
+        break;
       default:
         break;
     }
