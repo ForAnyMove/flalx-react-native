@@ -487,29 +487,19 @@ export default function sessionManager() {
   }
 
   // Создание пользователя по email + password
-  async function createUser(email, password, profileData = {}) {
+  async function createUser(email, password, profileData = {}, referralCode = null) {
     try {
-      // 0. Проверяем, существует ли пользователь
-      const { data: existingUser, error: checkError } =
-        await supabase.auth.signInWithPassword({
-          email,
-          password: 'invalid-password-check', // Пытаемся войти с неверным паролем
-        });
+      // Регистрируем пользователя в Supabase
+      console.log('Creating user with referral code:', referralCode);
 
-      // Если signInWithPassword вернула ошибку 'Invalid login credentials',
-      // это может означать, что пользователь СУЩЕСТВУЕТ.
-      if (checkError && checkError.message.includes('Invalid login')) {
-        return {
-          success: false,
-          error: 'User with this email already exists.',
-          isUserExists: true,
-        };
-      }
-
-      // 1. Регистрируем пользователя в Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            invite_code: referralCode || null
+          }
+        }
       });
 
       if (error) {
@@ -534,13 +524,13 @@ export default function sessionManager() {
         // Если сессия не вернулась — пользователь должен подтвердить email
         // Это может быть как новый пользователь, так и существующий неподтвержденный
         if (data.user && data.user.identities && data.user.identities.length === 0) {
-           return {
+          return {
             success: false,
             error: 'User with this email already exists.',
             isUserExists: true,
           };
         }
-        
+
         return {
           success: true,
           requiresEmailConfirmation: true,
@@ -602,7 +592,7 @@ export default function sessionManager() {
     }
   }
 
-    // Проверка SMS кода
+  // Проверка SMS кода
   async function verifyPhoneOtp(phone, token) {
     const { data, error } = await supabase.auth.verifyOtp({
       phone,
@@ -736,7 +726,7 @@ export default function sessionManager() {
         verifyOtpResetPasswordWithPhone(code),
       signOut,
       serverURL: API_BASE_URL,
-      createUser: (email, password) => createUser(email, password),
+      createUser: (email, password, options, referralCode) => createUser(email, password, options, referralCode),
       createUserWithPhone: (phone, password) => createUserWithPhone(phone, password),
       verifyPhoneOtp: (phone, token) => verifyPhoneOtp(phone, token),
       changePassword: (oldPassword, newPassword) =>

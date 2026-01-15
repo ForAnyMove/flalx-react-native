@@ -18,7 +18,7 @@ import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
 
 const CouponsModal = ({ visible, onClose }) => {
-  const { themeController, languageController, user } = useComponentContext();
+  const { themeController, languageController, couponsManagerController } = useComponentContext();
   const theme = themeController.current;
   const { height, width } = useWindowDimensions();
   const { isLandscape } = useWindowInfo();
@@ -27,8 +27,8 @@ const CouponsModal = ({ visible, onClose }) => {
   const isRTL = languageController.isRTL;
 
   const [linkCopied, setLinkCopied] = useState(false);
-  const referralLink = `https://www.flalx.com/projects/${user.current?.id}`;
-  const couponsCount = user.current?.coupons || 0;
+  const referralLink = couponsManagerController.referralLink;
+  const couponsCount = couponsManagerController.balance;
 
   useEffect(() => {
     if (!visible) {
