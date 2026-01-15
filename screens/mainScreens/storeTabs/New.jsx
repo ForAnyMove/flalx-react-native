@@ -20,6 +20,8 @@ import { useNotification } from '../../../src/render';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import { useLocalization } from '../../../src/services/useLocalization';
+import NewJobTemplateButton from '../../../components/NewJobTemplateButton';
+import NewJobTemplateGrouped from '../../../components/NewJobTemplateGrouped';
 // import JobModalWrapper from '../../../components/JobModalWrapper';
 
 export default function NewScreen({
@@ -56,6 +58,91 @@ export default function NewScreen({
     };
   }, [height, isWebLandscape]);
 
+  const renderDefaultList = () => {
+    return <ScrollView
+      contentContainerStyle={[
+        styles.scrollContainer,
+        { paddingBottom: sizes.scrollContainerPaddingBottom },
+      ]}
+    >
+      <View style={styles.cardsWrapper}>
+        {jobTypesController.jobTypesWithSubtypes && jobTypesController.jobTypesWithSubtypes
+          .filter((value) =>
+            value.name.toLowerCase().includes(searchValue.toLowerCase())
+          )
+          .sort((value1, value2) => {
+            const aIsLiked = likes.includes(value1.key);
+            const bIsLiked = likes.includes(value2.key);
+            return bIsLiked - aIsLiked;
+          })
+          .map((value) => (
+            <NewJobTemplateButton
+              onPress={async () => {
+                setActiveKey(value.key);
+                setNewJobModalVisible(true);
+              }}
+              likeStatus={likes.includes(value.key)}
+              switchLikeStatus={() => {
+                if (likes.includes(value.key)) {
+                  setLikes(likes.filter((item) => item !== value.key));
+                } else {
+                  setLikes([...likes, value.key]);
+                }
+              }}
+              templateTitle={tField(value, 'name')}
+              imageSource={null}
+            />
+            // <TouchableOpacity
+            //   key={value.key}
+            //   onPress={async () => {
+            //     // const pendingJobRequest = await checkHasPendingJob(session);
+            //     setActiveKey(value.key);
+            //     setNewJobModalVisible(true);
+
+            //     // if (!pendingJobRequest.job) {
+            //     //   setActiveKey(value.key);
+            //     //   setNewJobModalVisible(true);
+            //     // } else {
+            //     //   const url =
+            //     //     pendingJobRequest.payment?.paymentMetadata
+            //     //       ?.paypalApproval?.href;
+            //     //   const message = [
+            //     //     t('subscriptions.messages.pendingJob'),
+            //     //     '',
+            //     //     t('subscriptions.messages.paymentURL', { url: url }),
+            //     //     '',
+            //     //     t('subscriptions.messages.cancelPendingJob'),
+            //     //   ].join('\n');
+
+            //     //   showWarning(message, [
+            //     //     {
+            //     //       title: t('subscriptions.messages.moveToPayment'),
+            //     //       backgroundColor: '#3B82F6',
+            //     //       textColor: '#FFFFFF',
+            //     //       onPress: () => openWebView(url),
+            //     //     },
+            //     //   ]);
+            //     // }
+            //   }}
+            // >
+            //   <NewJobTemplateCard
+            //     likeStatus={likes.includes(value.key)}
+            //     switchLikeStatus={() => {
+            //       if (likes.includes(value.key)) {
+            //         setLikes(likes.filter((item) => item !== value.key));
+            //       } else {
+            //         setLikes([...likes, value.key]);
+            //       }
+            //     }}
+            //     templateTitle={tField(value, 'name')}
+            //     imageSource={null}
+            //   />
+            // </TouchableOpacity>
+          ))}
+      </View>
+    </ScrollView>
+  }
+
   return (
     <>
       <View
@@ -75,72 +162,11 @@ export default function NewScreen({
             setSearchValue={setSearchValue}
           />
         </View>
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContainer,
-            { paddingBottom: sizes.scrollContainerPaddingBottom },
-          ]}
-        >
-          <View style={styles.cardsWrapper}>
-            {jobTypesController.jobTypesWithSubtypes && jobTypesController.jobTypesWithSubtypes
-              .filter((value) =>
-                value.name.toLowerCase().includes(searchValue.toLowerCase())
-              )
-              .sort((value1, value2) => {
-                const aIsLiked = likes.includes(value1.key);
-                const bIsLiked = likes.includes(value2.key);
-                return bIsLiked - aIsLiked;
-              })
-              .map((value) => (
-                <TouchableOpacity
-                  key={value.key}
-                  onPress={async () => {
-                    // const pendingJobRequest = await checkHasPendingJob(session);
-                    setActiveKey(value.key);
-                    setNewJobModalVisible(true);
-
-                    // if (!pendingJobRequest.job) {
-                    //   setActiveKey(value.key);
-                    //   setNewJobModalVisible(true);
-                    // } else {
-                    //   const url =
-                    //     pendingJobRequest.payment?.paymentMetadata
-                    //       ?.paypalApproval?.href;
-                    //   const message = [
-                    //     t('subscriptions.messages.pendingJob'),
-                    //     '',
-                    //     t('subscriptions.messages.paymentURL', { url: url }),
-                    //     '',
-                    //     t('subscriptions.messages.cancelPendingJob'),
-                    //   ].join('\n');
-
-                    //   showWarning(message, [
-                    //     {
-                    //       title: t('subscriptions.messages.moveToPayment'),
-                    //       backgroundColor: '#3B82F6',
-                    //       textColor: '#FFFFFF',
-                    //       onPress: () => openWebView(url),
-                    //     },
-                    //   ]);
-                    // }
-                  }}
-                >
-                  <NewJobTemplateCard
-                    likeStatus={likes.includes(value.key)}
-                    switchLikeStatus={() => {
-                      if (likes.includes(value.key)) {
-                        setLikes(likes.filter((item) => item !== value.key));
-                      } else {
-                        setLikes([...likes, value.key]);
-                      }
-                    }}
-                    templateTitle={tField(value, 'name')}
-                    imageSource={null}
-                  />
-                </TouchableOpacity>
-              ))}
-          </View>
-        </ScrollView>
+        {/* {renderDefaultList()} */}
+        <NewJobTemplateGrouped jobTypesWithSubtypes={jobTypesController.jobTypesWithSubtypes} searchValue={searchValue} onSubTypePress={async (typeKey, subTypeKey) => {
+          setActiveKey({ typeKey, subTypeKey });
+          setNewJobModalVisible(true);
+        }} />
       </View>
     </>
   );

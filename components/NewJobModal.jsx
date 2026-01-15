@@ -131,10 +131,10 @@ export default function NewJobModal({
 
   // Объявляем состояния сначала, чтобы они были доступны в useMemo
   const [type, setType] = useState(
-    initialJob ? initialJob.type.key || '' : activeKey || ''
+    initialJob ? (initialJob.type.key || '') : (activeKey?.typeKey || activeKey || '')
   );
 
-  const [subType, setSubType] = useState(initialJob?.subType.key || '');
+  const [subType, setSubType] = useState(initialJob?.subType.key || activeKey?.subTypeKey || '');
 
   // Преобразуем данные из jobTypesController в нужный формат
   const jobTypesOptions = useMemo(() => {
@@ -272,7 +272,7 @@ export default function NewJobModal({
 
   // Очищаем подтип при смене типа
   useEffect(() => {
-    if (type !== (initialJob?.type?.key || activeKey || '')) {
+    if (type !== (initialJob?.type?.key || activeKey?.typeKey || activeKey || '')) {
       setSubType('');
     }
   }, [type]);
