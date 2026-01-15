@@ -42,6 +42,7 @@ import CompleteJobModal from './CompleteJobModal';
 import { useLocalization } from '../src/services/useLocalization';
 import { useNotification } from '../src/render';
 import { formatExperience } from '../utils/experience_ulit';
+import { formatCurrency } from '../utils/currency_formatter';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -2612,9 +2613,9 @@ export default function ShowJobModal({
                     },
                   ]}
                 >
-                  {t('showJob.buttons.buyForPrice', {
-                    defaultValue: 'Buy for 0.99$',
-                    price: '0.99',
+                  {t('showJob.buttons.buy', {
+                    defaultValue: 'Buy for {{price}}',
+                    price: formatCurrency(jobsController.providerProduct?.price, jobsController.providerProduct?.currency),
                   })}
                 </Text>
               </TouchableOpacity>

@@ -25,6 +25,7 @@ import { useNotification } from '../src/render';
 import { useMemo } from 'react';
 import { useLocalization } from '../src/services/useLocalization';
 import { useWindowInfo } from '../context/windowContext';
+import { formatCurrency } from '../utils/currency_formatter';
 
 function SubscriptionsModalContent({ closeModal }) {
   const {
@@ -348,7 +349,7 @@ function SubscriptionsModalContent({ closeModal }) {
                     marginBottom: sizes.priceMarginBottom,
                   }}
                 >
-                  {value.price}$/{t('subscriptions.month')}
+                  {formatCurrency(value.price, value.currency)}/{t('subscriptions.month')}
                 </Text>
                 {isPendingOnUpgrade ? <Text style={{ color: '#ff8800ff' }}>{`${changes.notes}\n\n${changes.prorated_amount}$ for ${changes.prorated_remaining_days} days remaining`}</Text> : null}
                 {isPendingOnDowngrade ? <Text style={{ color: '#ff8800ff' }}>{`Your plan is being downgraded, you can use ${subscription.current?.plan?.name} until next billing cycle`}</Text> : null}
