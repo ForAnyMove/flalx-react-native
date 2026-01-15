@@ -424,9 +424,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         marginBottom: sizes.professionMarginBottom,
                       }}
                     >
-                      {LICENSES[professions?.[0]]}{' '}
-                      {experience &&
-                        '- ' + t(`register.experience.${experience}`)}
+                      {LICENSES[professions?.[0]]}
                     </Text>
                   )}
 
@@ -651,7 +649,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                                 themeController.current?.buttonTextColorPrimary,
                             }}
                           >
-                            {t('profile.open_contact_info')}
+                            {t('common.purchase')}
                           </Text>
                         </TouchableOpacity>
                       ) : (

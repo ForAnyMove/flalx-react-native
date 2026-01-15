@@ -21,6 +21,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import CommentsSection from './CommentsSection';
 import { useWebView } from '../context/webViewContext';
 import { useWindowInfo } from '../context/windowContext';
+import { useLocalization } from '../src/services/useLocalization';
 
 const UserSummaryBlock = ({
   user,
@@ -36,13 +37,14 @@ const UserSummaryBlock = ({
     setAppLoading,
   } = useComponentContext();
   const { t } = useTranslation();
-    const { openWebView } = useWebView();
+  const { openWebView } = useWebView();
+  const { tField } = useLocalization(languageController.current);
   const isRTL = languageController?.isRTL;
   const [modalVisible, setModalVisible] = useState(false);
   const [showContactInfo, setShowContactInfo] = useState(false);
 
   const { width, height } = useWindowDimensions();
-  const {sidebarWidth} = useWindowInfo();
+  const { sidebarWidth } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && width > height;
 
   // компактные размеры для веб-альбомной (меньше, чем на мобильном)
@@ -74,7 +76,6 @@ const UserSummaryBlock = ({
       pagePaddingHorizontal: scale(24),
       nameSize: scale(28),
       professionSize: scale(20),
-      infoSectionMarginBottom: scale(23),
       btnRadius: scale(8),
       unlockContactBtnHeight: scale(38),
       unlockContactBtnPaddingHorizontal: scale(24),
@@ -90,6 +91,7 @@ const UserSummaryBlock = ({
       providerInfoGap: scale(8),
       titleMarginBottom: scale(4),
       professionMarginBottom: scale(32),
+      infoSectionMarginBottom: isWebLandscape ? web(23) : mobile(15),
     };
   }, [isWebLandscape, width, height]);
 
@@ -174,7 +176,11 @@ const UserSummaryBlock = ({
               ]}
             >
               <Image
-                source={themeController.current.isTheme ? icons.defaultAvatar : icons.monotoneAvatar}
+                source={
+                  themeController.current.isTheme
+                    ? icons.defaultAvatar
+                    : icons.monotoneAvatar
+                }
                 style={{ width: '100%', height: '100%' }}
               />
             </View>
@@ -296,7 +302,13 @@ const UserSummaryBlock = ({
 
                 <ScrollView contentContainerStyle={{}}>
                   <Image
-                    source={avatar ? { uri: avatar } : themeController.current.isTheme ? icons.defaultAvatar : icons.monotoneAvatar}
+                    source={
+                      avatar
+                        ? { uri: avatar }
+                        : themeController.current.isTheme
+                        ? icons.defaultAvatar
+                        : icons.monotoneAvatar
+                    }
                     style={[
                       styles.modalAvatar,
                       {
@@ -334,9 +346,7 @@ const UserSummaryBlock = ({
                         marginBottom: sizes.professionMarginBottom,
                       }}
                     >
-                      {LICENSES[professions?.[0]]}{' '}
-                      {experience &&
-                        '- ' + t(`register.experience.${experience}`)}
+                      {LICENSES[professions?.[0]]}
                     </Text>
                   )}
 
@@ -353,7 +363,7 @@ const UserSummaryBlock = ({
                     ]}
                   >
                     {/* Job Types */}
-                    {jobTypes && jobTypes?.length > 0 && (
+                    {professions && professions?.length > 0 && (
                       <View
                         style={[
                           isWebLandscape && {
@@ -368,6 +378,7 @@ const UserSummaryBlock = ({
                             {
                               fontSize: sizes.sectionTitleSize,
                               color: themeController.current?.textColor,
+                              marginBottom: sizes.infoSectionMarginBottom / 4,
                             },
                           ]}
                         >
@@ -381,9 +392,9 @@ const UserSummaryBlock = ({
                             isRTL && { justifyContent: 'flex-end' },
                           ]}
                         >
-                          {jobTypes?.map((type, index) => (
+                          {professions?.map((p, i) => (
                             <View
-                              key={index}
+                              key={i}
                               style={[
                                 styles.typeBadge,
                                 {
@@ -408,7 +419,7 @@ const UserSummaryBlock = ({
                                   },
                                 ]}
                               >
-                                {JOB_TYPES[type]}
+                                {tField(p.job_type, 'name')}
                               </Text>
                             </View>
                           ))}
@@ -431,10 +442,11 @@ const UserSummaryBlock = ({
                             {
                               fontSize: sizes.sectionTitleSize,
                               color: themeController.current?.textColor,
+                              marginBottom: sizes.infoSectionMarginBottom / 4,
                             },
                           ]}
                         >
-                          {t('profile.professions')}
+                          {t('profile.job_subtypes')}
                         </Text>
                         <View
                           style={[
@@ -443,9 +455,9 @@ const UserSummaryBlock = ({
                             isRTL && { justifyContent: 'flex-end' },
                           ]}
                         >
-                          {professions?.map((p, index) => (
+                          {professions?.map((p, i) => (
                             <View
-                              key={index}
+                              key={i}
                               style={[
                                 styles.professionBadge,
                                 {
@@ -469,7 +481,7 @@ const UserSummaryBlock = ({
                                   },
                                 ]}
                               >
-                                {LICENSES[p]}
+                                {tField(p.job_subtype, 'name')}
                               </Text>
                             </View>
                           ))}
@@ -546,6 +558,7 @@ const UserSummaryBlock = ({
                           {
                             fontSize: sizes.sectionTitleSize,
                             color: themeController.current?.textColor,
+                            marginBottom: sizes.infoSectionMarginBottom / 4,
                           },
                         ]}
                       >
@@ -578,6 +591,7 @@ const UserSummaryBlock = ({
                           {
                             fontSize: sizes.sectionTitleSize,
                             color: themeController.current?.textColor,
+                            marginBottom: sizes.infoSectionMarginBottom / 4,
                           },
                         ]}
                       >
@@ -585,8 +599,7 @@ const UserSummaryBlock = ({
                           defaultValue: 'Contact information',
                         })}
                       </Text>
-                      {!usersReveal.contains(user.id) &&
-                      status === 'store-waiting' ? (
+                      {!usersReveal.contains(user.id) ? (
                         <TouchableOpacity
                           style={[
                             styles.primaryBtn,
@@ -615,11 +628,7 @@ const UserSummaryBlock = ({
                               },
                             ]}
                           >
-                            {t('userSummary.openContactCta', {
-                              defaultValue:
-                                'Open contact information for {{price}}',
-                              price: '1.50$',
-                            })}
+                            {t('common.purchase')}
                           </Text>
                         </TouchableOpacity>
                       ) : (
@@ -848,13 +857,11 @@ const styles = StyleSheet.create({
   nameText: {
     fontWeight: '500',
   },
-  visitButton: {
-  },
+  visitButton: {},
   visitButtonText: {
     textDecorationLine: 'underline',
   },
-  modalContent: {
-  },
+  modalContent: {},
   modalAvatar: {
     alignSelf: 'center',
   },
@@ -889,8 +896,8 @@ const styles = StyleSheet.create({
     color: '#444',
   },
   sectionTitle: {
-    fontWeight: '600',
-    color: '#333',
+    // fontWeight: '600',
+    // color: '#333',
   },
   aboutText: {
     color: '#444',
