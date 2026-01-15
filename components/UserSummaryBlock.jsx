@@ -11,8 +11,6 @@ import {
   Platform,
   useWindowDimensions,
 } from 'react-native';
-import { JOB_SUB_TYPES } from '../constants/jobSubTypes';
-import { JOB_TYPES } from '../constants/jobTypes';
 import { LICENSES } from '../constants/licenses';
 import { useComponentContext } from '../context/globalAppContext';
 import { useTranslation } from 'react-i18next';
@@ -124,7 +122,6 @@ const UserSummaryBlock = ({
       console.error('Error revealing user:', error);
     }
   };
-  console.log('User data:', { user });
 
   return (
     <>
@@ -306,8 +303,8 @@ const UserSummaryBlock = ({
                       avatar
                         ? { uri: avatar }
                         : themeController.current.isTheme
-                        ? icons.defaultAvatar
-                        : icons.monotoneAvatar
+                          ? icons.defaultAvatar
+                          : icons.monotoneAvatar
                     }
                     style={[
                       styles.modalAvatar,
@@ -738,7 +735,7 @@ const UserSummaryBlock = ({
                           backgroundColor: usersReveal.contains(user.id)
                             ? themeController.current?.buttonColorPrimaryDefault
                             : themeController.current
-                                ?.buttonColorPrimaryDisabled,
+                              ?.buttonColorPrimaryDisabled,
                           borderRadius: sizes.borderRadius,
                           alignItems: 'center',
                           justifyContent: 'center',

@@ -17,7 +17,8 @@ export default function jobsManager({ session, user, geolocation }) {
   const [creatorWaiting, setCreatorWaiting] = useState([]);
   const [creatorInProgress, setCreatorInProgress] = useState([]);
   const [creatorDone, setCreatorDone] = useState([]);
-  const [products, setProducts] = useState([]);
+  const [jobProducts, setJobProducts] = useState([]);
+  const [providerProducts, setProviderProducts] = useState([]);
 
   const [execNew, setExecNew] = useState([]);
   const [execWaiting, setExecWaiting] = useState([]);
@@ -136,7 +137,8 @@ export default function jobsManager({ session, user, geolocation }) {
       setCreatorWaiting(waiting);
       setCreatorInProgress(inProgress);
       setCreatorDone(done);
-      setProducts(products);
+      setJobProducts(products.jobProducts);
+      setProviderProducts(products.providerProducts);
 
     } catch (e) {
       if (!alive.current) return;
@@ -333,6 +335,7 @@ export default function jobsManager({ session, user, geolocation }) {
       checkIsProviderInJob,
       noticeJobRejectionAsCreator
     },
-    products
+    products: jobProducts,
+    providerProduct: providerProducts.length > 0 ? providerProducts[0] : null,
   };
 }

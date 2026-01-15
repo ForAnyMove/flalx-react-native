@@ -122,7 +122,7 @@ async function getJobProducts(session) {
         const response = await axios.get(`${url}/api/jobs/products`, { headers });
 
         if (response.status === 200) {
-            return response.data.products;
+            return response.data;
         } else {
             throw new Error('Failed to fetch job products');
         }

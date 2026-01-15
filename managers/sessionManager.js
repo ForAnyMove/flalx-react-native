@@ -3,7 +3,7 @@ import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './../utils/supabase/supabase';
 import { API_BASE_URL } from '../utils/config';
-import { getRevealedUsers, revealUser } from '../src/api/users';
+import { getRevealedUsers, getRevealProduct, revealUser } from '../src/api/users';
 import { getUserSubscription } from '../src/api/subscriptions';
 
 // ⚠️ Замени этот IP на свой (или 10.0.2.2 для Android эмулятора)
@@ -16,6 +16,7 @@ export default function sessionManager() {
   const [user, setUser] = useState(null);
   const [subscription, setSubscription] = useState(null);
   const [revealedUsers, setRevealedUsers] = useState([]); // для хранения ID пользователей с раскрытыми контактами
+  const [revealProduct, setRevealProduct] = useState(null);
   const [email, setEmail] = useState(null); // для verifyOtp
   const [phone, setPhone] = useState(null); // для verifyOtp с телефоном
   const [isInPasswordReset, setIsInPasswordReset] = useState(false);
@@ -114,6 +115,10 @@ export default function sessionManager() {
         // Загружаем профиль пользователя
         await fetchUserProfile(parsed.access_token);
         await refreshRevealedUsers({
+          token: { access_token: parsed.access_token },
+          serverURL: API_BASE_URL,
+        });
+        await refreshRevealProduct({
           token: { access_token: parsed.access_token },
           serverURL: API_BASE_URL,
         });
@@ -217,6 +222,7 @@ export default function sessionManager() {
         // Загружаем профиль пользователя
         await fetchUserProfile(data.session.access_token);
         await refreshRevealedUsers(data.session);
+        await refreshRevealProduct(data.session);
       } catch (profileError) {
         console.error(
           'Ошибка загрузки профиля после входа:',
@@ -384,6 +390,20 @@ export default function sessionManager() {
     }
   }
 
+  async function refreshRevealProduct(sessionProps = null) {
+    try {
+      const revealed = await getRevealProduct(
+        sessionProps || {
+          token: { access_token: session.access_token },
+          serverURL: API_BASE_URL,
+        }
+      );
+      setRevealProduct(revealed);
+    } catch (error) {
+      console.error('Error refreshing revealed users:', error);
+    }
+  }
+
   async function refreshUserSubscription(sessionProps = null) {
     try {
       const { subscription } = await getUserSubscription(
@@ -478,6 +498,7 @@ export default function sessionManager() {
       // Загружаем профиль
       await fetchUserProfile(data.session.access_token);
       await refreshRevealedUsers(data.session);
+      await refreshRevealProduct(data.session);
 
       return { success: true };
     } catch (e) {
@@ -612,6 +633,7 @@ export default function sessionManager() {
       // Загружаем профиль пользователя
       await fetchUserProfile(data.session.access_token);
       await refreshRevealedUsers(data.session);
+      await refreshRevealProduct(data.session);
       return { success: true, session: data.session };
     } catch (profileError) {
       console.error(
@@ -747,6 +769,7 @@ export default function sessionManager() {
     },
     usersReveal: {
       list: revealedUsers,
+      product: revealProduct,
       contains: (userId) =>
         subscription != null || revealedUsers.includes(userId),
       tryReveal,

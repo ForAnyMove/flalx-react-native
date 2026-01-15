@@ -31,6 +31,7 @@ import AddressPicker from './ui/AddressPicker';
 import { useLocalization } from '../src/services/useLocalization';
 import CustomPicker from './ui/CustomPicker';
 import CustomExperiencePicker from './ui/CustomExperiencePicker';
+import { formatCurrency } from '../utils/currency_formatter';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -62,7 +63,7 @@ async function createNewJob(jobData, session, openWebView, updateJobsList) {
   try {
     const data = await createJob(jobData, session);
     if (data.paymentUrl) {
-      openWebView(data.paymentUrl, () => {});
+      openWebView(data.paymentUrl, () => { });
     } else if (data.job) {
       updateJobsList?.();
     }
@@ -1661,12 +1662,12 @@ export default function NewJobModal({
                             borderWidth: 1,
                             borderColor: active
                               ? themeController.current
-                                  ?.buttonColorPrimaryDefault
+                                ?.buttonColorPrimaryDefault
                               : themeController.current
-                                  ?.formInputPlaceholderColor,
+                                ?.formInputPlaceholderColor,
                             backgroundColor: active
                               ? themeController.current
-                                  ?.buttonColorPrimaryDefault
+                                ?.buttonColorPrimaryDefault
                               : 'transparent',
                             flexDirection: isRTL ? 'row-reverse' : 'row',
                             alignItems: 'center',
@@ -1680,7 +1681,7 @@ export default function NewJobModal({
                             color: active
                               ? themeController.current?.buttonTextColorPrimary
                               : themeController.current
-                                  ?.formInputPlaceholderColor,
+                                ?.formInputPlaceholderColor,
                           }}
                         >
                           {productName}
@@ -1727,28 +1728,28 @@ export default function NewJobModal({
                     defaultValue: '{{price}}',
                     price:
                       subscription.current != null &&
-                      selectedOption.type == 'normal'
+                        selectedOption.type == 'normal'
                         ? t('newJob.statusModal.free', {
-                            defaultValue: 'Free',
-                          })
-                        : `$${selectedOption?.price.toFixed(2)}`,
+                          defaultValue: 'Free',
+                        })
+                        : `${formatCurrency(selectedOption.price, selectedOption.currency)}`,
                   })}
                 </Text>
 
                 {(subscription.current == null ||
                   selectedOption.type != 'normal') && (
-                  <Text
-                    style={{
-                      fontSize: sizes.chipFont,
-                      color: themeController.current?.formInputLabelColor,
-                      marginBottom: sizes.chipMarginBottom,
-                      textAlign: 'center',
-                    }}
-                  >
-                    You must pay for publishing this type of ad after
-                    moderation.
-                  </Text>
-                )}
+                    <Text
+                      style={{
+                        fontSize: sizes.chipFont,
+                        color: themeController.current?.formInputLabelColor,
+                        marginBottom: sizes.chipMarginBottom,
+                        textAlign: 'center',
+                      }}
+                    >
+                      You must pay for publishing this type of ad after
+                      moderation.
+                    </Text>
+                  )}
 
                 {/* кнопка подтверждения с ценой */}
                 <TouchableOpacity

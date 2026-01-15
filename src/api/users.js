@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { fetchWithSession } from './apiBase';
 
 async function getRevealedUsers(session) {
     try {
@@ -71,6 +72,17 @@ async function revealUser(userId, session) {
     }
 }
 
+async function getRevealProduct(session) {
+    try {
+        const data = await fetchWithSession({ session, endpoint: '/api/user-info/products' });
+
+        return data.reveal;
+    } catch (error) {
+        console.error('Error fetching reveal product:', error);
+        throw error;
+    }
+}
+
 async function addCommentToUserByJob(userId, jobId, comment, rating, session) {
     try {
         const token = session?.token?.access_token;
@@ -108,4 +120,4 @@ async function addCommentToUserByJob(userId, jobId, comment, rating, session) {
     }
 }
 
-export { getRevealedUsers, revealUser, addCommentToUserByJob };
+export { getRevealedUsers, revealUser, addCommentToUserByJob, getRevealProduct };
