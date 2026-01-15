@@ -166,7 +166,7 @@ function App() {
   }
   // 2. Авторизация
   else if (!session.status) {
-  // Авторизация с OTP
+    // Авторизация с OTP
     if (authControl.state) {
       content = <AuthScreen />;
     } else {
@@ -187,12 +187,12 @@ function App() {
   }
 
   // Регистрация перед входом
-  // if (registerControl.state) {
-  //   content = <RegisterScreenWithPass />;
-  // }
   if (registerControl.state) {
-    content = <RegisterScreenWithPassSms />;
+    content = <RegisterScreenWithPass />;
   }
+  // if (registerControl.state) {
+  //   content = <RegisterScreenWithPassSms />;
+  // }
   // Регистрация перед входом
   // if (forgotPassControl.state) {
   //   content = <ForgottenPasswordScreenSms />;
@@ -203,7 +203,7 @@ function App() {
   if (session.resetPassword) {
     content = <ResetPasswordScreen />;
   }
-  
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={[styles.container, { backgroundColor: themeController.current.backgroundColor }]}>
