@@ -84,7 +84,7 @@ export default function ShowJobModal({
     subscription,
   } = useComponentContext();
   const { tField } = useLocalization(languageController.current);
-  const { showError } = useNotification();
+  const { showError, showWarning } = useNotification();
   const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
@@ -504,13 +504,15 @@ export default function ShowJobModal({
     currentJobInfo?.job_comment?.comment || ''
   );
 
-  const handleAddingSelfToJobProviders = async () => {
+  const handleAddingSelfToJobProviders = async (useCoupon) => {
     try {
       setAppLoading(true);
       const { success, payment } = await addSelfToJobProviders(
         currentJobId,
-        session
+        session,
+        useCoupon
       );
+
       if (success == true) {
         if (payment != null) {
           openWebView(payment?.paymentMetadata?.paypalApproval?.href);
@@ -518,26 +520,42 @@ export default function ShowJobModal({
           jobsController.reloadAll();
         }
       }
+
+      setAppLoading(false);
+      setConfirmInterestModal(false);
     } catch (e) {
-      console.error('Error adding self to job providers:', e);
-
-      setAppLoading(false);
-      setConfirmInterestModal(false);
-      // setInterestedRequest(true);
-
-      throw e;
-    } finally {
-      setAppLoading(false);
-      setConfirmInterestModal(false);
-      // setInterestedRequest(true);
+      if (e.response && e.response.status === 400 && e.response.data.code == 'NO_COUPONS_AVAILABLE') {
+        setAppLoading(false);
+        showWarning(t('showJob.errors.noCouponsAvailable', {
+          defaultValue: 'No coupons available to use for this job.',
+        }));
+      } else {
+        setAppLoading(false);
+        setConfirmInterestModal(false);
+      }
     }
   };
 
   const handleInterestRequest = async () => {
     if (subscription.current == null) {
+      try {
+        setAppLoading(true);
+        const ok = await jobsController.actions.checkWasProviderInJob(
+          currentJobId
+        );
+
+        if (ok) {
+          handleAddingSelfToJobProviders(false);
+          setInterestedRequest(true);
+          return;
+        }
+      } finally {
+        setAppLoading(false);
+      }
+
       setConfirmInterestModal(true);
     } else {
-      handleAddingSelfToJobProviders();
+      handleAddingSelfToJobProviders(false);
       setInterestedRequest(true);
     }
   };
@@ -2602,7 +2620,7 @@ export default function ShowJobModal({
                     borderWidth: 1,
                   },
                 ]}
-                onPress={handleAddingSelfToJobProviders}
+                onPress={() => handleAddingSelfToJobProviders(false)}
               >
                 <Text
                   style={[

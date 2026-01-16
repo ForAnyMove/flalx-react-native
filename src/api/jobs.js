@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { fetchWithSession } from './apiBase';
+import { logError } from '../../utils/log_util';
 
 async function createJob(jobData, session) {
     try {
@@ -27,7 +29,7 @@ async function createJob(jobData, session) {
 
         return returnData;
     } catch (error) {
-        console.error('Error creating new job:', error);
+        logError('Error creating new job:', error);
         throw error;
     }
 }
@@ -59,7 +61,7 @@ async function payForJob(jobDataId, session) {
 
         return returnData;
     } catch (error) {
-        console.error('Error creating new job:', error);
+        logError('Error creating new job:', error);
         throw error;
     }
 }
@@ -96,7 +98,7 @@ async function checkHasPendingJob(session) {
 
         return returnData;
     } catch (error) {
-        console.error('Error checking for pending jobs:', error);
+        logError('Error checking for pending jobs:', error);
         throw error;
     }
 }
@@ -127,35 +129,26 @@ async function getJobProducts(session) {
             throw new Error('Failed to fetch job products');
         }
     } catch (error) {
-        console.error('Error fetching job products:', error);
+        logError('Error fetching job products:', error);
         throw error;
     }
 }
 
-async function addSelfToJobProviders(jobId, session) {
+async function addSelfToJobProviders(jobId, session, useCoupon = false) {
     try {
-        const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
-
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        };
-
-        const response = await axios.post(`${url}/api/jobs/${jobId}/providers`, { paymentMethod: 'paypal' }, { headers });
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/api/jobs/${jobId}/providers`,
+            data: {
+                paymentMethod: 'paypal',
+                use_coupon: useCoupon
+            },
+            method: 'POST'
+        });
 
         return response.data;
-
     } catch (error) {
-        console.error('Error adding self to job providers:', error);
+        logError('Error adding self to job providers:', error);
         throw error;
     }
 }
@@ -183,7 +176,7 @@ async function removeSelfFromJobProviders(jobId, session) {
         return response.data;
 
     } catch (error) {
-        console.error('Error removing self from job providers:', error);
+        logError('Error removing self from job providers:', error);
         throw error;
     }
 }
@@ -211,7 +204,19 @@ async function isProviderInJob(jobId, session) {
         return response.data?.isProvider == true;
     }
     catch (error) {
-        console.error('Error checking if provider is in job:', error);
+        logError('Error checking if provider is in job:', error);
+        throw error;
+    }
+}
+
+async function wasProviderInJob(jobId, session) {
+    try {
+        const response = await fetchWithSession({ session, endpoint: `/api/jobs/${jobId}/is-cancelled-provider` });
+
+        return response?.isCancelledProvider == true;
+    }
+    catch (error) {
+        logError('Error checking if provider is in job:', error);
         throw error;
     }
 }
@@ -238,7 +243,7 @@ async function completeJob(jobId, options, session) {
 
         return response.data;
     } catch (error) {
-        console.error('Error completing job:', error);
+        logError('Error completing job:', error);
         throw error;
     }
 }
@@ -264,7 +269,7 @@ async function updateJobComment(jobId, comment, session) {
         const response = await axios.patch(`${url}/jobs/${jobId}/job-comment`, { comment }, { headers });
         return response.data;
     } catch (error) {
-        console.error('Error updating job comment:', error);
+        logError('Error updating job comment:', error);
         throw error;
     }
 }
@@ -290,9 +295,21 @@ async function noticeJobRejection(jobId, session) {
         const response = await axios.patch(`${url}/jobs/as-creator/waiting/${jobId}/notice-rejection`, {}, { headers });
         return response.data;
     } catch (error) {
-        console.error('Error noticing job rejection:', error);
+        logError('Error noticing job rejection:', error);
         throw error;
     }
 }
 
-export { createJob, checkHasPendingJob, getJobProducts, addSelfToJobProviders, removeSelfFromJobProviders, isProviderInJob, completeJob, updateJobComment, payForJob, noticeJobRejection };
+export {
+    createJob,
+    checkHasPendingJob,
+    getJobProducts,
+    addSelfToJobProviders,
+    removeSelfFromJobProviders,
+    isProviderInJob,
+    wasProviderInJob,
+    completeJob,
+    updateJobComment,
+    payForJob,
+    noticeJobRejection
+};
