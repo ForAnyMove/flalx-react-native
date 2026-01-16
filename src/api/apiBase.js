@@ -1,6 +1,7 @@
 import axios from "axios";
+import { logError } from "../../utils/log_util";
 
-export async function fetchWithSession({ session, endpoint, data = {} }) {
+export async function fetchWithSession({ session, endpoint, data = {}, method = 'GET' }) {
     try {
         const token = session?.token?.access_token;
         const url = session?.serverURL || 'http://localhost:3000';
@@ -18,10 +19,16 @@ export async function fetchWithSession({ session, endpoint, data = {} }) {
             Authorization: `Bearer ${token}`
         };
 
-        const response = await axios.get(url + endpoint, { headers, ...data });
+        const response = await axios({
+            method,
+            url: `${url}${endpoint}`,
+            headers,
+            data
+        });
+
         return response.data;
     } catch (error) {
-        console.error('Error fetching data from endpoint:', error);
+        logError('Error fetching data from endpoint:', error);
         throw error;
     }
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { addSelfToJobProviders, getJobProducts, isProviderInJob, noticeJobRejection, removeSelfFromJobProviders } from "../src/api/jobs";
+import { addSelfToJobProviders, getJobProducts, isProviderInJob, noticeJobRejection, removeSelfFromJobProviders, wasProviderInJob } from "../src/api/jobs";
 import { useGeolocation } from "./useGeolocation";
 
 /**
@@ -282,6 +282,16 @@ export default function jobsManager({ session, user, geolocation }) {
       return false;
     }
   }
+  async function checkWasProviderInJob(jobId) {
+    try {
+      const success = await wasProviderInJob(jobId, session);
+      return success;
+    }
+    catch (e) {
+      console.error('Error checking provider in job:', e);
+      return false;
+    }
+  }
 
   async function noticeJobRejectionAsCreator(jobId) {
     try {
@@ -333,6 +343,7 @@ export default function jobsManager({ session, user, geolocation }) {
       removeProvider,
       getJobById,
       checkIsProviderInJob,
+      checkWasProviderInJob,
       noticeJobRejectionAsCreator
     },
     products: jobProducts,
