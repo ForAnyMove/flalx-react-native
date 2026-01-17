@@ -22,11 +22,18 @@ import CommentsSection from './CommentsSection';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useWebView } from '../context/webViewContext';
 import { useLocalization } from '../src/services/useLocalization';
+import SubscriptionsModal from './SubscriptionsModal';
 
 const ProviderSummaryBlock = ({ user, chooseUser }) => {
   const { t } = useTranslation();
-  const { themeController, languageController, usersReveal, setAppLoading } =
-    useComponentContext();
+  const {
+    themeController,
+    languageController,
+    usersReveal,
+    setAppLoading,
+    subscription,
+    user: currentUser,
+  } = useComponentContext();
   const { tField } = useLocalization(languageController.current);
   const { openWebView } = useWebView();
   const { height, isLandscape, width, sidebarWidth } = useWindowInfo();
@@ -34,6 +41,8 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [showContactInfo, setShowContactInfo] = useState(false);
+  const [purchaseModalVisible, setPurchaseModalVisible] = useState(false);
+  const [plansModalVisible, setPlansModalVisible] = useState(false);
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
@@ -152,6 +161,41 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
       containerPaddingHorizontal: isWebLandscape
         ? scaleByHeight(20, height)
         : scaleByHeightMobile(14, height),
+      modalRadius: isWebLandscape
+        ? scaleByHeight(8, height)
+        : scaleByHeightMobile(5, height),
+      modalPadding: isWebLandscape
+        ? scaleByHeight(45, height)
+        : scaleByHeightMobile(12, height),
+      modalCardW: isWebLandscape ? scaleByHeight(450, height) : '88%',
+      modalCrossTopRightPos: isWebLandscape
+        ? scaleByHeight(7, height)
+        : scaleByHeightMobile(10, height),
+      iconSize: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(20, height),
+      modalTitle: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(16, height),
+      modalTitleMarginBottom: isWebLandscape
+        ? scaleByHeight(22, height)
+        : scaleByHeightMobile(10, height),
+      modalSub: isWebLandscape
+        ? scaleByHeight(20, height)
+        : scaleByHeightMobile(12, height),
+      chipMarginBottom: isWebLandscape
+        ? scaleByHeight(40 / 3, height)
+        : scaleByHeightMobile(12 / 3, height),
+      chipFont: isWebLandscape
+        ? scaleByHeight(14, height)
+        : scaleByHeightMobile(12, height),
+      btnH: isWebLandscape
+        ? scaleByHeight(62, height)
+        : scaleByHeightMobile(42, height),
+      btnW: isWebLandscape ? scaleByHeight(300, height) : '100%',
+      btnMB: isWebLandscape
+        ? scaleByHeight(16, height)
+        : scaleByHeightMobile(16, height),
     }),
     [isWebLandscape, height]
   );
@@ -301,7 +345,11 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                 ]}
               >
                 <Image
-                  source={themeController.current.isTheme ? icons.defaultAvatar : icons.monotoneAvatar}
+                  source={
+                    themeController.current.isTheme
+                      ? icons.defaultAvatar
+                      : icons.monotoneAvatar
+                  }
                   style={{ width: '100%', height: '100%' }}
                 />
               </View>
@@ -397,7 +445,11 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                       ]}
                     >
                       <Image
-                        source={themeController.current.isTheme ? icons.defaultAvatar : icons.monotoneAvatar}
+                        source={
+                          themeController.current.isTheme
+                            ? icons.defaultAvatar
+                            : icons.monotoneAvatar
+                        }
                         style={{ width: '100%', height: '100%' }}
                       />
                     </View>
@@ -640,7 +692,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                                 sizes.unlockContactBtnPaddingHorizontal,
                             },
                           ]}
-                          onPress={handleUserRevealTry}
+                          onPress={() => setPurchaseModalVisible(true)}
                         >
                           <Text
                             style={{
@@ -805,6 +857,212 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
+
+        {/* OPEN CONTACT PURCHASE MODAL */}
+        <Modal visible={purchaseModalVisible} animationType='fade' transparent>
+          {/* кликабельная подложка с отступом под сайдбар на web-landscape */}
+          <View
+            style={[
+              styles.backdrop,
+              { flexDirection: isRTL ? 'row-reverse' : 'row' },
+            ]}
+          >
+            {/* рабочая область — центрируем карточку */}
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={() => setPurchaseModalVisible(false)}
+              style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}
+            >
+              <View
+                style={[
+                  styles.centerArea,
+                  // { width: isWebLandscape ? width - sidebarWidth : '100%' },
+                  { width: '100%' },
+                ]}
+              >
+                {/* сама карточка; клики внутри НЕ закрывают */}
+                <TouchableOpacity
+                  activeOpacity={1}
+                  onPress={(e) => e.stopPropagation()}
+                  style={[
+                    styles.modalCard,
+                    {
+                      backgroundColor: themeController.current?.backgroundColor,
+                      borderRadius: sizes.modalRadius,
+                      padding: sizes.modalPadding,
+                      width: sizes.modalCardW,
+                      position: 'relative',
+                      alignItems: 'center',
+                    },
+                  ]}
+                >
+                  <TouchableOpacity
+                    onPress={() => setPurchaseModalVisible(false)}
+                    style={{
+                      position: 'absolute',
+                      top: sizes.modalCrossTopRightPos,
+                      right: sizes.modalCrossTopRightPos,
+                    }}
+                  >
+                    <Image
+                      source={icons.cross}
+                      style={{
+                        width: sizes.iconSize,
+                        height: sizes.iconSize,
+                        tintColor: themeController.current?.textColor,
+                      }}
+                      resizeMode='contain'
+                    />
+                  </TouchableOpacity>
+                  {/* заголовок */}
+                  <Text
+                    style={{
+                      fontSize: sizes.modalTitle,
+                      fontFamily: 'Rubik-Bold',
+                      color: themeController.current?.textColor,
+                      textAlign: 'center',
+                      marginBottom: sizes.modalTitleMarginBottom,
+                    }}
+                  >
+                    {t('providerSection.modalContactPopupTitle', {
+                      defaultValue:
+                        'Select a method for receiving information about this contact',
+                    })}
+                  </Text>
+
+                  {/* кнопка подтверждения с ценой */}
+                  <TouchableOpacity
+                    onPress={() => {
+                      handleCreate();
+                      setPurchaseModalVisible(false);
+                    }}
+                    style={{
+                      height: sizes.btnH,
+                      width: sizes.btnW,
+                      borderRadius: sizes.modalRadius,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 1,
+                      borderColor:
+                        themeController.current?.buttonColorPrimaryDefault,
+                      marginBottom: sizes.btnMB,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: sizes.modalSub,
+                        color:
+                          themeController.current?.buttonColorPrimaryDefault,
+                      }}
+                    >
+                      {t('showJob.buttons.buyForPrice', {
+                        defaultValue: 'Buy for 1.50$',
+                        price: '1.50',
+                      })}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* кнопка подтверждения с купонами */}
+                  <TouchableOpacity
+                    onPress={() => {
+                      setPurchaseModalVisible(false);
+                    }}
+                    style={{
+                      height: sizes.btnH,
+                      width: sizes.btnW,
+                      borderRadius: sizes.modalRadius,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 1,
+                      borderColor:
+                        themeController.current?.buttonColorSecondaryDefault,
+                      marginBottom: sizes.btnMB,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      flexDirection: isRTL ? 'row-reverse' : 'row',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: sizes.modalSub,
+                        color:
+                          themeController.current?.buttonColorSecondaryDefault,
+                      }}
+                    >
+                      {t('showJob.buttons.buyForCoupons', {
+                        defaultValue: 'Buy for 1',
+                        count: 1,
+                      })}
+                    </Text>
+                    <Image
+                      source={icons.coupon}
+                      style={{
+                        width: sizes.iconSize,
+                        height: sizes.iconSize,
+                        tintColor:
+                          themeController.current?.buttonColorSecondaryDefault,
+                      }}
+                    />
+                    <Text
+                      style={[
+                        {
+                          color:
+                            themeController.current
+                              ?.buttonColorSecondaryDefault,
+                          fontSize: sizes.modalSub,
+                        },
+                      ]}
+                    >
+                      {` (${currentUser.current?.coupons || 0})`}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* кнопка тарифов */}
+                  {/* {subscription.current == null && */}
+                  {true && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setPlansModalVisible(true);
+                        setPurchaseModalVisible(false);
+                      }}
+                      style={{
+                        height: sizes.btnH,
+                        width: sizes.btnW,
+                        borderRadius: sizes.modalRadius,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor:
+                          themeController.current?.buttonColorPrimaryDefault,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: sizes.modalSub,
+                          color:
+                            themeController.current?.buttonTextColorPrimary,
+                        }}
+                      >
+                        {t('newJob.statusModal.buttons.viewPlans', {
+                          defaultValue: 'See pricing plans',
+                        })}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </Modal>
+
+        {/* PLANS MODAL (простая заглушка, такой же фон/центрирование) */}
+        <SubscriptionsModal
+          visible={plansModalVisible}
+          main={false}
+          closeModal={() => {
+            setPlansModalVisible(false);
+            setPurchaseModalVisible(true);
+          }}
+        />
       </Modal>
     </>
   );
@@ -874,5 +1132,21 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     left: 0,
+  },
+  centerArea: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+  modalCard: {
+    // цвета/радиусы/паддинги задаём из sizes в JSX
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    elevation: 8,
+  },
+  chip: {
+    // базовые параметры, динамика — в JSX
+    boxSizing: 'border-box',
   },
 });

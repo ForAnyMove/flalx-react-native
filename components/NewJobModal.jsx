@@ -375,7 +375,8 @@ export default function NewJobModal({
       if (JSON.stringify(location) !== JSON.stringify(initialJob.location))
         jobChanges.location = location;
       // сравнение дат (если обе существуют и разные)
-      if (experience !== initialJob.experience) jobChanges.experience = experience;
+      if (experience !== initialJob.experience)
+        jobChanges.experience = experience;
       if (
         startDateTime &&
         new Date(startDateTime).toISOString() !== initialJob.startDateTime
@@ -1598,7 +1599,7 @@ export default function NewJobModal({
                     style={{
                       width: sizes.iconSize,
                       height: sizes.iconSize,
-                      tintColor: themeController.current?.formInputLabelColor,
+                      tintColor: themeController.current?.textColor,
                     }}
                     resizeMode='contain'
                   />
@@ -1765,7 +1766,7 @@ export default function NewJobModal({
                     borderWidth: 1,
                     borderColor:
                       themeController.current?.buttonColorPrimaryDefault,
-                    marginBottom: sizes.borderRadius,
+                    marginBottom: sizes.borderRadius * 2,
                   }}
                 >
                   <Text
@@ -1779,6 +1780,67 @@ export default function NewJobModal({
                     })}
                   </Text>
                 </TouchableOpacity>
+
+                {/* кнопка подтверждения с купонами */}
+                {subscription.current == null &&
+                  selectedOption?.type == 'normal' && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        // handleCreate();
+                        setStatusModalVisible(false);
+                      }}
+                      style={{
+                        height: sizes.btnH,
+                        width: sizes.btnW,
+                        borderRadius: sizes.modalRadius,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderWidth: 1,
+                        borderColor:
+                          themeController.current?.buttonColorSecondaryDefault,
+                        marginBottom: sizes.borderRadius * 2,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        flexDirection: isRTL ? 'row-reverse' : 'row',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: sizes.modalSub,
+                          color:
+                            themeController.current
+                              ?.buttonColorSecondaryDefault,
+                        }}
+                      >
+                        {t('newJob.statusModal.buttons.publishForCoupons', {
+                          defaultValue: 'Publish for {{count}} ',
+                          count: selectedOption?.couponsRequired || 0,
+                        })}
+                      </Text>
+                      <Image
+                        source={icons.coupon}
+                        style={{
+                          width: sizes.iconSize,
+                          height: sizes.iconSize,
+                          tintColor:
+                            themeController.current
+                              ?.buttonColorSecondaryDefault,
+                        }}
+                      />
+                      <Text
+                        style={[
+                          {
+                            color:
+                              themeController.current
+                                ?.buttonColorSecondaryDefault,
+                            fontSize: sizes.modalSub,
+                          },
+                        ]}
+                      >
+                        {` (${user.current?.coupons || 0})`}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
 
                 {/* кнопка тарифов */}
                 {subscription.current == null &&

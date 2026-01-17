@@ -80,6 +80,7 @@ export default function ShowJobModal({
     languageController,
     setAppLoading,
     subscription,
+    user,
   } = useComponentContext();
   const { tField } = useLocalization(languageController.current);
   const { showError } = useNotification();
@@ -2554,7 +2555,7 @@ export default function ShowJobModal({
                 padding: sizes.modalPadding,
                 borderRadius: sizes.modalBtnBorderRadius,
               },
-              isWebLandscape && { height: sizes.doubleBtnLineModalHeight },
+              // isWebLandscape && { height: sizes.doubleBtnLineModalHeight },
             ]}
           >
             <TouchableOpacity
@@ -2621,12 +2622,64 @@ export default function ShowJobModal({
                     },
                   ]}
                 >
-                  {t('showJob.buttons.buy099', {
+                  {t('showJob.buttons.buyForPrice', {
                     defaultValue: 'Buy for 0.99$',
+                    price: '0.99',
                   })}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
+                style={[
+                  styles.modalBtn,
+                  {
+                    backgroundColor:
+                      themeController.current?.buttonTextColorSecondary,
+                    borderColor:
+                      themeController.current?.buttonColorSecondaryDefault,
+                    height: sizes.modalBtnHeight,
+                    width: sizes.modalLongBtnWidth,
+                    borderRadius: sizes.modalBtnBorderRadius,
+                    borderWidth: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    flexDirection: isRTL ? 'row-reverse' : 'row',
+                  },
+                ]}
+                onPress={() => {}}
+              >
+                <Text
+                  style={[
+                    {
+                      color: themeController.current?.buttonColorSecondaryDefault,
+                      fontSize: sizes.modalBtnFont,
+                    },
+                  ]}
+                >
+                  {t('showJob.buttons.buyForCoupons', {
+                    defaultValue: 'Buy for 1',
+                    count: 1,
+                  })}
+                </Text>
+                <Image
+                  source={icons.coupon}
+                  style={{
+                    width: sizes.iconSize,
+                    height: sizes.iconSize,
+                    tintColor: themeController.current?.buttonColorSecondaryDefault,
+                  }}
+                />
+                <Text
+                  style={[
+                    {
+                      color: themeController.current?.buttonColorSecondaryDefault,
+                      fontSize: sizes.modalBtnFont,
+                    },
+                  ]}
+                >
+                  {` (${user.current?.coupons || 0})`}
+                </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
                 style={[
                   styles.modalBtn,
                   {

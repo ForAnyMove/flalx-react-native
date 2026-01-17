@@ -11,7 +11,7 @@ import {
   Modal,
   useWindowDimensions,
   PermissionsAndroid,
-  Alert
+  Alert,
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
 import { useMemo, useState } from 'react';
@@ -32,7 +32,7 @@ export default function Profile() {
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
-    () => () => { }
+    () => () => {}
   );
   const [changePasswordModal, showPasswordModal] = useState(false);
 
@@ -69,6 +69,7 @@ export default function Profile() {
       labelFont: isWebLandscape ? web(12) : mobile(12),
       fieldFont: isWebLandscape ? web(16) : mobile(16),
       fieldPadding: isWebLandscape ? web(10) : mobile(10),
+      fieldPaddingVertical: isWebLandscape ? web(12) : mobile(12),
       fieldMargin: isWebLandscape ? 0 : mobile(5),
       containerPaddingH: isWebLandscape ? web(24) : mobile(12),
       containerPaddingV: isWebLandscape ? web(10) : mobile(10),
@@ -140,7 +141,8 @@ export default function Profile() {
               PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
               {
                 title: 'Storage Permission',
-                message: 'App needs access to your storage to save export data.',
+                message:
+                  'App needs access to your storage to save export data.',
                 buttonNeutral: 'Ask Me Later',
                 buttonNegative: 'Cancel',
                 buttonPositive: 'OK',
@@ -155,7 +157,10 @@ export default function Profile() {
             await RNFS.writeFile(path, json, 'utf8');
             Alert.alert('Success', t('my_profile.export_success', { path }));
           } else {
-            Alert.alert('Permission denied', t('my_profile.export_permission_denied'));
+            Alert.alert(
+              'Permission denied',
+              t('my_profile.export_permission_denied')
+            );
           }
         }
       }
@@ -164,7 +169,9 @@ export default function Profile() {
     }
   }
 
-  const firstBtnsRow = isWebLandscape ? ['coupons', 'subscription', 'payment'] : ['coupons', 'subscription'];
+  const firstBtnsRow = isWebLandscape
+    ? ['coupons', 'subscription', 'payment']
+    : ['coupons', 'subscription'];
   return (
     <ScrollView
       style={[
@@ -232,58 +239,85 @@ export default function Profile() {
         {/* Инфо-поля */}
         <View
           style={{
-            flexDirection: isWebLandscape ? 'row' : 'column',
-            flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
-            justifyContent: isWebLandscape ? 'space-between' : 'center',
+            flexDirection: isWebLandscape
+              ? isRTL
+                ? 'row-reverse'
+                : 'row'
+              : 'column',
             gap: sizes.infoFieldsGap,
-            direction: isRTL ? 'rtl' : 'ltr',
+            marginBottom: sizes.infoFieldsGap,
+            width: '100%',
+            justifyContent: 'space-between',
           }}
         >
-          {[
-            { key: 'first_name', value: userState?.name, field: 'name' },
-            { key: 'surname', value: userState?.surname, field: 'surname' },
-            {
-              key: 'about',
-              value: userState?.about,
-              field: 'about',
-              multiline: true,
-            },
-            {
-              key: 'location',
-              value: userState?.location || '',
-              field: 'location',
-            },
-            { key: 'email', value: userState?.email, field: 'email' },
-            {
-              key: 'phone',
-              value: userState?.phoneNumber,
-              field: 'phoneNumber',
-            },
-          ].map((f) => (
-            <InfoField
-              key={f.key}
-              label={t(`my_profile.${f.key}`)}
-              value={f.value}
-              changeInfo={async (v) => {
-                setUserState((p) => ({ ...p, [f.field]: v }));
-                try {
-                  const updated = await user.update({ [f.field]: v });
-                  setUserState(updated);
-                } catch (err) {
-                  console.error('Ошибка сохранения:', err.message);
-                }
-              }}
-              baseFont={sizes.fieldFont}
-              fieldPadding={sizes.fieldPadding}
-              btnHeight={sizes.btnHeight}
-              fieldMargin={sizes.fieldMargin}
-              iconSize={sizes.iconSize}
-              isLandscape={isLandscape}
-              multiline={f.multiline}
-              height={height}
-              sizes={sizes}
-            />
-          ))}
+          <View
+            style={{
+              flexDirection: isWebLandscape ? 'row' : 'column',
+              flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
+              justifyContent: isWebLandscape ? 'space-between' : 'center',
+              gap: sizes.infoFieldsGap,
+              direction: isRTL ? 'rtl' : 'ltr',
+              width: isWebLandscape ? '66.5%' : '100%',
+            }}
+          >
+            {[
+              { key: 'first_name', value: userState?.name, field: 'name' },
+              { key: 'surname', value: userState?.surname, field: 'surname' },
+              { key: 'email', value: userState?.email, field: 'email' },
+              {
+                key: 'phone',
+                value: userState?.phoneNumber,
+                field: 'phoneNumber',
+              },
+            ].map((f) => (
+              <InfoField
+                key={f.key}
+                label={t(`my_profile.${f.key}`)}
+                value={f.value}
+                changeInfo={async (v) => {
+                  setUserState((p) => ({ ...p, [f.field]: v }));
+                  try {
+                    const updated = await user.update({ [f.field]: v });
+                    setUserState(updated);
+                  } catch (err) {
+                    console.error('Ошибка сохранения:', err.message);
+                  }
+                }}
+                baseFont={sizes.fieldFont}
+                fieldPadding={sizes.fieldPadding}
+                btnHeight={sizes.btnHeight}
+                fieldMargin={sizes.fieldMargin}
+                iconSize={sizes.iconSize}
+                isLandscape={isLandscape}
+                multiline={f.multiline}
+                height={height}
+                sizes={sizes}
+              />
+            ))}
+          </View>
+          <InfoField
+            key='about'
+            label={t(`my_profile.about`)}
+            value={userState?.about}
+            changeInfo={async (v) => {
+              setUserState((p) => ({ ...p, ['about']: v }));
+              try {
+                const updated = await user.update({ ['about']: v });
+                setUserState(updated);
+              } catch (err) {
+                console.error('Ошибка сохранения:', err.message);
+              }
+            }}
+            baseFont={sizes.fieldFont}
+            fieldPadding={sizes.fieldPadding}
+            btnHeight={sizes.btnHeight * 2 + sizes.infoFieldsGap}
+            fieldMargin={sizes.fieldMargin}
+            iconSize={sizes.iconSize}
+            isLandscape={isLandscape}
+            multiline={true}
+            height={height}
+            sizes={sizes}
+          />
         </View>
 
         <View
@@ -319,7 +353,7 @@ export default function Profile() {
                   width: sizes.btnWidth,
                   borderRadius: sizes.infoFieldBorderRadius,
                 },
-                key === 'payment' && isWebLandscape && { visibility: 'hidden' }
+                key === 'payment' && isWebLandscape && { visibility: 'hidden' },
               ]}
               onPress={() => {
                 /* Навигация по кнопкам */
@@ -577,8 +611,7 @@ export default function Profile() {
                 style={[
                   styles.modalBtn,
                   {
-                    backgroundColor:
-                      themeController.current?.backgroundColor,
+                    backgroundColor: themeController.current?.backgroundColor,
                     height: sizes.modalBtnHeight,
                     width: sizes.modalBtnWidth,
                     borderRadius: sizes.modalBtnBorderRadius,
@@ -968,7 +1001,7 @@ function InfoField({
       style={[
         styles.profileInfoString,
         {
-          width: Platform.OS === 'web' && isLandscape ? '32%' : '100%',
+          width: Platform.OS === 'web' && isLandscape ? multiline ? '32%' : '49%' : '100%',
           height: btnHeight,
           marginBottom: fieldMargin,
           backgroundColor: editMode
@@ -979,7 +1012,7 @@ function InfoField({
         },
       ]}
     >
-      <View style={{ flex: 1 }}>
+      <View style={multiline ? {paddingVertical: sizes.fieldPaddingVertical, alignItems: 'flex-start', flex: 1} : { flex: 1 }}>
         <Text
           style={[
             styles.profileInfoLabel,
@@ -999,6 +1032,7 @@ function InfoField({
               {
                 fontSize: baseFont,
                 color: themeController.current?.formInputTextColor,
+                minHeight: baseFont * 0.9,
               },
             ]}
             value={textValue}
