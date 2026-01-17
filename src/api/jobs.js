@@ -146,7 +146,7 @@ async function addSelfToJobProviders(jobId, session, useCoupon = false) {
             method: 'POST'
         });
 
-        return response.data;
+        return response;
     } catch (error) {
         logError('Error adding self to job providers:', error);
         throw error;

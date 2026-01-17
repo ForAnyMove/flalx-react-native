@@ -1065,9 +1065,11 @@ export default function ShowJobModal({
                   price: subscription.current != null &&
                     currentJobInfo.type == 'normal' ? t('newJob.statusModal.free', {
                       defaultValue: 'Free',
-                    }) : `$${jobsController.products.find(e => {
+                    }) : `${formatCurrency(jobsController.products.find(e => {
                       return e.type === currentJobInfo.jobType;
-                    })?.price.toFixed(2)}`
+                    })?.price.toFixed(2), jobsController.products.find(e => {
+                      return e.type === currentJobInfo.jobType;
+                    })?.currency)}`
                 })}
               </Text>
             </TouchableOpacity>}
