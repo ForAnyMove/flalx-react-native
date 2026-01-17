@@ -32,42 +32,25 @@ async function getRevealedUsers(session) {
     }
 }
 
-async function revealUser(userId, session) {
+async function revealUser(userId, session, useCoupon = false) {
     try {
-        const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/api/user-info/reveal/${userId}`,
+            method: 'POST',
+            data: { use_coupon: useCoupon }
+        });
 
-        if (!token) {
-            throw new Error('No valid session token found');
+        const returnData = {};
+
+        if (response.isAlreadyRevealed) {
+            returnData.user = response.data;
+        } else if (response.paymentRequired == true) {
+            returnData.paymentUrl = response.paymentUrl;
         }
 
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        };
-
-        const response = await axios.get(`${url}/api/user-info/reveal/${userId}`, { headers });
-
-        if (response.status === 200) {
-            const returnData = {};
-
-            if (response.data.isAlreadyRevealed) {
-                returnData.user = response.data.data;
-            } else if (response.data.paymentRequired == true) {
-                returnData.paymentUrl = response.data.paymentUrl;
-            }
-
-            return returnData;
-        } else {
-            throw new Error('Failed to reveal user contacts');
-        }
-
+        return returnData;
     } catch (error) {
-        console.error('Error revealing user contacts:', error);
         throw error;
     }
 }

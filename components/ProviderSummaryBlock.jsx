@@ -23,6 +23,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useWebView } from '../context/webViewContext';
 import { useLocalization } from '../src/services/useLocalization';
 import SubscriptionsModal from './SubscriptionsModal';
+import { useNotification } from '../src/render';
 
 const ProviderSummaryBlock = ({ user, chooseUser }) => {
   const { t } = useTranslation();
@@ -31,11 +32,13 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
     languageController,
     usersReveal,
     setAppLoading,
-    subscription,
+    providersManager,
     user: currentUser,
+    couponsManagerController
   } = useComponentContext();
   const { tField } = useLocalization(languageController.current);
   const { openWebView } = useWebView();
+  const { showWarning } = useNotification();
   const { height, isLandscape, width, sidebarWidth } = useWindowInfo();
   const isRTL = languageController.isRTL;
 
@@ -308,18 +311,32 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
     phoneNumber,
   } = user;
 
-  const handleUserRevealTry = async () => {
+  const handleUserRevealTry = async (useCoupon = false) => {
     try {
       setAppLoading(true);
 
-      const result = await usersReveal.tryReveal(user.id);
+      const result = await usersReveal.tryReveal(user.id, useCoupon);
       if (result.paymentUrl) {
         openWebView(result.paymentUrl);
+      } else if (result.user) {
+        providersManager.appendUserData(user.id, result.user.email, result.user.phoneNumber);
       }
 
       setAppLoading(false);
+      setPurchaseModalVisible(false);
     } catch (error) {
-      console.error('Error revealing user:', error);
+      console.log(error.response);
+
+      if (error.response && error.response.status === 400 && error.response.data.code == 'NO_COUPONS_AVAILABLE') {
+        setAppLoading(false);
+        showWarning(t('showJob.errors.noCouponsAvailable', {
+          defaultValue: 'No coupons available to use for this job.',
+        }));
+      }
+      else {
+        setAppLoading(false);
+        setPurchaseModalVisible(false);
+      }
     }
   };
 
@@ -932,10 +949,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
 
                   {/* кнопка подтверждения с ценой */}
                   <TouchableOpacity
-                    onPress={() => {
-                      handleCreate();
-                      setPurchaseModalVisible(false);
-                    }}
+                    onPress={() => handleUserRevealTry(false)}
                     style={{
                       height: sizes.btnH,
                       width: sizes.btnW,
@@ -964,9 +978,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
 
                   {/* кнопка подтверждения с купонами */}
                   <TouchableOpacity
-                    onPress={() => {
-                      setPurchaseModalVisible(false);
-                    }}
+                    onPress={() => handleUserRevealTry(true)}
                     style={{
                       height: sizes.btnH,
                       width: sizes.btnW,
@@ -1013,7 +1025,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         },
                       ]}
                     >
-                      {` (${currentUser.current?.coupons || 0})`}
+                      {` (${couponsManagerController.balance || 0})`}
                     </Text>
                   </TouchableOpacity>
 

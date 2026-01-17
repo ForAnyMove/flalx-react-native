@@ -420,7 +420,7 @@ export default function sessionManager() {
   }
 
   // Reveal user contacts
-  async function tryReveal(userId) {
+  async function tryReveal(userId, useCoupon = false) {
     if (revealedUsers.includes(userId)) {
       return;
     }
@@ -429,7 +429,7 @@ export default function sessionManager() {
       const data = await revealUser(userId, {
         token: { access_token: session.access_token },
         serverURL: API_BASE_URL,
-      });
+      }, useCoupon);
       if (data.user) {
         setRevealedUsers((prev) => [...prev, userId]);
         return { user: data.user };
@@ -437,7 +437,7 @@ export default function sessionManager() {
         return { paymentUrl: data.paymentUrl };
       }
     } catch (error) {
-      console.error('Error revealing user contacts:', error);
+      throw error;
     }
   }
 

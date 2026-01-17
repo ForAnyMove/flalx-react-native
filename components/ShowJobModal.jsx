@@ -82,7 +82,7 @@ export default function ShowJobModal({
     languageController,
     setAppLoading,
     subscription,
-    user,
+    couponsManagerController,
   } = useComponentContext();
   const { tField } = useLocalization(languageController.current);
   const { showError, showWarning } = useNotification();
@@ -2654,7 +2654,7 @@ export default function ShowJobModal({
                     flexDirection: isRTL ? 'row-reverse' : 'row',
                   },
                 ]}
-                onPress={() => {}}
+                onPress={() => handleAddingSelfToJobProviders(true)}
               >
                 <Text
                   style={[
@@ -2685,10 +2685,10 @@ export default function ShowJobModal({
                     },
                   ]}
                 >
-                  {` (${user.current?.coupons || 0})`}
+                  {` (${couponsManagerController.balance || 0})`}
                 </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+              </TouchableOpacity>
+              <TouchableOpacity
                 style={[
                   styles.modalBtn,
                   {
