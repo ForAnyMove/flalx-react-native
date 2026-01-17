@@ -33,7 +33,7 @@ const TAB_TITLES_RTL = ['done', 'in_progress', 'waiting', 'new'];
 const badgeCountsExample = {
   new: 0,
   waiting: 0,
-  'in-progress': 0,
+  'in_progress': 0,
   done: 0,
 };
 
@@ -76,7 +76,7 @@ export default function Store() {
     setBadgeCounts({
       new: 0,
       waiting: jobsController.creator.waiting.length,
-      'in-progress': jobsController.creator.inProgress.length,
+      'in_progress': jobsController.creator.inProgress.length,
       done: jobsController.creator.done.length,
     });
   }, [jobsController.creator]);
