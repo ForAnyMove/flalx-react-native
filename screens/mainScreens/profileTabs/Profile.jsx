@@ -100,6 +100,7 @@ export default function Profile() {
       infoFieldPaddingH: isWebLandscape ? web(16) : mobile(16),
       labelMarginBottom: isWebLandscape ? web(4) : mobile(4),
       editPanelGap: isWebLandscape ? web(5) : mobile(5),
+      oneLineInputHeight: isWebLandscape ? web(20) : mobile(20),
     };
   }, [height, isWebLandscape]);
 
@@ -1001,7 +1002,12 @@ function InfoField({
       style={[
         styles.profileInfoString,
         {
-          width: Platform.OS === 'web' && isLandscape ? multiline ? '32%' : '49%' : '100%',
+          width:
+            Platform.OS === 'web' && isLandscape
+              ? multiline
+                ? '32%'
+                : '49%'
+              : '100%',
           height: btnHeight,
           marginBottom: fieldMargin,
           backgroundColor: editMode
@@ -1010,9 +1016,21 @@ function InfoField({
           borderRadius: sizes.infoFieldBorderRadius,
           paddingHorizontal: sizes.infoFieldPaddingH,
         },
+        multiline && { alignItems: 'flex-start' },
       ]}
     >
-      <View style={multiline ? {paddingVertical: sizes.fieldPaddingVertical, alignItems: 'flex-start', flex: 1} : { flex: 1 }}>
+      <View
+        style={
+          multiline
+            ? {
+                paddingVertical: sizes.fieldPaddingVertical,
+                alignItems: 'flex-start',
+                flex: 1,
+                height: '100%',
+              }
+            : { flex: 1 }
+        }
+      >
         <Text
           style={[
             styles.profileInfoLabel,
@@ -1034,6 +1052,7 @@ function InfoField({
                 color: themeController.current?.formInputTextColor,
                 minHeight: baseFont * 0.9,
               },
+              multiline && { flex: 1 },
             ]}
             value={textValue}
             onChangeText={setTextValue}
@@ -1048,6 +1067,9 @@ function InfoField({
                 color: themeController.current?.formInputTextColor,
                 minHeight: baseFont * 0.9,
               },
+              multiline
+                ? { overflow: 'auto' }
+                : { overflow: 'hidden', maxHeight: sizes.oneLineInputHeight },
             ]}
           >
             {textValue}
@@ -1055,7 +1077,13 @@ function InfoField({
         )}
       </View>
       {editMode ? (
-        <View style={[styles.editPanel, { gap: sizes.editPanelGap }]}>
+        <View
+          style={[
+            styles.editPanel,
+            { gap: sizes.editPanelGap },
+            multiline && { marginTop: sizes.fieldPaddingVertical },
+          ]}
+        >
           <TouchableOpacity
             onPress={() => {
               setEditMode(false);
@@ -1090,7 +1118,10 @@ function InfoField({
           </TouchableOpacity>
         </View>
       ) : (
-        <TouchableOpacity onPress={() => setEditMode(true)}>
+        <TouchableOpacity
+          onPress={() => setEditMode(true)}
+          style={[multiline && { marginTop: sizes.fieldPaddingVertical }]}
+        >
           <Image
             source={icons.edit}
             style={{
