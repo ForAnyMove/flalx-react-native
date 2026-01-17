@@ -24,6 +24,7 @@ import { useWebView } from '../context/webViewContext';
 import { useLocalization } from '../src/services/useLocalization';
 import SubscriptionsModal from './SubscriptionsModal';
 import { useNotification } from '../src/render';
+import { formatCurrency } from '../utils/currency_formatter';
 
 const ProviderSummaryBlock = ({ user, chooseUser }) => {
   const { t } = useTranslation();
@@ -970,8 +971,8 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                       }}
                     >
                       {t('showJob.buttons.buyForPrice', {
-                        defaultValue: 'Buy for 1.50$',
-                        price: '1.50',
+                        defaultValue: 'Buy for {{price}}',
+                        price: formatCurrency(usersReveal.product.price, usersReveal.product.currency),
                       })}
                     </Text>
                   </TouchableOpacity>
