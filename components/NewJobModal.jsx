@@ -390,10 +390,15 @@ export default function NewJobModal({
       ) {
         jobChanges.endDateTime = new Date(endDateTime).toISOString();
       }
+      setAppLoading(true);
+
       if (Object.keys(jobChanges).length > 0) {
-        editJobById(currentJobId, jobChanges, session).then(() =>
-          jobsController.reloadCreator()
-        );
+        editJobById(currentJobId, jobChanges, session).then(() => {
+          jobsController.reloadCreator();
+          setAppLoading(false);
+        }).then(() => {
+          setAppLoading(false);
+        });
       }
     } else {
       const newJob = {
