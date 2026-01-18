@@ -43,14 +43,15 @@ export default function WaitingScreen({
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const rejectedJobsNotifications = useMemo(() => {
-    const rejectedJobs = jobsController.creator.waiting.filter((job => job.status === 'rejected')).sort((a, b) => new Date(a.moderated_at) - new Date(b.moderated_at));
+    const rejectedJobs = jobsController.creator.waiting.filter((job => job.status === 'rejected' || (job.moderated_by != null && job.isRejectionNoticedByUser == false))).sort((a, b) => new Date(a.moderated_at) - new Date(b.moderated_at));
 
     const notifications = rejectedJobs.map((job) => ({
       id: job.id,
-      message: job.rejection_reason != null ? job.rejection_reason : null,
+      // message: job.rejection_reason != null ? job.rejection_reason : null,
       title: '',
       jobType: tField(job.type, 'name'),
       jobSubtype: tField(job.subType, 'name'),
+      rejectionType: job.status === 'rejected' ? 'initial_rejection' : 'update_rejection',
     }));
 
     return notifications;
@@ -106,7 +107,7 @@ export default function WaitingScreen({
       [tField(job.type, 'name'), job.description].some((field) =>
         field.toLowerCase().includes(searchValue.toLowerCase())
       )
-    );
+    ).filter(job => job.status !== 'rejected');
 
   const drawJobCard = (job, index) => {
     const hasImage = job.images && job.images.length > 0;

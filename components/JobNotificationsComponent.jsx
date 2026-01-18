@@ -156,10 +156,10 @@ const JobNotificationsComponent = ({ notifications = [], onClose }) => {
 
         return (
           <View key={notification.id} style={[styles.card, cardStyle]}>
-            <Text style={styles.title}>{t('job_notifications.rejected_title')} {notification.title}</Text>
+            <Text style={styles.title}>{notification.rejectionType == 'initial_rejection' ? t('job_notifications.rejected_title') : t('job_notifications.update_rejected_title')} {notification.title}</Text>
             <Text style={styles.message} numberOfLines={3} ellipsizeMode='tail'>
               {notification.message != null ? t('job_notifications.rejected_message_reason', { reason: notification.message, jobType: notification.jobType, jobSubtype: notification.jobSubtype }) :
-                t('job_notifications.rejected_message', { jobType: notification.jobType, jobSubtype: notification.jobSubtype })}
+                (notification.rejectionType == 'initial_rejection' ? t('job_notifications.rejected_message', { jobType: notification.jobType, jobSubtype: notification.jobSubtype }) : t('job_notifications.update_rejected_message', { jobType: notification.jobType, jobSubtype: notification.jobSubtype }))}
             </Text>
             {isTopCard && (
               <TouchableOpacity

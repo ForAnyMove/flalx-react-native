@@ -112,8 +112,10 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
       },
       job_notifications: {
         rejected_title: 'Rejected',
+        update_rejected_title: 'Update Rejected',
         rejected_message_reason: 'Job "{{jobType}} - {{jobSubtype}}" was rejected with the reason: {{reason}}',
         rejected_message: 'Job "{{jobType}} - {{jobSubtype}}" was rejected',
+        update_rejected_message: 'Your update to the job "{{jobType}} - {{jobSubtype}}" was rejected',
       },
       auth: {
         app_name: 'FLALX',
@@ -642,8 +644,10 @@ After they register, you'll receive coupons.`,
       },
       job_notifications: {
         rejected_title: 'נדחה',
+        update_rejected_title: 'עדכון נדחה',
         rejected_message_reason: 'העבודה "{{jobType}} - {{jobSubtype}}" נדחתה עם הסיבה: {{reason}}',
         rejected_message: 'העבודה "{{jobType}} - {{jobSubtype}}" נדחתה',
+        update_rejected_message: 'העדכון שלך לעבודה "{{jobType}} - {{jobSubtype}}" נדחה',
       },
       auth: {
         app_name: 'FLALX',
