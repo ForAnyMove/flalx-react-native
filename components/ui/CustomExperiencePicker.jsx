@@ -47,8 +47,14 @@ const CustomExperiencePicker = ({
         value: { years: 0, months: 6 },
       },
       { label: t('register.experience.year'), value: { years: 1, months: 0 } },
-      { label: t('register.experience.years', { years: 2 }), value: { years: 2, months: 0 } },
-      { label: t('register.experience.years', { years: 3 }), value: { years: 3, months: 0 } },
+      {
+        label: t('register.experience.years', { years: 2 }),
+        value: { years: 2, months: 0 },
+      },
+      {
+        label: t('register.experience.years', { years: 3 }),
+        value: { years: 3, months: 0 },
+      },
       { label: t('register.experience.other'), value: 'custom' },
     ],
     [t]
@@ -224,6 +230,7 @@ const CustomExperiencePicker = ({
         textAlign: 'center',
         marginVertical: sizes.counterInputMarginV,
         fontFamily: 'Rubik-Bold',
+        width: sizes.counterFontSize * 2,
       },
       customInputButtons: {
         flexDirection: 'row',
@@ -244,8 +251,10 @@ const CustomExperiencePicker = ({
   const getSelectedLabel = () => {
     if (selectedValue && typeof selectedValue === 'object') {
       // Проверяем, есть ли предопределенная опция с таким же значением
-      const predefined = experienceLevels.find((option) =>
-        typeof option.value === 'object' && compareExperience(option.value, selectedValue)
+      const predefined = experienceLevels.find(
+        (option) =>
+          typeof option.value === 'object' &&
+          compareExperience(option.value, selectedValue)
       );
 
       if (predefined) {
@@ -262,6 +271,16 @@ const CustomExperiencePicker = ({
   const dropdownHeight =
     itemHeight * (experienceLevels.length > 4 ? 4 : experienceLevels.length);
 
+  useEffect(() => {
+    pickerRef.current?.measure((fx, fy, width, height, px, py) => {
+      setPickerLayout({
+        top: bottomDropdown ? py + height : py - dropdownHeight,
+        left: px,
+        width: width,
+      });
+    });
+  }, [height, width]);
+
   const handlePress = () => {
     if (fullScreen) {
       setModalVisible(true);
@@ -273,9 +292,16 @@ const CustomExperiencePicker = ({
           width: width,
         });
         // Always open in list view unless a custom value is already set
-        const isCustom = selectedValue && typeof selectedValue === 'object' &&
-          !experienceLevels.some(opt => typeof opt.value === 'object' && compareExperience(opt.value, selectedValue));
-        setViewMode(isCustom ? 'counter' : 'list');
+        // const isCustom =
+        //   selectedValue &&
+        //   typeof selectedValue === 'object' &&
+        //   !experienceLevels.some(
+        //     (opt) =>
+        //       typeof opt.value === 'object' &&
+        //       compareExperience(opt.value, selectedValue)
+        //   );
+        // setViewMode(isCustom ? 'counter' : 'list');
+        setViewMode('list');
         setModalVisible(true);
       });
     }
@@ -316,19 +342,21 @@ const CustomExperiencePicker = ({
   };
 
   const renderOption = ({ item }) => {
-    const isSelected = typeof item.value === 'object'
-      ? compareExperience(selectedValue, item.value)
-      : false;
-    const isHovered = typeof item.value === 'object'
-      ? compareExperience(hoveredValue, item.value)
-      : hoveredValue === item.value;
+    const isSelected =
+      typeof item.value === 'object'
+        ? compareExperience(selectedValue, item.value)
+        : false;
+    const isHovered =
+      typeof item.value === 'object'
+        ? compareExperience(hoveredValue, item.value)
+        : hoveredValue === item.value;
 
     const webHoverProps =
       Platform.OS === 'web'
         ? {
-          onMouseEnter: () => setHoveredValue(item.value),
-          onMouseLeave: () => setHoveredValue(null),
-        }
+            onMouseEnter: () => setHoveredValue(item.value),
+            onMouseLeave: () => setHoveredValue(null),
+          }
         : {};
 
     return (
@@ -340,8 +368,8 @@ const CustomExperiencePicker = ({
             backgroundColor: isSelected
               ? themeController.current?.selectedItemBackground
               : isHovered
-                ? themeController.current?.profileDefaultBackground
-                : 'transparent',
+              ? themeController.current?.profileDefaultBackground
+              : 'transparent',
             height: itemHeight,
             justifyContent: 'center',
           },
@@ -388,7 +416,7 @@ const CustomExperiencePicker = ({
       animationType='fade'
       onRequestClose={() => {
         setModalVisible(false);
-        setViewMode('list');
+        // setViewMode('list');
       }}
     >
       <TouchableOpacity
@@ -396,7 +424,7 @@ const CustomExperiencePicker = ({
         activeOpacity={1}
         onPressOut={() => {
           setModalVisible(false);
-          setViewMode('list');
+          // setViewMode('list');
         }}
       >
         <View
@@ -424,7 +452,7 @@ const CustomExperiencePicker = ({
   );
 
   const renderCustomInput = () => (
-    <View
+    <TouchableOpacity
       style={{
         alignItems: 'center',
         width: '100%',
@@ -432,6 +460,10 @@ const CustomExperiencePicker = ({
         justifyContent: 'center',
         padding: sizes.counterContainerPadding,
       }}
+      onPress={(e)=> {
+        e.stopPropagation()
+      }}
+      activeOpacity={1}
     >
       <View
         style={{
@@ -537,7 +569,7 @@ const CustomExperiencePicker = ({
       >
         {formatExperience({ years, months }, t)}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderDropdownModal = () => (
@@ -547,7 +579,7 @@ const CustomExperiencePicker = ({
       animationType='fade'
       onRequestClose={() => {
         setModalVisible(false);
-        setViewMode('list');
+        // setViewMode('list');
       }}
     >
       <TouchableOpacity
@@ -555,7 +587,7 @@ const CustomExperiencePicker = ({
         activeOpacity={1}
         onPressOut={() => {
           setModalVisible(false);
-          setViewMode('list');
+          // setViewMode('list');
         }}
       >
         {pickerLayout && (
@@ -566,8 +598,8 @@ const CustomExperiencePicker = ({
                 top:
                   viewMode === 'counter' && !bottomDropdown
                     ? sizes.counterContainerHeight +
-                    pickerLayout.top -
-                    sizes.pickerHeight * 1.5
+                      pickerLayout.top -
+                      sizes.pickerHeight * 1.5
                     : pickerLayout.top,
                 left: pickerLayout.left,
                 width: pickerLayout.width,
@@ -577,13 +609,13 @@ const CustomExperiencePicker = ({
                     : themeController.current?.dropdownBackground,
                 ...(bottomDropdown
                   ? {
-                    borderBottomLeftRadius: sizes.borderRadius,
-                    borderBottomRightRadius: sizes.borderRadius,
-                  }
+                      borderBottomLeftRadius: sizes.borderRadius,
+                      borderBottomRightRadius: sizes.borderRadius,
+                    }
                   : {
-                    borderTopLeftRadius: sizes.borderRadius,
-                    borderTopRightRadius: sizes.borderRadius,
-                  }),
+                      borderTopLeftRadius: sizes.borderRadius,
+                      borderTopRightRadius: sizes.borderRadius,
+                    }),
               },
             ]}
           >

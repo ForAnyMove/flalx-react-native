@@ -294,7 +294,7 @@ export default function NewJobModal({
     jobsController.products.find((o) => o.type === jobType) ||
     jobsController.products[0];
 
-  const [experience, setExperience] = useState(null);
+  const [experience, setExperience] = useState(initialJob?.experience || null);
 
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [plansModalVisible, setPlansModalVisible] = useState(false);
@@ -312,7 +312,7 @@ export default function NewJobModal({
     'type',
     'subType',
     'price',
-    'location',
+    // 'location',
     // 'description',
   ];
 
@@ -627,7 +627,7 @@ export default function NewJobModal({
       </Text>
       <TextInput
         value={price}
-        onChangeText={setPrice}
+        onChangeText={(text) => setPrice(text.replace(/[^0-9]/g, ''))}
         placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
         placeholderTextColor={
           themeController.current?.formInputPlaceholderColor
@@ -1165,7 +1165,7 @@ export default function NewJobModal({
                       <TextInput
                         key='priceInput'
                         value={price}
-                        onChangeText={setPrice}
+                        onChangeText={(text) => setPrice(text.replace(/[^0-9]/g, ''))}
                         placeholder={t('newJob.typePlaceholder', {
                           defaultValue: 'Type...',
                         })}

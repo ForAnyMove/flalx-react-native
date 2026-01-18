@@ -175,6 +175,7 @@ const AddressPicker = ({
           {label}
         </Text>
         <GooglePlacesTextInput
+          value={initialAddress}
           proxyUrl={`${PROXY_CONFIG.baseUrl}${PROXY_CONFIG.endpoints.autocomplete}`}
           detailsProxyUrl={`${PROXY_CONFIG.baseUrl}${PROXY_CONFIG.endpoints.details}`}
           onPlaceSelect={handleSelect}
