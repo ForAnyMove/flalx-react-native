@@ -376,6 +376,7 @@ export const WebSocketProvider = ({ children }) => {
       }
       case 'JOB_CREATED_BY_YOU':
       case 'JOB_APPROVED':
+      case 'JOB_UPDATE_REJECTED':
       case 'JOB_REJECTED': {
         jobsController.reloadCreator();
         break;
