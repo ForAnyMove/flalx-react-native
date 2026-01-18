@@ -236,6 +236,91 @@ export default function sessionManager() {
     }
   }
 
+  // >>> MFA (Multi-Factor Authentication) FUNCTIONS <<<
+
+  /**
+   * Шаг 1: Регистрация телефона как второго фактора
+   * @param {string} phone - Номер телефона в формате E.164 (например, +79991234567)
+   */
+  async function enrollPhoneNumber(phone) {
+    try {
+      const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: 'phone',
+        phone: phone,
+      });
+
+      if (error) {
+        console.error('MFA Enroll Error:', error.message);
+        return { success: false, error: error.message };
+      }
+
+      console.log('MFA Enroll Success:', data);
+      return { success: true, factorId: data.id };
+    } catch (e) {
+      console.error('MFA Enroll Exception:', e);
+      return { success: false, error: String(e) };
+    }
+  }
+
+  /**
+   * Шаг 2: Отправка СМС с кодом верификации
+   * @param {string} factorId - ID фактора, полученный на шаге enroll
+   */
+  async function challengePhoneNumber(factorId) {
+    try {
+      const { data, error } = await supabase.auth.mfa.challenge({
+        factorId: factorId,
+      });
+
+      if (error) {
+        console.error('MFA Challenge Error:', error.message);
+        return { success: false, error: error.message };
+      }
+
+      console.log('MFA Challenge Success:', data);
+      return { success: true, challengeId: data.id };
+    } catch (e) {
+      console.error('MFA Challenge Exception:', e);
+      return { success: false, error: String(e) };
+    }
+  }
+
+  /**
+   * Шаг 3: Проверка кода из СМС
+   * @param {string} factorId - ID фактора
+   * @param {string} challengeId - ID вызова, полученный на шаге challenge
+   * @param {string} code - Код из СМС
+   */
+  async function verifyPhoneNumber(factorId, challengeId, code) {
+    try {
+      const { error } = await supabase.auth.mfa.verify({
+        factorId: factorId,
+        challengeId: challengeId,
+        code: code,
+      });
+
+      if (error) {
+        console.error('MFA Verify Error:', error.message);
+        return { success: false, error: error.message };
+      }
+
+      console.log('MFA Verify Success: User session now has aal2.');
+      // Сессия автоматически обновляется, пересохранять не нужно,
+      // но можно обновить стейт, если потребуется
+      const { data: { session } } = await supabase.auth.getSession();
+      await saveSession(session);
+
+      return { success: true };
+    } catch (e) {
+      console.error('MFA Verify Exception:', e);
+      return { success: false, error: String(e) };
+    }
+  }
+
+
+  // >>> END MFA FUNCTIONS <<<
+
+
   // Проверка кода
   async function verifyOtpResetPassword(code) {
     if (!email) {
@@ -259,6 +344,24 @@ export default function sessionManager() {
 
       setIsInPasswordReset(true);
     }
+  }
+
+  // Обновление пароля (используется в сбросе пароля)
+  async function updatePassword(newPassword) {
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      console.error('Ошибка обновления пароля:', error.message);
+      return { success: false, error: error.message };
+    }
+
+    console.log('Пароль успешно обновлен:', data);
+    // После успешного обновления выходим из системы,
+    // чтобы пользователь мог войти с новым паролем.
+    await signOut();
+    return { success: true };
   }
 
   // Проверка SMS кода для сброса пароля
@@ -344,6 +447,37 @@ export default function sessionManager() {
       console.error('Ошибка updateUser:', err.message);
       throw err;
     }
+  }
+
+  // Сброс пароля (новая функция)
+  async function resetPassword(newPassword) {
+    if (!trialSession) {
+      return { success: false, error: 'No temporary session for password reset.' };
+    }
+    // Устанавливаем временную сессию для сброса
+    await supabase.auth.setSession(trialSession);
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    // Сбрасываем состояние после попытки
+    setTrialSession(null);
+    setIsInPasswordReset(false);
+    preResetAuthCall.current = false;
+
+    if (error) {
+      console.error('Ошибка сброса пароля:', error.message);
+      // Важно выйти из системы, даже если была ошибка,
+      // чтобы не остаться в некорректной сессии
+      await signOut();
+      return { success: false, error: error.message };
+    }
+
+    console.log('Пароль успешно сброшен.');
+    // Выходим, чтобы пользователь мог залогиниться с новым паролем
+    await signOut();
+    return { success: true };
   }
 
   // Удалить пользователя
@@ -486,6 +620,44 @@ export default function sessionManager() {
       });
 
       if (error) {
+        // Cпециальная обработка для MFA
+        if (error.code === 'mfa_required') {
+          console.log('MFA is required for this user.');
+          // На этом этапе сессия не создана, но Supabase возвращает
+          // информацию, необходимую для следующего шага.
+          // Мы можем получить список факторов аутентификации.
+          const { data: mfaData, error: mfaError } = await supabase.auth.mfa.listFactors();
+          
+          if (mfaError) {
+            console.error('Could not list MFA factors:', mfaError.message);
+            return { success: false, error: mfaError.message };
+          }
+
+          const phoneFactor = mfaData.factors.find(f => f.factor_type === 'phone' && f.status === 'verified');
+
+          if (phoneFactor) {
+            // Теперь мы можем инициировать challenge
+            const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
+              factorId: phoneFactor.id
+            });
+
+            if (challengeError) {
+              console.error('MFA Challenge failed:', challengeError.message);
+              return { success: false, error: challengeError.message };
+            }
+            
+            return {
+              success: false,
+              mfaRequired: true,
+              phone: phoneFactor.friendly_name, // friendly_name usually holds the phone number
+              factorId: phoneFactor.id,
+              challengeId: challengeData.id, // ID для шага верификации
+            };
+          } else {
+            return { success: false, error: 'No verified phone factor found for MFA.' };
+          }
+        }
+        
         console.error('Ошибка входа по паролю:', error.message);
         return { success: false, error: error.message };
       }
@@ -751,11 +923,15 @@ export default function sessionManager() {
       createUser: (email, password, options, referralCode) => createUser(email, password, options, referralCode),
       createUserWithPhone: (phone, password) => createUserWithPhone(phone, password),
       verifyPhoneOtp: (phone, token) => verifyPhoneOtp(phone, token),
+      updatePassword: (newPassword) => updatePassword(newPassword),
       changePassword: (oldPassword, newPassword) =>
         changePassword(oldPassword, newPassword),
       createPassword: (newPassword) => createPassword(newPassword),
       resetPassword: isInPasswordReset,
       setNewPassword: (newPassword) => setNewPassword(newPassword),
+      enrollPhoneNumber,
+      challengePhoneNumber,
+      verifyPhoneNumber,
     },
     user: {
       current: user,
