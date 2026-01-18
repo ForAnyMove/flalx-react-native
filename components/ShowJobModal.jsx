@@ -460,10 +460,7 @@ export default function ShowJobModal({
   const [currentJobInfo, setCurrentJobInfo] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const location = useMemo(() => {
-    if (!currentJobInfo?.location) return null;
-    return JSON.parse(currentJobInfo.location);
-  }, [currentJobInfo?.location]);
+  const location = currentJobInfo?.location;
 
   // Подгружаем job при редактировании
   useEffect(() => {
