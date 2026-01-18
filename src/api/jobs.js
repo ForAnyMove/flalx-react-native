@@ -34,7 +34,7 @@ async function createJob(jobData, session) {
     }
 }
 
-async function payForJob(jobDataId, session) {
+async function payForJob(jobDataId, session, useCoupon = false) {
     try {
         const token = session?.token?.access_token;
         const url = session?.serverURL || 'http://localhost:3000';
@@ -52,7 +52,7 @@ async function payForJob(jobDataId, session) {
             Authorization: `Bearer ${token}`
         };
 
-        const response = await axios.post(`${url}/api/jobs/${jobDataId}/pay`, { paymentMethod: 'paypal' }, { headers });
+        const response = await axios.post(`${url}/api/jobs/${jobDataId}/pay`, { paymentMethod: 'paypal', use_coupon: useCoupon }, { headers });
 
         const returnData = {
             paymentUrl: response.data?.payment?.paymentMetadata?.paypalApproval?.href,

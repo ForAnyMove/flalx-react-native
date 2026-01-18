@@ -356,7 +356,6 @@ export default function NewJobModal({
     setFieldErrors(newErrors);
 
     const hasErrors = Object.values(newErrors).some((e) => e);
-    console.log('error fields ', newErrors);
 
     if (hasErrors) return;
 
@@ -1759,7 +1758,7 @@ export default function NewJobModal({
                         marginRight: isRTL ? sizes.margin / 4 : 0,
                       }}
                     >
-                      or
+                      {t('common.or', { defaultValue: 'or' })}
                     </Text>
                   }
                   {(subscription.current == null &&

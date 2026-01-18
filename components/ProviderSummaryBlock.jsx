@@ -330,8 +330,8 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
 
       if (error.response && error.response.status === 400 && error.response.data.code == 'NO_COUPONS_AVAILABLE') {
         setAppLoading(false);
-        showWarning(t('showJob.errors.noCouponsAvailable', {
-          defaultValue: 'No coupons available to use for this job.',
+        showWarning(t('errors.no_coupons', {
+          defaultValue: 'You have no coupons available',
         }));
       }
       else {

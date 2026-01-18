@@ -5,6 +5,16 @@ import { licensesTranslations } from './licensesTranslations';
 export const translations = {
   en: {
     translation: {
+      publishJobModal: {
+        title_normal_type: 'You must pay to publish this ad or get a subscription',
+        title: 'You must pay to publish this ad',
+        sub_title: 'Type of ad',
+        buttons: {
+          viewPlans: 'Get a subscription',
+          confirmWithPrice: 'Publish for {{price}}',
+          publishForCoupons: 'Publish for {{count}} ',
+        },
+      },
       jobTypes: {
         ...jobTypesTranslations.en,
       },
@@ -189,6 +199,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
       errors: {
         passwords_not_match: 'Passwords do not match',
         unexpected_error: 'An unexpected error occurred. Please try again later.',
+        no_coupons: 'You have no coupons available',
       },
       settings: {
         sent: 'Sent',
@@ -274,6 +285,7 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         waiting_payment: 'Waiting for Payment',
         back: 'Back',
         purchase: 'Purchase',
+        or: 'or',
       },
       extra_markers: {
         verified: 'Verified',
@@ -327,11 +339,13 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
           buttons: {
             viewPlans: 'Get a subscription',
             confirmWithPrice: 'Publish for {{price}}',
+            confirm: 'Publish',
             publishForCoupons: 'Publish for {{count}} ',
           },
           plansTitle: 'Pricing plans',
           free: 'Free',
         },
+        payAfterModerationNotice: 'You must pay for publishing this type of ad after moderation.',
       },
       providersSection: {
         title: {
@@ -512,6 +526,15 @@ After they register, you'll receive coupons.`,
   },
   he: {
     translation: {
+      publishJobModal: {
+        title: 'פרסם משרה',
+        sub_title: 'תכונה נבחרת: {{option}}',
+        buttons: {
+          viewPlans: 'קבל מנוי',
+          confirmWithPrice: 'פרסם עבור {{price}}',
+          publishForCoupons: 'פרסם עבור {{count}} ',
+        },
+      },
       jobTypes: {
         ...jobTypesTranslations.he,
       },
@@ -698,6 +721,7 @@ After they register, you'll receive coupons.`,
       errors: {
         passwords_not_match: 'הסיסמאות אינן תואמות',
         unexpected_error: 'אירעה שגיאה בלתי צפויה. אנא נסה שוב מאוחר יותר.',
+        no_coupons: 'אין לך קופונים זמינים',
       },
       settings: {
         sent: 'נשלח',
@@ -786,6 +810,7 @@ After they register, you'll receive coupons.`,
         waiting_payment: 'ממתין לתשלום',
         back: 'חזור',
         purchase: 'רכוש',
+        or: 'או',
       },
       extra_markers: {
         verified: 'מְאוּמָת',
@@ -839,10 +864,13 @@ After they register, you'll receive coupons.`,
           buttons: {
             viewPlans: 'קבל/י מנוי',
             confirmWithPrice: 'פרסם ב-{{price}}',
+            confirm: 'פרסם',
             publishForCoupons: 'פרסם ב-{{count}} ',
           },
           plansTitle: 'תוכניות תמחור',
           free: 'חינם',
+          payAfterModerationNotice:
+            'עליך לשלם עבור פרסום סוג מודעה זה לאחר המודרציה.',
         },
       },
       providersSection: {
