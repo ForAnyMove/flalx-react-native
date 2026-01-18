@@ -1718,24 +1718,72 @@ export default function NewJobModal({
                   })}
                 </View>
 
-                <Text
+                <View
                   style={{
-                    fontSize: sizes.modalSub,
-                    color: themeController.current?.buttonColorPrimaryDefault,
+                    flexDirection: isRTL ? 'row-reverse' : 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     marginBottom: sizes.chipMarginBottom,
+                    gap: sizes.margin / 4,
                   }}
                 >
-                  {t('', {
-                    defaultValue: '{{price}}',
-                    price:
-                      subscription.current != null &&
-                        selectedOption.type == 'normal'
-                        ? t('newJob.statusModal.free', {
-                          defaultValue: 'Free',
-                        })
-                        : `${formatCurrency(selectedOption.price, selectedOption.currency)}`,
-                  })}
-                </Text>
+                  <Text
+                    style={{
+                      fontSize: sizes.modalSub,
+                      color: themeController.current?.buttonColorPrimaryDefault,
+                    }}
+                  >
+                    {t('', {
+                      defaultValue: '{{price}}',
+                      price:
+                        subscription.current != null &&
+                          selectedOption.type == 'normal'
+                          ? t('newJob.statusModal.free', {
+                            defaultValue: 'Free',
+                          })
+                          : `${formatCurrency(selectedOption.price, selectedOption.currency)}`,
+                    })}
+                  </Text>
+                  {(subscription.current == null &&
+                    selectedOption.type == 'normal') &&
+                    <Text
+                      style={{
+                        fontSize: sizes.modalSub,
+                        color: themeController.current?.formInputLabelColor,
+                        marginLeft: isRTL ? 0 : sizes.margin / 4,
+                        marginRight: isRTL ? sizes.margin / 4 : 0,
+                      }}
+                    >
+                      or
+                    </Text>
+                  }
+                  {(subscription.current == null &&
+                    selectedOption.type == 'normal') &&
+                    <Text
+                      style={{
+                        fontSize: sizes.modalSub,
+                        color: themeController.current?.buttonColorSecondaryDefault,
+                        marginLeft: isRTL ? 0 : sizes.margin / 4,
+                        marginRight: isRTL ? sizes.margin / 4 : 0,
+                      }}
+                    >
+                      1
+                    </Text>
+                  }
+                  {(subscription.current == null &&
+                    selectedOption.type == 'normal') &&
+                    <Image
+                      source={icons.coupon}
+                      style={{
+                        width: sizes.iconSize,
+                        height: sizes.iconSize,
+                        tintColor:
+                          themeController.current
+                            ?.buttonColorSecondaryDefault,
+                      }}
+                    />
+                  }
+                </View>
 
                 {(subscription.current == null ||
                   selectedOption.type != 'normal') && (
@@ -1782,69 +1830,8 @@ export default function NewJobModal({
                   </Text>
                 </TouchableOpacity>
 
-                {/* кнопка подтверждения с купонами */}
-                {subscription.current == null &&
-                  selectedOption?.type == 'normal' && (
-                    <TouchableOpacity
-                      onPress={() => {
-                        // handleCreate();
-                        setStatusModalVisible(false);
-                      }}
-                      style={{
-                        height: sizes.btnH,
-                        width: sizes.btnW,
-                        borderRadius: sizes.modalRadius,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderWidth: 1,
-                        borderColor:
-                          themeController.current?.buttonColorSecondaryDefault,
-                        marginBottom: sizes.borderRadius * 2,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        flexDirection: isRTL ? 'row-reverse' : 'row',
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: sizes.modalSub,
-                          color:
-                            themeController.current
-                              ?.buttonColorSecondaryDefault,
-                        }}
-                      >
-                        {t('newJob.statusModal.buttons.publishForCoupons', {
-                          defaultValue: 'Publish for {{count}} ',
-                          count: selectedOption?.couponsRequired || 0,
-                        })}
-                      </Text>
-                      <Image
-                        source={icons.coupon}
-                        style={{
-                          width: sizes.iconSize,
-                          height: sizes.iconSize,
-                          tintColor:
-                            themeController.current
-                              ?.buttonColorSecondaryDefault,
-                        }}
-                      />
-                      <Text
-                        style={[
-                          {
-                            color:
-                              themeController.current
-                                ?.buttonColorSecondaryDefault,
-                            fontSize: sizes.modalSub,
-                          },
-                        ]}
-                      >
-                        {` (${user.current?.coupons || 0})`}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-
                 {/* кнопка тарифов */}
-                {subscription.current == null &&
+                {/* {subscription.current == null &&
                   selectedOption?.type == 'normal' && (
                     <TouchableOpacity
                       onPress={() => {
@@ -1873,7 +1860,7 @@ export default function NewJobModal({
                         })}
                       </Text>
                     </TouchableOpacity>
-                  )}
+                  )} */}
               </TouchableOpacity>
             </View>
           </TouchableOpacity>

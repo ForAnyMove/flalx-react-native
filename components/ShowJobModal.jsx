@@ -460,10 +460,7 @@ export default function ShowJobModal({
   const [currentJobInfo, setCurrentJobInfo] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const location = useMemo(() => {
-    if (!currentJobInfo?.location) return null;
-    return JSON.parse(currentJobInfo.location);
-  }, [currentJobInfo?.location]);
+  const location = currentJobInfo?.location;
 
   // Подгружаем job при редактировании
   useEffect(() => {
@@ -1065,9 +1062,11 @@ export default function ShowJobModal({
                   price: subscription.current != null &&
                     currentJobInfo.type == 'normal' ? t('newJob.statusModal.free', {
                       defaultValue: 'Free',
-                    }) : `$${jobsController.products.find(e => {
+                    }) : `${formatCurrency(jobsController.products.find(e => {
                       return e.type === currentJobInfo.jobType;
-                    })?.price.toFixed(2)}`
+                    })?.price.toFixed(2), jobsController.products.find(e => {
+                      return e.type === currentJobInfo.jobType;
+                    })?.currency)}`
                 })}
               </Text>
             </TouchableOpacity>}
