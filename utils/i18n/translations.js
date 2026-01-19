@@ -93,8 +93,32 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         password_invalid: 'Password must contain at least 6 characters',
         password_mismatch: 'Passwords do not match',
 
+        email_password_subtitle: 'Enter your email and password to start',
+        mfa_skip: 'Skip phone verification',
+        mfa_skip_confirm_title: 'Skip Verification?',
+        mfa_skip_confirm_text: 'Are you sure you want to skip phone number verification? You can enable it later in your profile settings.',
+        mfa_enroll_title: 'Add a Phone Number',
+        mfa_enroll_subtitle: 'A verification code will be sent to this number via SMS.',
+        phone_number: 'Phone Number',
+        phone_invalid: 'Please enter a valid phone number in E.164 format (e.g., +1234567890)',
+        mfa_verify_title: 'Enter Confirmation Code',
+        mfa_verify_subtitle: 'Enter the 6-digit code sent to {{phone}}',
+        resend_in: 'Resend code in {{count}}s',
+        resend_code: 'Resend code',
+        back_to_email: 'Back to email',
+        back_to_phone: 'Back to phone number',
+
         create_account: 'Create account',
         continue: 'Continue',
+      },
+      login: {
+        otp: {
+          title: 'Enter Confirmation Code',
+          subtitle: 'Enter the 6-digit code sent to {{phone}}',
+          invalid_code: 'Please enter the complete 6-digit code.',
+          verification_failed: 'Invalid OTP. Please try again.',
+          verify_button: 'Verify',
+        }
       },
       job_notifications: {
         rejected_title: 'Rejected',
@@ -614,8 +638,32 @@ After they register, you'll receive coupons.`,
         password_invalid: 'הסיסמה חייבת להכיל לפחות 6 תווים',
         password_mismatch: 'הסיסמאות אינן תואמות',
 
+        email_password_subtitle: 'הזן את האימייל והסיסמה שלך כדי להתחיל',
+        mfa_skip: 'דלג על אימות טלפוני',
+        mfa_skip_confirm_title: 'לדלג על האימות?',
+        mfa_skip_confirm_text: 'האם אתה בטוח שברצונך לדלג על אימות מספר הטלפון? תוכל להפעיל אותו מאוחר יותר בהגדרות הפרופיל שלך.',
+        mfa_enroll_title: 'הוסף מספר טלפון',
+        mfa_enroll_subtitle: 'קוד אימות יישלח למספר זה באמצעות SMS.',
+        phone_number: 'מספר טלפון',
+        phone_invalid: 'אנא הזן מספר טלפון תקין בפורמט E.164 (למשל, +972501234567)',
+        mfa_verify_title: 'הזן קוד אישור',
+        mfa_verify_subtitle: 'הזן את הקוד בן 6 הספרות שנשלח ל-{{phone}}',
+        resend_in: 'שלח קוד שוב בעוד {{count}} שניות',
+        resend_code: 'שלח קוד שוב',
+        back_to_email: 'חזרה למייל',
+        back_to_phone: 'חזרה למספר טלפון',
+
         create_account: 'צור חשבון',
         continue: 'המשך',
+      },
+      login: {
+        otp: {
+          title: 'הזן קוד אישור',
+          subtitle: 'הזן את הקוד בן 6 הספרות שנשלח ל-{{phone}}',
+          invalid_code: 'אנא הזן את הקוד המלא בן 6 הספרות.',
+          verification_failed: 'קוד לא חוקי. בבקשה נסה שוב.',
+          verify_button: 'אמת',
+        }
       },
       job_notifications: {
         rejected_title: 'נדחה',

@@ -29,6 +29,8 @@ import ForgottenPasswordScreen from './screens/ForgottenPasswordScreen';
 import ResetPasswordScreen from './screens/ResetPasswordScreen';
 import ForgottenPasswordScreenSms from './screens/ForgottenPasswordScreenSms';
 import RegisterScreenWithPassSms from './screens/RegisterScreenWithPassSms';
+import MultiStepLoginScreen from './screens/login/MultiStepLoginScreen';
+import MultiStepRegisterScreen from './screens/register/MultiStepRegisterScreen';
 
 // --- Глобальное применение шрифта ---
 const originalTextRender = Text.render;
@@ -170,7 +172,11 @@ function App() {
     if (authControl.state) {
       content = <AuthScreen />;
     } else {
-      content = <AuthScreenWithPass />;
+      content = <MultiStepLoginScreen 
+                  onGoToRegister={() => registerControl.goToRegisterScreen()}
+                  onGoToForgottenPassword={() => forgotPassControl.switch()}
+                />;
+      // content = <AuthScreenWithPass />;
     }
   }
   // 3. Регистрация первого входа
@@ -188,7 +194,8 @@ function App() {
 
   // Регистрация перед входом
   if (registerControl.state) {
-    content = <RegisterScreenWithPass />;
+    // content = <RegisterScreenWithPass />;
+    content = <MultiStepRegisterScreen />;
   }
   // if (registerControl.state) {
   //   content = <RegisterScreenWithPassSms />;
