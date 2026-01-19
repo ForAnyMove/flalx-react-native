@@ -21,6 +21,7 @@ import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import TagSelector from '../components/TagSelector';
 import CustomPicker from '../components/ui/CustomPicker';
+import { logError } from '../utils/log_util';
 
 export default function RegisterScreenWithPass() {
   const { t } = useTranslation();
@@ -232,7 +233,7 @@ export default function RegisterScreenWithPass() {
       registerControl.leaveRegisterScreen();
     } catch (e) {
       const err = String(e.message || e).toLowerCase();
-      console.error('❌ Ошибка при обновлении:', e);
+      logError('❌ Ошибка при обновлении:', e);
       if (err.includes('already') || err.includes('exists')) {
         setEmailError(t('register.email_busy'));
         setStep(2);
@@ -260,8 +261,8 @@ export default function RegisterScreenWithPass() {
         const size = active
           ? sizes.activeDotSize
           : distance === 1
-          ? sizes.secondDotSize
-          : sizes.smallDotSize;
+            ? sizes.secondDotSize
+            : sizes.smallDotSize;
         return (
           <View
             key={i}
@@ -415,21 +416,21 @@ export default function RegisterScreenWithPass() {
           },
           !isWebLandscape && { height: '100%' },
           !isWebLandscape &&
-            step === 2 && {
-              paddingHorizontal: 0,
-            },
+          step === 2 && {
+            paddingHorizontal: 0,
+          },
           !isWebLandscape &&
-            step === 3 && {
-              paddingHorizontal: sizes.step3MobilePadding,
-            },
+          step === 3 && {
+            paddingHorizontal: sizes.step3MobilePadding,
+          },
           isWebLandscape
             ? {
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: scaleByHeight(688, height),
-                boxSizing: 'border-box',
-                marginTop: scaleByHeight(180, height),
-              }
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: scaleByHeight(688, height),
+              boxSizing: 'border-box',
+              marginTop: scaleByHeight(180, height),
+            }
             : null,
         ]}
         keyboardShouldPersistTaps='handled'
@@ -441,15 +442,15 @@ export default function RegisterScreenWithPass() {
             contentWidthStyle,
             { height: '100%', justifyContent: 'space-between' },
             isWebLandscape &&
-              step === 2 && {
-                height: scaleByHeight(741, height),
-                width: scaleByHeight(354, height),
-              },
+            step === 2 && {
+              height: scaleByHeight(741, height),
+              width: scaleByHeight(354, height),
+            },
             isWebLandscape &&
-              step === 3 && {
-                height: scaleByHeight(741, height),
-                width: scaleByHeight(951, height),
-              },
+            step === 3 && {
+              height: scaleByHeight(741, height),
+              width: scaleByHeight(951, height),
+            },
           ]}
         >
           {/* ======================= STEP 1: TERMS ======================= */}

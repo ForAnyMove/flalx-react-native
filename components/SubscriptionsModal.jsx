@@ -26,6 +26,7 @@ import { useMemo } from 'react';
 import { useLocalization } from '../src/services/useLocalization';
 import { useWindowInfo } from '../context/windowContext';
 import { formatCurrency } from '../utils/currency_formatter';
+import { logError } from '../utils/log_util';
 
 function SubscriptionsModalContent({ closeModal }) {
   const {
@@ -71,7 +72,7 @@ function SubscriptionsModalContent({ closeModal }) {
                   showInfo(message);
                 }
               } catch (error) {
-                console.error("Error during upgradeSubscription:", error);
+                logError("Error during upgradeSubscription:", error);
                 if (error.response && error.response.data && error.response.data.error) {
                   showError(`### ${error.response.data.error}`);
                 }
@@ -93,13 +94,12 @@ function SubscriptionsModalContent({ closeModal }) {
               setAppLoading(true);
               try {
                 const result = await upgradeSubscription(session, subscription.current.id, planId);
-                console.log('upgradeSubscription result:', result);
 
                 if (result.success && result.payment_url) {
                   openWebView(result.payment_url);
                 }
               } catch (error) {
-                console.error("Error during upgradeSubscription:", error);
+                logInfo("Error during upgradeSubscription:", error);
                 if (error.response && error.response.data && error.response.data.error) {
                   showError(`### ${error.response.data.error}`);
                 }
@@ -129,7 +129,7 @@ function SubscriptionsModalContent({ closeModal }) {
       }
 
     } catch (error) {
-      console.error("Error creating subscription:", error);
+      logInfo("Error creating subscription:", error);
     } finally {
       setAppLoading(false);
     }
@@ -144,7 +144,7 @@ function SubscriptionsModalContent({ closeModal }) {
       }
     } catch (error) {
       setAppLoading(false);
-      console.error("Error upgrading subscription:", error);
+      logInfo("Error upgrading subscription:", error);
     } finally {
       setAppLoading(false);
     }

@@ -1,3 +1,4 @@
+import { logError } from "../../utils/log_util";
 import { fetchWithSession } from "./apiBase";
 
 const ENDPOINTS = {
@@ -17,7 +18,7 @@ export async function getReferralLink(session) {
             referral_link
         };
     } catch (error) {
-        console.error('Error fetching referral link:', error);
+        logError('Error fetching referral link:', error);
         throw error;
     }
 }
@@ -29,7 +30,7 @@ export async function getCouponsBalance(session) {
 
         return balance;
     } catch (error) {
-        console.error('Error fetching coupons balance:', error);
+        logInfo('Error fetching coupons balance:', error);
         throw error;
     }
 }
@@ -41,7 +42,7 @@ export async function validateCouponCode(session, code) {
 
         return valid;
     } catch (error) {
-        console.error('Error validating coupon code:', error);
+        logInfo('Error validating coupon code:', error);
         throw error;
     }
 }

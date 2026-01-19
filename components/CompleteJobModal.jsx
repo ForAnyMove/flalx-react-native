@@ -27,6 +27,7 @@ import { useMemo, useState } from 'react';
 import ImagePickerModal from './ui/ImagePickerModal';
 import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
 import { scaleByHeightMobile } from '../utils/resizeFuncs';
+import { logError } from '../utils/log_util';
 
 function CompleteJobModalContent({ closeModal, completeFunc }) {
   const {
@@ -279,7 +280,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
 
       setImages((prev) => [...prev, ...uploadedUrls.filter(Boolean)]);
     } catch (e) {
-      console.error('Ошибка загрузки изображений:', e);
+      logError('Ошибка загрузки изображений:', e);
     }
   };
 
@@ -441,7 +442,6 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
                   description: description,
                   images: images,
                 });
-                console.log('completed');
               }}
             >
               <Text style={dynamicStyles.completeButtonText}>

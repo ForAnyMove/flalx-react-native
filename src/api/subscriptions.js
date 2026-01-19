@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logError } from '../../utils/log_util';
 
 async function createSubscription(session, planId) {
     try {
@@ -33,7 +34,7 @@ async function createSubscription(session, planId) {
 
         return returnData;
     } catch (error) {
-        console.error('Error creating subscription:', error, error.response);
+        logError('Error creating subscription:', error, error.response);
         if (error.response?.data?.subscription != null) {
             return {
                 success: false,
@@ -73,11 +74,10 @@ async function getSubscriptionPlans(session) {
             const { plans } = response.data;
             returnData.plans = plans;
         }
-        console.log('Check plans translations code: ',returnData.plans);
-        
+
         return returnData;
     } catch (error) {
-        console.error('Error fetching subscription plans:', error);
+        logInfo('Error fetching subscription plans:', error);
         throw error;
     }
 }
@@ -114,7 +114,7 @@ async function getUserSubscription(session) {
 
         return returnData;
     } catch (error) {
-        console.error('Error fetching user subscription:', error);
+        logInfo('Error fetching user subscription:', error);
         throw error;
     }
 }
@@ -150,7 +150,7 @@ async function upgradeSubscription(session, currentSubscriptionId, planId) {
 
         return returnData;
     } catch (error) {
-        console.error('Error upgrading subscription:', error);
+        logInfo('Error upgrading subscription:', error);
         throw error;
     }
 }
@@ -186,7 +186,7 @@ async function downgradeSubscription(session, currentSubscriptionId, planId) {
 
         return returnData;
     } catch (error) {
-        console.error('Error upgrading subscription:', error);
+        logInfo('Error upgrading subscription:', error);
         throw error;
     }
 }
@@ -212,8 +212,6 @@ async function payForPlanUpgrade(session, currentSubscriptionId) {
         const response = await axios.post(`${url}/api/subscriptions/${currentSubscriptionId}/upgrade-payment`, {}, { headers });
         const status = response.status;
         const returnData = {};
-        console.log(response);
-
 
         if (status == 200) {
             const { success, approval_url } = response.data;
@@ -223,7 +221,7 @@ async function payForPlanUpgrade(session, currentSubscriptionId) {
 
         return returnData;
     } catch (error) {
-        console.error('Error paying for plan upgrade:', error);
+        logInfo('Error paying for plan upgrade:', error);
         throw error;
     }
 }

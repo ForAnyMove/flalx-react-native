@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { fetchWithSession } from './apiBase';
+import { logError } from '../../utils/log_util';
 
 async function getRevealedUsers(session) {
     try {
@@ -27,7 +28,7 @@ async function getRevealedUsers(session) {
             throw new Error('Failed to fetch revealed users');
         }
     } catch (error) {
-        console.error('Error fetching revealed users:', error);
+        logInfo('Error fetching revealed users:', error);
         throw error;
     }
 }
@@ -61,7 +62,7 @@ async function getRevealProduct(session) {
 
         return data.reveal;
     } catch (error) {
-        console.error('Error fetching reveal product:', error);
+        logError('Error fetching reveal product:', error);
         throw error;
     }
 }
@@ -98,7 +99,7 @@ async function addCommentToUserByJob(userId, jobId, comment, rating, session) {
             throw new Error('Failed to add comment to user');
         }
     } catch (error) {
-        console.error('Error adding comment to user:', error);
+        logInfo('Error adding comment to user:', error);
         throw error;
     }
 }

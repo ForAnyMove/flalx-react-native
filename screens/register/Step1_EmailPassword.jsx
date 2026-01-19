@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
+import { logError } from '../../utils/log_util';
 
 // Re-using the button component from the original file
 function PrimaryOutlineButton({
@@ -138,7 +139,7 @@ export default function Step1_EmailPassword({ onNext }) {
       /^(([^<>()\[\]\\.,;:\s@\"]+(\.[^<>()\[\]\\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\\.,;:\s@\"]+\.)+[^<>()[\]\\.,;:\s@\"]{2,})$/i;
     return re.test(String(value).trim().toLowerCase());
   };
-  
+
   const tryGetReferralCode = async () => {
     const url = await Linking.getInitialURL();
     if (url) {
@@ -185,7 +186,7 @@ export default function Step1_EmailPassword({ onNext }) {
 
     try {
       setLoading(true);
-      
+
       const referralCode = await tryGetReferralCode();
       const res = await session.createUser(email.trim(), password, {}, referralCode);
 
@@ -211,7 +212,7 @@ export default function Step1_EmailPassword({ onNext }) {
 
     } catch (e) {
       const err = String(e.message || e).toLowerCase();
-      console.error('❌ Registration error:', e);
+      logError('❌ Registration error:', e);
       if (err.includes('already') || err.includes('exists')) {
         setEmailError(t('register.email_busy'));
       } else {
@@ -431,7 +432,7 @@ export default function Step1_EmailPassword({ onNext }) {
           >
             {t('auth.create_user_subtitle')}
           </Text>
-          
+
           {/* EMAIL FIELD */}
           <View
             style={[

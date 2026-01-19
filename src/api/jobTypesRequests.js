@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logError } from '../../utils/log_util';
 
 const ENDPOINTS = {
     getUserRequests: {
@@ -39,10 +40,9 @@ export async function fetchUserTypeRequests(session) {
             headers
         });
 
-        console.log(response.data);
         return response.data;
     } catch (error) {
-        console.error('Error fetching user type requests:', error);
+        logError('Error fetching user type requests:', error);
         throw error;
     }
 }
@@ -71,10 +71,9 @@ export async function fetchUserProfessions(session) {
             headers
         });
 
-        console.log(response.data);
         return response.data;
     } catch (error) {
-        console.error('Error fetching user type requests:', error);
+        logInfo('Error fetching user type requests:', error);
         throw error;
     }
 }
@@ -104,10 +103,9 @@ export async function sendUserTypeRequest(session, requestData) {
             data: requestData
         });
 
-        console.log(response.data);
         return response.data;
     } catch (error) {
-        console.error('Error sending user type request:', error);
+        logInfo('Error sending user type request:', error);
         throw error;
     }
 }

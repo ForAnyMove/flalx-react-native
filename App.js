@@ -31,6 +31,7 @@ import ForgottenPasswordScreenSms from './screens/ForgottenPasswordScreenSms';
 import RegisterScreenWithPassSms from './screens/RegisterScreenWithPassSms';
 import MultiStepLoginScreen from './screens/login/MultiStepLoginScreen';
 import MultiStepRegisterScreen from './screens/register/MultiStepRegisterScreen';
+import { logError } from './utils/log_util';
 
 // --- Глобальное применение шрифта ---
 const originalTextRender = Text.render;
@@ -86,7 +87,7 @@ function App() {
           setOnboardingShowed(true);
         }
       } catch (e) {
-        console.error('Failed to load onboarding status', e);
+        logError('Failed to load onboarding status', e);
       } finally {
         setOnboardingStatusChecked(true);
       }
@@ -154,7 +155,7 @@ function App() {
       }
       setOnboardingShowed(true);
     } catch (e) {
-      console.error('Failed to save onboarding status', e);
+      logError('Failed to save onboarding status', e);
       // Fallback for current session
       setOnboardingShowed(true);
     }
@@ -172,10 +173,11 @@ function App() {
     if (authControl.state) {
       content = <AuthScreen />;
     } else {
-      content = <MultiStepLoginScreen 
-                  onGoToRegister={() => registerControl.goToRegisterScreen()}
-                  onGoToForgottenPassword={() => forgotPassControl.switch()}
-                />;
+      content = <MultiStepLoginScreen
+        skipMFA={true}
+        onGoToRegister={() => registerControl.goToRegisterScreen()}
+        onGoToForgottenPassword={() => forgotPassControl.switch()}
+      />;
       // content = <AuthScreenWithPass />;
     }
   }
@@ -195,7 +197,7 @@ function App() {
   // Регистрация перед входом
   if (registerControl.state) {
     // content = <RegisterScreenWithPass />;
-    content = <MultiStepRegisterScreen />;
+    content = <MultiStepRegisterScreen skipMFA={true} />;
   }
   // if (registerControl.state) {
   //   content = <RegisterScreenWithPassSms />;

@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
+import { logError } from '../utils/log_util';
 
 const OTP_LENGTH = 6;
 
@@ -220,7 +221,7 @@ export default function AuthScreen() {
       setShowResendButton(false); // Начинаем с ссылки "Не получил код"
       animateStepChange('otp');
     } catch (e) {
-      console.error('Ошибка при отправке кода:', e.message);
+      logError('Ошибка при отправке кода:', e.message);
       if (e.message && e.message.includes('after')) {
         handleCooldownError(e);
         animateStepChange('otp'); // Все равно переходим на экран OTP
@@ -244,7 +245,7 @@ export default function AuthScreen() {
       }
       startTimer(60, 'standard'); // Сбрасываем таймер на 60 секунд в стандартном режиме
     } catch (e) {
-      console.error('Ошибка при переотправке кода:', e.message);
+      logInfo('Ошибка при переотправке кода:', e.message);
       if (e.message && e.message.includes('after')) {
         handleCooldownError(e);
       } else {
@@ -292,7 +293,7 @@ export default function AuthScreen() {
       // успешный вход → навигация во внешней логике
     } catch (e) {
       // например: 403 Forbidden / Token has expired or is invalid
-      console.error('Ошибка проверки кода:', e);
+      logInfo('Ошибка проверки кода:', e);
       setOtpError(t('auth.invalid_code'));
       triggerShake();
     } finally {
@@ -385,14 +386,14 @@ export default function AuthScreen() {
                     marginBottom: sizes.fieldBlockMarginBottom,
                     backgroundColor: theme.formInputBackground,
                     width: sizes.webLandscapeFieldBlockWidth,
-                        borderRadius: sizes.borderRadius,
+                    borderRadius: sizes.borderRadius,
                   },
                   isWebLandscape
                     ? {
-                        paddingHorizontal: 0,
-                        paddingTop: sizes.webLandscapeFieldBlockPaddingTop,
-                        height: sizes.webLandscapeFieldBlockHeight,
-                      }
+                      paddingHorizontal: 0,
+                      paddingTop: sizes.webLandscapeFieldBlockPaddingTop,
+                      height: sizes.webLandscapeFieldBlockHeight,
+                    }
                     : null,
                 ]}
               >
@@ -407,14 +408,14 @@ export default function AuthScreen() {
                     },
                     isWebLandscape
                       ? {
-                          paddingLeft: isRTL
-                            ? 0
-                            : sizes.webLandscapeLabelPadding,
-                          paddingRight: isRTL
-                            ? sizes.webLandscapeLabelPadding
-                            : 0,
-                          marginBottom: sizes.webLandscapeLabelMarginBottom,
-                        }
+                        paddingLeft: isRTL
+                          ? 0
+                          : sizes.webLandscapeLabelPadding,
+                        paddingRight: isRTL
+                          ? sizes.webLandscapeLabelPadding
+                          : 0,
+                        marginBottom: sizes.webLandscapeLabelMarginBottom,
+                      }
                       : null,
                   ]}
                 >
@@ -439,12 +440,12 @@ export default function AuthScreen() {
                     },
                     Platform.OS === 'web' && isLandscape
                       ? {
-                          // убираем чёрную обводку (RN Web)
-                          outlineStyle: 'none',
-                          outlineWidth: 0,
-                          outlineColor: 'transparent',
-                          boxShadow: 'none',
-                        }
+                        // убираем чёрную обводку (RN Web)
+                        outlineStyle: 'none',
+                        outlineWidth: 0,
+                        outlineColor: 'transparent',
+                        boxShadow: 'none',
+                      }
                       : null,
                   ]}
                   placeholder='name@example.com'

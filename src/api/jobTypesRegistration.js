@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logError } from '../../utils/log_util';
 
 const ENDPOINTS = {
     getUserRequests: {
@@ -35,10 +36,9 @@ export async function fetchUserTypeCreationRequests(session) {
             headers
         });
 
-        console.log(response.data);
         return response.data;
     } catch (error) {
-        console.error('Error fetching user type creation requests:', error);
+        logError('Error fetching user type creation requests:', error);
         throw error;
     }
 }
@@ -75,7 +75,7 @@ export async function sendUserTypeCreationRequest(session, requestData) {
         }
     }
     catch (error) {
-        console.error('Error sending user type creation request:', error);
+        logError('Error sending user type creation request:', error);
         throw error;
     }
 }

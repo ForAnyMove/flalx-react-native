@@ -58,7 +58,7 @@ const setLevel = (level) => {
     if (levels[level.toUpperCase()]) {
         currentLevel = levels[level.toUpperCase()];
     } else {
-        console.warn(`Invalid log level: ${level}`);
+        logWarn(`Invalid log level: ${level}`);
     }
 };
 

@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
+import { logError } from '../../utils/log_util';
 
 function PrimaryOutlineButton({
   title,
@@ -28,13 +29,13 @@ function PrimaryOutlineButton({
   height,
   containerStyle = {},
 }) {
-    const buttonDynamicStyles = useMemo(
+  const buttonDynamicStyles = useMemo(
     () => ({
       outlineBtn: {
         height: isLandscape && Platform.OS === 'web' ? scaleByHeight(62, height) : scaleByHeightMobile(62, height),
         width: isLandscape && Platform.OS === 'web' ? scaleByHeight(330, height) : '100%',
         marginTop: isLandscape && Platform.OS === 'web' ? scaleByHeight(38, height) : scaleByHeightMobile(12, height),
-        borderRadius: isLandscape && Platform.OS === 'web' ? scaleByHeight(8, height) : scaleByHeightMobile(12, height),  
+        borderRadius: isLandscape && Platform.OS === 'web' ? scaleByHeight(8, height) : scaleByHeightMobile(12, height),
       },
       outlineBtnText: {
         fontSize: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
@@ -56,10 +57,10 @@ function PrimaryOutlineButton({
         buttonDynamicStyles.outlineBtn,
         { borderColor: theme.primaryColor, opacity: disabled ? 0.6 : 1 },
         isLandscape &&
-          Platform.OS === 'web' && {
-            width: scaleByHeight(330, height),
-            height: scaleByHeight(62, height),
-          },
+        Platform.OS === 'web' && {
+          width: scaleByHeight(330, height),
+          height: scaleByHeight(62, height),
+        },
         containerStyle,
       ]}
     >
@@ -174,7 +175,7 @@ export default function Step2_PhoneEnroll({ onNext, onBack }) {
       onNext(factorId, challengeId, phone.trim());
 
     } catch (e) {
-      console.error('MFA Enrollment/Challenge Error:', e.message);
+      logError('MFA Enrollment/Challenge Error:', e.message);
       setPhoneError(e.message || 'An unknown error occurred.');
     } finally {
       setSending(false);
@@ -233,7 +234,7 @@ export default function Step2_PhoneEnroll({ onNext, onBack }) {
               },
             ]}
           >
-            {t('register.mfa_title')} 
+            {t('register.mfa_title')}
           </Text>
           <Text
             style={[
@@ -274,8 +275,8 @@ export default function Step2_PhoneEnroll({ onNext, onBack }) {
                 },
                 isWebLandscape
                   ? {
-                      marginBottom: sizes.webLandscapeLabelMarginBottom,
-                    }
+                    marginBottom: sizes.webLandscapeLabelMarginBottom,
+                  }
                   : null,
               ]}
             >
@@ -295,9 +296,9 @@ export default function Step2_PhoneEnroll({ onNext, onBack }) {
                   marginBottom: sizes.webLandscapeInputMarginBottom,
                 },
                 Platform.OS === 'web' &&
-                  isLandscape && {
-                    outlineStyle: 'none',
-                  },
+                isLandscape && {
+                  outlineStyle: 'none',
+                },
               ]}
               placeholder='+1234567890'
               placeholderTextColor={theme.formInputPlaceholderColor}

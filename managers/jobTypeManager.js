@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getSystemTypesWithSubtypes } from "../src/api/jobTypes";
 import { fetchUserTypeCreationRequests, sendUserTypeCreationRequest } from "../src/api/jobTypesRegistration";
 import { fetchUserProfessions, fetchUserTypeRequests, sendUserTypeRequest } from "../src/api/jobTypesRequests";
+import { logError } from "../utils/log_util";
 
 function professionRequests({ session }) {
     const [professionsRequestedToSystem, setProfessionsRequestedToSystem] = useState([]);
@@ -33,7 +34,7 @@ function professionRequests({ session }) {
             setProfessionsRequestedBySystem(userRequested);
         }
         catch (err) {
-            console.error('Error loading profession requests:', err);
+            logError('Error loading profession requests:', err);
         }
     }
 
@@ -52,7 +53,7 @@ function professionRequests({ session }) {
             return data;
         }
         catch (err) {
-            console.error('Error sending profession request:', err);
+            logInfo('Error sending profession request:', err);
             throw err;
         }
     }
@@ -73,7 +74,7 @@ function professionRequests({ session }) {
             return data;
         }
         catch (err) {
-            console.error('Error sending profession request to user:', err);
+            logInfo('Error sending profession request to user:', err);
             throw err;
         }
     }
@@ -108,8 +109,7 @@ export default function jobTypeManager({ session }) {
 
         try {
             const data = await getSystemTypesWithSubtypes(session);
-            console.log(data);
-            
+
             if (data.typesWithSubtypes)
                 setJobTypesWithSubtypes(data.typesWithSubtypes);
         }
@@ -153,7 +153,7 @@ export default function jobTypeManager({ session }) {
 
             return type.requires_verification === true || subtype.requires_verification === true;
         } catch (err) {
-            console.error('Error in checkIfVerificationNeeded:', err);
+            logInfo('Error in checkIfVerificationNeeded:', err);
             return false;
         }
     }

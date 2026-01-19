@@ -44,6 +44,7 @@ import { useNotification } from '../src/render';
 import { formatExperience } from '../utils/experience_ulit';
 import { formatCurrency } from '../utils/currency_formatter';
 import { PublishJobModal } from './PublishJobModal';
+import { logError } from '../utils/log_util';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -66,7 +67,7 @@ async function editJobById(jobId, updates, session) {
     const updatedJob = await response.json();
     return updatedJob;
   } catch (error) {
-    console.error('Ошибка обновления job:', error.message);
+    logError('Ошибка обновления job:', error.message);
     throw error;
   }
 }
@@ -137,9 +138,6 @@ export default function ShowJobModal({
         const fromStatus = `${isCreator ? 'client' : 'business'}-${prev}`;
         const toStatus = `${isCreator ? 'client' : 'business'
           }-${currentLocation}`;
-        console.log(
-          `Заявка ${currentJobId} переместилась: ${fromStatus} → ${toStatus}`
-        );
         setStatus(toStatus);
       }
 
@@ -147,7 +145,6 @@ export default function ShowJobModal({
     } else {
       // если заявка пропала из списка (например, удалена)
       if (prevJobLocation.current) {
-        console.log(`Заявка ${currentJobId} больше не найдена`);
         prevJobLocation.current = null;
       }
     }
@@ -489,7 +486,7 @@ export default function ShowJobModal({
         );
         setInterestedRequest(isProvider);
       } catch (e) {
-        console.error('Failed to load job:', e);
+        logInfo('Failed to load job:', e);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -1116,7 +1113,7 @@ export default function ShowJobModal({
                       .deleteJob(currentJobId)
                       .then(closeModal());
                   } catch (err) {
-                    console.error('Ошибка закрытия заявки:', err.message);
+                    logInfo('Ошибка закрытия заявки:', err.message);
                   }
                   setAcceptModalVisible(false);
                 });

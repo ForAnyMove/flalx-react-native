@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logError } from '../../utils/log_util';
 
 export async function sendMessage(session, messageData) {
     try {
@@ -32,7 +33,7 @@ export async function sendMessage(session, messageData) {
 
         return response.data?.success == true;
     } catch (error) {
-        console.error('Error sending support message:', error);
+        logError('Error sending support message:', error);
         throw error;
     }
 }
@@ -67,7 +68,7 @@ export async function sendFeedback(session, messageData) {
 
         return response.data?.success == true;
     } catch (error) {
-        console.error('Error sending support message:', error);
+        logInfo('Error sending support message:', error);
         throw error;
     }
 }

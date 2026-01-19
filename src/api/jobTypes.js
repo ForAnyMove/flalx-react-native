@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logError } from '../../utils/log_util';
 
 const ENDPOINTS = {
     typesWithSubtypes: (base) => `${base}/api/job-types/user/with-subtypes`,
@@ -33,7 +34,7 @@ export async function getSystemTypesWithSubtypes(session) {
 
         return returnData;
     } catch (error) {
-        console.error('Error fetching system types with subtypes:', error);
+        logError('Error fetching system types with subtypes:', error);
         throw error;
     }
 }

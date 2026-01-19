@@ -32,6 +32,7 @@ import { useLocalization } from '../src/services/useLocalization';
 import CustomPicker from './ui/CustomPicker';
 import CustomExperiencePicker from './ui/CustomExperiencePicker';
 import { formatCurrency } from '../utils/currency_formatter';
+import { logError } from '../utils/log_util';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -54,7 +55,7 @@ async function editJobById(jobId, updates, session) {
     const updatedJob = await response.json();
     return updatedJob;
   } catch (error) {
-    console.error('Ошибка обновления job:', error.message);
+    logError('Ошибка обновления job:', error.message);
     throw error;
   }
 }
@@ -68,7 +69,7 @@ async function createNewJob(jobData, session, openWebView, updateJobsList) {
       updateJobsList?.();
     }
   } catch (error) {
-    console.error('Ошибка создания job:', error.message);
+    logInfo('Ошибка создания job:', error.message);
     throw error;
   }
 
@@ -92,7 +93,7 @@ async function createNewJob(jobData, session, openWebView, updateJobsList) {
   //   const createdJob = await response.json();
   //   return createdJob;
   // } catch (error) {
-  //   console.error('Ошибка создания job:', error.message);
+  //   logInfo('Ошибка создания job:', error.message);
   //   throw error;
   // }
 }
@@ -450,7 +451,7 @@ export default function NewJobModal({
 
       setImages((prev) => [...prev, ...uploadedUrls.filter(Boolean)]);
     } catch (e) {
-      console.error('Ошибка загрузки изображений:', e);
+      logInfo('Ошибка загрузки изображений:', e);
     }
   };
 
