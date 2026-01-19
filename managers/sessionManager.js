@@ -7,10 +7,6 @@ import { getRevealedUsers, getRevealProduct, revealUser } from '../src/api/users
 import { getUserSubscription } from '../src/api/subscriptions';
 import { logError, logInfo, logWarn } from '../utils/log_util';
 
-// ⚠️ Замени этот IP на свой (или 10.0.2.2 для Android эмулятора)
-// const SERVER_URL =
-//   Platform.OS === 'web' ? 'http://localhost:3000' : 'http://10.0.2.2:3000';
-
 export default function sessionManager() {
   const [session, setSession] = useState(null);
   const [trialSession, setTrialSession] = useState(null);

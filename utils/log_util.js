@@ -8,7 +8,7 @@ const levels = {
 };
 
 
-let currentLevel = process.env.LOG_LEVEL || levels.INFO;
+let currentLevel = process.env.EXPO_PUBLIC_LOG_LEVEL || levels.INFO;
 let sessionId = null;
 
 const initSession = (customSessionId = null) => {

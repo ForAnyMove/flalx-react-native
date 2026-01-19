@@ -10,8 +10,8 @@ const ENDPOINTS = {
 
 export async function getReferralLink(session) {
     try {
-        const data = await fetchWithSession({ session, endpoint: ENDPOINTS.myLink() });
-        const { referral_code, referral_link } = data;
+        const response = await fetchWithSession({ session, endpoint: ENDPOINTS.myLink() });
+        const { referral_code, referral_link } = response.data;
 
         return {
             referral_code,
@@ -25,8 +25,8 @@ export async function getReferralLink(session) {
 
 export async function getCouponsBalance(session) {
     try {
-        const data = await fetchWithSession({ session, endpoint: ENDPOINTS.balance() });
-        const { balance } = data;
+        const response = await fetchWithSession({ session, endpoint: ENDPOINTS.balance() });
+        const { balance } = response.data;
 
         return balance;
     } catch (error) {
@@ -37,8 +37,8 @@ export async function getCouponsBalance(session) {
 
 export async function validateCouponCode(session, code) {
     try {
-        const data = await fetchWithSession({ session, endpoint: ENDPOINTS.validate(code) });
-        const { valid } = data;
+        const response = await fetchWithSession({ session, endpoint: ENDPOINTS.validate(code) });
+        const { valid } = response.data;
 
         return valid;
     } catch (error) {
