@@ -30,7 +30,7 @@ export async function getCouponsBalance(session) {
 
         return balance;
     } catch (error) {
-        logInfo('Error fetching coupons balance:', error);
+        logError('Error fetching coupons balance:', error);
         throw error;
     }
 }
@@ -42,7 +42,7 @@ export async function validateCouponCode(session, code) {
 
         return valid;
     } catch (error) {
-        logInfo('Error validating coupon code:', error);
+        logError('Error validating coupon code:', error);
         throw error;
     }
 }
