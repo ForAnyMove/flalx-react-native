@@ -13,7 +13,7 @@ RUN npm ci --legacy-peer-deps
 COPY . .
 
 # Загружаем переменные из .env в environment для expo
-RUN export $(cat .env | grep -v '^#' | xargs) && npm run build:web
+RUN npm run build:web:clean
 
 # Stage 2: Nginx для раздачи статики
 FROM nginx:alpine
