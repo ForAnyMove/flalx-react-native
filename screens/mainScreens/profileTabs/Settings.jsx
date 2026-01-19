@@ -256,7 +256,7 @@ export default function Settings() {
             />
           </View>
 
-          <View
+          {/* <View
             style={[
               styles.switchRow,
               {
@@ -287,7 +287,7 @@ export default function Settings() {
                 true ? themeController.current?.switchThumbColor : '#000'
               }
             />
-          </View>
+          </View> */}
         </View>
 
         {/* Break Line */}
