@@ -71,15 +71,18 @@ const UserSummaryBlock = ({
       cardWidth: '100%',
       logoFont: scale(24),
       containerHeight: scale(80),
-      pagePaddingHorizontal: scale(24),
+      pagePaddingHorizontal: isWebLandscape
+        ? scale(24)
+        : scaleByHeightMobile(15, height),
       nameSize: scale(28),
       professionSize: scale(20),
       btnRadius: scale(8),
       unlockContactBtnHeight: scale(38),
       unlockContactBtnPaddingHorizontal: scale(24),
+      unlockContactBtnFontSize: scale(20),
       iconMargin: scale(7),
       showContactInfoMarginBottom: scale(10),
-      modalAvatar: isWebLandscape ? web(112) : mobile(70),
+      modalAvatar: isWebLandscape ? web(112) : mobile(112),
       avatarMarginTop: scale(24),
       avatarMarginBottom: scale(8),
       contactInfoHeight: scale(50),
@@ -89,7 +92,14 @@ const UserSummaryBlock = ({
       providerInfoGap: scale(8),
       titleMarginBottom: scale(4),
       professionMarginBottom: scale(32),
-      infoSectionMarginBottom: isWebLandscape ? web(23) : mobile(15),
+      infoSectionMarginBottom: isWebLandscape ? web(23) : mobile(16),
+      modalHeaderPaddingTop: isWebLandscape
+        ? scaleByHeight(32, height)
+        : scaleByHeightMobile(16, height),
+      createRequestBtnHeight: isWebLandscape
+        ? scaleByHeight(62, height)
+        : scaleByHeightMobile(62, height),
+      aboutMaxHeight: isWebLandscape ? web(100) : mobile(100),
     };
   }, [isWebLandscape, width, height]);
 
@@ -303,8 +313,8 @@ const UserSummaryBlock = ({
                       avatar
                         ? { uri: avatar }
                         : themeController.current.isTheme
-                          ? icons.defaultAvatar
-                          : icons.monotoneAvatar
+                        ? icons.defaultAvatar
+                        : icons.monotoneAvatar
                     }
                     style={[
                       styles.modalAvatar,
@@ -375,7 +385,7 @@ const UserSummaryBlock = ({
                             {
                               fontSize: sizes.sectionTitleSize,
                               color: themeController.current?.textColor,
-                              marginBottom: sizes.infoSectionMarginBottom / 4,
+                              marginBottom: sizes.infoSectionMarginBottom / 2,
                             },
                           ]}
                         >
@@ -439,7 +449,7 @@ const UserSummaryBlock = ({
                             {
                               fontSize: sizes.sectionTitleSize,
                               color: themeController.current?.textColor,
-                              marginBottom: sizes.infoSectionMarginBottom / 4,
+                              marginBottom: sizes.infoSectionMarginBottom / 2,
                             },
                           ]}
                         >
@@ -555,7 +565,7 @@ const UserSummaryBlock = ({
                           {
                             fontSize: sizes.sectionTitleSize,
                             color: themeController.current?.textColor,
-                            marginBottom: sizes.infoSectionMarginBottom / 4,
+                            marginBottom: sizes.infoSectionMarginBottom / 2,
                           },
                         ]}
                       >
@@ -566,6 +576,8 @@ const UserSummaryBlock = ({
                           {
                             fontSize: sizes.small,
                             color: themeController.current?.unactiveTextColor,
+                            maxHeight: sizes.aboutMaxHeight,
+                            overflow: 'auto',
                           },
                         ]}
                       >
@@ -588,7 +600,7 @@ const UserSummaryBlock = ({
                           {
                             fontSize: sizes.sectionTitleSize,
                             color: themeController.current?.textColor,
-                            marginBottom: sizes.infoSectionMarginBottom / 4,
+                            marginBottom: sizes.infoSectionMarginBottom / 2,
                           },
                         ]}
                       >
@@ -618,7 +630,7 @@ const UserSummaryBlock = ({
                           <Text
                             style={[
                               {
-                                fontSize: sizes.professionSize,
+                                fontSize: sizes.unlockContactBtnFontSize,
                                 color:
                                   themeController.current
                                     ?.buttonTextColorPrimary,
@@ -735,15 +747,15 @@ const UserSummaryBlock = ({
                           backgroundColor: usersReveal.contains(user.id)
                             ? themeController.current?.buttonColorPrimaryDefault
                             : themeController.current
-                              ?.buttonColorPrimaryDisabled,
+                                ?.buttonColorPrimaryDisabled,
                           borderRadius: sizes.borderRadius,
                           alignItems: 'center',
                           justifyContent: 'center',
                           padding: 0,
+                          height: sizes.createRequestBtnHeight,
                         },
                         isWebLandscape && {
                           width: '30%',
-                          height: scaleByHeight(62, height),
                           alignSelf: isRTL ? 'flex-end' : 'flex-start',
                           marginBottom: sizes.infoSectionMarginBottom,
                         },
@@ -789,10 +801,10 @@ const UserSummaryBlock = ({
                           alignItems: 'center',
                           justifyContent: 'center',
                           padding: 0,
+                          height: sizes.createRequestBtnHeight,
                         },
                         isWebLandscape && {
                           width: '30%',
-                          height: scaleByHeight(62, height),
                           alignSelf: isRTL ? 'flex-end' : 'flex-start',
                           marginBottom: sizes.infoSectionMarginBottom,
                         },

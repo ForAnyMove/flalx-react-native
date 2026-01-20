@@ -195,7 +195,7 @@ function App() {
   // Регистрация перед входом
   if (registerControl.state) {
     // content = <RegisterScreenWithPass />;
-    content = <MultiStepRegisterScreen />;
+    content = <MultiStepRegisterScreen skipMFA={true} />;
   }
   // if (registerControl.state) {
   //   content = <RegisterScreenWithPassSms />;

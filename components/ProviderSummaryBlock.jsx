@@ -35,7 +35,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
     setAppLoading,
     providersManager,
     user: currentUser,
-    couponsManagerController
+    couponsManagerController,
   } = useComponentContext();
   const { tField } = useLocalization(languageController.current);
   const { openWebView } = useWebView();
@@ -60,43 +60,43 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
         : scaleByHeightMobile(12, height),
       sectionTitleSize: isWebLandscape
         ? scaleByHeight(18, height)
-        : scaleByHeightMobile(14, height),
+        : scaleByHeightMobile(18, height),
       small: isWebLandscape
         ? scaleByHeight(14, height)
-        : scaleByHeightMobile(10, height),
+        : scaleByHeightMobile(14, height),
       avatar: isWebLandscape
         ? scaleByHeight(48, height)
-        : scaleByHeightMobile(33, height),
+        : scaleByHeightMobile(48, height),
       modalAvatar: isWebLandscape
         ? scaleByHeight(112, height)
-        : scaleByHeightMobile(75, height),
+        : scaleByHeightMobile(112, height),
       icon: isWebLandscape
         ? scaleByHeight(24, height)
-        : scaleByHeightMobile(28, height),
+        : scaleByHeightMobile(24, height),
       padding: isWebLandscape ? height * 0.01 : scaleByHeightMobile(10, height),
       paddingHorizontal: isWebLandscape
         ? scaleByHeight(17, height)
-        : scaleByHeightMobile(12, height),
+        : scaleByHeightMobile(17, height),
       cardWidth: isWebLandscape ? '32%' : '100%', // 👈 3 в ряд для web-landscape
       borderRadius: isWebLandscape
         ? scaleByHeight(8, height)
-        : scaleByHeightMobile(5, height),
+        : scaleByHeightMobile(8, height),
       containerHeight: isWebLandscape
         ? scaleByHeight(80, height)
-        : scaleByHeightMobile(70, height),
+        : scaleByHeightMobile(80, height),
       containerWidth: isWebLandscape ? '32%' : '100%',
       logoFont: isWebLandscape
         ? scaleByHeight(24, height)
-        : scaleByHeightMobile(18, height),
+        : scaleByHeightMobile(24, height),
       pagePaddingHorizontal: isWebLandscape
         ? scaleByHeight(24, height)
         : scaleByHeightMobile(15, height),
       modalHeaderPadding: isWebLandscape
         ? scaleByHeight(7, height)
-        : scaleByHeightMobile(10, height),
+        : scaleByHeightMobile(7, height),
       modalHeaderPaddingTop: isWebLandscape
         ? scaleByHeight(32, height)
-        : scaleByHeightMobile(5, height),
+        : scaleByHeightMobile(16, height),
       avatarMarginTop: isWebLandscape
         ? scaleByHeight(24, height)
         : scaleByHeightMobile(8, height),
@@ -105,7 +105,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
         : scaleByHeightMobile(8, height),
       nameSize: isWebLandscape
         ? scaleByHeight(28, height)
-        : scaleByHeightMobile(14, height),
+        : scaleByHeightMobile(28, height),
       professionSize: isWebLandscape
         ? scaleByHeight(20, height)
         : scaleByHeightMobile(12, height),
@@ -117,10 +117,13 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
         : scaleByHeightMobile(6, height),
       infoSectionMarginBottom: isWebLandscape
         ? scaleByHeight(23, height)
-        : scaleByHeightMobile(15, height),
+        : scaleByHeightMobile(16, height),
       unlockContactBtnPaddingHorizontal: isWebLandscape
         ? scaleByHeight(24, height)
         : scaleByHeightMobile(15, height),
+      unlockContactBtnFontSize: isWebLandscape
+        ? scaleByHeight(20, height)
+        : scaleByHeightMobile(20, height),
       iconMargin: isWebLandscape
         ? scaleByHeight(7, height)
         : scaleByHeightMobile(3, height),
@@ -133,7 +136,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
         : scaleByHeightMobile(30, height),
       badgeHeight: isWebLandscape
         ? scaleByHeight(34, height)
-        : scaleByHeightMobile(20, height),
+        : scaleByHeightMobile(34, height),
       badgeGap: isWebLandscape
         ? scaleByHeight(8, height)
         : scaleByHeightMobile(6, height),
@@ -157,20 +160,20 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
         : scaleByHeightMobile(15, height),
       createRequestBtnHeight: isWebLandscape
         ? scaleByHeight(62, height)
-        : scaleByHeightMobile(45, height),
+        : scaleByHeightMobile(62, height),
       createRequestBtnFontSize: isWebLandscape
         ? scaleByHeight(20, height)
-        : scaleByHeightMobile(16, height),
+        : scaleByHeightMobile(20, height),
       mobileBottomContainerPaddingVertical: scaleByHeightMobile(16, height),
       containerPaddingHorizontal: isWebLandscape
         ? scaleByHeight(20, height)
         : scaleByHeightMobile(14, height),
       modalRadius: isWebLandscape
         ? scaleByHeight(8, height)
-        : scaleByHeightMobile(5, height),
+        : scaleByHeightMobile(8, height),
       modalPadding: isWebLandscape
         ? scaleByHeight(45, height)
-        : scaleByHeightMobile(12, height),
+        : scaleByHeightMobile(20, height),
       modalCardW: isWebLandscape ? scaleByHeight(450, height) : '88%',
       modalCrossTopRightPos: isWebLandscape
         ? scaleByHeight(7, height)
@@ -195,11 +198,14 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
         : scaleByHeightMobile(12, height),
       btnH: isWebLandscape
         ? scaleByHeight(62, height)
-        : scaleByHeightMobile(42, height),
+        : scaleByHeightMobile(62, height),
       btnW: isWebLandscape ? scaleByHeight(300, height) : '100%',
       btnMB: isWebLandscape
         ? scaleByHeight(16, height)
         : scaleByHeightMobile(16, height),
+      aboutMaxHeight: isWebLandscape
+        ? scaleByHeight(100, height)
+        : scaleByHeightMobile(100, height),
     }),
     [isWebLandscape, height]
   );
@@ -271,7 +277,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
           fontSize: sizes.logoFont,
         },
         sectionTitle: {
-          marginBottom: sizes.infoSectionMarginBottom / 4,
+          marginBottom: sizes.infoSectionMarginBottom / 2,
           fontSize: sizes.sectionTitleSize,
           color: themeController.current?.textColor,
         },
@@ -320,7 +326,11 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
       if (result.paymentUrl) {
         openWebView(result.paymentUrl);
       } else if (result.user) {
-        providersManager.appendUserData(user.id, result.user.email, result.user.phoneNumber);
+        providersManager.appendUserData(
+          user.id,
+          result.user.email,
+          result.user.phoneNumber
+        );
       }
 
       setAppLoading(false);
@@ -328,13 +338,18 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
     } catch (error) {
       console.log(error.response);
 
-      if (error.response && error.response.status === 400 && error.response.data.code == 'NO_COUPONS_AVAILABLE') {
+      if (
+        error.response &&
+        error.response.status === 400 &&
+        error.response.data.code == 'NO_COUPONS_AVAILABLE'
+      ) {
         setAppLoading(false);
-        showWarning(t('showJob.errors.noCouponsAvailable', {
-          defaultValue: 'No coupons available to use for this job.',
-        }));
-      }
-      else {
+        showWarning(
+          t('showJob.errors.noCouponsAvailable', {
+            defaultValue: 'No coupons available to use for this job.',
+          })
+        );
+      } else {
         setAppLoading(false);
         setPurchaseModalVisible(false);
       }
@@ -674,6 +689,8 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         style={{
                           fontSize: sizes.small,
                           color: themeController.current?.unactiveTextColor,
+                          maxHeight: sizes.aboutMaxHeight,
+                          overflow: 'auto',
                         }}
                       >
                         {about}
@@ -697,7 +714,8 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                       >
                         {t('profile.contact_info')}
                       </Text>
-                      {!usersReveal.contains(user.id) ? (
+                      {/* {!usersReveal.contains(user.id) ? ( */}
+                      {true ? (
                         <TouchableOpacity
                           style={[
                             styles.primaryBtn,
@@ -714,7 +732,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         >
                           <Text
                             style={{
-                              fontSize: sizes.professionSize,
+                              fontSize: sizes.unlockContactBtnFontSize,
                               color:
                                 themeController.current?.buttonTextColorPrimary,
                             }}
@@ -972,7 +990,10 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                     >
                       {t('showJob.buttons.buyForPrice', {
                         defaultValue: 'Buy for {{price}}',
-                        price: formatCurrency(usersReveal.product.price, usersReveal.product.currency),
+                        price: formatCurrency(
+                          usersReveal.product.price,
+                          usersReveal.product.currency
+                        ),
                       })}
                     </Text>
                   </TouchableOpacity>

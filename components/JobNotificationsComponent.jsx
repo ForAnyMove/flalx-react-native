@@ -42,6 +42,7 @@ const JobNotificationsComponent = ({ notifications = [], onClose }) => {
 
     return {
       containerPadding: scale(16),
+      containerPaddingV: isWebLandscape ? scale(16) : scale(10),
       borderRadius: scale(8),
       titleFontSize: scale(18),
       messageFontSize: scale(14),
@@ -72,7 +73,8 @@ const JobNotificationsComponent = ({ notifications = [], onClose }) => {
         height: sizes.cardHeight,
         backgroundColor: themeController.current?.formInputBackground,
         borderRadius: sizes.borderRadius,
-        padding: sizes.containerPadding,
+        paddingHorizontal: sizes.containerPadding,
+        paddingVertical: sizes.containerPaddingV,
         elevation: sizes.shadowElevation,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: sizes.shadowOffsetY },
