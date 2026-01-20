@@ -1,4 +1,5 @@
-import axios from 'axios';
+import { fetchWithSession } from './apiBase';
+import { logError } from '../../utils/log_util';
 
 const ENDPOINTS = {
     getUserRequests: {
@@ -17,97 +18,43 @@ const ENDPOINTS = {
 
 export async function fetchUserTypeRequests(session) {
     try {
-        const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
-
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        };
-
-        const response = await axios({
-            method: ENDPOINTS.getUserRequests.method,
-            url: ENDPOINTS.getUserRequests.url(url),
-            headers
+        const response = await fetchWithSession({
+            session,
+            endpoint: '/api/profession-requests/user/my',
+            method: 'GET'
         });
-
-        console.log(response.data);
         return response.data;
     } catch (error) {
-        console.error('Error fetching user type requests:', error);
+        logError('Error fetching user type requests:', error);
         throw error;
     }
 }
 
 export async function fetchUserProfessions(session) {
     try {
-        const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
-
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        };
-
-        const response = await axios({
-            method: ENDPOINTS.getUserProfessions.method,
-            url: ENDPOINTS.getUserProfessions.url(url),
-            headers
+        const response = await fetchWithSession({
+            session,
+            endpoint: '/api/user-professions/user/my',
+            method: 'GET'
         });
-
-        console.log(response.data);
         return response.data;
     } catch (error) {
-        console.error('Error fetching user type requests:', error);
+        logInfo('Error fetching user type requests:', error);
         throw error;
     }
 }
 
 export async function sendUserTypeRequest(session, requestData) {
     try {
-        const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
-
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        };
-
-        const response = await axios({
-            method: ENDPOINTS.sendUserRequest.method,
-            url: ENDPOINTS.sendUserRequest.url(url),
-            headers,
-            data: requestData
+        const response = await fetchWithSession({
+            session,
+            endpoint: '/api/profession-requests/user',
+            data: requestData,
+            method: 'POST'
         });
-
-        console.log(response.data);
         return response.data;
     } catch (error) {
-        console.error('Error sending user type request:', error);
+        logInfo('Error sending user type request:', error);
         throw error;
     }
 }

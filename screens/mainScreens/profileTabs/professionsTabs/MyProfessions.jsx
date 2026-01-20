@@ -24,6 +24,7 @@ import RequestProfessionModal from '../../../../components/RequestProfessionModa
 import { useTranslation } from 'react-i18next';
 import { SubmitModal } from '../../../../components/modals/misc/SubmitModal';
 import { useNotification } from '../../../../src/render';
+import { logError } from '../../../../utils/log_util';
 
 const MyProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible, setSystemAddingPopupVisible }) => {
   const [searchValue, setSearchValue] = useState('');
@@ -178,7 +179,7 @@ const MyProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible, se
     }
 
     if (!requestData.job_type_id || !requestData.job_subtype_id) {
-      console.error('Missing job type or subtype ID for profession request.');
+      logError('Missing job type or subtype ID for profession request.');
       return;
     }
 

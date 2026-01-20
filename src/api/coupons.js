@@ -1,3 +1,4 @@
+import { logError } from "../../utils/log_util";
 import { fetchWithSession } from "./apiBase";
 
 const ENDPOINTS = {
@@ -9,39 +10,39 @@ const ENDPOINTS = {
 
 export async function getReferralLink(session) {
     try {
-        const data = await fetchWithSession({ session, endpoint: ENDPOINTS.myLink() });
-        const { referral_code, referral_link } = data;
+        const response = await fetchWithSession({ session, endpoint: ENDPOINTS.myLink() });
+        const { referral_code, referral_link } = response.data;
 
         return {
             referral_code,
             referral_link
         };
     } catch (error) {
-        console.error('Error fetching referral link:', error);
+        logError('Error fetching referral link:', error);
         throw error;
     }
 }
 
 export async function getCouponsBalance(session) {
     try {
-        const data = await fetchWithSession({ session, endpoint: ENDPOINTS.balance() });
-        const { balance } = data;
+        const response = await fetchWithSession({ session, endpoint: ENDPOINTS.balance() });
+        const { balance } = response.data;
 
         return balance;
     } catch (error) {
-        console.error('Error fetching coupons balance:', error);
+        logError('Error fetching coupons balance:', error);
         throw error;
     }
 }
 
 export async function validateCouponCode(session, code) {
     try {
-        const data = await fetchWithSession({ session, endpoint: ENDPOINTS.validate(code) });
-        const { valid } = data;
+        const response = await fetchWithSession({ session, endpoint: ENDPOINTS.validate(code) });
+        const { valid } = response.data;
 
         return valid;
     } catch (error) {
-        console.error('Error validating coupon code:', error);
+        logError('Error validating coupon code:', error);
         throw error;
     }
 }

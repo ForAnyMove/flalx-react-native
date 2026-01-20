@@ -1,10 +1,11 @@
 import axios from "axios";
 import { logError } from "../../utils/log_util";
+import { FALLBACK_API_BASE_URL } from "../../utils/config";
 
 export async function fetchWithSession({ session, endpoint, data = {}, method = 'GET' }) {
     try {
         const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
+        const url = session?.serverURL || FALLBACK_API_BASE_URL;
 
         if (!token) {
             throw new Error('No valid session token found');
@@ -26,7 +27,7 @@ export async function fetchWithSession({ session, endpoint, data = {}, method = 
             data
         });
 
-        return response.data;
+        return response;
     } catch (error) {
         logError('Error fetching data from endpoint:', error);
         throw error;

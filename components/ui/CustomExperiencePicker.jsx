@@ -36,26 +36,42 @@ const CustomExperiencePicker = ({
 
   const experienceLevels = useMemo(
     () => [
-      { label: t('register.experience.none'), value: { years: 0, months: 0 } },
-      { label: t('register.experience.month'), value: { years: 0, months: 1 } },
       {
+        key: 1,
+        label: t('register.experience.none'), value: { years: 0, months: 0 }
+      },
+      {
+        key: 2,
+        label: t('register.experience.month'), value: { years: 0, months: 1 }
+      },
+      {
+        key: 3,
         label: t('register.experience.months', { months: 3 }),
         value: { years: 0, months: 3 },
       },
       {
+        key: 4,
         label: t('register.experience.months', { months: 6 }),
         value: { years: 0, months: 6 },
       },
-      { label: t('register.experience.year'), value: { years: 1, months: 0 } },
       {
+        key: 5,
+        label: t('register.experience.year'), value: { years: 1, months: 0 }
+      },
+      {
+        key: 6,
         label: t('register.experience.years', { years: 2 }),
         value: { years: 2, months: 0 },
       },
       {
+        key: 7,
         label: t('register.experience.years', { years: 3 }),
         value: { years: 3, months: 0 },
       },
-      { label: t('register.experience.other'), value: 'custom' },
+      {
+        key: 8,
+        label: t('register.experience.other'), value: 'custom'
+      },
     ],
     [t]
   );
@@ -354,9 +370,9 @@ const CustomExperiencePicker = ({
     const webHoverProps =
       Platform.OS === 'web'
         ? {
-            onMouseEnter: () => setHoveredValue(item.value),
-            onMouseLeave: () => setHoveredValue(null),
-          }
+          onMouseEnter: () => setHoveredValue(item.value),
+          onMouseLeave: () => setHoveredValue(null),
+        }
         : {};
 
     return (
@@ -368,8 +384,8 @@ const CustomExperiencePicker = ({
             backgroundColor: isSelected
               ? themeController.current?.selectedItemBackground
               : isHovered
-              ? themeController.current?.profileDefaultBackground
-              : 'transparent',
+                ? themeController.current?.profileDefaultBackground
+                : 'transparent',
             height: itemHeight,
             justifyContent: 'center',
           },
@@ -438,7 +454,7 @@ const CustomExperiencePicker = ({
         >
           <FlatList
             data={experienceLevels}
-            keyExtractor={(item) => item.value}
+            keyExtractor={(item) => item.key}
             renderItem={renderOption}
             showsVerticalScrollIndicator={false}
             onScroll={handleScroll}
@@ -460,7 +476,7 @@ const CustomExperiencePicker = ({
         justifyContent: 'center',
         padding: sizes.counterContainerPadding,
       }}
-      onPress={(e)=> {
+      onPress={(e) => {
         e.stopPropagation()
       }}
       activeOpacity={1}
@@ -598,8 +614,8 @@ const CustomExperiencePicker = ({
                 top:
                   viewMode === 'counter' && !bottomDropdown
                     ? sizes.counterContainerHeight +
-                      pickerLayout.top -
-                      sizes.pickerHeight * 1.5
+                    pickerLayout.top -
+                    sizes.pickerHeight * 1.5
                     : pickerLayout.top,
                 left: pickerLayout.left,
                 width: pickerLayout.width,
@@ -609,13 +625,13 @@ const CustomExperiencePicker = ({
                     : themeController.current?.dropdownBackground,
                 ...(bottomDropdown
                   ? {
-                      borderBottomLeftRadius: sizes.borderRadius,
-                      borderBottomRightRadius: sizes.borderRadius,
-                    }
+                    borderBottomLeftRadius: sizes.borderRadius,
+                    borderBottomRightRadius: sizes.borderRadius,
+                  }
                   : {
-                      borderTopLeftRadius: sizes.borderRadius,
-                      borderTopRightRadius: sizes.borderRadius,
-                    }),
+                    borderTopLeftRadius: sizes.borderRadius,
+                    borderTopRightRadius: sizes.borderRadius,
+                  }),
               },
             ]}
           >
@@ -623,7 +639,7 @@ const CustomExperiencePicker = ({
               <>
                 <FlatList
                   data={experienceLevels}
-                  keyExtractor={(item) => item.value}
+                  keyExtractor={(item) => item.key}
                   renderItem={renderOption}
                   showsVerticalScrollIndicator={false}
                   onScroll={handleScroll}

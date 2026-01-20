@@ -21,6 +21,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import { sendFeedback, sendMessage } from '../../../src/api/support';
 import { useNotification } from '../../../src/render';
+import { logError, logInfo } from '../../../utils/log_util';
 
 // getResponsiveSize helper was unused and removed
 
@@ -255,7 +256,7 @@ export default function Settings() {
             />
           </View>
 
-          <View
+          {/* <View
             style={[
               styles.switchRow,
               {
@@ -286,7 +287,7 @@ export default function Settings() {
                 true ? themeController.current?.switchThumbColor : '#000'
               }
             />
-          </View>
+          </View> */}
         </View>
 
         {/* Break Line */}
@@ -625,7 +626,7 @@ function ModalContent({
         }, 2000);
       }
     } catch (error) {
-      console.error('Error in confirmContactUs:', error);
+      logError('Error in confirmContactUs:', error);
     } finally {
       setAppLoading(false);
     }
@@ -646,7 +647,7 @@ function ModalContent({
       setAppLoading(false);
       onClose();
     } catch (error) {
-      console.error('Error in confirmFeedback:', error);
+      logInfo('Error in confirmFeedback:', error);
     } finally {
       setAppLoading(false);
     }
@@ -1227,7 +1228,7 @@ function ModalContent({
                   ]}
                   onPress={() => {
                     // TODO: implement submit behavior
-                    console.log('submit form', {
+                    logInfo('submit form', {
                       contactForm,
                       feedback,
                       contactUsForm,

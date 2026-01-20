@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getCouponsBalance, getReferralLink } from '../src/api/coupons';
+import { logError } from "../utils/log_util";
 
 export default function couponsManager({ session }) {
     const [couponsBalance, setCouponsBalance] = useState(0);
@@ -10,7 +11,6 @@ export default function couponsManager({ session }) {
         if (link !== '' || !session || !session?.token || loading) return;
 
         async function fetchCouponsData() {
-            console.log('-------------------------------------- Fetching coupons data...');
             setLoading(true);
 
             const balance = await getCouponsBalance(session);
@@ -31,7 +31,7 @@ export default function couponsManager({ session }) {
             const balance = await getCouponsBalance(session);
             setCouponsBalance(balance);
         } catch (error) {
-            console.error('Error refreshing coupons balance:', error);
+            logError('Error refreshing coupons balance:', error);
         }
     }
 

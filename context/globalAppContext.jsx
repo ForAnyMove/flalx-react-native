@@ -11,6 +11,7 @@ import authTabsManager from '../managers/authTabsManager';
 import jobTypeManager from '../managers/jobTypeManager';
 import { useGeolocation } from '../managers/useGeolocation';
 import couponsManager from '../managers/couponsManager';
+import { logError } from '../utils/log_util';
 
 const ComponentContext = createContext();
 
@@ -42,11 +43,10 @@ export const ComponentProvider = ({ children }) => {
     const fetchPlans = async () => {
       try {
         const { plans } = await getSubscriptionPlans(session);
-        console.log(plans);
         setSubscriptionPlans(plans);
 
       } catch (error) {
-        console.error('Error fetching subscription plans:', error);
+        logError('Error fetching subscription plans:', error);
       }
     }
     fetchPlans();

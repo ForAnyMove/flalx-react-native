@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
+import { logError } from '../utils/log_util';
 
 export default function RegisterScreenWithPass() {
   const { t } = useTranslation();
@@ -207,8 +208,8 @@ export default function RegisterScreenWithPass() {
       registerControl.leaveRegisterScreen();
     } catch (e) {
       const err = String(e.message || e).toLowerCase();
-      console.error('❌ Ошибка при обновлении:', e);
       if (err.includes('already') || err.includes('exists')) {
+        logError('❌ Ошибка при обновлении:', e);
         setEmailError(t('register.email_busy'));
         setStep(2);
       } else {
@@ -351,17 +352,17 @@ export default function RegisterScreenWithPass() {
           },
           !isWebLandscape && { height: '100%' },
           !isWebLandscape &&
-            step === 1 && {
-              paddingHorizontal: 0,
-            },
+          step === 1 && {
+            paddingHorizontal: 0,
+          },
           isWebLandscape
             ? {
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: scaleByHeight(688, height),
-                boxSizing: 'border-box',
-                marginTop: scaleByHeight(180, height),
-              }
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: scaleByHeight(688, height),
+              boxSizing: 'border-box',
+              marginTop: scaleByHeight(180, height),
+            }
             : null,
         ]}
         keyboardShouldPersistTaps='handled'
@@ -373,10 +374,10 @@ export default function RegisterScreenWithPass() {
             contentWidthStyle,
             { height: '100%', justifyContent: 'space-between' },
             isWebLandscape &&
-              step === 1 && {
-                height: scaleByHeight(741, height),
-                width: scaleByHeight(354, height),
-              },
+            step === 1 && {
+              height: scaleByHeight(741, height),
+              width: scaleByHeight(354, height),
+            },
           ]}
         >
           {/* ======================= STEP 2: PROFILE (NAME/SURNAME/AVATAR) ======================= */}

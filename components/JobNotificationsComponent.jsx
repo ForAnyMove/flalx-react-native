@@ -15,6 +15,7 @@ import { useComponentContext } from '../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 import { ActivityIndicator } from 'react-native-paper';
+import { logError } from '../utils/log_util';
 
 if (
   Platform.OS === 'android' &&
@@ -118,7 +119,7 @@ const JobNotificationsComponent = ({ notifications = [], onClose }) => {
       setLoading(true);
       const closed = await onClose(id);
     } catch (e) {
-      console.error('Error closing notification:', e);
+      logError('Error closing notification:', e);
     } finally {
       setLoading(false);
     }

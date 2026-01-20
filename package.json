@@ -8,6 +8,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "build:web": "expo export --platform web --output-dir dist",
+    "build:web:clean": "expo export --platform web --output-dir dist --clear",
+    "eas:pub": "eas deploy --prod",
     "build:web:pages": "cross-env PUBLIC_URL=/flalx-react-native/ expo export --platform web --output-dir dist",
     "postbuild:web": "node -e \"require('fs').copyFileSync('dist/index.html','dist/404.html')\"",
     "predeploy": "npm run build:web:pages && npm run postbuild:web",

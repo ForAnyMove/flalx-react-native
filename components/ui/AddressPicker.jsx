@@ -12,6 +12,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import themeManager from '../../managers/themeManager';
 import { API_BASE_URL } from '../../utils/config';
 import { useNotification } from '../../src/render';
+import { logError } from '../../utils/log_util';
 
 const AddressPicker = ({
   label,
@@ -50,7 +51,6 @@ const AddressPicker = ({
   }, [isWebLandscape, height]);
 
   const handleSelect = (place) => {
-    console.log('Place: ', place);
 
     if (place?.details) {
       const location = {
@@ -64,7 +64,7 @@ const AddressPicker = ({
   };
 
   const handleError = (error) => {
-    console.error('Places API Error:', error);
+    logError('Places API Error:', error);
 
     let errorMessage = 'There is a problem connecting to the server';
 
@@ -187,16 +187,6 @@ const AddressPicker = ({
           detailsFields={['location']}
           onError={(error) => {
             handleError(error);
-          }}
-          onSuggestionsReceived={(suggestions) => {
-            console.log('🔍 Suggestions received:', suggestions);
-            console.log('🔢 Count:', suggestions?.length);
-          }}
-          onSearching={(searching) => {
-            console.log('🔄 Searching state:', searching);
-          }}
-          onTextChange={(text) => {
-            console.log('📝 Text changed:', text);
           }}
 
           debounceDelay={300}

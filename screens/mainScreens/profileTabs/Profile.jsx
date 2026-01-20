@@ -24,6 +24,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import SubscriptionsModal from '../../../components/SubscriptionsModal';
 import { getUserExportData } from '../../../src/api/dataExport';
 import CouponsModal from '../../../components/CouponsModal';
+import { logError } from '../../../utils/log_util';
 
 export default function Profile() {
   const { user, themeController, languageController, session } =
@@ -32,7 +33,7 @@ export default function Profile() {
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
-    () => () => {}
+    () => () => { }
   );
   const [changePasswordModal, showPasswordModal] = useState(false);
 
@@ -116,7 +117,7 @@ export default function Profile() {
         setUserState(updated); // Обновляем локальное состояние
       }
     } catch (err) {
-      console.error('Ошибка загрузки аватара:', err.message);
+      logError('Ошибка загрузки аватара:', err.message);
     }
   }
 
@@ -281,7 +282,7 @@ export default function Profile() {
                     const updated = await user.update({ [f.field]: v });
                     setUserState(updated);
                   } catch (err) {
-                    console.error('Ошибка сохранения:', err.message);
+                    logInfo('Ошибка сохранения:', err.message);
                   }
                 }}
                 baseFont={sizes.fieldFont}
@@ -306,7 +307,7 @@ export default function Profile() {
                 const updated = await user.update({ ['about']: v });
                 setUserState(updated);
               } catch (err) {
-                console.error('Ошибка сохранения:', err.message);
+                logInfo('Ошибка сохранения:', err.message);
               }
             }}
             baseFont={sizes.fieldFont}
@@ -434,7 +435,7 @@ export default function Profile() {
                   try {
                     await session.signOut();
                   } catch (err) {
-                    console.error('Ошибка выхода из системы:', err.message);
+                    logInfo('Ошибка выхода из системы:', err.message);
                   }
                   setAcceptModalVisible(false);
                 });
@@ -508,7 +509,7 @@ export default function Profile() {
                 try {
                   await user.delete();
                 } catch (err) {
-                  console.error('Ошибка удаления:', err.message);
+                  logInfo('Ошибка удаления:', err.message);
                 }
                 setAcceptModalVisible(false);
               });
@@ -1023,11 +1024,11 @@ function InfoField({
         style={
           multiline
             ? {
-                paddingVertical: sizes.fieldPaddingVertical,
-                alignItems: 'flex-start',
-                flex: 1,
-                height: '100%',
-              }
+              paddingVertical: sizes.fieldPaddingVertical,
+              alignItems: 'flex-start',
+              flex: 1,
+              height: '100%',
+            }
             : { flex: 1 }
         }
       >

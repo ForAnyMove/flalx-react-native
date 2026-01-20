@@ -336,20 +336,13 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
       setAppLoading(false);
       setPurchaseModalVisible(false);
     } catch (error) {
-      console.log(error.response);
-
-      if (
-        error.response &&
-        error.response.status === 400 &&
-        error.response.data.code == 'NO_COUPONS_AVAILABLE'
-      ) {
+      if (error.response && error.response.status === 400 && error.response.data.code == 'NO_COUPONS_AVAILABLE') {
         setAppLoading(false);
-        showWarning(
-          t('showJob.errors.noCouponsAvailable', {
-            defaultValue: 'No coupons available to use for this job.',
-          })
-        );
-      } else {
+        showWarning(t('errors.no_coupons', {
+          defaultValue: 'You have no coupons available',
+        }));
+      }
+      else {
         setAppLoading(false);
         setPurchaseModalVisible(false);
       }
@@ -990,10 +983,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                     >
                       {t('showJob.buttons.buyForPrice', {
                         defaultValue: 'Buy for {{price}}',
-                        price: formatCurrency(
-                          usersReveal.product.price,
-                          usersReveal.product.currency
-                        ),
+                        price: usersReveal?.product ? formatCurrency(usersReveal.product.price, usersReveal.product.currency) : '',
                       })}
                     </Text>
                   </TouchableOpacity>

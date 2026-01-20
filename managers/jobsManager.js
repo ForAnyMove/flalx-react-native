@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { addSelfToJobProviders, getJobProducts, isProviderInJob, noticeJobRejection, removeSelfFromJobProviders, wasProviderInJob } from "../src/api/jobs";
 import { useGeolocation } from "./useGeolocation";
+import { logError } from "../utils/log_util";
 
 /**
  * jobsManager — агрегирует все списки заявок для вкладок:
@@ -241,7 +242,7 @@ export default function jobsManager({ session, user, geolocation }) {
     // try {
     //   const { success, payment } = await addSelfToJobProviders(jobId, session);
     // } catch (e) {
-    //   console.error('Error adding self to job providers:', e);
+    //   logInfo('Error adding self to job providers:', e);
     //   throw e;
     // }
   }
@@ -251,7 +252,7 @@ export default function jobsManager({ session, user, geolocation }) {
       const result = await removeSelfFromJobProviders(jobId, session);
       await reloadAll();
     } catch (e) {
-      console.error('Error removing self from job providers:', e);
+      logError('Error removing self from job providers:', e);
       throw e;
     }
     // await safeFetch(`${serverURL}/jobs/${jobId}/providers`, {
@@ -278,7 +279,7 @@ export default function jobsManager({ session, user, geolocation }) {
       return success;
     }
     catch (e) {
-      console.error('Error checking provider in job:', e);
+      logInfo('Error checking provider in job:', e);
       return false;
     }
   }
@@ -288,7 +289,7 @@ export default function jobsManager({ session, user, geolocation }) {
       return success;
     }
     catch (e) {
-      console.error('Error checking provider in job:', e);
+      logInfo('Error checking provider in job:', e);
       return false;
     }
   }
@@ -298,7 +299,7 @@ export default function jobsManager({ session, user, geolocation }) {
       await noticeJobRejection(jobId, session);
       setCreatorWaiting((prev) => prev.filter((job) => job.status !== 'rejected'));
     } catch (e) {
-      console.error('Error noticing job rejection as creator:', e);
+      logInfo('Error noticing job rejection as creator:', e);
     }
   }
 

@@ -4,29 +4,16 @@ import { logError } from '../../utils/log_util';
 
 async function createJob(jobData, session) {
     try {
-        const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
-
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        };
-
-        const response = await axios.post(`${url}/api/jobs/create`, { job: jobData, paymentMethod: 'paypal' }, { headers });
-
+        const response = await fetchWithSession({
+            session,
+            endpoint: '/api/jobs/create',
+            data: { job: jobData, paymentMethod: 'paypal' },
+            method: 'POST'
+        });
         const returnData = {
             paymentUrl: response.data?.payment?.paymentMetadata?.paypalApproval?.href,
             job: response.data?.job
         };
-
         return returnData;
     } catch (error) {
         logError('Error creating new job:', error);
@@ -34,31 +21,18 @@ async function createJob(jobData, session) {
     }
 }
 
-async function payForJob(jobDataId, session) {
+async function payForJob(jobDataId, session, useCoupon = false) {
     try {
-        const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
-
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        };
-
-        const response = await axios.post(`${url}/api/jobs/${jobDataId}/pay`, { paymentMethod: 'paypal' }, { headers });
-
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/api/jobs/${jobDataId}/pay`,
+            data: { paymentMethod: 'paypal', use_coupon: useCoupon },
+            method: 'POST'
+        });
         const returnData = {
             paymentUrl: response.data?.payment?.paymentMetadata?.paypalApproval?.href,
             job: response.data?.job
         };
-
         return returnData;
     } catch (error) {
         logError('Error creating new job:', error);
@@ -68,34 +42,17 @@ async function payForJob(jobDataId, session) {
 
 async function checkHasPendingJob(session) {
     try {
-        const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
-
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        };
-
-        const response = await axios.get(`${url}/api/jobs/pending`, { headers });
-
-        const status = response.status;
+        const response = await fetchWithSession({
+            session,
+            endpoint: '/api/jobs/pending',
+            method: 'GET'
+        });
         const returnData = {};
-
-        if (status == 200) {
-            // pending jobs found
+        if (response.status === 200) {
             const { job, payment } = response.data;
             returnData.job = job;
             returnData.payment = payment;
         }
-
         return returnData;
     } catch (error) {
         logError('Error checking for pending jobs:', error);
@@ -105,24 +62,11 @@ async function checkHasPendingJob(session) {
 
 async function getJobProducts(session) {
     try {
-        const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
-
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        };
-
-        const response = await axios.get(`${url}/api/jobs/products`, { headers });
-
+        const response = await fetchWithSession({
+            session,
+            endpoint: '/api/jobs/products',
+            method: 'GET'
+        });
         if (response.status === 200) {
             return response.data;
         } else {
@@ -146,7 +90,7 @@ async function addSelfToJobProviders(jobId, session, useCoupon = false) {
             method: 'POST'
         });
 
-        return response;
+        return response.data;
     } catch (error) {
         logError('Error adding self to job providers:', error);
         throw error;
@@ -155,26 +99,12 @@ async function addSelfToJobProviders(jobId, session, useCoupon = false) {
 
 async function removeSelfFromJobProviders(jobId, session) {
     try {
-        const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
-
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        };
-
-        const response = await axios.delete(`${url}/api/jobs/${jobId}/providers`, { headers });
-
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/api/jobs/${jobId}/providers`,
+            method: 'DELETE'
+        });
         return response.data;
-
     } catch (error) {
         logError('Error removing self from job providers:', error);
         throw error;
@@ -183,24 +113,11 @@ async function removeSelfFromJobProviders(jobId, session) {
 
 async function isProviderInJob(jobId, session) {
     try {
-        const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
-
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        };
-
-        const response = await axios.get(`${url}/api/jobs/${jobId}/is-provider`, { headers });
-
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/api/jobs/${jobId}/is-provider`,
+            method: 'GET'
+        });
         return response.data?.isProvider == true;
     }
     catch (error) {
@@ -213,7 +130,7 @@ async function wasProviderInJob(jobId, session) {
     try {
         const response = await fetchWithSession({ session, endpoint: `/api/jobs/${jobId}/is-cancelled-provider` });
 
-        return response?.isCancelledProvider == true;
+        return response.data?.isCancelledProvider == true;
     }
     catch (error) {
         logError('Error checking if provider is in job:', error);
@@ -223,24 +140,12 @@ async function wasProviderInJob(jobId, session) {
 
 async function completeJob(jobId, options, session) {
     try {
-        const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
-
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        };
-
-        const response = await axios.patch(`${url}/jobs/${jobId}/done`, { images: options.images, comment: options.description }, { headers });
-
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/jobs/${jobId}/done`,
+            data: { images: options.images, comment: options.description },
+            method: 'PATCH'
+        });
         return response.data;
     } catch (error) {
         logError('Error completing job:', error);
@@ -250,23 +155,12 @@ async function completeJob(jobId, options, session) {
 
 async function updateJobComment(jobId, comment, session) {
     try {
-        const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
-
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        };
-
-        const response = await axios.patch(`${url}/jobs/${jobId}/job-comment`, { comment }, { headers });
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/jobs/${jobId}/job-comment`,
+            data: { comment },
+            method: 'PATCH'
+        });
         return response.data;
     } catch (error) {
         logError('Error updating job comment:', error);
@@ -276,23 +170,12 @@ async function updateJobComment(jobId, comment, session) {
 
 async function noticeJobRejection(jobId, session) {
     try {
-        const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
-
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        };
-
-        const response = await axios.patch(`${url}/jobs/as-creator/waiting/${jobId}/notice-rejection`, {}, { headers });
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/jobs/as-creator/waiting/${jobId}/notice-rejection`,
+            data: {},
+            method: 'PATCH'
+        });
         return response.data;
     } catch (error) {
         logError('Error noticing job rejection:', error);

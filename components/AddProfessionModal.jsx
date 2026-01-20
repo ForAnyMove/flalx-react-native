@@ -17,6 +17,7 @@ import { useComponentContext } from '../context/globalAppContext';
 import ImagePickerModal from './ui/ImagePickerModal';
 import { icons } from '../constants/icons';
 import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
+import { logError } from '../utils/log_util';
 
 const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
   const { themeController, languageController, user } = useComponentContext();
@@ -107,7 +108,7 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
       setPickerVisible(false);
       setActivePicker(null);
     } catch (e) {
-      console.error('Ошибка загрузки изображений:', e);
+      logError('Ошибка загрузки изображений:', e);
     }
   };
 
@@ -277,7 +278,6 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
       fontWeight: 'bold',
     },
   });
-  console.log(passportPhotos);
 
   const renderImageGrid = (photos, type) => (
     <ScrollView contentContainerStyle={styles.imageGrid} horizontal={true}>

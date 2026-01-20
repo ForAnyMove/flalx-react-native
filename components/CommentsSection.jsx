@@ -91,7 +91,6 @@ export default function CommentsSection({
 
   const handleAdd = async () => {
     if (!newText.trim()) return;
-    console.log('comment - ', rating, newText.trim());
 
     const res = await providersController.setComment(userId, {
       text: newText.trim(),

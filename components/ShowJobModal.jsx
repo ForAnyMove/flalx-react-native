@@ -43,6 +43,8 @@ import { useLocalization } from '../src/services/useLocalization';
 import { useNotification } from '../src/render';
 import { formatExperience } from '../utils/experience_ulit';
 import { formatCurrency } from '../utils/currency_formatter';
+import { PublishJobModal } from './PublishJobModal';
+import { logError } from '../utils/log_util';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -65,7 +67,7 @@ async function editJobById(jobId, updates, session) {
     const updatedJob = await response.json();
     return updatedJob;
   } catch (error) {
-    console.error('Ошибка обновления job:', error.message);
+    logError('Ошибка обновления job:', error.message);
     throw error;
   }
 }
@@ -136,9 +138,6 @@ export default function ShowJobModal({
         const fromStatus = `${isCreator ? 'client' : 'business'}-${prev}`;
         const toStatus = `${isCreator ? 'client' : 'business'
           }-${currentLocation}`;
-        console.log(
-          `Заявка ${currentJobId} переместилась: ${fromStatus} → ${toStatus}`
-        );
         setStatus(toStatus);
       }
 
@@ -146,7 +145,6 @@ export default function ShowJobModal({
     } else {
       // если заявка пропала из списка (например, удалена)
       if (prevJobLocation.current) {
-        console.log(`Заявка ${currentJobId} больше не найдена`);
         prevJobLocation.current = null;
       }
     }
@@ -447,6 +445,8 @@ export default function ShowJobModal({
   const [showConfirmInterestModal, setConfirmInterestModal] = useState(false);
   const [completeJobModalVisible, setCompleteJobModalVisible] = useState(false);
 
+  const [publishModalVisible, setPublishModalVisible] = useState(false);
+
   const [showHistoryModal, setHistoryModal] = useState(false);
 
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
@@ -486,7 +486,7 @@ export default function ShowJobModal({
         );
         setInterestedRequest(isProvider);
       } catch (e) {
-        console.error('Failed to load job:', e);
+        logInfo('Failed to load job:', e);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -524,8 +524,8 @@ export default function ShowJobModal({
     } catch (e) {
       if (e.response && e.response.status === 400 && e.response.data.code == 'NO_COUPONS_AVAILABLE') {
         setAppLoading(false);
-        showWarning(t('showJob.errors.noCouponsAvailable', {
-          defaultValue: 'No coupons available to use for this job.',
+        showWarning(t('errors.no_coupons', {
+          defaultValue: 'You have no coupons available',
         }));
       } else {
         setAppLoading(false);
@@ -1048,7 +1048,13 @@ export default function ShowJobModal({
                   height: sizes.saveBtnHeight,
                 },
               ]}
-              onPress={payToPublish}
+              onPress={() => {
+                if (subscription.current != null && currentJobInfo?.jobType == 'normal') {
+                  payToPublish(false);
+                } else {
+                  setPublishModalVisible(true);
+                }
+              }}
             >
               <Text
                 style={{
@@ -1057,16 +1063,8 @@ export default function ShowJobModal({
                   fontSize: sizes.saveBtnFont,
                 }}
               >
-                {t('newJob.statusModal.buttons.confirmWithPrice', {
-                  defaultValue: 'Publish for {{price}}',
-                  price: subscription.current != null &&
-                    currentJobInfo.type == 'normal' ? t('newJob.statusModal.free', {
-                      defaultValue: 'Free',
-                    }) : `${formatCurrency(jobsController.products.find(e => {
-                      return e.type === currentJobInfo.jobType;
-                    })?.price.toFixed(2), jobsController.products.find(e => {
-                      return e.type === currentJobInfo.jobType;
-                    })?.currency)}`
+                {t('newJob.statusModal.buttons.confirm', {
+                  defaultValue: 'Publish'
                 })}
               </Text>
             </TouchableOpacity>}
@@ -1115,7 +1113,7 @@ export default function ShowJobModal({
                       .deleteJob(currentJobId)
                       .then(closeModal());
                   } catch (err) {
-                    console.error('Ошибка закрытия заявки:', err.message);
+                    logInfo('Ошибка закрытия заявки:', err.message);
                   }
                   setAcceptModalVisible(false);
                 });
@@ -1382,23 +1380,33 @@ export default function ShowJobModal({
     }
   }
 
-  async function payToPublish() {
+  async function payToPublish(useCoupon) {
     try {
       setAppLoading(true);
 
-      const data = await payForJob(currentJobInfo.id, session);
+      const data = await payForJob(currentJobInfo.id, session, useCoupon);
       if (data.paymentUrl) {
         openWebView(data.paymentUrl, () => { });
       } else {
         jobsController.reloadCreator();
       }
 
-      setAppLoading(false);
-    } catch (e) {
-      console.error('Error paying for job:', e);
-      showError(t('errors.unexpected_error'));
+      if (useCoupon) {
+        couponsManagerController?.refreshBalance();
+      }
 
       setAppLoading(false);
+      setPublishModalVisible(false);
+    } catch (e) {
+      if (e.response && e.response.status === 400 && e.response.data.code == 'NO_COUPONS_AVAILABLE') {
+        setAppLoading(false);
+        showWarning(t('errors.no_coupons', {
+          defaultValue: 'You have no coupons available',
+        }));
+      } else {
+        setAppLoading(false);
+        setPublishModalVisible(false);
+      }
     }
   }
 
@@ -2427,6 +2435,19 @@ export default function ShowJobModal({
           />
         </Modal>
       )}
+      {currentJobInfo && <PublishJobModal
+        visible={publishModalVisible}
+        setVisible={setPublishModalVisible}
+        jobType={currentJobInfo.jobType}
+        onSubscriptionPlans={() => {
+          setPlansModalVisible(true);
+          setPublishModalVisible(false);
+        }}
+        onPublish={({ useCoupons }) => {
+          payToPublish(useCoupons);
+        }}
+      />}
+
       {/* Cancel interest modal */}
       <Modal visible={showCancelRequestModal} transparent animationType='fade'>
         <View style={styles.modalOverlay}>
@@ -2864,7 +2885,8 @@ export default function ShowJobModal({
         main={false}
         closeModal={() => {
           setPlansModalVisible(false);
-          if (subscription.current == null) setConfirmInterestModal(true);
+          if (subscription.current == null && currentJobInfo.status != 'pending') setConfirmInterestModal(true);
+          if (subscription.current == null && currentJobInfo.status == 'pending') setPublishModalVisible(true);
         }}
       />
       <CompleteJobModal

@@ -20,6 +20,7 @@ import CommentsSection from './CommentsSection';
 import { useWebView } from '../context/webViewContext';
 import { useWindowInfo } from '../context/windowContext';
 import { useLocalization } from '../src/services/useLocalization';
+import { logError } from '../utils/log_util';
 
 const UserSummaryBlock = ({
   user,
@@ -129,7 +130,7 @@ const UserSummaryBlock = ({
 
       setAppLoading(false);
     } catch (error) {
-      console.error('Error revealing user:', error);
+      logError('Error revealing user:', error);
     }
   };
 
@@ -789,7 +790,7 @@ const UserSummaryBlock = ({
                   </View>
                 )}
 
-                {status === 'store-in-progress' && (
+                {/* {status === 'store-in-progress' && (
                   <View>
                     <TouchableOpacity
                       style={[
@@ -833,7 +834,7 @@ const UserSummaryBlock = ({
                       </Text>
                     </TouchableOpacity>
                   </View>
-                )}
+                )} */}
               </View>
             </TouchableWithoutFeedback>
           </View>

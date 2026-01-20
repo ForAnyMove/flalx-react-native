@@ -120,9 +120,6 @@ export default function DateTimeInput({
                 }
               }}
               onFocus={() => setInputActive(true)}
-              placeholderColor={
-                themeController.current?.formInputPlaceholderColor
-              }
               style={{
                 opacity: 0,
                 fontSize: sizes.inputFont,
@@ -152,9 +149,6 @@ export default function DateTimeInput({
                 textAlign: isRTL ? 'right' : 'left',
                 color: themeController.current?.textColor,
               }}
-              placeholderColor={
-                themeController.current?.formInputPlaceholderColor
-              }
               placeholder={t('common.none')}
             />
           </>

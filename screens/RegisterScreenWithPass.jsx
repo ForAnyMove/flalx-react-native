@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
+import { logError } from '../utils/log_util';
 
 const OTP_LENGTH = 6;
 
@@ -140,7 +141,7 @@ export default function AuthScreenWithPass() {
       // registerControl.leaveRegisterScreen();
     } catch (e) {
       const err = String(e.message || e).toLowerCase();
-      console.error('❌ Ошибка при обновлении:', e);
+      logError('❌ Ошибка при обновлении:', e);
       if (err.includes('already') || err.includes('exists')) {
         setEmailError(t('register.email_busy'));
       } else {

@@ -5,10 +5,7 @@ import { supabase } from './../utils/supabase/supabase';
 import { API_BASE_URL } from '../utils/config';
 import { getRevealedUsers, getRevealProduct, revealUser } from '../src/api/users';
 import { getUserSubscription } from '../src/api/subscriptions';
-
-// ⚠️ Замени этот IP на свой (или 10.0.2.2 для Android эмулятора)
-// const SERVER_URL =
-//   Platform.OS === 'web' ? 'http://localhost:3000' : 'http://10.0.2.2:3000';
+import { logError, logInfo, logWarn } from '../utils/log_util';
 
 export default function sessionManager() {
   const [session, setSession] = useState(null);
@@ -55,7 +52,6 @@ export default function sessionManager() {
 
     const handler = () => {
       if (preResetAuthCall.current || isInPasswordReset) {
-        console.log('Clearing Supabase storage on page unload (WEB)');
         clearSupabaseStorage();
       }
     };
@@ -75,7 +71,7 @@ export default function sessionManager() {
   //   const sub = AppState.addEventListener("change", (state) => {
   //     if (state === "background") {
   //       if (preResetAuthCall.current || isInPasswordReset) {
-  //         console.log("Clearing Supabase storage (RN background)");
+  //         logInfo("Clearing Supabase storage (RN background)");
   //         clearSupabaseStorage();
   //       }
   //     }
@@ -98,19 +94,16 @@ export default function sessionManager() {
 
         // Проверяем актуальность токена
         const { data, error } = await supabase.auth.setSession(parsed);
-        console.log(data.session);
 
         if (error) {
-          // console.error('Ошибка восстановления сессии:', error.message);
+          // logError('Ошибка восстановления сессии:', error.message);
           return;
         }
 
         // data.session уже будет с обновлённым токеном, если refresh прошёл
-        console.log('save session in load session, ', savedSession, parsed);
 
         await saveSession(data.session);
         setSession(parsed);
-        console.log('Сессия восстановлена:', parsed);
 
         // Загружаем профиль пользователя
         await fetchUserProfile(parsed.access_token);
@@ -124,7 +117,7 @@ export default function sessionManager() {
         });
       }
     } catch (e) {
-      console.error('Ошибка загрузки сессии:', e);
+      logError('Ошибка загрузки сессии:', e);
       await signOut();
     } finally {
       setLoader(false);
@@ -132,8 +125,6 @@ export default function sessionManager() {
   }
 
   async function saveSession(newSession) {
-    console.log('save session');
-
     try {
       setSession(newSession);
       if (Platform.OS === 'web') {
@@ -145,7 +136,7 @@ export default function sessionManager() {
         );
       }
     } catch (e) {
-      console.error('Ошибка сохранения сессии:', e);
+      logError('Ошибка сохранения сессии:', e);
     }
   }
 
@@ -154,10 +145,9 @@ export default function sessionManager() {
     setEmail(userEmail); // сохраним email для дальнейшей проверки кода
     const { error } = await supabase.auth.signInWithOtp({ email: userEmail });
     if (error) {
-      console.error('Ошибка при отправке кода:', error.message);
+      logError('Ошибка при отправке кода:', error.message);
       return { success: false, error: error.message };
     } else {
-      console.log('Код отправлен на email:', userEmail);
       return { success: true };
     }
   }
@@ -168,10 +158,10 @@ export default function sessionManager() {
       redirectTo: 'flalx://reset-password', // deep link
     });
     if (error) {
-      console.error('Ошибка при отправке кода:', error.message);
+      logError('Ошибка при отправке кода:', error.message);
       return { success: false, error: error.message };
     } else {
-      console.log('Код отправлен на email:', userEmail);
+      logInfo('Код отправлен на email:', userEmail);
       return { success: true };
     }
   }
@@ -183,17 +173,17 @@ export default function sessionManager() {
       phone: userPhone,
     });
     if (error) {
-      console.error('Ошибка при отправке SMS:', error.message);
+      logError('Ошибка при отправке SMS:', error.message);
       return { success: false, error: error.message };
     } else {
-      console.log('SMS отправлено на номер:', userPhone);
+      logInfo('SMS отправлено на номер:', userPhone);
       return { success: true };
     }
   }
 
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
-      console.log('Пользователь открыл ссылку восстановления');
+      logInfo('Пользователь открыл ссылку восстановления');
       setIsInPasswordReset(true); // поместить в контекст
     }
   });
@@ -201,7 +191,7 @@ export default function sessionManager() {
   // Проверка кода
   async function verifyOtp(code) {
     if (!email) {
-      console.error('Email не установлен. Сначала вызови signInWithEmail().');
+      logError('Email не установлен. Сначала вызови signInWithEmail().');
       return;
     }
 
@@ -212,10 +202,10 @@ export default function sessionManager() {
     });
 
     if (error) {
-      console.error('Ошибка проверки кода:', error.message);
+      logError('Ошибка проверки кода:', error.message);
       throw new Error(`Ошибка проверки кода: ${error.message}`);
     } else {
-      console.log('Успешный вход:', data);
+      logInfo('Успешный вход:', data);
       await saveSession(data.session);
 
       try {
@@ -224,7 +214,7 @@ export default function sessionManager() {
         await refreshRevealedUsers(data.session);
         await refreshRevealProduct(data.session);
       } catch (profileError) {
-        console.error(
+        logError(
           'Ошибка загрузки профиля после входа:',
           profileError.message
         );
@@ -250,14 +240,14 @@ export default function sessionManager() {
       });
 
       if (error) {
-        console.error('MFA Enroll Error:', error.message);
+        logError('MFA Enroll Error:', error.message);
         return { success: false, error: error.message };
       }
 
-      console.log('MFA Enroll Success:', data);
+      logInfo('MFA Enroll Success:', data);
       return { success: true, factorId: data.id };
     } catch (e) {
-      console.error('MFA Enroll Exception:', e);
+      logError('MFA Enroll Exception:', e);
       return { success: false, error: String(e) };
     }
   }
@@ -273,14 +263,14 @@ export default function sessionManager() {
       });
 
       if (error) {
-        console.error('MFA Challenge Error:', error.message);
+        logError('MFA Challenge Error:', error.message);
         return { success: false, error: error.message };
       }
 
-      console.log('MFA Challenge Success:', data);
+      logInfo('MFA Challenge Success:', data);
       return { success: true, challengeId: data.id };
     } catch (e) {
-      console.error('MFA Challenge Exception:', e);
+      logError('MFA Challenge Exception:', e);
       return { success: false, error: String(e) };
     }
   }
@@ -300,11 +290,11 @@ export default function sessionManager() {
       });
 
       if (error) {
-        console.error('MFA Verify Error:', error.message);
+        logError('MFA Verify Error:', error.message);
         return { success: false, error: error.message };
       }
 
-      console.log('MFA Verify Success: User session now has aal2.');
+      logInfo('MFA Verify Success: User session now has aal2.');
       // Сессия автоматически обновляется, пересохранять не нужно,
       // но можно обновить стейт, если потребуется
       const { data: { session } } = await supabase.auth.getSession();
@@ -312,7 +302,7 @@ export default function sessionManager() {
 
       return { success: true };
     } catch (e) {
-      console.error('MFA Verify Exception:', e);
+      logError('MFA Verify Exception:', e);
       return { success: false, error: String(e) };
     }
   }
@@ -324,7 +314,7 @@ export default function sessionManager() {
   // Проверка кода
   async function verifyOtpResetPassword(code) {
     if (!email) {
-      console.error('Email не установлен. Сначала вызови signInWithEmail().');
+      logError('Email не установлен. Сначала вызови signInWithEmail().');
       return;
     }
 
@@ -336,10 +326,10 @@ export default function sessionManager() {
     });
 
     if (error) {
-      console.error('Ошибка проверки кода:', error.message);
+      logError('Ошибка проверки кода:', error.message);
       throw new Error(`Ошибка проверки кода: ${error.message}`);
     } else {
-      console.log('Код принят:', data);
+      logInfo('Код принят:', data);
       setTrialSession(data.session);
 
       setIsInPasswordReset(true);
@@ -353,11 +343,11 @@ export default function sessionManager() {
     });
 
     if (error) {
-      console.error('Ошибка обновления пароля:', error.message);
+      logError('Ошибка обновления пароля:', error.message);
       return { success: false, error: error.message };
     }
 
-    console.log('Пароль успешно обновлен:', data);
+    logInfo('Пароль успешно обновлен:', data);
     // После успешного обновления выходим из системы,
     // чтобы пользователь мог войти с новым паролем.
     await signOut();
@@ -367,7 +357,7 @@ export default function sessionManager() {
   // Проверка SMS кода для сброса пароля
   async function verifyOtpResetPasswordWithPhone(code) {
     if (!phone) {
-      console.error(
+      logError(
         'Телефон не установлен. Сначала вызови resetPasswordWithPhone().'
       );
       return;
@@ -381,10 +371,10 @@ export default function sessionManager() {
     });
 
     if (error) {
-      console.error('Ошибка проверки SMS кода:', error.message);
+      logError('Ошибка проверки SMS кода:', error.message);
       throw new Error(`Ошибка проверки SMS кода: ${error.message}`);
     } else {
-      console.log('Код принят:', data);
+      logInfo('Код принят:', data);
       setTrialSession(data.session);
       setIsInPasswordReset(true);
     }
@@ -404,13 +394,13 @@ export default function sessionManager() {
       }
 
       const { profile, subscription } = await res.json();
-      console.log('Профиль пользователя:', profile);
-      console.log('Подписка пользователя:', subscription);
+      logInfo('Профиль пользователя:', profile);
+      logInfo('Подписка пользователя:', subscription);
 
       setUser(profile);
       setSubscription(subscription);
     } catch (err) {
-      // console.error('Ошибка запроса профиля:', err.message);
+      // logError('Ошибка запроса профиля:', err.message);
     }
   }
 
@@ -441,10 +431,10 @@ export default function sessionManager() {
 
       const updatedUser = await res.json();
       setUser(updatedUser); // обновляем локальное состояние
-      console.log('Данные пользователя обновлены:', updatedUser);
+      logInfo('Данные пользователя обновлены:', updatedUser);
       return updatedUser;
     } catch (err) {
-      console.error('Ошибка updateUser:', err.message);
+      logError('Ошибка updateUser:', err.message);
       throw err;
     }
   }
@@ -467,14 +457,14 @@ export default function sessionManager() {
     preResetAuthCall.current = false;
 
     if (error) {
-      console.error('Ошибка сброса пароля:', error.message);
+      logError('Ошибка сброса пароля:', error.message);
       // Важно выйти из системы, даже если была ошибка,
       // чтобы не остаться в некорректной сессии
       await signOut();
       return { success: false, error: error.message };
     }
 
-    console.log('Пароль успешно сброшен.');
+    logInfo('Пароль успешно сброшен.');
     // Выходим, чтобы пользователь мог залогиниться с новым паролем
     await signOut();
     return { success: true };
@@ -492,12 +482,12 @@ export default function sessionManager() {
 
       if (!res.ok) throw new Error('Ошибка удаления пользователя');
 
-      console.log('Пользователь удалён');
+      logInfo('Пользователь удалён');
 
       // сразу выходим из аккаунта
       await signOut();
     } catch (err) {
-      console.error('Ошибка deleteUser:', err.message);
+      logError('Ошибка deleteUser:', err.message);
       throw err;
     }
   }
@@ -520,7 +510,7 @@ export default function sessionManager() {
       );
       setRevealedUsers(revealed.map((user) => user.id));
     } catch (error) {
-      console.error('Error refreshing revealed users:', error);
+      logError('Error refreshing revealed users:', error);
     }
   }
 
@@ -534,7 +524,7 @@ export default function sessionManager() {
       );
       setRevealProduct(revealed);
     } catch (error) {
-      console.error('Error refreshing revealed users:', error);
+      logError('Error refreshing revealed users:', error);
     }
   }
 
@@ -549,7 +539,7 @@ export default function sessionManager() {
 
       setSubscription(subscription);
     } catch (error) {
-      console.error('Error refreshing user subscription:', error);
+      logError('Error refreshing user subscription:', error);
     }
   }
 
@@ -579,7 +569,7 @@ export default function sessionManager() {
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         if (event === 'PASSWORD_RECOVERY') {
-          console.log('Password recovery mode: session НЕ сохраняем');
+          logInfo('Password recovery mode: session НЕ сохраняем');
           setTrialSession(newSession); // временная сессия
           setIsInPasswordReset(true);
           return;
@@ -588,13 +578,13 @@ export default function sessionManager() {
         if (event === 'SIGNED_IN') {
           // но если мы в режиме reset — тоже не сохраняем!
           if (preResetAuthCall.current || isInPasswordReset) {
-            console.log('SIGNED_IN во время reset password – игнорируем');
+            logInfo('SIGNED_IN во время reset password – игнорируем');
             preResetAuthCall.current = false;
             return;
           }
 
           // обычный вход — сохраняем
-          console.log('default sign in event');
+          logInfo('default sign in event');
 
           await saveSession(newSession);
           setSession(newSession);
@@ -622,14 +612,14 @@ export default function sessionManager() {
       if (error) {
         // Cпециальная обработка для MFA
         if (error.code === 'mfa_required') {
-          console.log('MFA is required for this user.');
+          logInfo('MFA is required for this user.');
           // На этом этапе сессия не создана, но Supabase возвращает
           // информацию, необходимую для следующего шага.
           // Мы можем получить список факторов аутентификации.
           const { data: mfaData, error: mfaError } = await supabase.auth.mfa.listFactors();
-          
+
           if (mfaError) {
-            console.error('Could not list MFA factors:', mfaError.message);
+            logError('Could not list MFA factors:', mfaError.message);
             return { success: false, error: mfaError.message };
           }
 
@@ -642,10 +632,10 @@ export default function sessionManager() {
             });
 
             if (challengeError) {
-              console.error('MFA Challenge failed:', challengeError.message);
+              logError('MFA Challenge failed:', challengeError.message);
               return { success: false, error: challengeError.message };
             }
-            
+
             return {
               success: false,
               mfaRequired: true,
@@ -657,12 +647,12 @@ export default function sessionManager() {
             return { success: false, error: 'No verified phone factor found for MFA.' };
           }
         }
-        
-        console.error('Ошибка входа по паролю:', error.message);
+
+        logError('Ошибка входа по паролю:', error.message);
         return { success: false, error: error.message };
       }
 
-      console.log('Успешный вход с паролем:', data.session);
+      logInfo('Успешный вход с паролем:', data.session);
 
       // сохраняем сессию
       await saveSession(data.session);
@@ -674,7 +664,7 @@ export default function sessionManager() {
 
       return { success: true };
     } catch (e) {
-      console.error('Ошибка signInWithPassword:', e.message);
+      logError('Ошибка signInWithPassword:', e.message);
       return { success: false, error: e.message };
     }
   }
@@ -683,7 +673,7 @@ export default function sessionManager() {
   async function createUser(email, password, profileData = {}, referralCode = null) {
     try {
       // Регистрируем пользователя в Supabase
-      console.log('Creating user with referral code:', referralCode);
+      logInfo('Creating user with referral code:', referralCode);
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -704,11 +694,11 @@ export default function sessionManager() {
             isUserExists: true,
           };
         }
-        console.error('Ошибка регистрации в Supabase:', error.message);
+        logError('Ошибка регистрации в Supabase:', error.message);
         return { success: false, error: error.message };
       }
 
-      console.log('Пользователь создан:', data);
+      logInfo('Пользователь создан:', data);
 
       // → data.session может быть null если email confirmation = ON
       const sessionData = data.session;
@@ -748,7 +738,7 @@ export default function sessionManager() {
 
       return { success: true, user: data.user, session: sessionData };
     } catch (e) {
-      console.error('Ошибка createUser:', e);
+      logError('Ошибка createUser:', e);
       return { success: false, error: e.message };
     }
   }
@@ -770,17 +760,17 @@ export default function sessionManager() {
             isUserExists: true,
           };
         }
-        console.error('Ошибка регистрации в Supabase:', error.message);
+        logError('Ошибка регистрации в Supabase:', error.message);
         return { success: false, error: error.message };
       }
 
       // Если signUp прошел успешно, это значит, что OTP был отправлен.
       // Сессия не создается до верификации.
-      console.log('OTP отправлен на номер:', phone);
+      logInfo('OTP отправлен на номер:', phone);
       return { success: true };
 
     } catch (e) {
-      console.error('Ошибка createUserWithPhone:', e);
+      logError('Ошибка createUserWithPhone:', e);
       return { success: false, error: e.message };
     }
   }
@@ -794,11 +784,11 @@ export default function sessionManager() {
     });
 
     if (error) {
-      console.error('Ошибка проверки SMS кода:', error.message);
+      logError('Ошибка проверки SMS кода:', error.message);
       return { success: false, error: error.message };
     }
 
-    console.log('Успешный вход через SMS OTP:', data);
+    logInfo('Успешный вход через SMS OTP:', data);
     await saveSession(data.session);
 
     try {
@@ -808,7 +798,7 @@ export default function sessionManager() {
       await refreshRevealProduct(data.session);
       return { success: true, session: data.session };
     } catch (profileError) {
-      console.error(
+      logError(
         'Ошибка загрузки профиля после входа:',
         profileError.message
       );
@@ -853,11 +843,11 @@ export default function sessionManager() {
       if (updErr) {
         return { success: false, error: updErr.message };
       }
-      console.log('Password was changed successfully');
+      logInfo('Password was changed successfully');
 
       return { success: true };
     } catch (e) {
-      console.error('changePassword error:', e);
+      logError('changePassword error:', e);
       return { success: false, error: e.message };
     }
   }
@@ -877,12 +867,12 @@ export default function sessionManager() {
       try {
         await updateUser({ is_password_exist: true });
       } catch (e) {
-        console.warn("Couldn't update profile flag is_password_exist");
+        logWarn("Couldn't update profile flag is_password_exist");
       }
 
       return { success: true };
     } catch (e) {
-      console.error('createPassword error:', e);
+      logError('createPassword error:', e);
       return { success: false, error: e.message };
     }
   }
@@ -895,7 +885,7 @@ export default function sessionManager() {
     });
 
     if (error) {
-      console.error('Ошибка:', error.message);
+      logError('Ошибка:', error.message);
       return { success: false, error: error.message };
     }
 

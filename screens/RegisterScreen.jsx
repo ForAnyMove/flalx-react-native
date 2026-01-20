@@ -21,6 +21,7 @@ import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import TagSelector from '../components/TagSelector';
 import CustomPicker from '../components/ui/CustomPicker';
+import { logError } from '../utils/log_util';
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
@@ -153,7 +154,7 @@ export default function RegisterScreen() {
         // navigation.replace("MainApp");
       }, 1500);
     } catch (e) {
-      console.error('❌ Ошибка при обновлении:', e);
+      logError('❌ Ошибка при обновлении:', e);
     } finally {
       setLoading(false);
     }
@@ -175,8 +176,8 @@ export default function RegisterScreen() {
         const size = active
           ? sizes.activeDotSize
           : distance === 1
-          ? sizes.secondDotSize
-          : sizes.smallDotSize;
+            ? sizes.secondDotSize
+            : sizes.smallDotSize;
         return (
           <View
             key={i}
@@ -328,21 +329,21 @@ export default function RegisterScreen() {
           },
           !isWebLandscape && { height: '100%' },
           !isWebLandscape &&
-            step === 2 && {
-              paddingHorizontal: 0,
-            },
+          step === 2 && {
+            paddingHorizontal: 0,
+          },
           !isWebLandscape &&
-            step === 3 && {
-              paddingHorizontal: sizes.containerPaddingHorizontal,
-            },
+          step === 3 && {
+            paddingHorizontal: sizes.containerPaddingHorizontal,
+          },
           isWebLandscape
             ? {
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: scaleByHeight(688, height),
-                boxSizing: 'border-box',
-                marginTop: scaleByHeight(180, height),
-              }
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: scaleByHeight(688, height),
+              boxSizing: 'border-box',
+              marginTop: scaleByHeight(180, height),
+            }
             : null,
         ]}
         keyboardShouldPersistTaps='handled'
@@ -354,15 +355,15 @@ export default function RegisterScreen() {
             contentWidthStyle,
             { height: '100%', justifyContent: 'space-between' },
             isWebLandscape &&
-              step === 2 && {
-                height: scaleByHeight(741, height),
-                width: scaleByHeight(354, height),
-              },
+            step === 2 && {
+              height: scaleByHeight(741, height),
+              width: scaleByHeight(354, height),
+            },
             isWebLandscape &&
-              step === 3 && {
-                height: scaleByHeight(741, height),
-                width: scaleByHeight(951, height),
-              },
+            step === 3 && {
+              height: scaleByHeight(741, height),
+              width: scaleByHeight(951, height),
+            },
           ]}
         >
           {step === 1 && (
@@ -581,12 +582,12 @@ export default function RegisterScreen() {
                       },
                       isWebLandscape
                         ? {
-                            // убираем чёрную обводку (RN Web)
-                            outlineStyle: 'none',
-                            outlineWidth: 0,
-                            outlineColor: 'transparent',
-                            boxShadow: 'none',
-                          }
+                          // убираем чёрную обводку (RN Web)
+                          outlineStyle: 'none',
+                          outlineWidth: 0,
+                          outlineColor: 'transparent',
+                          boxShadow: 'none',
+                        }
                         : null,
                     ]}
                     placeholderTextColor={theme.formInputPlaceholderColor}
@@ -642,12 +643,12 @@ export default function RegisterScreen() {
                       },
                       isWebLandscape
                         ? {
-                            // убираем чёрную обводку (RN Web)
-                            outlineStyle: 'none',
-                            outlineWidth: 0,
-                            outlineColor: 'transparent',
-                            boxShadow: 'none',
-                          }
+                          // убираем чёрную обводку (RN Web)
+                          outlineStyle: 'none',
+                          outlineWidth: 0,
+                          outlineColor: 'transparent',
+                          boxShadow: 'none',
+                        }
                         : null,
                     ]}
                     placeholderTextColor={theme.formInputPlaceholderColor}
@@ -706,12 +707,12 @@ export default function RegisterScreen() {
                       },
                       isWebLandscape
                         ? {
-                            // убираем чёрную обводку (RN Web)
-                            outlineStyle: 'none',
-                            outlineWidth: 0,
-                            outlineColor: 'transparent',
-                            boxShadow: 'none',
-                          }
+                          // убираем чёрную обводку (RN Web)
+                          outlineStyle: 'none',
+                          outlineWidth: 0,
+                          outlineColor: 'transparent',
+                          boxShadow: 'none',
+                        }
                         : null,
                     ]}
                     placeholderTextColor={theme.formInputPlaceholderColor}
@@ -744,15 +745,15 @@ export default function RegisterScreen() {
                 />
                 <PrimaryButton
                   // title={t('register.next')}
-                    title={
-                      loading ? (
-                        <ActivityIndicator
-                          color={theme.buttonTextColorPrimary}
-                        />
-                      ) : (
-                        t('register.create')
-                      )
-                    }
+                  title={
+                    loading ? (
+                      <ActivityIndicator
+                        color={theme.buttonTextColorPrimary}
+                      />
+                    ) : (
+                      t('register.create')
+                    )
+                  }
                   // onPress={() => setStep(3)}
                   onPress={handleSubmit}
                   disabled={!isNameValid || !isSurnameValid || loading}
@@ -855,198 +856,198 @@ const styles = StyleSheet.create({
 });
 
 
-// 
-          // {step === 3 && (
-          //   <>
-          //     <Text
-          //       style={[
-          //         styles.title,
-          //         {
-          //           color: theme.textColor,
-          //           fontSize: sizes.titleFontSize,
-          //         },
-          //       ]}
-          //     >
-          //       {t('register.profile_create')}
-          //     </Text>
+//
+// {step === 3 && (
+//   <>
+//     <Text
+//       style={[
+//         styles.title,
+//         {
+//           color: theme.textColor,
+//           fontSize: sizes.titleFontSize,
+//         },
+//       ]}
+//     >
+//       {t('register.profile_create')}
+//     </Text>
 
-          //     <View
-          //       style={
-          //         isWebLandscape
-          //           ? { flexDirection: 'row', gap: sizes.step3Gap }
-          //           : {}
-          //       }
-          //     >
-          //       {/* Left Column */}
-          //       <View
-          //         style={
-          //           isWebLandscape
-          //             ? { flex: 1.5 }
-          //             : {
-          //                 marginVertical:
-          //                   sizes.mobileSelectorPickersMarginVertical,
-          //               }
-          //         }
-          //       >
-          //         <TagSelector
-          //           title={t('register.job_types_title')}
-          //           subtitle={t('register.job_types_subtitle')}
-          //           options={jobTypes}
-          //           selectedItems={selectedJobTypes}
-          //           setSelectedItems={setSelectedJobTypes}
-          //           containerStyle={{
-          //             marginBottom: sizes.typeTagsSelectorMarginBottom,
-          //           }}
-          //           numberOfRows={6}
-          //         />
-          //         <TagSelector
-          //           title={t('register.license_types_title')}
-          //           subtitle={t('register.license_types_subtitle')}
-          //           options={licenses}
-          //           selectedItems={selectedLicenseTypes}
-          //           setSelectedItems={setSelectedLicenseTypes}
-          //           numberOfRows={2}
-          //         />
-          //       </View>
+//     <View
+//       style={
+//         isWebLandscape
+//           ? { flexDirection: 'row', gap: sizes.step3Gap }
+//           : {}
+//       }
+//     >
+//       {/* Left Column */}
+//       <View
+//         style={
+//           isWebLandscape
+//             ? { flex: 1.5 }
+//             : {
+//                 marginVertical:
+//                   sizes.mobileSelectorPickersMarginVertical,
+//               }
+//         }
+//       >
+//         <TagSelector
+//           title={t('register.job_types_title')}
+//           subtitle={t('register.job_types_subtitle')}
+//           options={jobTypes}
+//           selectedItems={selectedJobTypes}
+//           setSelectedItems={setSelectedJobTypes}
+//           containerStyle={{
+//             marginBottom: sizes.typeTagsSelectorMarginBottom,
+//           }}
+//           numberOfRows={6}
+//         />
+//         <TagSelector
+//           title={t('register.license_types_title')}
+//           subtitle={t('register.license_types_subtitle')}
+//           options={licenses}
+//           selectedItems={selectedLicenseTypes}
+//           setSelectedItems={setSelectedLicenseTypes}
+//           numberOfRows={2}
+//         />
+//       </View>
 
-          //       {/* Right Column */}
-          //       <View
-          //         style={
-          //           isLandscape && Platform.OS === 'web' ? { flex: 1 } : {}
-          //         }
-          //       >
-          //         <CustomPicker
-          //           label={t('register.qualification_label')}
-          //           options={qualificationLevels}
-          //           selectedValue={qualificationLevel}
-          //           onValueChange={setQualificationLevel}
-          //           isRTL={isRTL}
-          //           containerStyle={{
-          //             marginBottom: sizes.typeTagsSelectorMarginBottom,
-          //           }}
-          //         />
-          //         {/* <CustomPicker
-          //           label={t('register.experience_label')}
-          //           options={experienceLevels}
-          //           selectedValue={experience}
-          //           onValueChange={setExperience}
-          //           isRTL={isRTL}
-          //           containerStyle={{
-          //             marginBottom: sizes.typeTagsSelectorMarginBottom,
-          //           }}
-          //         /> */}
-          //         <View
-          //           style={[
-          //             styles.inputBlock,
-          //             {
-          //               backgroundColor: theme.formInputBackground,
-          //               marginBottom: sizes.inputBlockMarginBottom,
-          //               borderRadius: sizes.inputBlockBorderRadius,
-          //               paddingVertical: sizes.inputBlockPaddingVertical,
-          //             },
-          //           ]}
-          //         >
-          //           <Text
-          //             style={[
-          //               styles.label,
-          //               {
-          //                 textAlign: isRTL ? 'right' : 'left',
-          //                 color: theme.textColor,
-          //                 paddingHorizontal: sizes.labelPaddingHorizontal,
-          //                 paddingTop: sizes.labelPaddingTop,
-          //                 fontSize: sizes.labelFontSize,
-          //               },
-          //             ]}
-          //           >
-          //             {t('register.profile_description')}
-          //           </Text>
-          //           <TextInput
-          //             placeholder={t('register.description_placeholder')}
-          //             value={form.description}
-          //             onChangeText={(txt) =>
-          //               setForm({ ...form, description: txt })
-          //             }
-          //             multiline
-          //             style={[
-          //               styles.input,
-          //               {
-          //                 height: sizes.multilineInputHeight,
-          //                 textAlign: isRTL ? 'right' : 'left',
-          //                 color: theme.textColor,
-          //                 backgroundColor: theme.defaultBlocksBackground,
-          //                 borderColor: theme.borderColor,
-          //                 borderWidth: 1,
-          //                 // прозрачный инпут внутри окрашенного fieldBlock
-          //                 backgroundColor: 'transparent',
-          //                 borderWidth: 0,
-          //                 marginBottom: sizes.multilineInputMarginBottom,
-          //                 paddingHorizontal: sizes.inputPaddingHorizontal,
-          //                 borderRadius: sizes.inputBorderRadius,
-          //                 fontSize: sizes.inputFontSize,
-          //               },
-          //               isWebLandscape
-          //                 ? {
-          //                     // убираем чёрную обводку (RN Web)
-          //                     outlineStyle: 'none',
-          //                     outlineWidth: 0,
-          //                     outlineColor: 'transparent',
-          //                     boxShadow: 'none',
-          //                   }
-          //                 : null,
-          //             ]}
-          //             placeholderTextColor={theme.formInputPlaceholderColor}
-          //           />
-          //         </View>
-          //       </View>
-          //     </View>
-          //     <View>
-          //       <ProgressDots />
+//       {/* Right Column */}
+//       <View
+//         style={
+//           isLandscape && Platform.OS === 'web' ? { flex: 1 } : {}
+//         }
+//       >
+//         <CustomPicker
+//           label={t('register.qualification_label')}
+//           options={qualificationLevels}
+//           selectedValue={qualificationLevel}
+//           onValueChange={setQualificationLevel}
+//           isRTL={isRTL}
+//           containerStyle={{
+//             marginBottom: sizes.typeTagsSelectorMarginBottom,
+//           }}
+//         />
+//         {/* <CustomPicker
+//           label={t('register.experience_label')}
+//           options={experienceLevels}
+//           selectedValue={experience}
+//           onValueChange={setExperience}
+//           isRTL={isRTL}
+//           containerStyle={{
+//             marginBottom: sizes.typeTagsSelectorMarginBottom,
+//           }}
+//         /> */}
+//         <View
+//           style={[
+//             styles.inputBlock,
+//             {
+//               backgroundColor: theme.formInputBackground,
+//               marginBottom: sizes.inputBlockMarginBottom,
+//               borderRadius: sizes.inputBlockBorderRadius,
+//               paddingVertical: sizes.inputBlockPaddingVertical,
+//             },
+//           ]}
+//         >
+//           <Text
+//             style={[
+//               styles.label,
+//               {
+//                 textAlign: isRTL ? 'right' : 'left',
+//                 color: theme.textColor,
+//                 paddingHorizontal: sizes.labelPaddingHorizontal,
+//                 paddingTop: sizes.labelPaddingTop,
+//                 fontSize: sizes.labelFontSize,
+//               },
+//             ]}
+//           >
+//             {t('register.profile_description')}
+//           </Text>
+//           <TextInput
+//             placeholder={t('register.description_placeholder')}
+//             value={form.description}
+//             onChangeText={(txt) =>
+//               setForm({ ...form, description: txt })
+//             }
+//             multiline
+//             style={[
+//               styles.input,
+//               {
+//                 height: sizes.multilineInputHeight,
+//                 textAlign: isRTL ? 'right' : 'left',
+//                 color: theme.textColor,
+//                 backgroundColor: theme.defaultBlocksBackground,
+//                 borderColor: theme.borderColor,
+//                 borderWidth: 1,
+//                 // прозрачный инпут внутри окрашенного fieldBlock
+//                 backgroundColor: 'transparent',
+//                 borderWidth: 0,
+//                 marginBottom: sizes.multilineInputMarginBottom,
+//                 paddingHorizontal: sizes.inputPaddingHorizontal,
+//                 borderRadius: sizes.inputBorderRadius,
+//                 fontSize: sizes.inputFontSize,
+//               },
+//               isWebLandscape
+//                 ? {
+//                     // убираем чёрную обводку (RN Web)
+//                     outlineStyle: 'none',
+//                     outlineWidth: 0,
+//                     outlineColor: 'transparent',
+//                     boxShadow: 'none',
+//                   }
+//                 : null,
+//             ]}
+//             placeholderTextColor={theme.formInputPlaceholderColor}
+//           />
+//         </View>
+//       </View>
+//     </View>
+//     <View>
+//       <ProgressDots />
 
-          //       <View
-          //         style={[
-          //           {
-          //             flexDirection: isRTL ? 'row-reverse' : 'row',
-          //             justifyContent: 'center',
-          //             gap: sizes.containerGap,
-          //           },
-          //           { marginBottom: sizes.finalMarginBottom },
-          //         ]}
-          //       >
-          //         <PrimaryButton
-          //           title={t('register.previous')}
-          //           onPress={() => setStep(2)}
-          //           customStyle={{
-          //             btn: {
-          //               backgroundColor: 'transparent',
-          //               borderWidth: 1,
-          //               borderColor: theme.primaryColor,
-          //               width: sizes.primaryButtonWidth,
-          //               flex: isWebLandscape ? null : 1,
-          //             },
-          //             btnText: { color: theme.primaryColor },
-          //           }}
-          //         />
-          //         <PrimaryButton
-          //           title={
-          //             loading ? (
-          //               <ActivityIndicator
-          //                 color={theme.buttonTextColorPrimary}
-          //               />
-          //             ) : (
-          //               t('register.create')
-          //             )
-          //           }
-          //           onPress={handleSubmit}
-          //           disabled={loading}
-          //           customStyle={{
-          //             btn: {
-          //               width: sizes.primaryButtonWidth,
-          //               flex: isWebLandscape ? null : 1,
-          //             },
-          //           }}
-          //         />
-          //       </View>
-          //     </View>
-          //   </>
-          // )}
-          // End of step 3
+//       <View
+//         style={[
+//           {
+//             flexDirection: isRTL ? 'row-reverse' : 'row',
+//             justifyContent: 'center',
+//             gap: sizes.containerGap,
+//           },
+//           { marginBottom: sizes.finalMarginBottom },
+//         ]}
+//       >
+//         <PrimaryButton
+//           title={t('register.previous')}
+//           onPress={() => setStep(2)}
+//           customStyle={{
+//             btn: {
+//               backgroundColor: 'transparent',
+//               borderWidth: 1,
+//               borderColor: theme.primaryColor,
+//               width: sizes.primaryButtonWidth,
+//               flex: isWebLandscape ? null : 1,
+//             },
+//             btnText: { color: theme.primaryColor },
+//           }}
+//         />
+//         <PrimaryButton
+//           title={
+//             loading ? (
+//               <ActivityIndicator
+//                 color={theme.buttonTextColorPrimary}
+//               />
+//             ) : (
+//               t('register.create')
+//             )
+//           }
+//           onPress={handleSubmit}
+//           disabled={loading}
+//           customStyle={{
+//             btn: {
+//               width: sizes.primaryButtonWidth,
+//               flex: isWebLandscape ? null : 1,
+//             },
+//           }}
+//         />
+//       </View>
+//     </View>
+//   </>
+// )}
+// End of step 3
