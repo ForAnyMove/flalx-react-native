@@ -359,7 +359,7 @@ export default function Step2_PhoneEnroll({ onNext, onBack }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
+  root: { flex: 1, width: '100%' },
   scroll: {
     paddingHorizontal: '6%',
   },

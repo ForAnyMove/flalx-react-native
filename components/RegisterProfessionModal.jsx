@@ -45,17 +45,17 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
     const scale = isWebLandscape ? web : mobile;
 
     return {
-      modalWidth: isWebLandscape ? scale(450) : width,
+      modalWidth: isWebLandscape ? scale(450) : width*0.9,
       modalMaxHeight: isWebLandscape ? height * 0.8 : height,
       borderRadius: scale(8),
       padding: scale(24),
       paddingVertical: scale(40),
       paddingHorizontal: scale(60),
       headerBottomMargin: scale(16),
-      titleSize: scale(24),
+      titleSize: isWebLandscape ? scale(24) : scale(20),
       iconSize: scale(24),
       crossSpace: scale(8),
-      descriptionSize: scale(14),
+      descriptionSize: isWebLandscape ? scale(14) : scale(13),
       successDescriptionSize: scale(18),
       descriptionMarginBottom: scale(32),
       inputHeight: scale(64),

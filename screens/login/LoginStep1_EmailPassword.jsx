@@ -70,6 +70,7 @@ export default function LoginStep1_EmailPassword({ onNext, onGoToRegister, onGoT
       root: {
         flex: 1,
         backgroundColor: theme.backgroundColor,
+        width: '100%',
       },
       keyboardAvoiding: {
         flex: 1,

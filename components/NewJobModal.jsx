@@ -64,7 +64,7 @@ async function createNewJob(jobData, session, openWebView, updateJobsList) {
   try {
     const data = await createJob(jobData, session);
     if (data.paymentUrl) {
-      openWebView(data.paymentUrl, () => { });
+      openWebView(data.paymentUrl, () => {});
     } else if (data.job) {
       updateJobsList?.();
     }
@@ -133,10 +133,14 @@ export default function NewJobModal({
 
   // Объявляем состояния сначала, чтобы они были доступны в useMemo
   const [type, setType] = useState(
-    initialJob ? (initialJob.type.key || '') : (activeKey?.typeKey || activeKey || '')
+    initialJob
+      ? initialJob.type.key || ''
+      : activeKey?.typeKey || activeKey || ''
   );
 
-  const [subType, setSubType] = useState(initialJob?.subType.key || activeKey?.subTypeKey || '');
+  const [subType, setSubType] = useState(
+    initialJob?.subType.key || activeKey?.subTypeKey || ''
+  );
 
   // Преобразуем данные из jobTypesController в нужный формат
   const jobTypesOptions = useMemo(() => {
@@ -203,25 +207,25 @@ export default function NewJobModal({
       thumb: isWebLandscape ? webLandscapeScale(128) : mobileScale(128),
       thumbGap: isWebLandscape ? webLandscapeScale(16) : mobileScale(16),
       headerMargin: isWebLandscape ? webLandscapeScale(30) : mobileScale(5),
-      modalPadding: isWebLandscape ? webLandscapeScale(45) : mobileScale(12),
-      modalRadius: isWebLandscape ? webLandscapeScale(8) : mobileScale(5),
+      modalPadding: isWebLandscape ? webLandscapeScale(45) : mobileScale(35),
+      modalRadius: isWebLandscape ? webLandscapeScale(8) : mobileScale(8),
       modalCrossTopRightPos: isWebLandscape
         ? webLandscapeScale(7)
         : mobileScale(10),
-      modalTitle: isWebLandscape ? webLandscapeScale(24) : mobileScale(16),
+      modalTitle: isWebLandscape ? webLandscapeScale(24) : mobileScale(22),
       modalTitleMarginBottom: isWebLandscape
         ? webLandscapeScale(22)
-        : mobileScale(10),
-      modalSub: isWebLandscape ? webLandscapeScale(20) : mobileScale(12),
-      chipFont: isWebLandscape ? webLandscapeScale(14) : mobileScale(12),
-      chipHeight: isWebLandscape ? webLandscapeScale(34) : mobileScale(30),
-      chipPadH: isWebLandscape ? webLandscapeScale(11) : mobileScale(12),
+        : mobileScale(22),
+      modalSub: isWebLandscape ? webLandscapeScale(20) : mobileScale(20),
+      chipFont: isWebLandscape ? webLandscapeScale(14) : mobileScale(14),
+      chipHeight: isWebLandscape ? webLandscapeScale(34) : mobileScale(34),
+      chipPadH: isWebLandscape ? webLandscapeScale(11) : mobileScale(11),
       chipGap: isWebLandscape ? webLandscapeScale(8) : mobileScale(8),
       chipMarginBottom: isWebLandscape
         ? webLandscapeScale(40 / 3)
-        : mobileScale(12 / 3),
+        : mobileScale(40 / 3),
       modalCardW: isWebLandscape ? webLandscapeScale(450) : '88%',
-      btnH: isWebLandscape ? webLandscapeScale(62) : mobileScale(42),
+      btnH: isWebLandscape ? webLandscapeScale(62) : mobileScale(62),
       btnW: isWebLandscape ? webLandscapeScale(300) : '100%',
       btnMarginBottom: isWebLandscape ? webLandscapeScale(16) : mobileScale(10),
       headerHeight: isWebLandscape ? webLandscapeScale(50) : height * 0.07,
@@ -239,7 +243,7 @@ export default function NewJobModal({
       saveBtnWidth: isWebLandscape ? webLandscapeScale(380) : '100%',
       saveBtnHeight: isWebLandscape ? webLandscapeScale(62) : mobileScale(62),
       saveBtnFont: isWebLandscape ? webLandscapeScale(20) : mobileScale(20),
-      iconSize: isWebLandscape ? webLandscapeScale(24) : mobileScale(20),
+      iconSize: isWebLandscape ? webLandscapeScale(24) : mobileScale(24),
       removeIconSize: isWebLandscape ? webLandscapeScale(20) : mobileScale(20),
       removeIconPosition: isWebLandscape
         ? webLandscapeScale(3)
@@ -274,7 +278,9 @@ export default function NewJobModal({
 
   // Очищаем подтип при смене типа
   useEffect(() => {
-    if (type !== (initialJob?.type?.key || activeKey?.typeKey || activeKey || '')) {
+    if (
+      type !== (initialJob?.type?.key || activeKey?.typeKey || activeKey || '')
+    ) {
       setSubType('');
     }
   }, [type]);
@@ -393,12 +399,14 @@ export default function NewJobModal({
       setAppLoading(true);
 
       if (Object.keys(jobChanges).length > 0) {
-        editJobById(currentJobId, jobChanges, session).then(() => {
-          jobsController.reloadCreator();
-          setAppLoading(false);
-        }).then(() => {
-          setAppLoading(false);
-        });
+        editJobById(currentJobId, jobChanges, session)
+          .then(() => {
+            jobsController.reloadCreator();
+            setAppLoading(false);
+          })
+          .then(() => {
+            setAppLoading(false);
+          });
       }
     } else {
       const newJob = {
@@ -1170,7 +1178,9 @@ export default function NewJobModal({
                       <TextInput
                         key='priceInput'
                         value={price}
-                        onChangeText={(text) => setPrice(text.replace(/[^0-9]/g, ''))}
+                        onChangeText={(text) =>
+                          setPrice(text.replace(/[^0-9]/g, ''))
+                        }
                         placeholder={t('newJob.typePlaceholder', {
                           defaultValue: 'Type...',
                         })}
@@ -1668,12 +1678,12 @@ export default function NewJobModal({
                             borderWidth: 1,
                             borderColor: active
                               ? themeController.current
-                                ?.buttonColorPrimaryDefault
+                                  ?.buttonColorPrimaryDefault
                               : themeController.current
-                                ?.formInputPlaceholderColor,
+                                  ?.formInputPlaceholderColor,
                             backgroundColor: active
                               ? themeController.current
-                                ?.buttonColorPrimaryDefault
+                                  ?.buttonColorPrimaryDefault
                               : 'transparent',
                             flexDirection: isRTL ? 'row-reverse' : 'row',
                             alignItems: 'center',
@@ -1687,7 +1697,7 @@ export default function NewJobModal({
                             color: active
                               ? themeController.current?.buttonTextColorPrimary
                               : themeController.current
-                                ?.formInputPlaceholderColor,
+                                  ?.formInputPlaceholderColor,
                           }}
                         >
                           {productName}
@@ -1742,68 +1752,73 @@ export default function NewJobModal({
                       defaultValue: '{{price}}',
                       price:
                         subscription.current != null &&
-                          selectedOption.type == 'normal'
+                        selectedOption.type == 'normal'
                           ? t('newJob.statusModal.free', {
-                            defaultValue: 'Free',
-                          })
-                          : `${formatCurrency(selectedOption.price, selectedOption.currency)}`,
+                              defaultValue: 'Free',
+                            })
+                          : `${formatCurrency(
+                              selectedOption.price,
+                              selectedOption.currency
+                            )}`,
                     })}
                   </Text>
-                  {(subscription.current == null &&
-                    selectedOption.type == 'normal') &&
-                    <Text
-                      style={{
-                        fontSize: sizes.modalSub,
-                        color: themeController.current?.formInputLabelColor,
-                        marginLeft: isRTL ? 0 : sizes.margin / 4,
-                        marginRight: isRTL ? sizes.margin / 4 : 0,
-                      }}
-                    >
-                      {t('common.or', { defaultValue: 'or' })}
-                    </Text>
-                  }
-                  {(subscription.current == null &&
-                    selectedOption.type == 'normal') &&
-                    <Text
-                      style={{
-                        fontSize: sizes.modalSub,
-                        color: themeController.current?.buttonColorSecondaryDefault,
-                        marginLeft: isRTL ? 0 : sizes.margin / 4,
-                        marginRight: isRTL ? sizes.margin / 4 : 0,
-                      }}
-                    >
-                      1
-                    </Text>
-                  }
-                  {(subscription.current == null &&
-                    selectedOption.type == 'normal') &&
-                    <Image
-                      source={icons.coupon}
-                      style={{
-                        width: sizes.iconSize,
-                        height: sizes.iconSize,
-                        tintColor:
-                          themeController.current
-                            ?.buttonColorSecondaryDefault,
-                      }}
-                    />
-                  }
+                  {subscription.current == null &&
+                    selectedOption.type == 'normal' && (
+                      <Text
+                        style={{
+                          fontSize: sizes.modalSub,
+                          color: themeController.current?.formInputLabelColor,
+                          marginLeft: isRTL ? 0 : sizes.margin / 4,
+                          marginRight: isRTL ? sizes.margin / 4 : 0,
+                        }}
+                      >
+                        {t('common.or', { defaultValue: 'or' })}
+                      </Text>
+                    )}
+                  {subscription.current == null &&
+                    selectedOption.type == 'normal' && (
+                      <Text
+                        style={{
+                          fontSize: sizes.modalSub,
+                          color:
+                            themeController.current
+                              ?.buttonColorSecondaryDefault,
+                          marginLeft: isRTL ? 0 : sizes.margin / 4,
+                          marginRight: isRTL ? sizes.margin / 4 : 0,
+                        }}
+                      >
+                        1
+                      </Text>
+                    )}
+                  {subscription.current == null &&
+                    selectedOption.type == 'normal' && (
+                      <Image
+                        source={icons.coupon}
+                        style={{
+                          width: sizes.iconSize,
+                          height: sizes.iconSize,
+                          tintColor:
+                            themeController.current
+                              ?.buttonColorSecondaryDefault,
+                        }}
+                      />
+                    )}
                 </View>
 
                 {(subscription.current == null ||
                   selectedOption.type != 'normal') && (
-                    <Text
-                      style={{
-                        fontSize: sizes.chipFont,
-                        color: themeController.current?.formInputLabelColor,
-                        marginBottom: sizes.chipMarginBottom,
-                        textAlign: 'center',
-                      }}
-                    >
-                      You must pay for publishing this type of ad after
-                      moderation.
-                    </Text>
-                  )}
+                  <Text
+                    style={{
+                      fontSize: sizes.chipFont,
+                      color: themeController.current?.formInputLabelColor,
+                      marginBottom: sizes.chipMarginBottom,
+                      textAlign: 'center',
+                    }}
+                  >
+                    You must pay for publishing this type of ad after
+                    moderation.
+                  </Text>
+                )}
 
                 {/* кнопка подтверждения с ценой */}
                 <TouchableOpacity
@@ -1811,17 +1826,21 @@ export default function NewJobModal({
                     handleCreate();
                     setStatusModalVisible(false);
                   }}
-                  style={{
-                    height: sizes.btnH,
-                    width: sizes.btnW,
-                    borderRadius: sizes.modalRadius,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderWidth: 1,
-                    borderColor:
-                      themeController.current?.buttonColorPrimaryDefault,
-                    marginBottom: sizes.borderRadius * 2,
-                  }}
+                  style={[
+                    {
+                      height: sizes.btnH,
+                      width: sizes.btnW,
+                      borderRadius: sizes.modalRadius,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 1,
+                      borderColor:
+                        themeController.current?.buttonColorPrimaryDefault,
+                    },
+                    isWebLandscape && {
+                      marginBottom: sizes.borderRadius * 2,
+                    },
+                  ]}
                 >
                   <Text
                     style={{

@@ -155,11 +155,12 @@ function SubscriptionsModalContent({ closeModal }) {
     return {
       headerHeight: isWebLandscape ? scaleByHeight(50, height) : height * 0.07,
       headerMargin: isWebLandscape ? scaleByHeight(30, height) : 0,
+      headerMarginBottom: isWebLandscape ? scaleByHeight(30, height) : scaleByHeight(20, height),
       icon: scale(24, height),
       logoFont: scale(24, height),
       modalHeaderPadding: scale(7, height),
       modalHeaderPaddingTop: scale(32, height),
-      containerPaddingHorizontal: scale(23, height),
+      containerPaddingHorizontal: isWebLandscape ? scaleByHeight(23, height) : scaleByHeightMobile(12, height),
       subscriptionsGap: scale(23, height),
       subscriptionMarginBottom: scale(23, height),
       borderRadius: scale(8, height),
@@ -238,6 +239,7 @@ function SubscriptionsModalContent({ closeModal }) {
                 themeController.current?.profileDefaultBackground,
               height: sizes.headerHeight,
               marginVertical: sizes.headerMargin,
+              marginBottom: sizes.headerMarginBottom,
               borderBottomWidth: 2,
             },
           ]}

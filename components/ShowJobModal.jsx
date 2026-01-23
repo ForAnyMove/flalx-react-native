@@ -1690,6 +1690,7 @@ export default function ShowJobModal({
         styles.row,
         {
           gap: sizes.dateTimeGapMobile,
+          paddingBottom: sizes.mobileBottomPaddingExtraSpace, // чтобы не закрывались кнопками
         },
         isRTL && { flexDirection: 'row-reverse' },
       ]}

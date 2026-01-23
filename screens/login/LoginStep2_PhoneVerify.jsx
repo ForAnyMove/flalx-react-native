@@ -41,6 +41,7 @@ const LoginStep2_PhoneVerify = ({ onNext, onBack, phone, factorId, challengeId }
         justifyContent: 'center',
         padding: baseDimension * 20,
         backgroundColor: theme.backgroundColor,
+        width: '100%',
       },
       title: {
         fontSize: baseDimension * 22,

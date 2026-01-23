@@ -750,7 +750,7 @@ export default function Step1_EmailPassword({ onNext }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
+  root: { flex: 1, width: '100%' },
   scroll: {
     paddingHorizontal: '6%',
   },

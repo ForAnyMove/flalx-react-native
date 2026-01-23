@@ -54,7 +54,7 @@ const CouponsModal = ({ visible, onClose }) => {
       borderRadius: scale(8),
       padding: scale(24),
       containerPaddingVertical: scale(36),
-      containerPaddingHorizontal: scale(67),
+      containerPaddingHorizontal: isWebLandscape ? scale(67) : scale(35),
       titleSize: scale(24),
       titleBottomMargin: scale(32),
       couponIconSize: scale(40),
