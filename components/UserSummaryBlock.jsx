@@ -93,6 +93,12 @@ const UserSummaryBlock = ({
       providerInfoGap: scale(8),
       titleMarginBottom: scale(4),
       professionMarginBottom: scale(32),
+      infoSectionsContainerMarginBottom: isWebLandscape
+        ? 0
+        : scaleByHeightMobile(15, height),
+      infoSectionsContainerGap: isWebLandscape
+        ? 0
+        : scaleByHeightMobile(15, height),
       infoSectionMarginBottom: isWebLandscape ? web(23) : mobile(16),
       modalHeaderPaddingTop: isWebLandscape
         ? scaleByHeight(32, height)
@@ -361,6 +367,10 @@ const UserSummaryBlock = ({
                   {/* Контейнер для сетки 2x2 */}
                   <View
                     style={[
+                      {
+                        marginBottom: sizes.infoSectionsContainerMarginBottom,
+                        gap: sizes.infoSectionsContainerGap,
+                      },
                       isWebLandscape && {
                         flexDirection: isRTL ? 'row-reverse' : 'row',
                         flexWrap: 'wrap',
@@ -605,7 +615,7 @@ const UserSummaryBlock = ({
                           },
                         ]}
                       >
-                        {t('userSummary.contactTitle', {
+                        {t('profile.contact_info', {
                           defaultValue: 'Contact information',
                         })}
                       </Text>

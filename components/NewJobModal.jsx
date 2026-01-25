@@ -514,13 +514,14 @@ export default function NewJobModal({
       focusStates={focusStates}
       error={fieldErrors.type}
       backgroundColor={themeController.current?.formInputBackground}
-      rtl={isRTL}
+      isRTL={isRTL}
       isWebLandscape={isWebLandscape}
       sizeOverrides={sizes}
     />,
     <AutocompletePicker
       label={t('newJob.subType', { defaultValue: 'Sub type' })}
       selectedValue={subType}
+      value={subType}
       setValue={(text) => {
         setSubType(text);
         if (fieldErrors.subType && text) {
@@ -539,7 +540,7 @@ export default function NewJobModal({
       focusStates={focusStates}
       error={fieldErrors.subType}
       backgroundColor={themeController.current?.formInputBackground}
-      rtl={isRTL}
+      isRTL={isRTL}
       isWebLandscape={isWebLandscape}
       sizeOverrides={sizes}
     />,
@@ -665,6 +666,7 @@ export default function NewJobModal({
           {
             fontSize: sizes.photosLabelSize,
             marginBottom: sizes.photosLabelMarginBottom,
+            color: themeController.current?.textColor,
           },
         ]}
       >
@@ -997,7 +999,7 @@ export default function NewJobModal({
                       focusStates={focusStates}
                       error={fieldErrors.type}
                       backgroundColor={bg}
-                      rtl={isRTL}
+                      isRTL={isRTL}
                       isWebLandscape={isWebLandscape}
                       sizeOverrides={sizes}
                     />
@@ -1103,7 +1105,7 @@ export default function NewJobModal({
                       focusStates={focusStates}
                       error={fieldErrors.subType}
                       backgroundColor={bg}
-                      rtl={isRTL}
+                      isRTL={isRTL}
                       isWebLandscape={isWebLandscape}
                       sizeOverrides={sizes}
                     />

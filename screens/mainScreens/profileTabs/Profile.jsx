@@ -294,6 +294,7 @@ export default function Profile() {
                 multiline={f.multiline}
                 height={height}
                 sizes={sizes}
+                isRTL={isRTL}
               />
             ))}
           </View>
@@ -319,6 +320,7 @@ export default function Profile() {
             multiline={true}
             height={height}
             sizes={sizes}
+            isRTL={isRTL}
           />
         </View>
 
@@ -993,6 +995,7 @@ function InfoField({
   btnHeight,
   height,
   sizes,
+  isRTL
 }) {
   const { themeController } = useComponentContext();
   const [editMode, setEditMode] = useState(false);
@@ -1018,6 +1021,7 @@ function InfoField({
           paddingHorizontal: sizes.infoFieldPaddingH,
         },
         multiline && { alignItems: 'flex-start' },
+        multiline && isRTL && { flexDirection: 'row-reverse' }
       ]}
     >
       <View
@@ -1040,6 +1044,7 @@ function InfoField({
               color: themeController.current?.formInputLabelColor,
               marginBottom: sizes.labelMarginBottom,
             },
+            multiline && isRTL && { alignSelf: 'flex-end'}
           ]}
         >
           {label}

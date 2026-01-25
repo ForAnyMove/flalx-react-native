@@ -255,7 +255,12 @@ const AutocompletePicker = ({
         >
           {label}
         </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View
+          style={{
+            flexDirection: arrowIcon && isRTL ? 'row-reverse' : 'row',
+            alignItems: 'center',
+          }}
+        >
           <TextInput
             ref={inputRef}
             value={inputText}

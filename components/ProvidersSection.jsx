@@ -22,23 +22,23 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 function showTitleByStatus(status, t) {
   switch (status) {
     case 'store-waiting':
-      return t('providers.title.storeWaiting', {
+      return t('providersSection.title.storeWaiting', {
         defaultValue: 'Interested Providers',
       });
     case 'store-in-progress':
-      return t('providers.title.storeInProgress', {
+      return t('providersSection.title.storeInProgress', {
         defaultValue: 'Provider working on request',
       });
     case 'store-done':
-      return t('providers.title.storeDone', {
+      return t('providersSection.title.storeDone', {
         defaultValue: 'Provider complete request',
       });
     case 'jobs-in-progress':
-      return t('providers.title.jobsInProgress', {
+      return t('providersSection.title.jobsInProgress', {
         defaultValue: 'Customer placed request',
       });
     case 'jobs-done':
-      return t('providers.title.jobsDone', {
+      return t('providersSection.title.jobsDone', {
         defaultValue: 'Customer placed request',
       });
     default:

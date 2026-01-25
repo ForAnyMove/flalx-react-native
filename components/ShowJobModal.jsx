@@ -2343,10 +2343,10 @@ export default function ShowJobModal({
                   }}
                 >
                   {extraUiByStatus(status).map((node, idx) => (
-                    <View key={`extra-${idx}`}>{node}</View>
+                    <View key={`extra-${idx}`} style={{ alignItems: isRTL ? 'flex-end' : 'flex-start' }}>{node}</View>
                   ))}
                   {bottomButtonByStatus(status).map((node, idx) => (
-                    <View key={`extra-btn-${idx}`}>{node}</View>
+                    <View key={`extra-btn-${idx}`} style={{ alignItems: isRTL ? 'flex-end' : 'flex-start' }}>{node}</View>
                   ))}
                 </View>
               </ScrollView>

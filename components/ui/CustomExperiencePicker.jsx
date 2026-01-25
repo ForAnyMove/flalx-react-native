@@ -702,9 +702,10 @@ const CustomExperiencePicker = ({
             style={[
               // styles.value,
               {
-                color: selectedValue
-                  ? themeController.current?.textColor
-                  : placeholderColor,
+                // color: selectedValue
+                //   ? themeController.current?.textColor
+                //   : placeholderColor,
+                color: themeController.current?.textColor,
                 fontSize: sizes.baseFont,
                 textAlign: isRTL ? 'right' : 'left',
               },

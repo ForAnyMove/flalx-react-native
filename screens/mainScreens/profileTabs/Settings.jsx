@@ -22,6 +22,7 @@ import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import { sendFeedback, sendMessage } from '../../../src/api/support';
 import { useNotification } from '../../../src/render';
 import { logError, logInfo } from '../../../utils/log_util';
+import CustomSwitch from '../../../components/ui/CustomSwitch';
 
 // getResponsiveSize helper was unused and removed
 
@@ -117,6 +118,10 @@ export default function Settings() {
       checkboxTextMargin: isWebLandscape ? web(10) : mobile(10),
       checkboxIconBorderWidth: isWebLandscape ? web(2) : mobile(2),
       checkboxIconBorderRadius: isWebLandscape ? web(3) : mobile(3),
+      switchWidth: isWebLandscape ? web(50) : mobile(50),
+      switchHeight: isWebLandscape ? web(30) : mobile(30),
+      switchCircleSize: isWebLandscape ? web(20) : mobile(20),
+      switchPadding: isWebLandscape ? web(5) : mobile(5),
     };
   }, [height, isWebLandscape, isRTL]);
 
@@ -243,16 +248,13 @@ export default function Settings() {
             >
               {t('settings.location')}
             </Text>
-            <Switch
+            <CustomSwitch
               value={geolocationController.enabled}
               onValueChange={geolocationController.toggleGeolocation}
-              trackColor={{
-                false: themeController.current?.switchTrackColor,
-                true: themeController.current?.switchTrackColor,
-              }}
-              thumbColor={
-                true ? themeController.current?.switchThumbColor : '#000'
-              }
+              width={sizes.switchWidth}
+              height={sizes.switchHeight}
+              circleSize={sizes.switchCircleSize}
+              padding={sizes.switchPadding}
             />
           </View>
 
@@ -380,6 +382,7 @@ export default function Settings() {
             marginTop: sizes.rowGap,
           },
           isWebLandscape && { justifyContent: 'flex-start' },
+          isWebLandscape && { alignSelf: isRTL ? 'flex-end' : 'flex-start' },
         ]}
       >
         <View
@@ -679,12 +682,12 @@ function ModalContent({
             justifyContent: 'center',
             boxSizing: 'border-box',
             height: '100%',
+            backgroundColor: themeController.current?.backgroundColor,
           },
           isWebLandscape && {
             width: sizes.regulationsModalWidth,
             height: heightByType(),
             borderRadius: sizes.borderRadius,
-            backgroundColor: themeController.current?.backgroundColor,
           },
         ]}
       >
@@ -807,8 +810,9 @@ function ModalContent({
                           paddingHorizontal:
                             sizes.inputContainerPaddingHorizontal,
                           borderRadius: sizes.borderRadius,
-                          marginBottom: 0,
+                          // marginBottom: 0,
                           height: sizes.inputHeight,
+                          marginBottom: sizes.modalInputMarginBottom/2,
                         },
                       ]}
                     >
@@ -1089,8 +1093,7 @@ function ModalContent({
                           },
                         ]}
                         textContainerStyle={{
-                          [isRTL ? 'marginRight' : 'marginLeft']:
-                            sizes.checkboxTextMargin,
+                          marginLeft: isRTL ? 0 : sizes.checkboxTextMargin,
                         }}
                         fillColor={themeController.current?.primaryColor}
                         innerIconStyle={{
@@ -1107,6 +1110,7 @@ function ModalContent({
                           {
                             color: themeController.current?.unactiveTextColor,
                             fontSize: sizes.checkboxTextSize,
+                            marginRight: isRTL ? sizes.checkboxTextMargin : 0,
                           },
                         ]}
                       >

@@ -145,9 +145,10 @@ export default function DateTimeInput({
               }}
               textStyle={{
                 fontSize: sizes.inputFont,
-                fontWeight: '500',
+                // fontWeight: '500',
                 textAlign: isRTL ? 'right' : 'left',
                 color: themeController.current?.textColor,
+                width: '100%',
               }}
               placeholder={t('common.none')}
             />
@@ -200,6 +201,7 @@ export default function DateTimeInput({
       </Text>
       <TouchableOpacity onPress={() => !readOnly && setShowPicker(true)}>
         <Text
+          rtl={isRTL}
           style={[
             value ? styles.dateTimeText : styles.dateTimePlaceholder,
             { color: themeController.current?.textColor },
