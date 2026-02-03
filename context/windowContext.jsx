@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Dimensions, Platform } from "react-native";
 import { scaleByHeight } from "../utils/resizeFuncs";
+import { useKeyboardListener } from "../utils/useKeyboardListener";
 
 const WindowContext = createContext(null);
 
 export function WindowProvider({ children }) {
+  const { isKeyboardVisible } = useKeyboardListener();
+
   const getWindow = () => {
     const { width, height } = Dimensions.get("window");
     const isLandscape = width > height;
@@ -22,6 +25,9 @@ export function WindowProvider({ children }) {
 
   useEffect(() => {
     const sub = Dimensions.addEventListener("change", ({ window }) => {
+      if (Platform.OS !== 'web' && isKeyboardVisible) {
+        return;
+      }
       const isLandscape = window.width > window.height;
 
       setWindowInfo({
@@ -58,7 +64,7 @@ export function WindowProvider({ children }) {
     }
 
     return () => sub?.remove?.();
-  }, []);
+  }, [isKeyboardVisible]);
 
   return (
     <WindowContext.Provider value={windowInfo}>
