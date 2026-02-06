@@ -100,9 +100,42 @@ jobs:
             
             echo "=== Deployment completed successfully ==="
 
-      # 7. Отправить уведомление об успехе
-      - name: Notify success
+      # 8. Уведомление в Telegram об успехе
+      - name: Send Telegram notification (Success)
         if: success()
-        run: |
-          echo "Preview deployment successful!"
-          echo "URL: https://preview.flalx.com"
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            ✅ Preview успешно задеплоен!
+            
+            📦 Репозиторий: ${{ github.repository }}
+            🌿 Ветка: ${{ github.ref_name }}
+            👤 Автор: ${{ github.actor }}
+            💬 Коммит: ${{ github.event.head_commit.message }}
+            
+            🌐 URL: https://preview.flalx.com
+            🐳 Образ: goldenitsir/flalx-website:preview
+            
+            ⏱️ Время: ${{ github.event.head_commit.timestamp }}
+
+      # 9. Уведомление в Telegram об ошибке
+      - name: Send Telegram notification (Failure)
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            ❌ Preview деплой ПРОВАЛИЛСЯ!
+            
+            📦 Репозиторий: ${{ github.repository }}
+            🌿 Ветка: ${{ github.ref_name }}
+            👤 Автор: ${{ github.actor }}
+            💬 Коммит: ${{ github.event.head_commit.message }}
+            
+            🔗 Логи: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            
+            ⏱️ Время: ${{ github.event.head_commit.timestamp }}
+            echo "=== Deployment completed successfully ==="

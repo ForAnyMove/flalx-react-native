@@ -66,9 +66,60 @@ jobs:
             docker compose up -d
             docker image prune -f
 
-      # 7. Отправить уведомление об успехе
-      - name: Notify success
+
+      # 7. Уведомление в Telegram об успехе
+      - name: Send Telegram notification (Success)
         if: success()
-        run: |
-          echo "Production deployment successful!"
-          echo "URL: https://flalx.com"
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            🚀 Production успешно задеплоен!
+            
+            📦 Репозиторий: ${{ github.repository }}
+            🌿 Ветка: ${{ github.ref_name }}
+            👤 Автор: ${{ github.actor }}
+            💬 Коммит: ${{ github.event.head_commit.message }}
+            
+            🌐 URL: https://flalx.com
+            🐳 Образ: goldenitsir/flalx-website:latest
+            
+            ⏱️ Время: ${{ github.event.head_commit.timestamp }}
+
+      # 8. Уведомление в Telegram об ошибке
+      - name: Send Telegram notification (Failure)
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            ⚠️ Production деплой ПРОВАЛИЛСЯ!
+            
+            📦 Репозиторий: ${{ github.repository }}
+            🌿 Ветка: ${{ github.ref_name }}
+            👤 Автор: ${{ github.actor }}
+            💬 Коммит: ${{ github.event.head_commit.message }}
+            
+            🔗 Логи: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            
+            ⏱️ Время: ${{ github.event.head_commit.timestamp }}
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: Production deployment FAILED!
+          to: ${{ secrets.NOTIFY_EMAIL }}
+          from: GitHub Actions <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            Deployment to Production FAILED!
+            
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Author: ${{ github.actor }}
+            Commit: ${{ github.event.head_commit.message }}
+            
+            Check logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            
+            Failed at: ${{ github.event.head_commit.timestamp }}
