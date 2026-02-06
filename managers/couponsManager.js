@@ -7,13 +7,16 @@ export default function couponsManager({ session }) {
     const [link, setLink] = useState('');
     const [loading, setLoading] = useState(false);
 
+    const token = session?.token?.access_token;
+
     useEffect(() => {
-        if (link !== '' || !session || !session?.token || loading) return;
+        if (!session || !session?.token || loading) return;
 
         async function fetchCouponsData() {
             setLoading(true);
 
             const balance = await getCouponsBalance(session);
+
             const referralData = await getReferralLink(session);
             setCouponsBalance(balance);
 
@@ -22,7 +25,7 @@ export default function couponsManager({ session }) {
         }
 
         fetchCouponsData();
-    }, [session, link]);
+    }, [token, link]);
 
     async function refreshBalance() {
         try {
