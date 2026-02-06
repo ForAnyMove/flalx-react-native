@@ -12,7 +12,6 @@ yarn-error.log
 # Expo
 .expo/
 .expo-shared/
-dist/
 web-build/
 expo-env.d.ts
 
@@ -87,3 +86,5 @@ babel.config.js
 metro.config.js
 app.json
 eas.json
+
+/docs

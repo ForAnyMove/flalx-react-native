@@ -15,11 +15,15 @@ COPY . .
 # Загружаем переменные из .env в environment для expo
 RUN npm run build:web:clean
 
+RUN ls -la dist/
+
 # Stage 2: Nginx для раздачи статики
 FROM nginx:alpine
 
 # Копируем собранные файлы
 COPY --from=builder /app/dist /usr/share/nginx/html
+
+RUN ls -la /usr/share/nginx/html/
 
 # Конфигурация для SPA
 RUN echo 'server { \

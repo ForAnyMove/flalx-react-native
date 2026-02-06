@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "FlalxRN",
+    "name": "Flalx",
     "slug": "flalx",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -30,7 +30,10 @@
       "package": "com.yulab.flalx"
     },
     "web": {
-      "favicon": "./assets/logo/favicon.png"
+      "favicon": "./assets/logo/favicon.png",
+      "name": "Flalx - Professional Services",
+      "shortName": "Flalx",
+      "description": "Flalx is a platform that connects users with professional services easily and efficiently."
     },
     "extra": {
       "eas": {
