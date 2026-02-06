@@ -12,9 +12,6 @@ RUN npm ci --legacy-peer-deps
 # Копируем исходный код (включая .env)
 COPY . .
 
-# Проверяем что assets скопировались
-RUN ls -la assets/icon/ | head -20
-
 # Загружаем переменные из .env в environment для expo
 RUN npm run build:web:clean
 
