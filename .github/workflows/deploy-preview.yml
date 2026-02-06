@@ -45,7 +45,16 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # 6. Деплой на VPS через SSH
+      # 6. Test VPS connectivity
+      - name: Test VPS Connection
+        run: |
+          echo "Testing connection to VPS..."
+          echo "Host: ${{ secrets.VPS_HOST }}"
+          echo "Port: ${{ secrets.VPS_PORT || 22 }}"
+          ping -c 4 ${{ secrets.VPS_HOST }} || echo "Ping failed"
+          nc -zv ${{ secrets.VPS_HOST }} ${{ secrets.VPS_PORT || 22 }} || echo "Port not accessible"
+
+      # 7. Деплой на VPS через SSH
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
