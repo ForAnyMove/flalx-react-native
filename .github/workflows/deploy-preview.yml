@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - preview
+  workflow_dispatch:  # Ручной запуск из GitHub UI
 
 jobs:
   build-and-deploy:
