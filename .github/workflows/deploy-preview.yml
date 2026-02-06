@@ -59,7 +59,7 @@ jobs:
           script: |
             cd ${{ secrets.VPS_COMPOSE_PATH }}
             docker pull goldenitsir/flalx-website:preview
-            docker-compose up -d flalx-preview
+            docker compose up -d website-preview
             docker image prune -f
 
       # 7. Отправить уведомление об успехе
