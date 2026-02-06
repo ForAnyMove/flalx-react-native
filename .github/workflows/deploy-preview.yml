@@ -57,7 +57,7 @@ jobs:
           timeout: 60s
           command_timeout: 10m
           script: |
-            cd /opt/flalx
+            cd ${{ secrets.VPS_COMPOSE_PATH }}
             docker pull goldenitsir/flalx-website:preview
             docker-compose up -d flalx-preview
             docker image prune -f
