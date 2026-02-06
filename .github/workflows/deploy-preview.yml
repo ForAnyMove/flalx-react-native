@@ -56,11 +56,38 @@ jobs:
           port: ${{ secrets.VPS_PORT || 22 }}
           timeout: 60s
           command_timeout: 10m
+          debug: true
           script: |
+            set -e  # Останавливать при ошибках
+            
+            echo "=== Starting deployment ==="
+            echo "Current directory: $(pwd)"
+            echo "User: $(whoami)"
+            
+            echo "=== Navigating to compose directory ==="
             cd ${{ secrets.VPS_COMPOSE_PATH }}
+            echo "Changed to: $(pwd)"
+            
+            echo "=== Listing files ==="
+            ls -la
+            
+            echo "=== Checking Docker ==="
+            docker --version || echo "Docker not found!"
+            docker compose version || docker-compose --version || echo "Docker Compose not found!"
+            
+            echo "=== Pulling latest image ==="
             docker pull goldenitsir/flalx-website:preview
-            docker compose up -d website-preview
-            docker image prune -f
+            
+            echo "=== Checking current containers ==="
+            docker ps -a | grep preview || echo "No preview containers found"
+            
+            echo "=== Starting container ==="
+            docker compose up -d website-preview || docker-compose up -d website-preview
+            
+            echo "=== Verifying container started ==="
+            docker ps | grep preview
+            
+            echo "=== Deployment completed successfully ==="
 
       # 7. Отправить уведомление об успехе
       - name: Notify success
