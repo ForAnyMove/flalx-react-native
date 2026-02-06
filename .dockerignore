@@ -13,7 +13,9 @@ yarn-error.log
 .expo/
 .expo-shared/
 web-build/
-expo-env.d.ts
+# НЕ игнорируем dist/ - может понадобиться для инкрементальной сборки
+# dist/
+# expo-env.d.ts - может быть нужен для TypeScript
 
 # Build outputs
 android/
@@ -81,10 +83,10 @@ docker-compose.yml
 .editorconfig
 .eslintrc*
 .prettierrc*
-.babelrc
-babel.config.js
-metro.config.js
-app.json
-eas.json
+# .babelrc - НУЖЕН для сборки
+# babel.config.js - НУЖЕН для сборки
+# metro.config.js - НУЖЕН для сборки
+# app.json - НУЖЕН для Expo
+# eas.json - может быть нужен
 
 /docs
