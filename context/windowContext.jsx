@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { Dimensions, Platform } from "react-native";
-import { scaleByHeight } from "../utils/resizeFuncs";
-import { useKeyboardListener } from "../utils/useKeyboardListener";
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Dimensions, Platform } from 'react-native';
+import { scaleByHeight } from '../utils/resizeFuncs';
+import { useKeyboardListener } from '../utils/useKeyboardListener';
 
 const WindowContext = createContext(null);
 
@@ -9,14 +9,12 @@ export function WindowProvider({ children }) {
   const { isKeyboardVisible } = useKeyboardListener();
 
   const getWindow = () => {
-    const { width, height } = Dimensions.get("window");
+    const { width, height } = Dimensions.get('window');
     const isLandscape = width > height;
 
     // 👇 вычисляем sidebarWidth сразу тут
     const sidebarWidth =
-      Platform.OS === "web" && isLandscape
-        ? scaleByHeight(220, height)
-        : 0;
+      Platform.OS === 'web' && isLandscape ? scaleByHeight(220, height) : 0;
 
     return { width, height, isLandscape, sidebarWidth };
   };
@@ -24,24 +22,27 @@ export function WindowProvider({ children }) {
   const [windowInfo, setWindowInfo] = useState(getWindow());
 
   useEffect(() => {
-    const sub = Dimensions.addEventListener("change", ({ window }) => {
-      if (Platform.OS !== 'web' && isKeyboardVisible) {
+    const sub = Dimensions.addEventListener('change', ({ window }) => {
+      const isLandscape = window.width > window.height;
+      if (
+        (Platform.OS !== 'web' && isKeyboardVisible) ||
+        (Platform.OS === 'web' && !isLandscape)
+      ) {
         return;
       }
-      const isLandscape = window.width > window.height;
 
       setWindowInfo({
         width: window.width,
         height: window.height,
         isLandscape,
         sidebarWidth:
-          Platform.OS === "web" && isLandscape
+          Platform.OS === 'web' && isLandscape
             ? Math.max(90, Math.min(280, window.height * 0.22))
             : 0,
       });
     });
 
-    if (Platform.OS === "web") {
+    if (Platform.OS === 'web') {
       const onResize = () => {
         const { innerWidth, innerHeight } = window;
         const isLandscape = innerWidth > innerHeight;
@@ -51,15 +52,15 @@ export function WindowProvider({ children }) {
           height: innerHeight,
           isLandscape,
           sidebarWidth:
-            Platform.OS === "web" && isLandscape
+            Platform.OS === 'web' && isLandscape
               ? Math.max(90, Math.min(280, innerHeight * 0.22))
               : 0,
         });
       };
-      window.addEventListener("resize", onResize);
+      window.addEventListener('resize', onResize);
       return () => {
         sub?.remove?.();
-        window.removeEventListener("resize", onResize);
+        window.removeEventListener('resize', onResize);
       };
     }
 
