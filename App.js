@@ -16,7 +16,7 @@ import AuthScreen from './screens/AuthScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import AppScreen from './screens/AppScreen';
-import { WindowProvider } from './context/windowContext';
+import { useWindowInfo, WindowProvider } from './context/windowContext';
 import { useFonts } from 'expo-font';
 import { WebViewProvider } from './context/webViewContext';
 import { GlobalWebScreen } from './screens/GlobalWebScreen';
@@ -32,6 +32,7 @@ import RegisterScreenWithPassSms from './screens/RegisterScreenWithPassSms';
 import MultiStepLoginScreen from './screens/login/MultiStepLoginScreen';
 import MultiStepRegisterScreen from './screens/register/MultiStepRegisterScreen';
 import { logError } from './utils/log_util';
+import { useKeyboardListener } from './utils/useKeyboardListener';
 
 // --- Глобальное применение шрифта ---
 const originalTextRender = Text.render;
@@ -212,12 +213,18 @@ function App() {
   if (session.resetPassword) {
     content = <ResetPasswordScreen />;
   }
-
+  const { width, height, isLandscape } = useWindowInfo();
+  
   return (
     <SafeAreaProvider>
       <SafeAreaView style={[styles.container, { backgroundColor: themeController.current.backgroundColor }]}>
         <WebViewProvider>
           {isLoader ? <LoadingStub /> : content}
+          <View style={{ position: 'absolute', top: '15%', right: 0, zIndex: 999999999 }}>
+            <Text>Width: {width}</Text>
+            <Text>Height: {height}</Text>
+            <Text>Landscape: {isLandscape ? 'Yes' : 'No'}</Text>
+          </View>
           <GlobalWebScreen />
           <StatusBar style='auto' />
         </WebViewProvider>

@@ -26,7 +26,7 @@ export function WindowProvider({ children }) {
       const isLandscape = window.width > window.height;
       if (
         (Platform.OS !== 'web' && isKeyboardVisible) ||
-        (Platform.OS === 'web' && !isLandscape)
+        (Platform.OS === 'web' && !isLandscape && isKeyboardVisible)
       ) {
         return;
       }
