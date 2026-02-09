@@ -21,51 +21,51 @@ export function WindowProvider({ children }) {
 
   const [windowInfo, setWindowInfo] = useState(getWindow());
 
-  useEffect(() => {
-    const sub = Dimensions.addEventListener('change', ({ window }) => {
-      const isLandscape = window.width > window.height;
-      if (
-        (Platform.OS !== 'web' && isKeyboardVisible) ||
-        (Platform.OS === 'web' && !isLandscape && isKeyboardVisible)
-      ) {
-        return;
-      }
+  // useEffect(() => {
+  //   const sub = Dimensions.addEventListener('change', ({ window }) => {
+  //     const isLandscape = window.width > window.height;
+  //     if (
+  //       (Platform.OS !== 'web' && isKeyboardVisible) ||
+  //       (Platform.OS === 'web' && !isLandscape && isKeyboardVisible)
+  //     ) {
+  //       return;
+  //     }
 
-      setWindowInfo({
-        width: window.width,
-        height: window.height,
-        isLandscape,
-        sidebarWidth:
-          Platform.OS === 'web' && isLandscape
-            ? Math.max(90, Math.min(280, window.height * 0.22))
-            : 0,
-      });
-    });
+  //     setWindowInfo({
+  //       width: window.width,
+  //       height: window.height,
+  //       isLandscape,
+  //       sidebarWidth:
+  //         Platform.OS === 'web' && isLandscape
+  //           ? Math.max(90, Math.min(280, window.height * 0.22))
+  //           : 0,
+  //     });
+  //   });
 
-    if (Platform.OS === 'web') {
-      const onResize = () => {
-        const { innerWidth, innerHeight } = window;
-        const isLandscape = innerWidth > innerHeight;
+  //   if (Platform.OS === 'web') {
+  //     const onResize = () => {
+  //       const { innerWidth, innerHeight } = window;
+  //       const isLandscape = innerWidth > innerHeight;
 
-        setWindowInfo({
-          width: innerWidth,
-          height: innerHeight,
-          isLandscape,
-          sidebarWidth:
-            Platform.OS === 'web' && isLandscape
-              ? Math.max(90, Math.min(280, innerHeight * 0.22))
-              : 0,
-        });
-      };
-      window.addEventListener('resize', onResize);
-      return () => {
-        sub?.remove?.();
-        window.removeEventListener('resize', onResize);
-      };
-    }
+  //       setWindowInfo({
+  //         width: innerWidth,
+  //         height: innerHeight,
+  //         isLandscape,
+  //         sidebarWidth:
+  //           Platform.OS === 'web' && isLandscape
+  //             ? Math.max(90, Math.min(280, innerHeight * 0.22))
+  //             : 0,
+  //       });
+  //     };
+  //     window.addEventListener('resize', onResize);
+  //     return () => {
+  //       sub?.remove?.();
+  //       window.removeEventListener('resize', onResize);
+  //     };
+  //   }
 
-    return () => sub?.remove?.();
-  }, [isKeyboardVisible]);
+  //   return () => sub?.remove?.();
+  // }, [isKeyboardVisible]);
 
   return (
     <WindowContext.Provider value={windowInfo}>
