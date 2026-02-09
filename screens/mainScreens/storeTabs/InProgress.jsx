@@ -6,7 +6,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
 import JobTypeSelector from '../../../components/JobTypeSelector';
@@ -26,8 +25,7 @@ export default function InProgressScreen({
     useComponentContext();
   const { tField } = useLocalization(languageController.current);
   const { t } = useTranslation();
-  const { height } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { height, isLandscape } = useWindowInfo();
   const isRTL = languageController.isRTL;
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');

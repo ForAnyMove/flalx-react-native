@@ -5,18 +5,18 @@ import {
   TouchableOpacity,
   View,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 import { useMemo } from 'react';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
+import { useWindowInfo } from '../context/windowContext';
 
 export default function Header({ switchToProfile }) {
   const { themeController, user, languageController } = useComponentContext();
-  const { width, height } = useWindowDimensions();
+  const { width, height, isLandscape } = useWindowInfo();
   const userAvatar = user.current?.avatar;
-  const isWebLandscape = Platform.OS === 'web' && width > height;
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const isRTL = languageController.isRTL;
 
   const sizes = useMemo(() => {

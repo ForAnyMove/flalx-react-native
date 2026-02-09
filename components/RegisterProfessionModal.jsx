@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  useWindowDimensions,
   TextInput,
   Image,
 } from 'react-native';
@@ -21,8 +20,7 @@ import { useNotification } from '../src/render';
 const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
   const { themeController, languageController, jobTypesController, setAppLoading } = useComponentContext();
   const { showWarning, showError } = useNotification();
-  const { height, width } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;

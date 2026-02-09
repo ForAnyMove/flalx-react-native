@@ -1,11 +1,11 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useMemo, useRef, useState } from 'react';
+import { useWindowInfo } from '../../context/windowContext';
 import {
   Platform,
   Text,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
@@ -37,9 +37,9 @@ export default function DateTimeInput({
   const { themeController, languageController } = useComponentContext();
   const [showPicker, setShowPicker] = useState(false);
 
-  const { width, height } = useWindowDimensions();
+  const { width, height, isLandscape } = useWindowInfo();
   const isRTL = languageController.isRTL;
-  const isWebLandscape = Platform.OS === 'web' && width > height;
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const { t } = useTranslation();
   const [inputActive, setInputActive] = useState(false);

@@ -8,7 +8,6 @@ import {
   Image,
   FlatList,
   Platform,
-  useWindowDimensions,
   Animated,
   TextInput,
 } from 'react-native';
@@ -17,6 +16,7 @@ import { icons } from '../../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
 import { formatExperience } from '../../utils/experience_ulit';
+import { useWindowInfo } from '../../context/windowContext';
 
 const CustomExperiencePicker = ({
   label,
@@ -30,8 +30,8 @@ const CustomExperiencePicker = ({
   bottomDropdown = true,
 }) => {
   const { themeController } = useComponentContext();
-  const { width, height } = useWindowDimensions();
-  const isWebLandscape = Platform.OS === 'web' && width > height;
+  const { width, height, isLandscape } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
 
   const experienceLevels = useMemo(

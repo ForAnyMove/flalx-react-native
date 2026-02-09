@@ -9,7 +9,6 @@ import {
   Image,
   StyleSheet,
   Platform,
-  useWindowDimensions,
   ActivityIndicator,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +21,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import TagSelector from '../components/TagSelector';
 import CustomPicker from '../components/ui/CustomPicker';
 import { logError } from '../utils/log_util';
+import { useWindowInfo } from '../context/windowContext';
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
@@ -30,8 +30,7 @@ export default function RegisterScreen() {
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
 
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const sizes = useMemo(() => {

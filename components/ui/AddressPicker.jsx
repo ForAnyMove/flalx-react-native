@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 import GooglePlacesTextInput from 'react-native-google-places-textinput';
 import { useComponentContext } from '../../context/globalAppContext';
@@ -13,6 +12,7 @@ import themeManager from '../../managers/themeManager';
 import { API_BASE_URL } from '../../utils/config';
 import { useNotification } from '../../src/render';
 import { logError } from '../../utils/log_util';
+import { useWindowInfo } from '../../context/windowContext';
 
 const AddressPicker = ({
   label,
@@ -24,9 +24,9 @@ const AddressPicker = ({
   containerStyle = {},
 }) => {
   const { themeController } = useComponentContext();
-  const { width, height } = useWindowDimensions();
+  const { width, height, isLandscape } = useWindowInfo();
   const { showError } = useNotification();
-  const isWebLandscape = Platform.OS === 'web' && width > height;
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   // --- Размеры и стили ---
   const sizes = useMemo(() => {

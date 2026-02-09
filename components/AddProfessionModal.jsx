@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  useWindowDimensions,
   Image,
   ScrollView,
 } from 'react-native';
@@ -21,8 +20,7 @@ import { logError } from '../utils/log_util';
 
 const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
   const { themeController, languageController, user } = useComponentContext();
-  const { height, width } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { height, width, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;

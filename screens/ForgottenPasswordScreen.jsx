@@ -12,13 +12,13 @@ import {
   Animated,
   ActivityIndicator,
   Image,
-  useWindowDimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 import { logError } from '../utils/log_util';
+import { useWindowInfo } from '../context/windowContext';
 
 const OTP_LENGTH = 6;
 
@@ -29,8 +29,7 @@ export default function ForgottenPasswordScreen() {
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
 
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const [step, setStep] = useState('email');

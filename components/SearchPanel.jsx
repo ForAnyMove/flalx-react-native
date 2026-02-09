@@ -5,17 +5,16 @@ import {
   View,
   Image,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
+import { useWindowInfo } from '../context/windowContext';
 
 export default function SearchPanel({ searchValue, setSearchValue }) {
   const { themeController, languageController } = useComponentContext();
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 

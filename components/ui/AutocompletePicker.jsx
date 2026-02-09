@@ -8,12 +8,12 @@ import {
   FlatList,
   Platform,
   Keyboard,
-  useWindowDimensions,
   Image,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
+import { useWindowInfo } from '../../context/windowContext';
 
 const AutocompletePicker = ({
   label,
@@ -29,8 +29,8 @@ const AutocompletePicker = ({
   allowCustomText = false, // Новый пропс для разрешения кастомного текста
 }) => {
   const { themeController } = useComponentContext();
-  const { width, height } = useWindowDimensions();
-  const isWebLandscape = Platform.OS === 'web' && width > height;
+  const { width, height, isLandscape } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   // --- Размеры и стили ---
   const sizes = useMemo(() => {

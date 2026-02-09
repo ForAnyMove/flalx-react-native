@@ -7,19 +7,19 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { normalizeImageUri } from '../../utils/supabase/uriHelpers';
 import { useComponentContext } from '../../context/globalAppContext';
 import { logError } from '../../utils/log_util';
+import { useWindowInfo } from '../../context/windowContext';
 
 export default function ImagePickerModal({ visible, onClose, onAdd }) {
   const [url, setUrl] = useState('');
   const { themeController } = useComponentContext();
   const theme = themeController.current;
-  const { width, height } = useWindowDimensions();
-  const isWebLandscape = width > height && Platform.OS === 'web';
+  const { width, height, isLandscape } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const sizes = useMemo(() => {
     const scale = isWebLandscape ? scaleByHeight : scaleByHeightMobile;

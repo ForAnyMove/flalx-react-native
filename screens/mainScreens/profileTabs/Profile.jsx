@@ -9,7 +9,6 @@ import {
   View,
   Platform,
   Modal,
-  useWindowDimensions,
   PermissionsAndroid,
   Alert,
 } from 'react-native';
@@ -45,8 +44,7 @@ export default function Profile() {
   const [showNewPassword, setShowNewPassword] = useState(false);
 
   const [pickerVisible, setPickerVisible] = useState(false);
-  const { height } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 

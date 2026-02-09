@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import SearchPanel from '../../../../components/SearchPanel';
@@ -24,8 +23,7 @@ import { useTranslation } from 'react-i18next';
 
 const SystemProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible, setSystemAddingPopupVisible }) => {
   const [searchValue, setSearchValue] = useState('');
-  const { height } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { height, isLandscape } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
   const { themeController, languageController, jobTypesController } = useComponentContext();
   const isRTL = languageController.isRTL;

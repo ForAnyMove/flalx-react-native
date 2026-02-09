@@ -6,7 +6,6 @@ import {
   StyleSheet,
   View,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
@@ -15,13 +14,14 @@ import Profession from './mainScreens/profileTabs/Profession';
 import Settings from './mainScreens/profileTabs/Settings';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useMemo } from 'react';
+import { useWindowInfo } from '../context/windowContext';
 
 export default function AppProfileScreen({ switchToApp }) {
   const { session, profileTabController, themeController, languageController } =
     useComponentContext();
-  const { width, height } = useWindowDimensions();
+  const { width, height, isLandscape } = useWindowInfo();
   const isRTL = languageController?.isRTL;
-  const isWebLandscape = Platform.OS === 'web' && width > height;
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);

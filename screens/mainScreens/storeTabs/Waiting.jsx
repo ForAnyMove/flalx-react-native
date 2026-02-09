@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   View,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 import JobTypeSelector from '../../../components/JobTypeSelector';
 import SearchPanel from '../../../components/SearchPanel';
@@ -30,8 +29,7 @@ export default function WaitingScreen({
   const { themeController, jobsController, languageController } =
     useComponentContext();
   const { tField } = useLocalization(languageController.current);
-  const { height } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 

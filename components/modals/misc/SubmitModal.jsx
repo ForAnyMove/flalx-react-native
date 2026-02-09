@@ -17,8 +17,7 @@ import { useTranslation } from 'react-i18next';
 
 export const SubmitModal = ({ visible, onClose, onSubmitted }) => {
     const { themeController } = useComponentContext();
-    const { height, width } = useWindowDimensions();
-    const { isLandscape } = useWindowInfo();
+    const { width, height, isLandscape } = useWindowInfo();
     const isWebLandscape = Platform.OS === 'web' && isLandscape;
     const { t } = useTranslation();
 

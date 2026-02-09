@@ -16,7 +16,7 @@ export function WindowProvider({ children }) {
     const sidebarWidth =
       Platform.OS === 'web' && isLandscape ? scaleByHeight(220, height) : 0;
 
-    return { width, height, isLandscape, sidebarWidth };
+    return { width, height, isLandscape, sidebarWidth,  };
   };
 
   const [windowInfo, setWindowInfo] = useState(getWindow());
@@ -24,12 +24,12 @@ export function WindowProvider({ children }) {
   // useEffect(() => {
   //   const sub = Dimensions.addEventListener('change', ({ window }) => {
   //     const isLandscape = window.width > window.height;
-  //     if (
-  //       (Platform.OS !== 'web' && isKeyboardVisible) ||
-  //       (Platform.OS === 'web' && !isLandscape && isKeyboardVisible)
-  //     ) {
-  //       return;
-  //     }
+  //     // if (
+  //     //   (Platform.OS !== 'web' && isKeyboardVisible) ||
+  //     //   (Platform.OS === 'web' && !isLandscape && isKeyboardVisible)
+  //     // ) {
+  //     //   return;
+  //     // }
 
   //     setWindowInfo({
   //       width: window.width,
@@ -39,6 +39,7 @@ export function WindowProvider({ children }) {
   //         Platform.OS === 'web' && isLandscape
   //           ? Math.max(90, Math.min(280, window.height * 0.22))
   //           : 0,
+  //       isKeyboardVisible, // Добавляем isKeyboardVisible в состояние
   //     });
   //   });
 
@@ -54,7 +55,8 @@ export function WindowProvider({ children }) {
   //         sidebarWidth:
   //           Platform.OS === 'web' && isLandscape
   //             ? Math.max(90, Math.min(280, innerHeight * 0.22))
-  //             : 0,
+  //             : 0, 
+  //         isKeyboardVisible, // Добавляем isKeyboardVisible в состояние
   //       });
   //     };
   //     window.addEventListener('resize', onResize);

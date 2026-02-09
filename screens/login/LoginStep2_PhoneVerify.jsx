@@ -7,12 +7,12 @@ import {
   StyleSheet,
   ActivityIndicator,
   Animated,
-  useWindowDimensions,
   Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
+import { useWindowInfo } from '../../context/windowContext';
 
 const OTP_LENGTH = 6;
 
@@ -27,8 +27,7 @@ const LoginStep2_PhoneVerify = ({ onNext, onBack, phone, factorId, challengeId }
   const inputsRef = useRef([]);
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const dynamicStyles = useMemo(() => {

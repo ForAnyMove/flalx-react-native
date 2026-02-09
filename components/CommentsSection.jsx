@@ -9,12 +9,12 @@ import {
   View,
   Platform,
   Image,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../context/globalAppContext';
 import { useTranslation } from 'react-i18next';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
+import { useWindowInfo } from '../context/windowContext';
 
 export default function CommentsSection({
   jobId,
@@ -22,7 +22,7 @@ export default function CommentsSection({
   allowAdd = false,
   allowAddOnly = false,
 }) {
-  const { width, height } = useWindowDimensions();
+  const { width, height } = useWindowInfo();
   const { themeController, providersController, languageController } =
     useComponentContext();
   const { t } = useTranslation();

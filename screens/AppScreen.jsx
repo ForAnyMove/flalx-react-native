@@ -7,7 +7,6 @@ import {
   Image,
   StyleSheet,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
@@ -29,9 +28,7 @@ export default function AppScreen() {
   const [screenName, setScreenName] = useState('app');
   const isRTL = languageController.isRTL;
 
-  const { width, height } = useWindowDimensions();
-  const { sidebarWidth } = useWindowInfo();
-  const isLandscape = width > height;
+  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   // const sidebarWidth = isWebLandscape ? Math.max(200, width * 0.15) : 0;
   const theme = themeController.current;

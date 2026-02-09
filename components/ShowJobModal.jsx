@@ -12,7 +12,6 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { JOB_SUB_TYPES } from '../constants/jobSubTypes';
 import { JOB_TYPES } from '../constants/jobTypes';
@@ -25,7 +24,7 @@ import CustomFlatList from './ui/CustomFlatList';
 import DateTimeInput from './ui/DateTimeInput';
 import DateTimeInputDouble from './ui/DateTimeInputDouble';
 import { useTranslation } from 'react-i18next';
-// import { useWindowInfo } from '../context/windowContext';
+import { useWindowInfo } from '../context/windowContext';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import JobModalWrapper from './JobModalWrapper';
@@ -89,8 +88,7 @@ export default function ShowJobModal({
   const { tField } = useLocalization(languageController.current);
   const { showError, showWarning } = useNotification();
   const { t } = useTranslation();
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const { openWebView } = useWebView();
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;

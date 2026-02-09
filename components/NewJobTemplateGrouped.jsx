@@ -4,7 +4,6 @@ import {
     View,
     Platform,
     ScrollView,
-    useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../context/globalAppContext';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +11,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useMemo } from 'react';
 import NewJobTemplateButton from './NewJobTemplateButton';
 import { useLocalization } from '../src/services/useLocalization';
+import { useWindowInfo } from '../context/windowContext';
 
 export default function NewJobTemplateGrouped({
     jobTypesWithSubtypes,
@@ -20,8 +20,7 @@ export default function NewJobTemplateGrouped({
 }) {
     const { themeController, languageController } = useComponentContext();
     const { tField } = useLocalization(languageController.current);
-    const { width, height } = useWindowDimensions();
-    const isLandscape = width > height;
+    const { width, height, isLandscape } = useWindowInfo();
     const { t } = useTranslation();
 
     const isWebLandscape = Platform.OS === 'web' && isLandscape;

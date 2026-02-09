@@ -7,7 +7,6 @@ import {
   View,
   Image,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -42,8 +41,7 @@ export default function Jobs() {
   } = useComponentContext();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
-  const { width, height } = useWindowDimensions();
-  const { sidebarWidth, isLandscape } = useWindowInfo();
+  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
 
   const orderedTabs = isRTL ? TAB_TITLES_RTL : TAB_TITLES;

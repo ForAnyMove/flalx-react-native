@@ -6,7 +6,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
 import JobTypeSelector from '../../../components/JobTypeSelector';
@@ -25,8 +24,7 @@ export default function DoneScreen({
   const { themeController, jobsController, languageController } =
     useComponentContext();
   const { tField } = useLocalization(languageController.current);
-  const { width, height } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { width, height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
   const [filteredJobs, setFilteredJobs] = useState([]);

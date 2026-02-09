@@ -9,7 +9,6 @@ import {
   View,
   TouchableWithoutFeedback,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 import { LICENSES } from '../constants/licenses';
 import { useComponentContext } from '../context/globalAppContext';
@@ -42,9 +41,8 @@ const UserSummaryBlock = ({
   const [modalVisible, setModalVisible] = useState(false);
   const [showContactInfo, setShowContactInfo] = useState(false);
 
-  const { width, height } = useWindowDimensions();
-  const { sidebarWidth } = useWindowInfo();
-  const isWebLandscape = Platform.OS === 'web' && width > height;
+  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   // компактные размеры для веб-альбомной (меньше, чем на мобильном)
   const sizes = useMemo(() => {

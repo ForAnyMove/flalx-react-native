@@ -10,12 +10,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  useWindowDimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
+import { useWindowInfo } from '../../context/windowContext';
 
 function PrimaryOutlineButton({
     title,
@@ -51,8 +51,7 @@ export default function LoginStep1_EmailPassword({ onNext, onGoToRegister, onGoT
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
 
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const [email, setEmail] = useState('');

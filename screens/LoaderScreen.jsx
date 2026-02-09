@@ -5,20 +5,19 @@ import {
   StyleSheet,
   Animated,
   ActivityIndicator,
-  useWindowDimensions,
   Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
+import { useWindowInfo } from '../context/windowContext';
 
 export default function LoadingStub() {
   const { t } = useTranslation();
   const { themeController } = useComponentContext();
   const theme = themeController.current;
 
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   // --- АНИМАЦИЯ ПУЛЬСА ---

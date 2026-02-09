@@ -5,7 +5,6 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  useWindowDimensions,
   View,
   Text
 } from 'react-native';
@@ -28,8 +27,7 @@ import { logError } from '../../../../utils/log_util';
 
 const MyProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible, setSystemAddingPopupVisible }) => {
   const [searchValue, setSearchValue] = useState('');
-  const { height, width } = useWindowDimensions();
-  const { isLandscape, sidebarWidth } = useWindowInfo();
+  const { height, width, isLandscape, sidebarWidth } = useWindowInfo();
   const { showWarning } = useNotification();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
   const { themeController, languageController, jobTypesController, setAppLoading } = useComponentContext();

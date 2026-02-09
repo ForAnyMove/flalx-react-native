@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import NewJobModal from '../../../components/NewJobModal';
 import NewJobTemplateCard from '../../../components/NewJobTemplateCard';
@@ -35,8 +34,7 @@ export default function NewScreen({
   const { showWarning } = useNotification();
   const { openWebView } = useWebView();
   const isRTL = languageController.isRTL;
-  const { height } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { height, isLandscape } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
   const { t } = useTranslation();
 

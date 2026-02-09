@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
-  useWindowDimensions,
   Image,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
@@ -17,8 +16,7 @@ import { icons } from '../../constants/icons';
 
 const UniversalProfessionComponent = ({ item, onPress }) => {
   const { themeController } = useComponentContext();
-  const { height } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const { type, title, subtitle, extra } = item;

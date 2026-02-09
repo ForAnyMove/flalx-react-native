@@ -12,12 +12,12 @@ import {
   Animated,
   ActivityIndicator,
   Image,
-  useWindowDimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
+import { useWindowInfo } from '../context/windowContext';
 
 const OTP_LENGTH = 6;
 
@@ -32,8 +32,7 @@ export default function RegisterScreenWithPassSms() {
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
 
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const [step, setStep] = useState('register'); // 'register', 'otp'
@@ -795,7 +794,6 @@ function PrimaryOutlineButton({
   height,
   containerStyle = {},
 }) {
-  const { width } = useWindowDimensions();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const buttonSizes = useMemo(

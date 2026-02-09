@@ -8,13 +8,13 @@ import {
   Image,
   StyleSheet,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { logError } from '../utils/log_util';
+import { useWindowInfo } from '../context/windowContext';
 
 export default function RegisterScreenWithPass() {
   const { t } = useTranslation();
@@ -29,8 +29,7 @@ export default function RegisterScreenWithPass() {
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
 
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const sizes = useMemo(() => {

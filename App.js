@@ -213,7 +213,7 @@ function App() {
   if (session.resetPassword) {
     content = <ResetPasswordScreen />;
   }
-  const { width, height, isLandscape } = useWindowInfo();
+  const { width, height, isLandscape, isKeyboardVisible } = useWindowInfo();
   
   return (
     <SafeAreaProvider>
@@ -224,6 +224,7 @@ function App() {
             <Text>Width: {width}</Text>
             <Text>Height: {height}</Text>
             <Text>Landscape: {isLandscape ? 'Yes' : 'No'}</Text>
+            <Text>Is Keyboard Visible: {isKeyboardVisible ? 'Yes' : 'No'}</Text>
           </View>
           <GlobalWebScreen />
           <StatusBar style='auto' />

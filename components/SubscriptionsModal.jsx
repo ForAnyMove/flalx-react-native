@@ -7,7 +7,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../context/globalAppContext';
 import JobModalWrapper from './JobModalWrapper';
@@ -40,8 +39,7 @@ function SubscriptionsModalContent({ closeModal }) {
   const { tField } = useLocalization(languageController?.current);
   const { showWarning, showInfo, showError } = useNotification();
   const { openWebView } = useWebView();
-  const { width, height } = useWindowDimensions();
-  const { sidebarWidth, isLandscape } = useWindowInfo();
+  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;

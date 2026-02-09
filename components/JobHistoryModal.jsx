@@ -39,8 +39,7 @@ function CustomModal({ isWebLandscape, visible, transparent, animationType, chil
 export default function JobHistoryModal({ visible, onClose, history = [] }) {
   const { themeController, languageController, jobTypesController } = useComponentContext();
   const { t } = useTranslation();
-  const { height } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { height, isLandscape } = useWindowInfo();
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 

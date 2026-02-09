@@ -9,7 +9,6 @@ import {
   View,
   Platform,
   TouchableWithoutFeedback,
-  useWindowDimensions,
 } from 'react-native';
 // import { RFValue } from 'react-native-responsive-fontsize';
 import { useComponentContext } from '../context/globalAppContext';
@@ -40,7 +39,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
   const { tField } = useLocalization(languageController.current);
   const { openWebView } = useWebView();
   const { showWarning } = useNotification();
-  const { height, isLandscape, width, sidebarWidth } = useWindowInfo();
+  const { width, height, isLandscape } = useWindowInfo();
   const isRTL = languageController.isRTL;
 
   const [modalVisible, setModalVisible] = useState(false);

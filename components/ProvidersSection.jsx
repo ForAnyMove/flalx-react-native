@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
+import { useWindowInfo } from '../context/windowContext';
 import {
   FlatList,
   Modal,
@@ -10,7 +11,6 @@ import {
   TouchableWithoutFeedback,
   View,
   Image,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../context/globalAppContext';
 import CustomFlatList from './ui/CustomFlatList';
@@ -92,8 +92,8 @@ export default function ProvidersSection({
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   // размеры/ориентация экрана
-  const { width, height } = useWindowDimensions();
-  const isWebLandscape = Platform.OS === 'web' && width > height;
+  const { width, height, isLandscape } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const isShortProviderBlock = status !== 'store-waiting';
 

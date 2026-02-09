@@ -14,6 +14,7 @@ import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocalization } from '../src/services/useLocalization';
+import { useWindowInfo } from '../context/windowContext';
 
 export default function JobTypeSelector({
   selectedTypes,
@@ -22,8 +23,7 @@ export default function JobTypeSelector({
   subtypesOnly = false,
 }) {
   const { t } = useTranslation();
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const { themeController, languageController, jobTypesController } = useComponentContext();
   const { tField } = useLocalization(languageController.current);
 

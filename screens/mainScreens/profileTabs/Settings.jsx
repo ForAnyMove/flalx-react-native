@@ -9,7 +9,6 @@ import {
   View,
   Platform,
   TextInput,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
 import CustomPicker from '../../../components/ui/CustomPicker';
@@ -29,10 +28,9 @@ import CustomSwitch from '../../../components/ui/CustomSwitch';
 export default function Settings() {
   const { themeController, languageController, geolocationController } = useComponentContext();
   const { showError, showInfo } = useNotification();
-  const { height } = useWindowDimensions();
+  const { height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
-  const { isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   // Toggles
@@ -568,7 +566,7 @@ function ModalContent({
 }) {
   const { themeController, setAppLoading, session } = useComponentContext();
   const { t } = useTranslation();
-  const { height } = useWindowDimensions();
+  const { height } = useWindowInfo();
 
   const [accepted, setAccepted] = useState(false);
   const [contactUsForm, setContactUsForm] = useState({

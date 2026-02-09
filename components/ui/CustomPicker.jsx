@@ -8,12 +8,12 @@ import {
   Image,
   FlatList,
   Platform,
-  useWindowDimensions,
   Animated,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { icons } from '../../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
+import { useWindowInfo } from '../../context/windowContext';
 
 const CustomPicker = ({
   label,
@@ -28,8 +28,8 @@ const CustomPicker = ({
   bottomDropdown = true,
 }) => {
   const { themeController } = useComponentContext();
-  const { width, height } = useWindowDimensions();
-  const isWebLandscape = Platform.OS === 'web' && width > height;
+  const { width, height, isLandscape } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);

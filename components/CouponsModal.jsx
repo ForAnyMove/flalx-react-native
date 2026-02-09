@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  useWindowDimensions,
   Image,
   TextInput,
 } from 'react-native';
@@ -20,8 +19,7 @@ import { icons } from '../constants/icons';
 const CouponsModal = ({ visible, onClose }) => {
   const { themeController, languageController, couponsManagerController } = useComponentContext();
   const theme = themeController.current;
-  const { height, width } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { height, width, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;

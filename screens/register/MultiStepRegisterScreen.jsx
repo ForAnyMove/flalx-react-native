@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, useWindowDimensions, Platform, Animated, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Platform, Animated, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
@@ -7,6 +7,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import Step1_EmailPassword from './Step1_EmailPassword';
 import Step2_PhoneEnroll from './Step2_PhoneEnroll';
 import Step3_PhoneVerify from './Step3_PhoneVerify';
+import { useWindowInfo } from '../../context/windowContext';
 
 function PrimaryOutlineButton({
   title,
@@ -75,8 +76,7 @@ export default function MultiStepRegisterScreen({ skipMFA = false }) {
   const { themeController, registerControl } = useComponentContext();
   const theme = themeController.current;
 
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const [step, setStep] = useState('email'); // email, phone_enroll, phone_verify, finished

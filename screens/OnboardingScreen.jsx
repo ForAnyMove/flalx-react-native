@@ -9,17 +9,16 @@ import {
   Animated,
   Easing,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
+import { useWindowInfo } from '../context/windowContext';
 
 export default function OnboardingScreen({ onFinish }) {
   const { t } = useTranslation();
   const { themeController, languageController } = useComponentContext();
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const isRTL = languageController.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 

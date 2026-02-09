@@ -11,12 +11,12 @@ import {
   Image,
   Animated,
   ActivityIndicator,
-  useWindowDimensions,
 } from 'react-native';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
+import { useWindowInfo } from '../context/windowContext';
 
 export default function ResetPasswordScreen() {
   const { t } = useTranslation();
@@ -26,8 +26,7 @@ export default function ResetPasswordScreen() {
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
 
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const [password, setPassword] = useState('');

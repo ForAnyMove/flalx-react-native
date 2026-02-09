@@ -16,6 +16,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 import { ActivityIndicator } from 'react-native-paper';
 import { logError } from '../utils/log_util';
+import { useWindowInfo } from '../context/windowContext';
 
 if (
   Platform.OS === 'android' &&
@@ -27,8 +28,8 @@ if (
 const JobNotificationsComponent = ({ notifications = [], onClose }) => {
   const { t } = useTranslation();
   const { themeController } = useComponentContext();
-  const { width, height } = useWindowDimensions();
-  const isWebLandscape = Platform.OS === 'web' && width > height;
+  const { width, height, isLandscape } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const [localNotifications, setLocalNotifications] = useState(notifications);
   const [loading, setLoading] = useState(false);
 

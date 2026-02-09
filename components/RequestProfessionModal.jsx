@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  useWindowDimensions,
   Image,
 } from 'react-native';
 import { useWindowInfo } from '../context/windowContext';
@@ -24,8 +23,7 @@ const RequestProfessionModal = ({
 }) => {
   const { themeController, languageController, jobTypesController } =
     useComponentContext();
-  const { height, width } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;

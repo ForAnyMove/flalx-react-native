@@ -12,12 +12,12 @@ import {
   Animated,
   ActivityIndicator,
   Image,
-  useWindowDimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
+import { useWindowInfo } from '../context/windowContext';
 
 const OTP_LENGTH = 6;
 
@@ -28,8 +28,7 @@ export default function ForgottenPasswordScreenSms() {
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
 
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const [step, setStep] = useState('phone');
@@ -317,9 +316,7 @@ export default function ForgottenPasswordScreenSms() {
           styles.timerText,
           {
             color:
-              cooldownMode === 'error'
-                ? theme.errorTextColor
-                : theme.textColor,
+              cooldownMode === 'error' ? theme.errorTextColor : theme.textColor,
           },
         ]}
       >
@@ -357,7 +354,8 @@ export default function ForgottenPasswordScreenSms() {
             {step === 'phone' ? (
               <>
                 <Text style={styles.brand}>{t('auth.app_name')}</Text>
-                <Text style={[styles.title, { marginTop: sizes.titleTopMargin }]}
+                <Text
+                  style={[styles.title, { marginTop: sizes.titleTopMargin }]}
                 >
                   {t('auth.forgot_pass_title')}
                 </Text>
@@ -427,9 +425,7 @@ export default function ForgottenPasswordScreenSms() {
 
                 <PrimaryOutlineButton
                   title={
-                    sending
-                      ? t('auth.sending')
-                      : t('auth.send_reset_code')
+                    sending ? t('auth.sending') : t('auth.send_reset_code')
                   }
                   onPress={onSendCode}
                   disabled={!isValidPhone || sending || cooldown > 0}
@@ -525,11 +521,7 @@ export default function ForgottenPasswordScreenSms() {
                 </View>
 
                 <PrimaryOutlineButton
-                  title={
-                    verifying
-                      ? t('auth.sending')
-                      : t('auth.confirm')
-                  }
+                  title={verifying ? t('auth.sending') : t('auth.confirm')}
                   onPress={onConfirm}
                   disabled={!canConfirm || verifying}
                   theme={theme}
@@ -541,7 +533,10 @@ export default function ForgottenPasswordScreenSms() {
                 <View
                   style={[
                     styles.linksRow,
-                    { marginTop: sizes.linksTopMargin, height: sizes.inputHeight },
+                    {
+                      marginTop: sizes.linksTopMargin,
+                      height: sizes.inputHeight,
+                    },
                   ]}
                 >
                   <TouchableOpacity onPress={backToPhone}>
@@ -580,14 +575,32 @@ function PrimaryOutlineButton({
   const buttonDynamicStyles = useMemo(
     () => ({
       outlineBtn: {
-        height: isLandscape && Platform.OS === 'web' ? scaleByHeight(62, height) : scaleByHeightMobile(62, height),
-        width: isLandscape && Platform.OS === 'web' ? scaleByHeight(330, height) : '100%',
-        marginTop: isLandscape && Platform.OS === 'web' ? scaleByHeight(38, height) : scaleByHeightMobile(12, height),
-        borderRadius: isLandscape && Platform.OS === 'web' ? scaleByHeight(8, height) : scaleByHeightMobile(12, height),  
+        height:
+          isLandscape && Platform.OS === 'web'
+            ? scaleByHeight(62, height)
+            : scaleByHeightMobile(62, height),
+        width:
+          isLandscape && Platform.OS === 'web'
+            ? scaleByHeight(330, height)
+            : '100%',
+        marginTop:
+          isLandscape && Platform.OS === 'web'
+            ? scaleByHeight(38, height)
+            : scaleByHeightMobile(12, height),
+        borderRadius:
+          isLandscape && Platform.OS === 'web'
+            ? scaleByHeight(8, height)
+            : scaleByHeightMobile(12, height),
       },
       outlineBtnText: {
-        fontSize: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
-        lineHeight: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
+        fontSize:
+          isLandscape && Platform.OS === 'web'
+            ? scaleByHeight(20, height)
+            : scaleByHeightMobile(20, height),
+        lineHeight:
+          isLandscape && Platform.OS === 'web'
+            ? scaleByHeight(20, height)
+            : scaleByHeightMobile(20, height),
       },
       webLandscapeButton: {
         width: scaleByHeight(330, height),
