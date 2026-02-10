@@ -19,6 +19,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
 import { logError } from '../../utils/log_util';
 import { useWindowInfo } from '../../context/windowContext';
+import CustomTextInput from '../../components/ui/CustomTextInput';
 
 function PrimaryOutlineButton({
   title,
@@ -281,7 +282,7 @@ export default function Step2_PhoneEnroll({ onNext, onBack }) {
             >
               {t('register.phone_label')}
             </Text>
-            <TextInput
+            <CustomTextInput
               ref={phoneInputRef}
               style={[
                 styles.input,

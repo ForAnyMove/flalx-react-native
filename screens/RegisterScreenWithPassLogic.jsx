@@ -15,6 +15,7 @@ import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { logError } from '../utils/log_util';
 import { useWindowInfo } from '../context/windowContext';
+import CustomTextInput from '../components/ui/CustomTextInput';
 
 export default function RegisterScreenWithPass() {
   const { t } = useTranslation();
@@ -431,7 +432,7 @@ export default function RegisterScreenWithPass() {
                     {t('register.email')} ({t('register.required')})
                   </Text>
 
-                  <TextInput
+                  <CustomTextInput
                     value={email}
                     onChangeText={(txt) => {
                       setEmail(txt);
@@ -503,7 +504,7 @@ export default function RegisterScreenWithPass() {
                     {t('register.password')} ({t('register.required')})
                   </Text>
 
-                  <TextInput
+                  <CustomTextInput
                     secureTextEntry={!showPassword}
                     value={password}
                     onChangeText={(txt) => {
@@ -597,7 +598,7 @@ export default function RegisterScreenWithPass() {
                     {t('register.repeat_password')} ({t('register.required')})
                   </Text>
 
-                  <TextInput
+                  <CustomTextInput
                     secureTextEntry={true}
                     value={passwordRepeat}
                     onChangeText={(txt) => {

@@ -18,6 +18,7 @@ import { useComponentContext } from '../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 import { useWindowInfo } from '../context/windowContext';
+import CustomTextInput from '../components/ui/CustomTextInput';
 
 const OTP_LENGTH = 6;
 
@@ -499,7 +500,7 @@ export default function RegisterScreenWithPassSms() {
         >
           Phone Number
         </Text>
-        <TextInput
+        <CustomTextInput
           ref={phoneInputRef}
           style={[
             styles.input,
@@ -550,7 +551,7 @@ export default function RegisterScreenWithPassSms() {
         <Text style={[styles.label, dynamicStyles.label, { color: theme.formInputLabelColor, textAlign: isRTL ? 'right' : 'left' }]}>
           {t('register.password')}
         </Text>
-        <TextInput
+        <CustomTextInput
           style={[
             styles.input,
             dynamicStyles.input,
@@ -610,7 +611,7 @@ export default function RegisterScreenWithPassSms() {
         <Text style={[styles.label, dynamicStyles.label, { color: theme.formInputLabelColor, textAlign: isRTL ? 'right' : 'left' }]}>
           {t('register.repeat_password')}
         </Text>
-        <TextInput
+        <CustomTextInput
           style={[
             styles.input,
             dynamicStyles.input,
@@ -677,7 +678,7 @@ export default function RegisterScreenWithPassSms() {
       </Text>
       <View style={dynamicStyles.otpRow}>
         {otp.map((digit, idx) => (
-          <TextInput
+          <CustomTextInput
             key={idx}
             ref={(ref) => (inputsRef.current[idx] = ref)}
             style={[

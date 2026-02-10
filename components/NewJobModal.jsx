@@ -33,6 +33,7 @@ import CustomPicker from './ui/CustomPicker';
 import CustomExperiencePicker from './ui/CustomExperiencePicker';
 import { formatCurrency } from '../utils/currency_formatter';
 import { logError } from '../utils/log_util';
+import CustomTextInput from './ui/CustomTextInput';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -585,7 +586,7 @@ export default function NewJobModal({
       >
         {t('newJob.description', { defaultValue: 'Description' })}
       </Text>
-      <TextInput
+      <CustomTextInput
         value={description}
         onChangeText={setDescription}
         placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
@@ -639,7 +640,7 @@ export default function NewJobModal({
       >
         {t('newJob.price', { defaultValue: 'Price' })}
       </Text>
-      <TextInput
+      <CustomTextInput
         value={price}
         onChangeText={(text) => setPrice(text.replace(/[^0-9]/g, ''))}
         placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
@@ -791,7 +792,7 @@ export default function NewJobModal({
     //   >
     //     {t('newJob.location', { defaultValue: 'Location' })}
     //   </Text>
-    //   <TextInput
+    //   <CustomTextInput
     //     value={location}
     //     onChangeText={setLocation}
     //     placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
@@ -1047,7 +1048,7 @@ export default function NewJobModal({
                           defaultValue: 'Description',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={description}
                         onChangeText={setDescription}
                         placeholder={t('newJob.typePlaceholder', {
@@ -1177,7 +1178,7 @@ export default function NewJobModal({
                       >
                         {t('newJob.price', { defaultValue: 'Price' })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         key='priceInput'
                         value={price}
                         onChangeText={(text) =>

@@ -20,6 +20,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 import { logError } from '../utils/log_util';
 import { useWindowInfo } from '../context/windowContext';
+import CustomTextInput from '../components/ui/CustomTextInput';
 
 const OTP_LENGTH = 6;
 
@@ -531,7 +532,7 @@ export default function AuthScreenWithPass() {
               >
                 {t('auth.email_label')}
               </Text>
-              <TextInput
+              <CustomTextInput
                 ref={emailInputRef}
                 style={[
                   styles.input,
@@ -622,7 +623,7 @@ export default function AuthScreenWithPass() {
               >
                 {t('register.password')}
               </Text>
-              <TextInput
+              <CustomTextInput
                 style={[
                   styles.input,
                   dynamicStyles.input,
@@ -736,7 +737,7 @@ export default function AuthScreenWithPass() {
               >
                 {t('register.repeat_password')}
               </Text>
-              <TextInput
+              <CustomTextInput
                 style={[
                   styles.input,
                   dynamicStyles.input,

@@ -17,6 +17,7 @@ import { icons } from '../constants/icons';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { useWindowInfo } from '../context/windowContext';
+import CustomTextInput from '../components/ui/CustomTextInput';
 
 export default function ResetPasswordScreen() {
   const { t } = useTranslation();
@@ -237,7 +238,7 @@ export default function ResetPasswordScreen() {
               {t('reset.password')}
             </Text>
 
-            <TextInput
+            <CustomTextInput
               style={[
                 styles.input,
                 {
@@ -347,7 +348,7 @@ export default function ResetPasswordScreen() {
               {t('reset.repeat_password')}
             </Text>
 
-            <TextInput
+            <CustomTextInput
               style={[
                 styles.input,
                 {

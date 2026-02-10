@@ -18,6 +18,7 @@ import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
 import { useWindowInfo } from '../../context/windowContext';
+import CustomTextInput from '../../components/ui/CustomTextInput';
 
 const OTP_LENGTH = 6;
 
@@ -280,7 +281,7 @@ export default function Step3_PhoneVerify({ factorId, phone, onNext, onBack }) {
           </Text>
           <View style={dynamicStyles.otpRow}>
             {otp.map((digit, idx) => (
-              <TextInput
+              <CustomTextInput
                 key={idx}
                 ref={(ref) => (inputsRef.current[idx] = ref)}
                 style={[

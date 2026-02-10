@@ -16,6 +16,7 @@ import AutocompletePicker from './ui/AutocompletePicker';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
 import { useNotification } from '../src/render';
+import CustomTextInput from './ui/CustomTextInput';
 
 const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
   const { themeController, languageController, jobTypesController, setAppLoading } = useComponentContext();
@@ -338,7 +339,7 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
                 <Text style={styles.label}>
                   {t('professions.register_modal.subtype_label')}
                 </Text>
-                <TextInput
+                <CustomTextInput
                   style={styles.textInput}
                   placeholder={t(
                     'professions.register_modal.subtype_placeholder'

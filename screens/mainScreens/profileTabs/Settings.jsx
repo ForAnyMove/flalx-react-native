@@ -22,6 +22,7 @@ import { sendFeedback, sendMessage } from '../../../src/api/support';
 import { useNotification } from '../../../src/render';
 import { logError, logInfo } from '../../../utils/log_util';
 import CustomSwitch from '../../../components/ui/CustomSwitch';
+import CustomTextInput from '../../../components/ui/CustomTextInput';
 
 // getResponsiveSize helper was unused and removed
 
@@ -827,7 +828,7 @@ function ModalContent({
                           defaultValue: 'Topic',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={contactUsForm.topic}
                         onChangeText={(v) =>
                           setContactUsForm((p) => ({ ...p, topic: v }))
@@ -893,7 +894,7 @@ function ModalContent({
                           defaultValue: 'Message',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={contactUsForm.message}
                         onChangeText={(v) =>
                           setContactUsForm((p) => ({ ...p, message: v }))
@@ -947,7 +948,7 @@ function ModalContent({
                           defaultValue: 'Email',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={contactUsForm.email}
                         onChangeText={(v) =>
                           setContactUsForm((p) => ({ ...p, email: v }))
@@ -999,7 +1000,7 @@ function ModalContent({
                           defaultValue: 'Your name',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={contactUsForm.name}
                         onChangeText={(v) =>
                           setContactUsForm((p) => ({ ...p, name: v }))
@@ -1189,7 +1190,7 @@ function ModalContent({
                           defaultValue: 'Your phone number',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={contactUsForm.phoneNumber}
                         onChangeText={(v) =>
                           setContactUsForm((p) => ({ ...p, phoneNumber: v }))

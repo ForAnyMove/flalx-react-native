@@ -22,6 +22,7 @@ import TagSelector from '../components/TagSelector';
 import CustomPicker from '../components/ui/CustomPicker';
 import { logError } from '../utils/log_util';
 import { useWindowInfo } from '../context/windowContext';
+import CustomTextInput from '../components/ui/CustomTextInput';
 
 export default function RegisterScreenWithPass() {
   const { t } = useTranslation();
@@ -648,7 +649,7 @@ export default function RegisterScreenWithPass() {
                   >
                     {t('register.name')} ({t('register.required')})
                   </Text>
-                  <TextInput
+                  <CustomTextInput
                     placeholder={t('register.name')}
                     value={form.name}
                     onChangeText={(txt) => setForm({ ...form, name: txt })}
@@ -702,7 +703,7 @@ export default function RegisterScreenWithPass() {
                   >
                     {t('register.surname')} ({t('register.required')})
                   </Text>
-                  <TextInput
+                  <CustomTextInput
                     placeholder={t('register.surname')}
                     value={form.surname}
                     onChangeText={(txt) => setForm({ ...form, surname: txt })}
@@ -758,7 +759,7 @@ export default function RegisterScreenWithPass() {
                     {t('register.email')} ({t('register.required')})
                   </Text>
 
-                  <TextInput
+                  <CustomTextInput
                     value={email}
                     onChangeText={(txt) => {
                       setEmail(txt);
@@ -830,7 +831,7 @@ export default function RegisterScreenWithPass() {
                     {t('register.password')} ({t('register.required')})
                   </Text>
 
-                  <TextInput
+                  <CustomTextInput
                     secureTextEntry={!showPassword}
                     value={password}
                     onChangeText={(txt) => {
@@ -924,7 +925,7 @@ export default function RegisterScreenWithPass() {
                     {t('register.repeat_password')} ({t('register.required')})
                   </Text>
 
-                  <TextInput
+                  <CustomTextInput
                     secureTextEntry={true}
                     value={passwordRepeat}
                     onChangeText={(txt) => {
@@ -1027,7 +1028,7 @@ export default function RegisterScreenWithPass() {
                 {t('register.profile_profession')}
               </Text>
 
-              <TextInput
+              <CustomTextInput
                 placeholder={t('register.profession_placeholder')}
                 value={form.profession}
                 onChangeText={(txt) => setForm({ ...form, profession: txt })}
@@ -1173,7 +1174,7 @@ export default function RegisterScreenWithPass() {
                     >
                       {t('register.profile_description')}
                     </Text>
-                    <TextInput
+                    <CustomTextInput
                       placeholder={t('register.description_placeholder')}
                       value={form.description}
                       onChangeText={(txt) =>

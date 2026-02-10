@@ -16,6 +16,7 @@ import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
 import { useWindowInfo } from '../../context/windowContext';
+import CustomTextInput from '../../components/ui/CustomTextInput';
 
 function PrimaryOutlineButton({
     title,
@@ -262,7 +263,7 @@ export default function LoginStep1_EmailPassword({ onNext, onGoToRegister, onGoT
             <Text style={dynamicStyles.label}>
               {t('auth.email_label')}
             </Text>
-            <TextInput
+            <CustomTextInput
               ref={emailInputRef}
               style={dynamicStyles.input}
               placeholder='name@example.com'
@@ -284,7 +285,7 @@ export default function LoginStep1_EmailPassword({ onNext, onGoToRegister, onGoT
             <Text style={dynamicStyles.label}>
               {t('auth.password_label')}
             </Text>
-            <TextInput
+            <CustomTextInput
               style={dynamicStyles.input}
               placeholder='******'
               placeholderTextColor={theme.formInputPlaceholderColor}

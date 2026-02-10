@@ -20,6 +20,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
 import { logError } from '../../utils/log_util';
 import { useWindowInfo } from '../../context/windowContext';
+import CustomTextInput from '../../components/ui/CustomTextInput';
 
 // Re-using the button component from the original file
 function PrimaryOutlineButton({
@@ -463,7 +464,7 @@ export default function Step1_EmailPassword({ onNext }) {
             >
               {t('auth.email_label')}
             </Text>
-            <TextInput
+            <CustomTextInput
               ref={emailInputRef}
               style={[
                 styles.input,
@@ -539,7 +540,7 @@ export default function Step1_EmailPassword({ onNext }) {
             >
               {t('register.password')}
             </Text>
-            <TextInput
+            <CustomTextInput
               style={[
                 styles.input,
                 dynamicStyles.input,
@@ -637,7 +638,7 @@ export default function Step1_EmailPassword({ onNext }) {
             >
               {t('register.repeat_password')}
             </Text>
-            <TextInput
+            <CustomTextInput
               style={[
                 styles.input,
                 dynamicStyles.input,

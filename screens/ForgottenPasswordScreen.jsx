@@ -19,6 +19,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 import { logError } from '../utils/log_util';
 import { useWindowInfo } from '../context/windowContext';
+import CustomTextInput from '../components/ui/CustomTextInput';
 
 const OTP_LENGTH = 6;
 
@@ -410,7 +411,7 @@ export default function ForgottenPasswordScreen() {
                 >
                   {t('auth.email_label')}
                 </Text>
-                <TextInput
+                <CustomTextInput
                   ref={emailInputRef}
                   style={[
                     styles.input,
@@ -573,7 +574,7 @@ export default function ForgottenPasswordScreen() {
                 ]}
               >
                 {Array.from({ length: OTP_LENGTH }).map((_, i) => (
-                  <TextInput
+                  <CustomTextInput
                     key={i}
                     ref={(el) => (inputsRef.current[i] = el)}
                     style={[

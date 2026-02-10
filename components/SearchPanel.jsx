@@ -11,6 +11,7 @@ import { icons } from '../constants/icons';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useWindowInfo } from '../context/windowContext';
+import CustomTextInput from './ui/CustomTextInput';
 
 export default function SearchPanel({ searchValue, setSearchValue }) {
   const { themeController, languageController } = useComponentContext();
@@ -87,7 +88,7 @@ export default function SearchPanel({ searchValue, setSearchValue }) {
         },
       ]}
     >
-      <TextInput
+      <CustomTextInput
         placeholder={t('common.search')}
         value={searchValue}
         onChangeText={setSearchValue}

@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { useWindowInfo } from '../../context/windowContext';
+import CustomTextInput from '../../components/ui/CustomTextInput';
 
 const OTP_LENGTH = 6;
 
@@ -171,7 +172,7 @@ const LoginStep2_PhoneVerify = ({ onNext, onBack, phone, factorId, challengeId }
       <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
         <View style={dynamicStyles.otpContainer}>
           {otp.map((digit, index) => (
-            <TextInput
+            <CustomTextInput
               key={index}
               ref={(ref) => (inputsRef.current[index] = ref)}
               style={dynamicStyles.otpInput}

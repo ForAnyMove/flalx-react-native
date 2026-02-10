@@ -48,23 +48,23 @@ export function WindowProvider({ children }) {
 
   useEffect(() => {
     const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
-    const isMobileWeb = Platform.OS === 'web' && window.innerWidth < 768; // Примерный порог для мобильного веба
+    const isMobileWeb = Platform.OS === 'web' && window.innerWidth < 892; // Примерный порог для мобильного веба
 
     const shouldBlockResize =
       (isMobile && isKeyboardVisible) ||
       (isMobileWeb && focusedInputs.length > 0);
 
     const sub = Dimensions.addEventListener('change', ({ window }) => {
-      if (shouldBlockResize) {
-        return;
-      }
+      // if (shouldBlockResize) {
+      //   return;
+      // }
 
       const isLandscape = window.width > window.height;
 
       setWindowInfo((prev) => ({
         ...prev,
         width: window.width,
-        height: window.height,
+        height: shouldBlockResize ? prev.height : window.height,
         isLandscape,
         sidebarWidth:
           Platform.OS === 'web' && isLandscape

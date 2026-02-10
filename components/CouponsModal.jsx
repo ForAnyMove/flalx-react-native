@@ -15,6 +15,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
+import CustomTextInput from './ui/CustomTextInput';
 
 const CouponsModal = ({ visible, onClose }) => {
   const { themeController, languageController, couponsManagerController } = useComponentContext();
@@ -240,7 +241,7 @@ const CouponsModal = ({ visible, onClose }) => {
               <Text style={styles.infoFieldLabel}>
                 {t('coupons.copy_link_label')}
               </Text>
-              <TextInput
+              <CustomTextInput
                 style={styles.infoFieldText}
                 value={referralLink}
                 editable={false}

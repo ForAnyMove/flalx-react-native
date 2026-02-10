@@ -14,6 +14,7 @@ import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
 import { useWindowInfo } from '../../context/windowContext';
+import CustomTextInput from './CustomTextInput';
 
 const AutocompletePicker = ({
   label,
@@ -261,7 +262,7 @@ const AutocompletePicker = ({
             alignItems: 'center',
           }}
         >
-          <TextInput
+          <CustomTextInput
             ref={inputRef}
             value={inputText}
             onChangeText={setInputText}

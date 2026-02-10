@@ -28,6 +28,7 @@ import ImagePickerModal from './ui/ImagePickerModal';
 import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
 import { scaleByHeightMobile } from '../utils/resizeFuncs';
 import { logError } from '../utils/log_util';
+import CustomTextInput from './ui/CustomTextInput';
 
 function CompleteJobModalContent({ closeModal, completeFunc }) {
   const {
@@ -421,7 +422,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
                   defaultValue: 'Description',
                 })}
               </Text>
-              <TextInput
+              <CustomTextInput
                 value={description}
                 onChangeText={setDescription}
                 placeholder={t('newJob.typePlaceholder', {

@@ -13,6 +13,7 @@ import { normalizeImageUri } from '../../utils/supabase/uriHelpers';
 import { useComponentContext } from '../../context/globalAppContext';
 import { logError } from '../../utils/log_util';
 import { useWindowInfo } from '../../context/windowContext';
+import CustomTextInput from './CustomTextInput';
 
 export default function ImagePickerModal({ visible, onClose, onAdd }) {
   const [url, setUrl] = useState('');
@@ -156,7 +157,7 @@ export default function ImagePickerModal({ visible, onClose, onAdd }) {
             </TouchableOpacity>
           )}
 
-          <TextInput
+          <CustomTextInput
             placeholder='Or enter image URL...'
             placeholderTextColor={theme.formInputPlaceholderColor}
             value={url}

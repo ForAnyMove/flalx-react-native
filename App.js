@@ -32,16 +32,15 @@ import RegisterScreenWithPassSms from './screens/RegisterScreenWithPassSms';
 import MultiStepLoginScreen from './screens/login/MultiStepLoginScreen';
 import MultiStepRegisterScreen from './screens/register/MultiStepRegisterScreen';
 import { logError } from './utils/log_util';
-import { useKeyboardListener } from './utils/useKeyboardListener';
 
-// --- Безопасная глобальная подмена TextInput ---
-const originalCreateElement = React.createElement;
-React.createElement = (type, props, ...children) => {
-  if (type === TextInput) {
-    return originalCreateElement(CustomTextInput, props, ...children);
-  }
-  return originalCreateElement(type, props, ...children);
-};
+// // --- Безопасная глобальная подмена TextInput ---
+// const originalCreateElement = React.createElement;
+// React.createElement = (type, props, ...children) => {
+//   if (type === TextInput) {
+//     return originalCreateElement(CustomTextInput, props, ...children);
+//   }
+//   return originalCreateElement(type, props, ...children);
+// };
 
 // --- Глобальное применение шрифта ---
 const originalTextRender = Text.render;

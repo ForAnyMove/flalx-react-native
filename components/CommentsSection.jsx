@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useWindowInfo } from '../context/windowContext';
+import CustomTextInput from './ui/CustomTextInput';
 
 export default function CommentsSection({
   jobId,
@@ -362,7 +363,7 @@ export default function CommentsSection({
                 />
               </TouchableOpacity>
             </View>
-            <TextInput
+            <CustomTextInput
               value={newText}
               onChangeText={setNewText}
               placeholder={t('comments.placeholder')}

@@ -17,6 +17,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
 import { formatExperience } from '../../utils/experience_ulit';
 import { useWindowInfo } from '../../context/windowContext';
+import CustomTextInput from './CustomTextInput';
 
 const CustomExperiencePicker = ({
   label,
@@ -512,7 +513,7 @@ const CustomExperiencePicker = ({
             >
               <Text style={styles.counterButtonText}>+</Text>
             </TouchableOpacity>
-            <TextInput
+            <CustomTextInput
               style={styles.counterInput}
               value={String(years)}
               onChangeText={(text) => {
@@ -554,7 +555,7 @@ const CustomExperiencePicker = ({
             >
               <Text style={styles.counterButtonText}>+</Text>
             </TouchableOpacity>
-            <TextInput
+            <CustomTextInput
               style={styles.counterInput}
               value={String(months)}
               onChangeText={(text) => {

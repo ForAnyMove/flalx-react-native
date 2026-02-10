@@ -44,6 +44,7 @@ import { formatExperience } from '../utils/experience_ulit';
 import { formatCurrency } from '../utils/currency_formatter';
 import { PublishJobModal } from './PublishJobModal';
 import { logError } from '../utils/log_util';
+import CustomTextInput from './ui/CustomTextInput';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -657,7 +658,7 @@ export default function ShowJobModal({
                   defaultValue: 'Provider comments',
                 })}
               </Text>
-              <TextInput
+              <CustomTextInput
                 value={currentJobInfo?.job_comment?.comment || ''}
                 placeholder={t('showJob.fields.commentsPlaceholder', {
                   defaultValue: 'Comment on the completed work...',
@@ -984,7 +985,7 @@ export default function ShowJobModal({
                   </TouchableOpacity>
                 )}
               </View>
-              <TextInput
+              <CustomTextInput
                 value={
                   editableCommentState
                     ? editableCommentValue
@@ -1426,7 +1427,7 @@ export default function ShowJobModal({
       >
         {t('showJob.fields.type', { defaultValue: 'Type' })}
       </Text>
-      <TextInput
+      <CustomTextInput
         value={tField(currentJobInfo?.type, 'name') || '-'}
         style={[
           styles.input,
@@ -1453,7 +1454,7 @@ export default function ShowJobModal({
       >
         {t('showJob.fields.subType', { defaultValue: 'Sub type' })}
       </Text>
-      <TextInput
+      <CustomTextInput
         value={tField(currentJobInfo?.subType, 'name') || '-'}
         style={[
           styles.input,
@@ -1480,7 +1481,7 @@ export default function ShowJobModal({
     //   >
     //     {t('showJob.fields.profession', { defaultValue: 'Profession' })}
     //   </Text>
-    //   <TextInput
+    //   <CustomTextInput
     //     value={LICENSES[currentJobInfo?.profession] || '-'}
     //     style={[
     //       styles.input,
@@ -1507,7 +1508,7 @@ export default function ShowJobModal({
       >
         {t('showJob.fields.location', { defaultValue: 'Location' })}
       </Text>
-      <TextInput
+      <CustomTextInput
         value={location?.address || '-'}
         style={[
           styles.input,
@@ -1534,7 +1535,7 @@ export default function ShowJobModal({
       >
         {t('showJob.fields.description', { defaultValue: 'Description' })}
       </Text>
-      <TextInput
+      <CustomTextInput
         value={currentJobInfo?.description || ''}
         style={[
           styles.input,
@@ -1563,7 +1564,7 @@ export default function ShowJobModal({
       >
         {t('showJob.fields.price', { defaultValue: 'Price' })}
       </Text>
-      <TextInput
+      <CustomTextInput
         value={currentJobInfo?.price || '-'}
         style={[
           styles.input,
@@ -1673,7 +1674,7 @@ export default function ShowJobModal({
       >
         {t('showJob.fields.experience', { defaultValue: 'Experience' })}
       </Text>
-      <TextInput
+      <CustomTextInput
         value={formatExperience(currentJobInfo?.experience, t)}
         style={[
           styles.input,
@@ -1863,7 +1864,7 @@ export default function ShowJobModal({
                       >
                         {t('showJob.fields.type', { defaultValue: 'Type' })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={tField(currentJobInfo?.type, 'name') || '-'}
                         style={{
                           // fontWeight: '500',
@@ -1915,7 +1916,7 @@ export default function ShowJobModal({
                           defaultValue: 'Description',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={currentJobInfo?.description || ''}
                         style={{
                           // fontWeight: '500',
@@ -1969,7 +1970,7 @@ export default function ShowJobModal({
                           defaultValue: 'Sub type',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={tField(currentJobInfo?.subType, 'name') || '-'}
                         style={{
                           // fontWeight: '500',
@@ -2022,7 +2023,7 @@ export default function ShowJobModal({
                           defaultValue: 'Location',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={location?.address || '-'}
                         style={{
                           // fontWeight: '500',
@@ -2067,7 +2068,7 @@ export default function ShowJobModal({
                           defaultValue: 'Profession',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={LICENSES[currentJobInfo?.profession] || '-'}
                         style={{
                           fontWeight: '500',
@@ -2117,7 +2118,7 @@ export default function ShowJobModal({
                       >
                         {t('showJob.fields.price', { defaultValue: 'Price' })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={currentJobInfo?.price || '-'}
                         style={{
                           // fontWeight: '500',
@@ -2253,7 +2254,7 @@ export default function ShowJobModal({
                       >
                         {t('showJob.fields.experience')}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={formatExperience(currentJobInfo?.experience, t)}
                         style={{
                           // fontWeight: '500',

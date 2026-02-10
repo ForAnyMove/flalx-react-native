@@ -22,6 +22,7 @@ import TagSelector from '../components/TagSelector';
 import CustomPicker from '../components/ui/CustomPicker';
 import { logError } from '../utils/log_util';
 import { useWindowInfo } from '../context/windowContext';
+import CustomTextInput from '../components/ui/CustomTextInput';
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
@@ -559,7 +560,7 @@ export default function RegisterScreen() {
                   >
                     {t('register.name')} ({t('register.required')})
                   </Text>
-                  <TextInput
+                  <CustomTextInput
                     placeholder={t('register.name')}
                     value={form.name}
                     onChangeText={(txt) => setForm({ ...form, name: txt })}
@@ -620,7 +621,7 @@ export default function RegisterScreen() {
                   >
                     {t('register.surname')} ({t('register.required')})
                   </Text>
-                  <TextInput
+                  <CustomTextInput
                     placeholder={t('register.surname')}
                     value={form.surname}
                     onChangeText={(txt) => setForm({ ...form, surname: txt })}
@@ -680,7 +681,7 @@ export default function RegisterScreen() {
                   >
                     {t('register.profile_description')}
                   </Text>
-                  <TextInput
+                  <CustomTextInput
                     placeholder={t('register.description_placeholder')}
                     value={form.description}
                     onChangeText={(txt) =>
@@ -960,7 +961,7 @@ const styles = StyleSheet.create({
 //           >
 //             {t('register.profile_description')}
 //           </Text>
-//           <TextInput
+//           <CustomTextInput
 //             placeholder={t('register.description_placeholder')}
 //             value={form.description}
 //             onChangeText={(txt) =>

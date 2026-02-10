@@ -18,6 +18,7 @@ import { useComponentContext } from '../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 import { useWindowInfo } from '../context/windowContext';
+import CustomTextInput from '../components/ui/CustomTextInput';
 
 const OTP_LENGTH = 6;
 
@@ -384,7 +385,7 @@ export default function ForgottenPasswordScreenSms() {
                   >
                     {t('my_profile.phone')}
                   </Text>
-                  <TextInput
+                  <CustomTextInput
                     ref={phoneInputRef}
                     style={[
                       styles.input,
@@ -476,7 +477,7 @@ export default function ForgottenPasswordScreenSms() {
                 <View style={styles.fieldBlock}>
                   <View style={styles.otpRow}>
                     {otp.map((digit, idx) => (
-                      <TextInput
+                      <CustomTextInput
                         key={idx}
                         ref={(ref) => (inputsRef.current[idx] = ref)}
                         style={[

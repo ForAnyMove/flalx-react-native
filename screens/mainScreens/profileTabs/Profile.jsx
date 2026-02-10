@@ -24,6 +24,7 @@ import SubscriptionsModal from '../../../components/SubscriptionsModal';
 import { getUserExportData } from '../../../src/api/dataExport';
 import CouponsModal from '../../../components/CouponsModal';
 import { logError } from '../../../utils/log_util';
+import CustomTextInput from '../../../components/ui/CustomTextInput';
 
 export default function Profile() {
   const { user, themeController, languageController, session } =
@@ -720,7 +721,7 @@ export default function Profile() {
                       {t('my_profile.old_password')}
                     </Text>
 
-                    <TextInput
+                    <CustomTextInput
                       secureTextEntry={!showOldPassword}
                       value={oldPassword}
                       onChangeText={setOldPassword}
@@ -785,7 +786,7 @@ export default function Profile() {
                     {t('my_profile.new_password')}
                   </Text>
 
-                  <TextInput
+                  <CustomTextInput
                     secureTextEntry={!showNewPassword}
                     value={newPassword}
                     onChangeText={setNewPassword}
@@ -848,7 +849,7 @@ export default function Profile() {
                     {t('my_profile.repeat_new_password')}
                   </Text>
 
-                  <TextInput
+                  <CustomTextInput
                     secureTextEntry={true}
                     value={repeatPassword}
                     onChangeText={setRepeatPassword}
@@ -1048,7 +1049,7 @@ function InfoField({
           {label}
         </Text>
         {editMode ? (
-          <TextInput
+          <CustomTextInput
             style={[
               styles.profileInfoText,
               {
