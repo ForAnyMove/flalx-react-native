@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, ActivityIndicator, View, Text } from 'react-native';
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, ActivityIndicator, View, Text, TextInput } from 'react-native';
 import {
   ComponentProvider,
   useComponentContext,
@@ -8,8 +8,8 @@ import {
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Platform } from 'react-native';
-import { useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import CustomTextInput from './components/ui/CustomTextInput';
 
 // Экраны
 import AuthScreen from './screens/AuthScreen';
@@ -33,6 +33,15 @@ import MultiStepLoginScreen from './screens/login/MultiStepLoginScreen';
 import MultiStepRegisterScreen from './screens/register/MultiStepRegisterScreen';
 import { logError } from './utils/log_util';
 import { useKeyboardListener } from './utils/useKeyboardListener';
+
+// --- Безопасная глобальная подмена TextInput ---
+const originalCreateElement = React.createElement;
+React.createElement = (type, props, ...children) => {
+  if (type === TextInput) {
+    return originalCreateElement(CustomTextInput, props, ...children);
+  }
+  return originalCreateElement(type, props, ...children);
+};
 
 // --- Глобальное применение шрифта ---
 const originalTextRender = Text.render;
@@ -74,6 +83,7 @@ function App() {
   } = useComponentContext();
   const [isOnboardingShowed, setOnboardingShowed] = useState(false);
   const [onboardingStatusChecked, setOnboardingStatusChecked] = useState(false);
+  const { width, height, isLandscape, isKeyboardVisible, focusedInputs } = useWindowInfo();
 
   useEffect(() => {
     const checkOnboardingStatus = async () => {
@@ -213,7 +223,6 @@ function App() {
   if (session.resetPassword) {
     content = <ResetPasswordScreen />;
   }
-  const { width, height, isLandscape, isKeyboardVisible } = useWindowInfo();
   
   return (
     <SafeAreaProvider>
@@ -225,6 +234,7 @@ function App() {
             <Text>Height: {height}</Text>
             <Text>Landscape: {isLandscape ? 'Yes' : 'No'}</Text>
             <Text>Is Keyboard Visible: {isKeyboardVisible ? 'Yes' : 'No'}</Text>
+            <Text>Focused Inputs: {focusedInputs.length}</Text>
           </View>
           <GlobalWebScreen />
           <StatusBar style='auto' />
