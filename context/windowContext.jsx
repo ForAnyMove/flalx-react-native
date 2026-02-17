@@ -65,9 +65,9 @@ export function WindowProvider({ children }) {
         ...prev,
         width: window.width,
         height: shouldBlockResize ? prev.height : window.height,
-        isLandscape,
+        isLandscape: shouldBlockResize ? prev.isLandscape : isLandscape,
         sidebarWidth:
-          Platform.OS === 'web' && isLandscape
+          Platform.OS === 'web' && (shouldBlockResize ? prev.isLandscape : isLandscape)
             ? Math.max(90, Math.min(280, window.height * 0.22))
             : 0,
       }));

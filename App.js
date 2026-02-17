@@ -184,7 +184,7 @@ function App() {
       content = <AuthScreen />;
     } else {
       content = <MultiStepLoginScreen
-        skipMFA={true}
+        // skipMFA={true}
         onGoToRegister={() => registerControl.goToRegisterScreen()}
         onGoToForgottenPassword={() => forgotPassControl.switch()}
       />;
@@ -208,6 +208,7 @@ function App() {
   if (registerControl.state) {
     // content = <RegisterScreenWithPass />;
     content = <MultiStepRegisterScreen skipMFA={true} />;
+    // content = <MultiStepRegisterScreen />;
   }
   // if (registerControl.state) {
   //   content = <RegisterScreenWithPassSms />;
@@ -228,13 +229,13 @@ function App() {
       <SafeAreaView style={[styles.container, { backgroundColor: themeController.current.backgroundColor }]}>
         <WebViewProvider>
           {isLoader ? <LoadingStub /> : content}
-          <View style={{ position: 'absolute', top: '15%', right: 0, zIndex: 999999999 }}>
+          {/* <View style={{ position: 'absolute', top: '15%', right: 0, zIndex: 999999999 }}>
             <Text>Width: {width}</Text>
             <Text>Height: {height}</Text>
             <Text>Landscape: {isLandscape ? 'Yes' : 'No'}</Text>
             <Text>Is Keyboard Visible: {isKeyboardVisible ? 'Yes' : 'No'}</Text>
             <Text>Focused Inputs: {focusedInputs.length}</Text>
-          </View>
+          </View> */}
           <GlobalWebScreen />
           <StatusBar style='auto' />
         </WebViewProvider>

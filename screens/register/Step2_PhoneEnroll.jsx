@@ -145,7 +145,8 @@ export default function Step2_PhoneEnroll({ onNext, onBack }) {
   const isValidPhone = useMemo(() => {
     // Basic validation for E.164 format
     const phoneRegex = /^\+[1-9]\d{1,14}$/;
-    return phoneRegex.test(phone.trim());
+    const phoneRegex2 = /^\[1-9]\d{1,14}$/;
+    return phoneRegex.test(phone.trim()) || phoneRegex2.test(phone.trim());
   }, [phone]);
 
   const handleSubmit = async () => {
