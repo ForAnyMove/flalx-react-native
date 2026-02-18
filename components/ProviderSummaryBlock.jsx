@@ -39,7 +39,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
   const { tField } = useLocalization(languageController.current);
   const { openWebView } = useWebView();
   const { showWarning } = useNotification();
-  const { width, height, isLandscape } = useWindowInfo();
+  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
   const isRTL = languageController.isRTL;
 
   const [modalVisible, setModalVisible] = useState(false);

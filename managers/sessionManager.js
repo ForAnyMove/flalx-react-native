@@ -872,10 +872,36 @@ export default function sessionManager() {
 
       return { success: true };
     } catch (e) {
-      logError('createPassword error:', e);
+      logError('Ошибка создания пароля:', e.message);
       return { success: false, error: e.message };
     }
   }
+
+  // Получение номера WhatsApp с сервера
+  async function getWhatsAppNumber() {
+    try {
+      // ЗАГЛУШКА: Когда эндпоинт будет готов, замените это на реальный fetch
+      // const res = await fetch(`${API_BASE_URL}/settings/whatsapp-number`, {
+      //   headers: {
+      //     Authorization: `Bearer ${session?.access_token}`,
+      //   },
+      // });
+      // if (!res.ok) {
+      //   throw new Error('Failed to fetch WhatsApp number');
+      // }
+      // const data = await res.json();
+      // return data.phoneNumber;
+
+      // Возвращаем тестовый номер, пока эндпоинт не готов
+      logInfo('Используется тестовый номер WhatsApp из заглушки.');
+      return '+19876543210';
+    } catch (err) {
+      logError('Ошибка getWhatsAppNumber:', err.message);
+      // Возвращаем null или тестовый номер в случае ошибки, чтобы не ломать приложение
+      return '+1234567890';
+    }
+  }
+
   // Обновление пароля после сброса
   async function setNewPassword(newPassword) {
     await supabase.auth.setSession(trialSession);
@@ -919,6 +945,7 @@ export default function sessionManager() {
       createPassword: (newPassword) => createPassword(newPassword),
       resetPassword: isInPasswordReset,
       setNewPassword: (newPassword) => setNewPassword(newPassword),
+      getWhatsAppNumber: () => getWhatsAppNumber(),
       enrollPhoneNumber,
       challengePhoneNumber,
       verifyPhoneNumber,
