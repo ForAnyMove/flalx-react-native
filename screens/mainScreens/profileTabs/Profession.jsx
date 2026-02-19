@@ -15,13 +15,18 @@ import { useWindowInfo } from '../../../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import MyProfessions from './professionsTabs/MyProfessions';
 import SystemProfessions from './professionsTabs/SystemProfessions';
+import RegisterProfessionModal from '../../../components/RegisterProfessionModal';
 
 const TAB_TITLES = ['my_professions', 'system_professions'];
 const TAB_TITLES_RTL = ['system_professions', 'my_professions'];
 
 export default function Profession() {
-  const { themeController, appTabController, languageController } =
-    useComponentContext();
+  const {
+    themeController,
+    appTabController,
+    languageController,
+    jobTypesController,
+  } = useComponentContext();
 
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
@@ -30,6 +35,11 @@ export default function Profession() {
 
   const [systemAddingPopupVisible, setSystemAddingPopupVisible] =
     useState(false);
+  const [isFromRequest, setIsFromRequest] = useState(false);
+  const [isRequestModalVisible, setIsRequestModalVisible] = useState(false);
+  const [showTabs, setShowTabs] = useState(
+    jobTypesController.userToSystemRequest.list.length > 3
+  );
 
   const orderedTabs = isRTL ? TAB_TITLES_RTL : TAB_TITLES;
   const orderedScreens = isRTL
@@ -107,6 +117,25 @@ export default function Profession() {
     );
   }, [screenWidth, themeController.current, positiveScrollX]);
 
+  const interpolatedSystemColorValue = useMemo(() => {
+    const systemTabIndex = orderedTabs.indexOf('system_professions');
+    if (systemTabIndex === -1) return null;
+
+    return positiveScrollX.interpolate({
+      inputRange: [
+        (systemTabIndex - 1) * screenWidth,
+        systemTabIndex * screenWidth,
+        (systemTabIndex + 1) * screenWidth,
+      ],
+      outputRange: [
+        themeController.current?.systemProfessionsTabColorInactive,
+        themeController.current?.systemProfessionsTabColor,
+        themeController.current?.systemProfessionsTabColorInactive,
+      ],
+      extrapolate: 'clamp',
+    });
+  }, [screenWidth, themeController.current, positiveScrollX, orderedTabs]);
+
   const interpolatedOpacityValues = useMemo(() => {
     return orderedTabs.map((_, i) =>
       positiveScrollX.interpolate({
@@ -180,10 +209,23 @@ export default function Profession() {
     });
   };
 
-  function switchToSystemProfessions() {
+  function openSystemRegistration(fromRequest = false) {
+    setIsFromRequest(fromRequest);
+    setSystemAddingPopupVisible(true);
+  }
+
+  function onBackFromSystemRegistration() {
+    setSystemAddingPopupVisible(false);
+    if (isFromRequest) {
+      setIsRequestModalVisible(true);
+    }
+  }
+
+  function switchToSystemView() {
+    setShowTabs(true);
+    setSystemAddingPopupVisible(false);
     const newIndex = orderedTabs.indexOf('system_professions');
     handleTabPress(newIndex);
-    setSystemAddingPopupVisible(true);
   }
 
   useEffect(() => {
@@ -227,6 +269,25 @@ export default function Profession() {
     };
   }, [height, isWebLandscape]);
 
+  if (!showTabs) {
+    return (
+      <View style={{ flex: 1 }}>
+        <MyProfessions
+          openSystemRegistration={openSystemRegistration}
+          onBackFromSystemRegistration={onBackFromSystemRegistration}
+          isRequestModalVisible={isRequestModalVisible}
+          setIsRequestModalVisible={setIsRequestModalVisible}
+        />
+        <RegisterProfessionModal
+          visible={systemAddingPopupVisible}
+          onClose={() => setSystemAddingPopupVisible(false)}
+          onRequestDone={switchToSystemView}
+          onBack={isFromRequest ? onBackFromSystemRegistration : null}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1, userSelect: 'none' }}>
       <View
@@ -257,7 +318,7 @@ export default function Profession() {
                     source={icons[`${title}-dark`]}
                     style={{ width: sizes.iconSize, height: sizes.iconSize }}
                     resizeMode='contain'
-                    tintColor={themeController?.current.textColor}
+                    tintColor={title === 'system_professions' ? themeController?.current.systemProfessionsTabColor : themeController?.current.textColor }
                   />
                 </Animated.View>
               </View>
@@ -271,7 +332,7 @@ export default function Profession() {
                 <Animated.Text
                   style={{
                     opacity: interpolatedOpacityValues[idx],
-                    color: interpolatedColorValues[idx],
+                    color: title === 'system_professions' && interpolatedSystemColorValue ? interpolatedSystemColorValue : interpolatedColorValues[idx],
                     textAlign: 'center',
                     fontSize: sizes.fontSize,
                   }}
@@ -316,14 +377,22 @@ export default function Profession() {
               }}
             >
               <Component
-                switchToSystemProfessions={switchToSystemProfessions}
-                systemAddingPopupVisible={systemAddingPopupVisible}
-                setSystemAddingPopupVisible={setSystemAddingPopupVisible}
+                openSystemRegistration={openSystemRegistration}
+                onBackFromSystemRegistration={onBackFromSystemRegistration}
+                switchToSystemView={switchToSystemView}
+                isRequestModalVisible={isRequestModalVisible}
+                setIsRequestModalVisible={setIsRequestModalVisible}
               />
             </View>
           ))}
         </Animated.View>
       </View>
+      <RegisterProfessionModal
+        visible={systemAddingPopupVisible}
+        onClose={() => setSystemAddingPopupVisible(false)}
+        onRequestDone={switchToSystemView}
+        onBack={isFromRequest ? onBackFromSystemRegistration : null}
+      />
     </View>
   );
 }
