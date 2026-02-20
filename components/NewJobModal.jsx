@@ -302,7 +302,30 @@ export default function NewJobModal({
     jobsController.products.find((o) => o.type === jobType) ||
     jobsController.products[0];
 
+  const [isExperienceRequired, setIsExperienceRequired] = useState(false);
   const [experience, setExperience] = useState(initialJob?.experience || null);
+
+  // Хук для отслеюивания смены type или subType и отображения поля ввода опыта, если она требует опыта
+  useEffect(() => {
+    let requiresExperience = false;
+    if (jobTypesController.jobTypesWithSubtypes) {
+      // Проверяем, требует ли верификации выбранный тип
+      const typeRequiresVerification = jobTypesController.jobTypesWithSubtypes.find(
+        (t) => t.key === type
+      )?.requires_verification;
+
+      // Проверяем, требует ли верификации выбранный "подтип" (который является таким же типом)
+      const subTypeRequiresVerification = jobTypesController.jobTypesWithSubtypes.find(
+        (t) => t.key === subType
+      )?.requires_verification;
+
+      if (typeRequiresVerification || subTypeRequiresVerification) {
+        requiresExperience = true;
+      }
+    }
+    setIsExperienceRequired(requiresExperience);
+  }, [type, subType, jobTypesController.jobTypesWithSubtypes]);
+  
 
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [plansModalVisible, setPlansModalVisible] = useState(false);
@@ -765,62 +788,18 @@ export default function NewJobModal({
         onAdd={handleImageAdd}
       />
     </View>,
-    // <View
-    //   style={[
-    //     styles.inputBlock,
-    //     {
-    //       backgroundColor: themeController.current?.formInputBackground,
-    //       padding: 0,
-    //       paddingHorizontal: sizes.inputContainerPaddingHorizontal,
-    //       paddingVertical: sizes.inputContainerPaddingVertical,
-    //       borderRadius: sizes.borderRadius,
-    //       height: sizes.inputHeight,
-    //     },
-    //   ]}
-    //   key='location'
-    // >
-    //   <Text
-    //     style={[
-    //       styles.label,
-    //       {
-    //         color: themeController.current?.unactiveTextColor,
-    //         fontSize: sizes.font,
-    //       },
-    //       isRTL && { textAlign: 'right' },
-    //       isWebLandscape && { fontSize: sizes.font },
-    //     ]}
-    //   >
-    //     {t('newJob.location', { defaultValue: 'Location' })}
-    //   </Text>
-    //   <CustomTextInput
-    //     value={location}
-    //     onChangeText={setLocation}
-    //     placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
-    //     placeholderTextColor={
-    //       themeController.current?.formInputPlaceholderColor
-    //     }
-    //     style={[
-    //       styles.input,
-    //       {
-    //         color: themeController.current?.textColor,
-    //         fontSize: sizes.inputFont,
-    //         borderRadius: sizes.borderRadius,
-    //         fontFamily: 'Rubik-Regular',
-    //       },
-    //       isRTL && { textAlign: 'right' },
-    //     ]}
-    //   />
-    // </View>,
-    <CustomExperiencePicker
-      label={t('register.experience_label')}
-      selectedValue={experience}
-      onValueChange={setExperience}
-      isRTL={isRTL}
-      containerStyle={{
-        marginBottom: sizes.typeTagsSelectorMarginBottom,
-      }}
-      bottomDropdown={false}
-    />,
+    isExperienceRequired ? (
+      <CustomExperiencePicker
+        label={t('register.experience_label')}
+        selectedValue={experience}
+        onValueChange={setExperience}
+        isRTL={isRTL}
+        containerStyle={{
+          marginBottom: sizes.typeTagsSelectorMarginBottom,
+        }}
+        bottomDropdown={false}
+      />
+    ) : null,
     <View
       style={[
         styles.row,
@@ -869,7 +848,7 @@ export default function NewJobModal({
         />
       )}
     </View>,
-  ];
+  ].filter(Boolean); // Фильтруем null значения
 
   const bg = themeController.current?.formInputBackground;
 
@@ -1329,35 +1308,42 @@ export default function NewJobModal({
                     onAdd={handleImageAdd}
                   />
 
-                  <View
-                    style={[
-                      styles.gridHalf,
-                      {
-                        // marginBottom: sizes.margin,
-                        zIndex: 4,
-                        gridArea: isRTL ? '6 / 2 / 7 / 3' : '6 / 1 / 7 / 2',
-                      },
-                    ]}
-                  >
-                    <CustomExperiencePicker
-                      label={t('register.experience_label')}
-                      selectedValue={experience}
-                      onValueChange={setExperience}
-                      isRTL={isRTL}
-                      containerStyle={{
-                        marginBottom: sizes.typeTagsSelectorMarginBottom,
-                      }}
-                    />
-                  </View>
+                  {isExperienceRequired && (
+                    <View
+                      style={[
+                        styles.gridHalf,
+                        {
+                          // marginBottom: sizes.margin,
+                          zIndex: 4,
+                          gridArea: isRTL ? '6 / 2 / 7 / 3' : '6 / 1 / 7 / 2',
+                        },
+                      ]}
+                    >
+                      <CustomExperiencePicker
+                        label={t('register.experience_label')}
+                        selectedValue={experience}
+                        onValueChange={setExperience}
+                        isRTL={isRTL}
+                        containerStyle={{
+                          marginBottom: sizes.typeTagsSelectorMarginBottom,
+                        }}
+                      />
+                    </View>
+                  )}
 
-                  {/* Row 5: Start/End date (1/2 + 1/2) */}
+                  {/* Дата и время начала */}
                   <View
                     style={[
                       styles.gridHalf,
                       {
-                        // marginBottom: sizes.margin,
-                        zIndex: 3,
-                        gridArea: isRTL ? '7 / 2 / 8 / 3' : '7 / 1 / 8 / 2',
+                        /* zIndex: 3, */
+                        gridArea: isExperienceRequired
+                          ? isRTL
+                            ? '7 / 2 / 8 / 3'
+                            : '7 / 1 / 8 / 2'
+                          : isRTL
+                          ? '6 / 2 / 7 / 3'
+                          : '6 / 1 / 7 / 2',
                       },
                       { flexDirection: isRTL ? 'row-reverse' : 'row' },
                     ]}
@@ -1386,9 +1372,14 @@ export default function NewJobModal({
                     style={[
                       styles.gridHalf,
                       {
-                        // marginBottom: sizes.margin,
-                        zIndex: 2,
-                        gridArea: isRTL ? '7 / 1 / 8 / 2' : '7 / 2 / 8 / 3',
+                        /* zIndex: 2, */
+                        gridArea: isExperienceRequired
+                          ? isRTL
+                            ? '7 / 1 / 8 / 2'
+                            : '7 / 2 / 8 / 3'
+                          : isRTL
+                          ? '6 / 1 / 7 / 2'
+                          : '6 / 2 / 7 / 3',
                       },
                       { flexDirection: isRTL ? 'row-reverse' : 'row' },
                     ]}
@@ -1412,16 +1403,22 @@ export default function NewJobModal({
                       />
                     )}
                   </View>
-                  {/* Bottom button (слева, зеркалим для RTL) */}
+                  {/* Кнопка отправки */}
                   <View
                     style={[
-                      // styles.bottomButtonWrapper,
+                      /* styles.gridFull, */
                       {
                         alignItems: isRTL ? 'flex-end' : 'flex-start',
                         backgroundColor:
                           themeController.current?.backgroundColor,
                         zIndex: 1,
-                        gridArea: isRTL ? '8 / 1 / 9 / 3' : '8 / 1 / 9 / 3',
+                        gridArea: isExperienceRequired
+                          ? isRTL
+                            ? '8 / 1 / 9 / 3'
+                            : '8 / 1 / 9 / 3'
+                          : isRTL
+                          ? '7 / 1 / 8 / 3'
+                          : '7 / 1 / 8 / 3',
                       },
                     ]}
                   >
