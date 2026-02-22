@@ -67,8 +67,12 @@ export function WindowProvider({ children }) {
         height: shouldBlockResize ? prev.height : window.height,
         isLandscape: shouldBlockResize ? prev.isLandscape : isLandscape,
         sidebarWidth:
-          Platform.OS === 'web' && (shouldBlockResize ? prev.isLandscape : isLandscape)
-            ? Math.max(90, Math.min(280, window.height * 0.22))
+          Platform.OS === 'web' &&
+          (shouldBlockResize ? prev.isLandscape : isLandscape)
+            ? scaleByHeight(
+                220,
+                shouldBlockResize ? prev.height : window.height
+              )
             : 0,
       }));
     });
@@ -88,7 +92,10 @@ export function WindowProvider({ children }) {
           isLandscape,
           sidebarWidth:
             Platform.OS === 'web' && isLandscape
-              ? Math.max(90, Math.min(280, innerHeight * 0.22))
+              ? scaleByHeight(
+                  220,
+                  shouldBlockResize ? prev.height : innerHeight
+                )
               : 0,
         }));
       };
