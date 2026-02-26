@@ -258,6 +258,7 @@ export default function Store() {
       fontSize: isWebLandscape ? web(12) : mobile(12),
       badgeSize,
       underlineHeight: isWebLandscape ? web(2) : mobile(2),
+      globalUnderlineSpace: isWebLandscape ? web(10) : mobile(10),
       tabPaddingBottom: panelHeight * 0.1,
       badgeTop: -badgeSize * 0.3,
       badgeRight: -badgeSize * 0.8,
@@ -383,6 +384,17 @@ export default function Store() {
             backgroundColor: themeController.current?.primaryColor,
             borderRadius: sizes.underlineBorderRadius,
             zIndex: 2,
+          }}
+        />
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: sizes.globalUnderlineSpace,
+            right: sizes.globalUnderlineSpace,
+            height: sizes.underlineHeight,
+            backgroundColor: themeController.current?.profileDefaultBackground,
+            zIndex: 1,
           }}
         />
       </View>

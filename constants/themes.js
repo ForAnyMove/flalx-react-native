@@ -52,6 +52,9 @@ export const LIGHT_THEME = {
   dropdownBorderColor: '#DDDDDD',
   systemProfessionsTabColor: '#FFC107',
   systemProfessionsTabColorInactive: '#FFC10780',
+  activeStarColor: '#FEBF01',
+  inactiveStarColor: '#9FAACD',
+  headerPickerDropdownBorder: '#0A62EA',
 };
 
 export const DARK_THEME = {
@@ -108,4 +111,7 @@ export const DARK_THEME = {
   dropdownBorderColor: '#444444',
   systemProfessionsTabColor: '#FFC107',
   systemProfessionsTabColorInactive: '#FFC10780',
+  activeStarColor: '#FEBF01',
+  inactiveStarColor: '#9FAACD',
+  headerPickerDropdownBorder: '#0A62EA',
 };

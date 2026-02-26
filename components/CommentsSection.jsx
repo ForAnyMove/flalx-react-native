@@ -33,7 +33,8 @@ export default function CommentsSection({
   const [activeTab, setActiveTab] = useState('all'); // all | positive | negative
   const [addModal, setAddModal] = useState(false);
   const [newText, setNewText] = useState('');
-  const [rating, setRating] = useState(1); // 1 - positive, -1 - negative
+  const [rating, setRating] = useState(0); // 1-5
+  const [hoverRating, setHoverRating] = useState(0); // 1-5 for hover/pressIn effect
 
   const isWebLandscape = Platform.OS === 'web' && width > height;
 
@@ -66,7 +67,10 @@ export default function CommentsSection({
         ? scaleByHeight(330, height)
         : '100%',
       modalIconPadding: scale(16, height),
-      modalIconsGap: scale(35, height),
+      modalIconsGap: scale(10, height),
+      modalTextareaPadding: scale(12, height),
+      starIcon: scale(17, height),
+      starsGap: scale(2, height),
     };
   }, [isWebLandscape, height]);
 
@@ -77,33 +81,85 @@ export default function CommentsSection({
     }
   }, [userId]);
 
-  const positiveCount = comments.filter((c) => c.rating > 0).length;
-  const negativeCount = comments.filter((c) => c.rating < 0).length;
-
-  const ratio = comments.length
-    ? Math.round((positiveCount / comments.length) * 100)
-    : 0;
+  const averageRating = 3.6;
+  // const averageRating = useMemo(() => {
+  //   if (comments.length === 0) return 0;
+  //   const totalRating = comments.reduce((acc, c) => acc + c.rating, 0);
+  //   const avg = totalRating / comments.length;
+  //   // Округляем до 1 знака после запятой
+  //   return Math.round(avg * 10) / 10;
+  // }, [comments]);
 
   const filtered = comments.filter((c) => {
-    if (activeTab === 'positive') return c.rating > 0;
-    if (activeTab === 'negative') return c.rating < 0;
+    if (activeTab === 'positive') return c.rating >= 4; // e.g., 4 or 5 stars
+    if (activeTab === 'negative') return c.rating <= 2; // e.g., 1 or 2 stars
     return true;
   });
 
   const handleAdd = async () => {
-    if (!newText.trim()) return;
+    if (!newText.trim() || rating === 0) return;
 
     const res = await providersController.setComment(userId, {
       text: newText.trim(),
-      rating,
-      jobId
+      rating: rating, // send 1-5 rating
+      jobId,
     });
     if (res) {
       setComments((prev) => [res, ...prev]);
       setNewText('');
-      setRating(1);
+      setRating(0);
       setAddModal(false);
     }
+  };
+
+  const renderStars = (currentRating, starSize = sizes.starIcon) => {
+    const stars = [];
+    const roundedRating = Math.round(currentRating * 2) / 2; // Округляем до ближайших 0.5
+    const fullStars = Math.floor(roundedRating);
+    const halfStar = roundedRating % 1 !== 0;
+    const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(
+        <Image
+          key={`full_${i}`}
+          source={icons.star}
+          style={{
+            width: starSize,
+            height: starSize,
+            tintColor: themeController?.current.activeStarColor,
+          }}
+        />
+      );
+    }
+
+    if (halfStar) {
+      stars.push(
+        <Image
+          key="half"
+          source={icons.halfStar}
+          style={{
+            width: starSize,
+            height: starSize,
+          }}
+        />
+      );
+    }
+
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(
+        <Image
+          key={`empty_${i}`}
+          source={icons.star}
+          style={{
+            width: starSize,
+            height: starSize,
+            tintColor: themeController?.current.inactiveStarColor,
+          }}
+        />
+      );
+    }
+    return stars;
   };
 
   return (
@@ -137,17 +193,9 @@ export default function CommentsSection({
             <View style={styles.ratioRow}>
               {comments.length > 0 && (
                 <>
-                  <Image
-                    source={ratio >= 50 ? icons.thumbUp : icons.thumbDown}
-                    style={{
-                      width: sizes.icon,
-                      height: sizes.icon,
-                      marginRight: sizes.iconMargin,
-                      tintColor: ratio >= 50
-                        ? themeController?.current.primaryColor
-                        : themeController?.current.errorTextColor,
-                    }}
-                  />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: sizes.iconMargin, gap: sizes.starsGap }}>
+                    {renderStars(averageRating)}
+                  </View>
                   <Text
                     style={{
                       fontSize: sizes.font,
@@ -155,7 +203,7 @@ export default function CommentsSection({
                       color: themeController.current?.textColor,
                     }}
                   >
-                    {ratio}%
+                    {averageRating.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
                   </Text>
                 </>
               )}
@@ -186,7 +234,11 @@ export default function CommentsSection({
                 >
                   {t(`comments.${tab}`)}{' '}
                   {tab !== 'all' &&
-                    `(${comments.filter((c) => tab === 'positive' ? c.rating > 0 : c.rating < 0).length})`}
+                    `(${comments.filter((c) => {
+                      if (tab === 'positive') return c.rating >= 4;
+                      if (tab === 'negative') return c.rating <= 2;
+                      return true;
+                    }).length})`}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -227,19 +279,9 @@ export default function CommentsSection({
                   >
                     {new Date(c.created_at).toLocaleDateString('ru-RU')}
                   </Text>
-                  <Image
-                    source={
-                      c.rating > 0 ? icons.thumbUp : icons.thumbDown
-                    }
-                    style={{
-                      width: sizes.icon,
-                      height: sizes.icon,
-                      tintColor:
-                        c.rating > 0
-                          ? themeController?.current.primaryColor
-                          : themeController?.current.errorTextColor,
-                    }}
-                  />
+                  <View style={{ flexDirection: 'row', gap: sizes.starsGap, alignItems: 'center' }}>
+                    {renderStars(c.rating)}
+                  </View>
                 </View>
                 <Text
                   style={{
@@ -318,50 +360,29 @@ export default function CommentsSection({
               />
             </TouchableOpacity>
             <View style={[styles.statusRow, { gap: sizes.modalIconsGap }]}>
-              <TouchableOpacity
-                onPress={() => setRating(1)}
-                style={{
-                  borderRadius: sizes.icon + sizes.modalIconPadding,
-                  borderWidth: 1,
-                  borderColor: rating > 0
-                    ? themeController?.current.primaryColor
-                    : themeController?.current.unactiveTextColor,
-                  padding: sizes.modalIconPadding,
-                }}
-              >
-                <Image
-                  source={icons.thumbUp}
-                  style={{
-                    width: sizes.icon * 1.5,
-                    height: sizes.icon * 1.5,
-                    tintColor: rating > 0
-                      ? themeController?.current.primaryColor
-                      : themeController?.current.unactiveTextColor,
-                  }}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setRating(-1)}
-                style={{
-                  borderRadius: sizes.icon + sizes.modalIconPadding,
-                  borderWidth: 1,
-                  borderColor: rating < 0
-                    ? themeController?.current.errorTextColor
-                    : themeController?.current.unactiveTextColor,
-                  padding: sizes.modalIconPadding,
-                }}
-              >
-                <Image
-                  source={icons.thumbDown}
-                  style={{
-                    width: sizes.icon * 1.5,
-                    height: sizes.icon * 1.5,
-                    tintColor: rating < 0
-                      ? themeController?.current.errorTextColor
-                      : themeController?.current.unactiveTextColor,
-                  }}
-                />
-              </TouchableOpacity>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity
+                  key={star}
+                  onPress={() => setRating(star)}
+                  onPressIn={() => setHoverRating(star)}
+                  onPressOut={() => setHoverRating(0)}
+                  // onMouseEnter and onMouseLeave are for web
+                  onMouseEnter={() => Platform.OS === 'web' && setHoverRating(star)}
+                  onMouseLeave={() => Platform.OS === 'web' && setHoverRating(0)}
+                >
+                  <Image
+                    source={icons.star}
+                    style={{
+                      width: sizes.icon * 1.5,
+                      height: sizes.icon * 1.5,
+                      tintColor:
+                        (hoverRating > 0 && star <= hoverRating) || (hoverRating === 0 && star <= rating)
+                          ? themeController?.current.activeStarColor
+                          : themeController?.current.inactiveStarColor,
+                    }}
+                  />
+                </TouchableOpacity>
+              ))}
             </View>
             <CustomTextInput
               value={newText}
@@ -375,6 +396,7 @@ export default function CommentsSection({
                   borderRadius: sizes.borderRadius,
                   height: sizes.modalTextfieldHeight,
                   width: sizes.modalTextfieldWidth,
+                  padding: sizes.modalTextareaPadding,
                 },
               ]}
             />

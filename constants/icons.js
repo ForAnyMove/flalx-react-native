@@ -67,4 +67,8 @@ export const icons = {
   image_mock: require('../assets/icon/image_mock.png'),
   coupon: require('../assets/icon/coupon.png'),
   copy: require('../assets/icon/copy.png'),
+  star: require('../assets/icon/star.png'),
+  halfStar: require('../assets/icon/halfstar.png'),
+  emptyStar: require('../assets/icon/emptystar.png'),
+  language: require('../assets/icon/language.png'),
 };

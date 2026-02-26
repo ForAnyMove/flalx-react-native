@@ -15,7 +15,8 @@ import { logError } from '../utils/log_util';
 
 const ComponentContext = createContext();
 
-const appTabsList = ['client', 'providers', 'business'];
+const appTabsList = ['client', 'business'];
+// const appTabsList = ['client', 'providers', 'business'];
 const profileTabsList = ['profile', 'professions', 'settings'];
 
 export const ComponentProvider = ({ children }) => {

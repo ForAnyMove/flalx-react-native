@@ -1,6 +1,12 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, ActivityIndicator, View, Text, TextInput } from 'react-native';
+import {
+  StyleSheet,
+  ActivityIndicator,
+  View,
+  Text,
+  TextInput,
+} from 'react-native';
 import {
   ComponentProvider,
   useComponentContext,
@@ -82,7 +88,8 @@ function App() {
   } = useComponentContext();
   const [isOnboardingShowed, setOnboardingShowed] = useState(false);
   const [onboardingStatusChecked, setOnboardingStatusChecked] = useState(false);
-  const { width, height, isLandscape, isKeyboardVisible, focusedInputs } = useWindowInfo();
+  const { width, height, isLandscape, isKeyboardVisible, focusedInputs } =
+    useWindowInfo();
 
   useEffect(() => {
     const checkOnboardingStatus = async () => {
@@ -183,11 +190,13 @@ function App() {
     if (authControl.state) {
       content = <AuthScreen />;
     } else {
-      content = <MultiStepLoginScreen
-        // skipMFA={true}
-        onGoToRegister={() => registerControl.goToRegisterScreen()}
-        onGoToForgottenPassword={() => forgotPassControl.switch()}
-      />;
+      content = (
+        <MultiStepLoginScreen
+          // skipMFA={true}
+          onGoToRegister={() => registerControl.goToRegisterScreen()}
+          onGoToForgottenPassword={() => forgotPassControl.switch()}
+        />
+      );
       // content = <AuthScreenWithPass />;
     }
   }
@@ -223,10 +232,15 @@ function App() {
   if (session.resetPassword) {
     content = <ResetPasswordScreen />;
   }
-  
+
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={[styles.container, { backgroundColor: themeController.current.backgroundColor }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          { backgroundColor: themeController.current.backgroundColor },
+        ]}
+      >
         <WebViewProvider>
           {isLoader ? <LoadingStub /> : content}
           {/* <View style={{ position: 'absolute', top: '15%', right: 0, zIndex: 999999999 }}>
