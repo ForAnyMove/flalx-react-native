@@ -106,16 +106,23 @@ export default function JobTypeSelector({
   const jobSubTypesOptions = useMemo(() => {
     const options = {};
     if (jobTypesController.jobTypesWithSubtypes) {
-      jobTypesController.jobTypesWithSubtypes.forEach(type => {
-        if (!subtypesOnly) options[type.key] = tField(type, 'name');
+      const approvedTypeIds = new Set(jobTypesController.approvedProfessions.filter(p => p.startsWith('type_')).map(p => p.replace('type_', '')));
+      const approvedSubTypeIds = new Set(jobTypesController.approvedProfessions.filter(p => p.startsWith('subtype_')).map(p => p.replace('subtype_', '')));
 
-        type.subtypes.forEach((subtype) => {
-          options[subtype.key] = tField(subtype, 'name');
-        });
+      jobTypesController.jobTypesWithSubtypes.forEach(type => {
+        if (approvedTypeIds.has(type.id)) {
+          if (!subtypesOnly) options[type.key] = tField(type, 'name');
+
+          type.subtypes.forEach((subtype) => {
+            if (approvedSubTypeIds.has(subtype.id)) {
+              options[subtype.key] = tField(subtype, 'name');
+            }
+          });
+        }
       });
     }
     return options;
-  }, [jobTypesController.jobTypesWithSubtypes, languageController.current]);
+  }, [jobTypesController.jobTypesWithSubtypes, jobTypesController.approvedProfessions, languageController.current, subtypesOnly]);
 
   useEffect(() => {
     const scrollElement = scrollRef.current;
