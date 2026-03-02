@@ -807,50 +807,90 @@ export default function sessionManager() {
     }
   }
 
-  // Смена существующего пароля
+    // Смена существующего пароля
   async function changePassword(oldPassword, newPassword) {
     try {
-      const email = user?.email;
+      // 1. Проверяем наличие пользователя и его ID
+      const userId = user?.id;
+      if (!userId) {
+        return { success: false, error: 'User not authenticated.' };
+      }
 
-      if (!email) return { success: false, error: 'User email not found' };
-
-      // 1. Сохраняем основную сессию
-      const mainSession = { ...session };
-
-      // 2. Проверяем правильность старого пароля
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password: oldPassword,
+      // 2. Вызываем безопасную Edge Function для смены пароля
+      // Эта функция выполняет все проверки: сверяет старый пароль,
+      // проверяет историю паролей и обновляет пароль пользователя.
+      const { data, error } = await supabase.functions.invoke('change-password', {
+        body: {
+          user_id: userId,
+          old_password: oldPassword,
+          new_password: newPassword,
+          keep_count: 3 // N = 3 по умолчанию
+        },
       });
 
       if (error) {
-        // восстановить основную сессию
-        await supabase.auth.setSession(mainSession);
-        return {
-          success: false,
-          error: 'Old password is incorrect',
-        };
+        // Обрабатываем специфичные ошибки от Edge Function
+        const errorMessage = error.context?.errorMessage || error.message;
+        logError('Failed to change password via Edge Function:', errorMessage);
+        return { success: false, error: errorMessage };
       }
 
-      // 3. Старый пароль верный — восстанавливаем основную сессию
-      await supabase.auth.setSession(mainSession);
-
-      // 4. Меняем пароль
-      const { data: upd, error: updErr } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
-      if (updErr) {
-        return { success: false, error: updErr.message };
-      }
-      logInfo('Password was changed successfully');
+      // 3. При успехе выходим из системы, чтобы пользователь мог войти с новым паролем
+      logInfo('Password was changed successfully. Signing out.');
+      await signOut();
 
       return { success: true };
+
     } catch (e) {
-      logError('changePassword error:', e);
+      logError('changePassword client-side error:', e.message);
       return { success: false, error: e.message };
     }
   }
+  
+  // // Смена существующего пароля
+  // async function changePassword(oldPassword, newPassword) {
+  //   try {
+  //     const email = user?.email;
+
+  //     if (!email) return { success: false, error: 'User email not found' };
+
+  //     // 1. Сохраняем основную сессию
+  //     const mainSession = { ...session };
+
+  //     // 2. Проверяем правильность старого пароля
+  //     const { data, error } = await supabase.auth.signInWithPassword({
+  //       email,
+  //       password: oldPassword,
+  //     });
+
+  //     if (error) {
+  //       // восстановить основную сессию
+  //       await supabase.auth.setSession(mainSession);
+  //       return {
+  //         success: false,
+  //         error: 'Old password is incorrect',
+  //       };
+  //     }
+
+  //     // 3. Старый пароль верный — восстанавливаем основную сессию
+  //     await supabase.auth.setSession(mainSession);
+
+  //     // 4. Меняем пароль
+  //     const { data: upd, error: updErr } = await supabase.auth.updateUser({
+  //       password: newPassword,
+  //     });
+
+  //     if (updErr) {
+  //       return { success: false, error: updErr.message };
+  //     }
+  //     logInfo('Password was changed successfully');
+
+  //     return { success: true };
+  //   } catch (e) {
+  //     logError('changePassword error:', e);
+  //     return { success: false, error: e.message };
+  //   }
+  // }
 
   // Создание нового пароля для OTP-пользователя
   async function createPassword(newPassword) {
