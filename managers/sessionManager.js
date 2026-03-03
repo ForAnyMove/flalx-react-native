@@ -819,9 +819,9 @@ export default function sessionManager() {
       // 2. Вызываем безопасную Edge Function для смены пароля
       // Эта функция выполняет все проверки: сверяет старый пароль,
       // проверяет историю паролей и обновляет пароль пользователя.
+      // user_id теперь получается из токена аутентификации внутри функции.
       const { data, error } = await supabase.functions.invoke('change-password', {
         body: {
-          user_id: userId,
           old_password: oldPassword,
           new_password: newPassword,
           keep_count: 3 // N = 3 по умолчанию
