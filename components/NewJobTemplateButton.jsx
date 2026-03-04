@@ -78,7 +78,7 @@ export default function NewJobTemplateButton({
                 titleText: {
                     fontSize: sizes.font,
                     color: themeController.current?.primaryColor,
-                    textAlign: fullWidth ? (isRTL ? 'right' : 'left') : 'center',
+                    // textAlign: fullWidth ? (isRTL ? 'right' : 'left') : 'center',
                     flex: fullWidth ? 1 : 0,
                 },
                 icon: {
