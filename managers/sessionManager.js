@@ -810,28 +810,32 @@ export default function sessionManager() {
     // Смена существующего пароля
   async function changePassword(oldPassword, newPassword) {
     try {
-      // 1. Проверяем наличие пользователя и его ID
-      const userId = user?.id;
-      if (!userId) {
-        return { success: false, error: 'User not authenticated.' };
+      // 1. Получаем токен доступа пользователя из текущей сессии
+      const accessToken = session?.access_token;
+
+      if (!accessToken) {
+        return { success: false, error: 'user_not_authenticated' };
       }
 
-      // 2. Вызываем безопасную Edge Function для смены пароля
-      // Эта функция выполняет все проверки: сверяет старый пароль,
-      // проверяет историю паролей и обновляет пароль пользователя.
-      // user_id теперь получается из токена аутентификации внутри функции.
-      const { data, error } = await supabase.functions.invoke('change-password', {
-        body: {
+      // 2. Отправляем запрос на ваш сервер для смены пароля
+      const response = await fetch(`${API_BASE_URL}/api/security/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
           old_password: oldPassword,
           new_password: newPassword,
-          keep_count: 3 // N = 3 по умолчанию
-        },
+          keep_count: 3, // N = 3 по умолчанию
+        }),
       });
 
-      if (error) {
-        // Обрабатываем специфичные ошибки от Edge Function
-        const errorMessage = error.context?.errorMessage || error.message;
-        logError('Failed to change password via Edge Function:', errorMessage);
+      if (!response.ok) {
+        const data = await response.json();
+        // Возвращаем ошибку от сервера как ключ для перевода
+        const errorMessage = data.error || 'change_password_failed';
+        logError('Failed to change password via server endpoint:', errorMessage);
         return { success: false, error: errorMessage };
       }
 

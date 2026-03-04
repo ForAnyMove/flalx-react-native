@@ -1026,13 +1026,13 @@ export default function Profile() {
                       newPassword
                     );
                     if (!res.success) {
-                      alert(res.error);
+                      alert(t(`errors.${res.error}`));
                       return;
                     }
                   } else {
                     const res = await session.createPassword(newPassword);
                     if (!res.success) {
-                      alert(res.error);
+                      alert(t(`errors.${res.error}`));
                       return;
                     }
                   }
