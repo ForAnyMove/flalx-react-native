@@ -434,13 +434,14 @@ export default function Store() {
       <View
         style={{
           position: 'absolute',
-          ...(isRTL
-            ? {
-              left: sizes.plusButtonLeft,
-            }
-            : {
-              right: sizes.plusButtonRight,
-            }),
+          // ...(isRTL
+          //   ? {
+          //     left: sizes.plusButtonLeft,
+          //   }
+          //   : {
+          //     right: sizes.plusButtonRight,
+          //   }),
+          right: sizes.plusButtonRight,
           bottom: sizes.plusButtonBottom,
           alignItems: 'center',
         }}

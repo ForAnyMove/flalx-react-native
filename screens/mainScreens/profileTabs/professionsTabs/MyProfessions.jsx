@@ -279,13 +279,14 @@ const MyProfessions = ({ openSystemRegistration, onBackFromSystemRegistration, i
                 justifyContent: 'center',
                 alignItems: 'center',
                 position: 'absolute',
-                ...(isRTL
-                  ? {
-                    left: sizes.plusButtonLeft,
-                  }
-                  : {
-                    right: sizes.plusButtonRight,
-                  }),
+                // ...(isRTL
+                //   ? {
+                //     left: sizes.plusButtonLeft,
+                //   }
+                //   : {
+                //     right: sizes.plusButtonRight,
+                //   }),
+                right: sizes.plusButtonRight,
                 bottom: sizes.plusButtonBottom,
                 shadowColor: sizes.plusButtonShadowColor,
                 shadowOffset: sizes.plusButtonShadowOffset,

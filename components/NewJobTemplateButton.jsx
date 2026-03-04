@@ -5,6 +5,7 @@ import {
     Platform,
     TouchableOpacity,
     useWindowDimensions,
+    Image,
 } from 'react-native';
 import { useComponentContext } from '../context/globalAppContext';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +16,10 @@ import { useWindowInfo } from '../context/windowContext';
 export default function NewJobTemplateButton({
     templateTitle,
     onPress,
+    icon,
+    iconStyle,
+    isRTL,
+    fullWidth,
 }) {
     const { themeController } = useComponentContext();
     const { width, height, isLandscape } = useWindowInfo();
@@ -27,7 +32,9 @@ export default function NewJobTemplateButton({
             cardMargin: isWebLandscape
                 ? scaleByHeight(8, height)
                 : scaleByHeightMobile(4, height),
-            cardWidth: isWebLandscape
+            cardWidth: fullWidth
+                ? '100%'
+                : isWebLandscape
                 ? scaleByHeight(242, height)
                 : (width - scaleByHeightMobile(20, height)) / 2 -
                 scaleByHeightMobile(17, height),
@@ -46,28 +53,41 @@ export default function NewJobTemplateButton({
             paddingHorizontal: isWebLandscape
                 ? scaleByHeight(16, height)
                 : scaleByHeightMobile(12, height),
+            iconSize: isWebLandscape
+                ? scaleByHeight(24, height)
+                : scaleByHeightMobile(20, height),
+            iconMargin: scaleByHeightMobile(8, height),
         }),
-        [isWebLandscape, height, width]
+        [isWebLandscape, height, width, fullWidth]
     );
 
     const dynamicStyles = useMemo(
         () =>
             StyleSheet.create({
                 card: {
-                    margin: sizes.cardMargin,
+                    margin: fullWidth ? 0 : sizes.cardMargin,
                     width: sizes.cardWidth,
                     height: sizes.cardHeight,
                     borderRadius: sizes.cardRadius,
                     backgroundColor: themeController.current?.formInputBackground,
                     paddingVertical: sizes.paddingVertical,
                     paddingHorizontal: sizes.paddingHorizontal,
+                    flexDirection: isRTL ? 'row-reverse' : 'row',
+                    justifyContent: fullWidth ? 'flex-start' : 'center',
                 },
                 titleText: {
                     fontSize: sizes.font,
                     color: themeController.current?.primaryColor,
+                    textAlign: fullWidth ? (isRTL ? 'right' : 'left') : 'center',
+                    flex: fullWidth ? 1 : 0,
                 },
+                icon: {
+                    width: sizes.iconSize,
+                    height: sizes.iconSize,
+                    marginHorizontal: sizes.iconMargin,
+                }
             }),
-        [sizes, themeController]
+        [sizes, themeController, fullWidth, isRTL]
     );
 
     return (
@@ -76,6 +96,7 @@ export default function NewJobTemplateButton({
             onPress={onPress}
             activeOpacity={0.7}
         >
+            {icon && <Image source={icon} style={[dynamicStyles.icon, iconStyle]} />}
             <Text
                 style={[styles.title, dynamicStyles.titleText]}
                 numberOfLines={2}
@@ -91,11 +112,9 @@ const styles = StyleSheet.create({
     card: {
         elevation: 3,
         overflow: 'hidden',
-        justifyContent: 'center',
         alignItems: 'center',
     },
     title: {
         fontWeight: '500',
-        textAlign: 'center',
     },
 });
