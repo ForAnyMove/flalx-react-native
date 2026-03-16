@@ -1,5 +1,5 @@
 import { fetchWithSession } from './apiBase';
-import { logError } from '../../utils/log_util';
+import { logError, logInfo } from '../../utils/log_util';
 
 async function getRevealedUsers(session) {
     try {
@@ -28,6 +28,8 @@ async function revealUser(userId, session, useCoupon = false) {
             data: { use_coupon: useCoupon }
         });
 
+        logInfo('Reveal user response:', response);
+
         const returnData = {};
 
         if (response.data?.isAlreadyRevealed) {
@@ -38,6 +40,7 @@ async function revealUser(userId, session, useCoupon = false) {
 
         return returnData;
     } catch (error) {
+        logInfo('Error revealing user:', error);
         throw error;
     }
 }

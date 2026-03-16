@@ -5,25 +5,16 @@ async function createSubscription(session, planId) {
     try {
         const response = await fetchWithSession({
             session,
-            endpoint: '/api/subscriptions/create',
-            data: { planId },
+            endpoint: '/api/billing/subscriptions/initialize',
+            data: { planId, provider: 'hyp' },
             method: 'POST'
         });
-        const status = response.status;
-        const returnData = {};
-        if (status == 201 || status == 200) {
-            const { success, subscription, approvalUrl } = response.data;
-            returnData.success = success;
-            returnData.subscription = subscription;
-            returnData.approvalUrl = approvalUrl;
-        }
-        return returnData;
+
+        return response.data;
     } catch (error) {
         logError('Error creating subscription:', error, error.response);
         if (error.response?.data?.subscription != null) {
             return {
-                success: false,
-                subscription: error.response.data.subscription,
                 approvalUrl: null
             };
         }
@@ -46,7 +37,7 @@ async function getSubscriptionPlans(session) {
         }
         return returnData;
     } catch (error) {
-        logInfo('Error fetching subscription plans:', error);
+        logError('Error fetching subscription plans:', error);
         throw error;
     }
 }
@@ -66,7 +57,7 @@ async function getUserSubscription(session) {
         }
         return returnData;
     } catch (error) {
-        logInfo('Error fetching user subscription:', error);
+        logError('Error fetching user subscription:', error);
         throw error;
     }
 }
@@ -88,7 +79,7 @@ async function upgradeSubscription(session, currentSubscriptionId, planId) {
         }
         return returnData;
     } catch (error) {
-        logInfo('Error upgrading subscription:', error);
+        logError('Error upgrading subscription:', error);
         throw error;
     }
 }
@@ -110,7 +101,7 @@ async function downgradeSubscription(session, currentSubscriptionId, planId) {
         }
         return returnData;
     } catch (error) {
-        logInfo('Error upgrading subscription:', error);
+        logError('Error downgrading subscription:', error);
         throw error;
     }
 }
@@ -132,7 +123,7 @@ async function payForPlanUpgrade(session, currentSubscriptionId) {
         }
         return returnData;
     } catch (error) {
-        logInfo('Error paying for plan upgrade:', error);
+        logError('Error paying for plan upgrade:', error);
         throw error;
     }
 }

@@ -418,7 +418,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                   paddingBottom: sizes.padding,
                   paddingHorizontal: sizes.pagePaddingHorizontal,
                   // Веб-альбомная: узкая панель справа, с пустой кликабельной зоной слева
-                  width: isWebLandscape ? width - sidebarWidth : '100%',
+                  // width: isWebLandscape ? width - sidebarWidth : '100%',
                   alignSelf: isRTL ? 'flex-start' : 'flex-end',
                   height: '100%',
                 }}
@@ -706,8 +706,8 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                       >
                         {t('profile.contact_info')}
                       </Text>
-                      {/* {!usersReveal.contains(user.id) ? ( */}
-                      {true ? (
+                      {!usersReveal.contains(user.id) ? (
+                        // {true ? (
                         <TouchableOpacity
                           style={[
                             styles.primaryBtn,

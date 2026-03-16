@@ -9,26 +9,28 @@ import {
   View,
   Platform,
   Modal,
-  PermissionsAndroid,
-  Alert,
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { icons } from '../../../constants/icons';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import ImagePickerModal from '../../../components/ui/ImagePickerModal';
-import { uploadImageToSupabase } from '../../../utils/supabase/uploadImageToSupabase';
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import SubscriptionsModal from '../../../components/SubscriptionsModal';
 import { getUserExportData } from '../../../src/api/dataExport';
 import CouponsModal from '../../../components/CouponsModal';
 import { logError } from '../../../utils/log_util';
 import CustomTextInput from '../../../components/ui/CustomTextInput';
+import { useNotification } from '../../../src/render';
+import { uploadAvatarForModeration } from '../../../src/api/images';
+import { convertImageToBase64 } from '../../../utils/imageToBase64';
+import { exportHtmlToPdf } from '../../../utils/htmlToPdf';
 
 export default function Profile() {
-  const { user, themeController, languageController, session } =
+  const { user, themeController, languageController, session, setAppLoading } =
     useComponentContext();
+  const { showError, showInfo } = useNotification();
   const [userState, setUserState] = useState(user.current || {});
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
@@ -53,6 +55,13 @@ export default function Profile() {
   const [couponsModalVisible, setCouponsModalVisible] = useState(false);
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  // Синхронизация userState с user.current (включая pending_avatar)
+  useEffect(() => {
+    if (user.current) {
+      setUserState(user.current);
+    }
+  }, [user.current]);
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -104,69 +113,46 @@ export default function Profile() {
     };
   }, [height, isWebLandscape]);
 
-  // Функция загрузки и обновления аватара
+  // Функция загрузки и обновления аватара через сервер
   async function uploadAvatar(uri) {
     try {
-      const res = await uploadImageToSupabase(uri, user?.current?.id, {
-        bucket: 'avatars',
-        isAvatar: true,
-      });
-      if (res.publicUrl) {
-        const updated = await user.update({ avatar: res.publicUrl });
-        setUserState(updated); // Обновляем локальное состояние
-      }
+      setAppLoading(true);
+
+      // 1. Конвертировать файл в base64
+      const { base64, fileType } = await convertImageToBase64(uri);
+
+      // 2. Отправить на сервер
+      const { pending_avatar } = await uploadAvatarForModeration(base64, fileType, session);
+
+      // 3. Обновить локальный стейт
+      user.setPendingAvatar(pending_avatar);
+      setUserState(prev => ({ ...prev, pending_avatar }));
+
+      showInfo(t('my_profile.avatar_uploaded_for_moderation'));
+
     } catch (err) {
       logError('Ошибка загрузки аватара:', err.message);
+      showError(err.message || t('errors.unexpected_error'));
+    } finally {
+      setAppLoading(false);
     }
   }
 
   async function downloadExportData() {
     try {
-      const res = await getUserExportData(session);
-      if (res && typeof res === 'object') {
-        const json = JSON.stringify(res, null, 2);
+      setAppLoading(true);
+      const res = await getUserExportData(session, languageController.current);
+      if (res) {
+        await exportHtmlToPdf(res, 'user-data-export.pdf');
         if (Platform.OS === 'web') {
-          const blob = new Blob([json], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'export.json';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        } else {
-          let hasPermission = true;
-          if (Platform.OS === 'android') {
-            const granted = await PermissionsAndroid.request(
-              PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-              {
-                title: 'Storage Permission',
-                message:
-                  'App needs access to your storage to save export data.',
-                buttonNeutral: 'Ask Me Later',
-                buttonNegative: 'Cancel',
-                buttonPositive: 'OK',
-              }
-            );
-            hasPermission = granted === PermissionsAndroid.RESULTS.GRANTED;
-          }
-
-          if (hasPermission) {
-            const RNFS = require('react-native-fs');
-            const path = `${RNFS.DownloadDirectoryPath}/export.json`;
-            await RNFS.writeFile(path, json, 'utf8');
-            Alert.alert('Success', t('my_profile.export_success', { path }));
-          } else {
-            Alert.alert(
-              'Permission denied',
-              t('my_profile.export_permission_denied')
-            );
-          }
+          showInfo(t('my_profile.export_success'));
         }
       }
     } catch (err) {
+      console.error('Error exporting data:', err);
       showError(t('errors.unexpected_error'));
+    } finally {
+      setAppLoading(false);
     }
   }
 
@@ -207,33 +193,63 @@ export default function Profile() {
             },
           ]}
         >
-          <View style={{ position: 'relative' }}>
-            <Image
-              source={
-                userState.avatar
-                  ? { uri: userState.avatar }
-                  : icons.defaultAvatarInverse
-              }
-              style={{
-                width: sizes.avatarSize,
-                height: sizes.avatarSize,
-                borderRadius: sizes.avatarSize / 2,
-                backgroundColor: '#ccc',
-              }}
-            />
-            {/* Кнопка редактирования аватара */}
-            <TouchableOpacity
-              style={[
-                styles.cameraButton,
-                {
-                  width: sizes.avatarSize * 0.3,
-                  height: sizes.avatarSize * 0.3,
-                },
-              ]}
-              onPress={() => setPickerVisible(true)}
-            >
-              <Image source={icons.camera} style={styles.cameraIcon} />
-            </TouchableOpacity>
+          <View style={{ alignItems: 'center' }}>
+            {/* Контейнер для аватара и кнопки */}
+            <View style={{ position: 'relative' }}>
+              <Image
+                source={
+                  // Приоритет: pending_avatar > avatar > default
+                  userState.pending_avatar
+                    ? { uri: userState.pending_avatar }
+                    : userState.avatar
+                      ? { uri: userState.avatar }
+                      : icons.defaultAvatarInverse
+                }
+                style={{
+                  width: sizes.avatarSize,
+                  height: sizes.avatarSize,
+                  borderRadius: sizes.avatarSize / 2,
+                  backgroundColor: '#ccc',
+                }}
+              />
+              {/* Кнопка редактирования аватара */}
+              <TouchableOpacity
+                style={[
+                  styles.cameraButton,
+                  {
+                    width: sizes.avatarSize * 0.3,
+                    height: sizes.avatarSize * 0.3,
+                  },
+                ]}
+                onPress={() => setPickerVisible(true)}
+              >
+                <Image source={icons.camera} style={styles.cameraIcon} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Текст о модерации аватарки */}
+            {userState.pending_avatar && (
+              <View style={{ marginTop: sizes.infoFieldsGap, alignItems: 'center' }}>
+                <Text
+                  style={{
+                    fontSize: sizes.labelFont,
+                    color: themeController.current?.textColorSecondary || '#666',
+                    fontFamily: 'Rubik-Medium',
+                  }}
+                >
+                  {t('my_profile.avatar_pending_moderation')}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: sizes.labelFont * 0.85,
+                    color: themeController.current?.textColorSecondary || '#999',
+                    fontFamily: 'Rubik-Regular',
+                  }}
+                >
+                  {t('my_profile.avatar_pending_subtitle')}
+                </Text>
+              </View>
+            )}
           </View>
         </ImageBackground>
 
@@ -1043,7 +1059,7 @@ function InfoField({
               color: themeController.current?.formInputLabelColor,
               marginBottom: sizes.labelMarginBottom,
             },
-            multiline && isRTL && { alignSelf: 'flex-end'}
+            multiline && isRTL && { alignSelf: 'flex-end' }
           ]}
         >
           {label}

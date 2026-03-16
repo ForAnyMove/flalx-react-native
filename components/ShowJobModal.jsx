@@ -512,7 +512,7 @@ export default function ShowJobModal({
 
       if (success == true) {
         if (payment != null) {
-          openWebView(payment?.paymentMetadata?.paypalApproval?.href);
+          openWebView(payment?.paymentMetadata?.approval?.href);
         } else {
           jobsController.reloadAll();
         }

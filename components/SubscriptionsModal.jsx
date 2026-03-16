@@ -25,7 +25,7 @@ import { useMemo } from 'react';
 import { useLocalization } from '../src/services/useLocalization';
 import { useWindowInfo } from '../context/windowContext';
 import { formatCurrency } from '../utils/currency_formatter';
-import { logError } from '../utils/log_util';
+import { logError, logInfo } from '../utils/log_util';
 
 function SubscriptionsModalContent({ closeModal }) {
   const {
@@ -97,7 +97,7 @@ function SubscriptionsModalContent({ closeModal }) {
                   openWebView(result.payment_url);
                 }
               } catch (error) {
-                logInfo("Error during upgradeSubscription:", error);
+                logError("Error during upgradeSubscription:", error);
                 if (error.response && error.response.data && error.response.data.error) {
                   showError(`### ${error.response.data.error}`);
                 }
@@ -118,8 +118,10 @@ function SubscriptionsModalContent({ closeModal }) {
       setAppLoading(true);
 
       const result = await createSubscription(session, planId);
-      if (result.success && result.approvalUrl) {
-        openWebView(result.approvalUrl);
+      console.log(result);
+
+      if (result.redirectUrl) {
+        openWebView(result.redirectUrl);
       } else if (result.success == false && result.subscription) {
         const message = t('subscriptionAlreadyExist');
 
@@ -127,7 +129,7 @@ function SubscriptionsModalContent({ closeModal }) {
       }
 
     } catch (error) {
-      logInfo("Error creating subscription:", error);
+      logError("Error creating subscription:", error);
     } finally {
       setAppLoading(false);
     }
@@ -142,7 +144,7 @@ function SubscriptionsModalContent({ closeModal }) {
       }
     } catch (error) {
       setAppLoading(false);
-      logInfo("Error upgrading subscription:", error);
+      logError("Error upgrading subscription:", error);
     } finally {
       setAppLoading(false);
     }

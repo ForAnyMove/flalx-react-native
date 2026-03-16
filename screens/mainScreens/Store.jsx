@@ -456,7 +456,7 @@ export default function Store() {
             //   setNewJobModalVisible(true);
             // } else {
             //   const url =
-            //     pendingJobRequest.payment?.paymentMetadata?.paypalApproval
+            //     pendingJobRequest.payment?.paymentMetadata?.approval
             //       ?.href;
             //   const message = [
             //     t('subscriptions.messages.pendingJob'),

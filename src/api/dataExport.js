@@ -1,16 +1,17 @@
 import { fetchWithSession } from './apiBase';
 import { logError } from '../../utils/log_util';
+import { Platform } from 'react-native';
 
-const ENDPOINTS = {
-    export: (base) => `${base}/users/export`,
-}
-
-export async function getUserExportData(session) {
+export async function getUserExportData(session, language) {
     try {
         const response = await fetchWithSession({
             session,
-            endpoint: '/users/export',
-            method: 'GET'
+            endpoint: `/users/export`,
+            method: 'GET',
+            // Web receives a Blob (PDF binary from server).
+            // Mobile receives HTML text which expo-print converts to PDF.
+            responseType: Platform.OS === 'web' ? 'blob' : 'text',
+            data: { lang: language }
         });
         const status = response.status;
         let returnData = null;

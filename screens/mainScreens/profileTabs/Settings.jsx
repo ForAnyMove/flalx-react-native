@@ -566,6 +566,7 @@ function ModalContent({
   isRTL,
 }) {
   const { themeController, setAppLoading, session } = useComponentContext();
+  const { showError } = useNotification();
   const { t } = useTranslation();
   const { height } = useWindowInfo();
 
@@ -629,6 +630,13 @@ function ModalContent({
       }
     } catch (error) {
       logError('Error in confirmContactUs:', error);
+
+      // Check if rate limit exceeded
+      if (error?.response?.data?.type === 'RATE_LIMIT_EXCEEDED') {
+        showError(t('errors.rate_limit_exceeded'));
+      } else {
+        showError(error?.response?.data?.message || t('errors.unexpected_error'));
+      }
     } finally {
       setAppLoading(false);
     }
@@ -650,6 +658,13 @@ function ModalContent({
       onClose();
     } catch (error) {
       logInfo('Error in confirmFeedback:', error);
+
+      // Check if rate limit exceeded
+      if (error?.response?.data?.type === 'RATE_LIMIT_EXCEEDED') {
+        showError(t('errors.rate_limit_exceeded'));
+      } else {
+        showError(error?.response?.data?.message || t('errors.unexpected_error'));
+      }
     } finally {
       setAppLoading(false);
     }
@@ -811,7 +826,7 @@ function ModalContent({
                           borderRadius: sizes.borderRadius,
                           // marginBottom: 0,
                           height: sizes.inputHeight,
-                          marginBottom: sizes.modalInputMarginBottom/2,
+                          marginBottom: sizes.modalInputMarginBottom / 2,
                         },
                       ]}
                     >

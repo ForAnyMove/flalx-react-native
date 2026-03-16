@@ -67,9 +67,11 @@ export const WebSocketProvider = ({ children }) => {
         jobsController.reloadAll();
         break;
       }
-      case 'SUBSCRIPTION_ACTIVATED':
-      case 'SUBSCRIPTION_CANCELLED':
+      case 'SUBSCRIPTION_CREATED':
+      case 'SUBSCRIPTION_RENEWED':
+      case 'SUBSCRIPTION_RENEWAL_FAILED':
       case 'SUBSCRIPTION_EXPIRED':
+      case 'PAYMENT_METHOD_UPDATE_REQUIRED':
       case 'SUBSCRIPTION_DOWNGRADE_SCHEDULED':
       case 'SUBSCRIPTION_UPGRADE_INITIATED':
       case 'PLAN_CHANGE_APPROVED':
