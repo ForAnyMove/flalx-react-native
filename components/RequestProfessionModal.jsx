@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Platform,
   Image,
+  ScrollView,
 } from 'react-native';
 import { useWindowInfo } from '../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
@@ -14,12 +15,15 @@ import { useTranslation } from 'react-i18next';
 import AutocompletePicker from './ui/AutocompletePicker';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
+import { useNotification } from '../src/render';
+import CustomTextInput from './ui/CustomTextInput';
 
 const RequestProfessionModal = ({
   visible,
   onClose,
   onRequested,
   onSwitchToSystemProfessions,
+  showTabs,
 }) => {
   const { themeController, languageController, jobTypesController } =
     useComponentContext();
@@ -109,6 +113,14 @@ const RequestProfessionModal = ({
     onRequested(data);
   };
 
+  const handleSwitch = () => {
+    onSwitchToSystemProfessions();
+    if (showTabs) {
+      const newIndex = orderedTabs.indexOf('system_professions');
+      handleTabPress(newIndex);
+    }
+  };
+
   const handleClose = () => {
     onClose();
     // Reset state after a short delay to allow closing animation to finish
@@ -117,6 +129,11 @@ const RequestProfessionModal = ({
       setType(null);
       setSubType(null);
     }, 300);
+  };
+
+  const handleSelect = (type, subtype) => {
+    setType(type);
+    setSubType(subtype);
   };
 
   const styles = StyleSheet.create({
@@ -328,13 +345,15 @@ const RequestProfessionModal = ({
                   alignItems: isRTL ? 'flex-end' : 'flex-start',
                 }}
               >
-                <TouchableOpacity
-                  onPress={() => {
-                    onSwitchToSystemProfessions();
-                    onClose();
-                  }}
-                >
-                  <Text style={styles.didntFindText}>
+                <TouchableOpacity onPress={handleSwitch}>
+                  <Text
+                    style={[
+                      styles.didntFindText,
+                      {
+                        textDecorationLine: 'underline',
+                      },
+                    ]}
+                  >
                     {t('professions.request_modal.profession_not_found')}
                   </Text>
                 </TouchableOpacity>
@@ -360,13 +379,15 @@ const RequestProfessionModal = ({
                   alignItems: isRTL ? 'flex-end' : 'flex-start',
                 }}
               >
-                <TouchableOpacity
-                  onPress={() => {
-                    onSwitchToSystemProfessions();
-                    onClose();
-                  }}
-                >
-                  <Text style={styles.didntFindText}>
+                <TouchableOpacity onPress={handleSwitch}>
+                  <Text
+                    style={[
+                      styles.didntFindText,
+                      {
+                        textDecorationLine: 'underline',
+                      },
+                    ]}
+                  >
                     {t('professions.request_modal.subtype_not_found')}
                   </Text>
                 </TouchableOpacity>

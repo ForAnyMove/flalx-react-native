@@ -258,6 +258,7 @@ export default function Store() {
       fontSize: isWebLandscape ? web(12) : mobile(12),
       badgeSize,
       underlineHeight: isWebLandscape ? web(2) : mobile(2),
+      globalUnderlineSpace: isWebLandscape ? web(10) : mobile(10),
       tabPaddingBottom: panelHeight * 0.1,
       badgeTop: -badgeSize * 0.3,
       badgeRight: -badgeSize * 0.8,
@@ -385,6 +386,17 @@ export default function Store() {
             zIndex: 2,
           }}
         />
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: sizes.globalUnderlineSpace,
+            right: sizes.globalUnderlineSpace,
+            height: sizes.underlineHeight,
+            backgroundColor: themeController.current?.profileDefaultBackground,
+            zIndex: 1,
+          }}
+        />
       </View>
 
       {/* Контент */}
@@ -422,13 +434,14 @@ export default function Store() {
       <View
         style={{
           position: 'absolute',
-          ...(isRTL
-            ? {
-              left: sizes.plusButtonLeft,
-            }
-            : {
-              right: sizes.plusButtonRight,
-            }),
+          // ...(isRTL
+          //   ? {
+          //     left: sizes.plusButtonLeft,
+          //   }
+          //   : {
+          //     right: sizes.plusButtonRight,
+          //   }),
+          right: sizes.plusButtonRight,
           bottom: sizes.plusButtonBottom,
           alignItems: 'center',
         }}

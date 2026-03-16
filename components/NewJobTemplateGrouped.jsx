@@ -8,10 +8,11 @@ import {
 import { useComponentContext } from '../context/globalAppContext';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import NewJobTemplateButton from './NewJobTemplateButton';
 import { useLocalization } from '../src/services/useLocalization';
 import { useWindowInfo } from '../context/windowContext';
+import { icons } from '../constants/icons';
 
 export default function NewJobTemplateGrouped({
     jobTypesWithSubtypes,
@@ -19,17 +20,18 @@ export default function NewJobTemplateGrouped({
     searchValue = '',
 }) {
     const { themeController, languageController } = useComponentContext();
-    const { tField } = useLocalization(languageController.current);
+    const { tField, isRTL } = useLocalization(languageController.current);
     const { width, height, isLandscape } = useWindowInfo();
     const { t } = useTranslation();
+    const [expandedTypes, setExpandedTypes] = useState({});
 
     const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
     const sizes = useMemo(
         () => ({
             groupMarginBottom: isWebLandscape
-                ? scaleByHeight(24, height)
-                : scaleByHeightMobile(20, height),
+                ? scaleByHeight(12, height)
+                : scaleByHeightMobile(10, height),
             titleFontSize: isWebLandscape
                 ? scaleByHeight(18, height)
                 : scaleByHeightMobile(16, height),
@@ -46,17 +48,11 @@ export default function NewJobTemplateGrouped({
     const dynamicStyles = useMemo(
         () =>
             StyleSheet.create({
-                groupTitle: {
-                    fontSize: sizes.titleFontSize,
-                    color: themeController.current?.textColor,
-                    marginBottom: sizes.titleMarginBottom,
-                    paddingHorizontal: sizes.titlePaddingHorizontal,
-                },
                 groupContainer: {
                     marginBottom: sizes.groupMarginBottom,
                 },
             }),
-        [sizes, themeController]
+        [sizes]
     );
 
     // Фильтрация по поисковому запросу
@@ -87,27 +83,46 @@ export default function NewJobTemplateGrouped({
             .filter(Boolean);
     }, [jobTypesWithSubtypes, searchValue, tField]);
 
+    const handleTypePress = (typeKey) => {
+        setExpandedTypes(prev => ({
+            ...prev,
+            [typeKey]: !prev[typeKey]
+        }));
+    };
+
     return (
         <ScrollView
             style={styles.container}
             contentContainerStyle={styles.contentContainer}
         >
-            {filteredData.map((type) => (
-                <View key={type.key} style={dynamicStyles.groupContainer}>
-                    <Text style={[styles.groupTitle, dynamicStyles.groupTitle]}>
-                        {tField(type, 'name')}
-                    </Text>
-                    <View style={styles.buttonsWrapper}>
-                        {type.subtypes?.map((subType) => (
-                            <NewJobTemplateButton
-                                key={subType.key}
-                                templateTitle={tField(subType, 'name')}
-                                onPress={() => onSubTypePress(type.key, subType.key)}
-                            />
-                        ))}
+            {filteredData.map((type) => {
+                const isExpanded = !!expandedTypes[type.key];
+                const rotation = isExpanded ? '0deg' : (isRTL ? '90deg' : '-90deg');
+
+                return (
+                    <View key={type.key} style={dynamicStyles.groupContainer}>
+                        <NewJobTemplateButton
+                            templateTitle={tField(type, 'name')}
+                            onPress={() => handleTypePress(type.key)}
+                            fullWidth
+                            isRTL={isRTL}
+                            icon={icons.arrowDown}
+                            iconStyle={{ transform: [{ rotate: rotation }] }}
+                        />
+                        {isExpanded && (
+                            <View style={styles.buttonsWrapper}>
+                                {type.subtypes?.map((subType) => (
+                                    <NewJobTemplateButton
+                                        key={subType.key}
+                                        templateTitle={tField(subType, 'name')}
+                                        onPress={() => onSubTypePress(type.key, subType.key)}
+                                    />
+                                ))}
+                            </View>
+                        )}
                     </View>
-                </View>
-            ))}
+                );
+            })}
         </ScrollView>
     );
 }
@@ -119,14 +134,11 @@ const styles = StyleSheet.create({
     contentContainer: {
         paddingBottom: 20,
     },
-    groupTitle: {
-        fontWeight: '700',
-        fontFamily: 'Rubik-Bold',
-    },
     groupContainer: {},
     buttonsWrapper: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'flex-start',
+        marginTop: 10,
     },
 });

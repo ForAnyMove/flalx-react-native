@@ -25,7 +25,7 @@ import { SubmitModal } from '../../../../components/modals/misc/SubmitModal';
 import { useNotification } from '../../../../src/render';
 import { logError } from '../../../../utils/log_util';
 
-const MyProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible, setSystemAddingPopupVisible }) => {
+const MyProfessions = ({ openSystemRegistration, onBackFromSystemRegistration, isRequestModalVisible, setIsRequestModalVisible }) => {
   const [searchValue, setSearchValue] = useState('');
   const { height, width, isLandscape, sidebarWidth } = useWindowInfo();
   const { showWarning } = useNotification();
@@ -86,7 +86,6 @@ const MyProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible, se
     });
   }, [formattedUserRequests, searchValue]);
 
-  const [isRequestModalVisible, setIsRequestModalVisible] = useState(false);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [isSubmitModalVisible, setIsSubmitModalVisible] = useState(false);
 
@@ -122,6 +121,16 @@ const MyProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible, se
   };
 
   //#region Methods
+
+  const handleSwitchToSystem = () => {
+    setIsRequestModalVisible(false);
+    openSystemRegistration(true);
+  };
+
+  const handleBackFromSystem = () => {
+    onBackFromSystemRegistration();
+    setIsRequestModalVisible(true);
+  }
 
   const handleProfessionRequested = (data) => {
     if (jobTypesController.checkIfVerificationNeeded({ typeId: data.job_type_id, subTypeId: data.job_subtype_id })) {
@@ -270,13 +279,14 @@ const MyProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible, se
                 justifyContent: 'center',
                 alignItems: 'center',
                 position: 'absolute',
-                ...(isRTL
-                  ? {
-                    left: sizes.plusButtonLeft,
-                  }
-                  : {
-                    right: sizes.plusButtonRight,
-                  }),
+                // ...(isRTL
+                //   ? {
+                //     left: sizes.plusButtonLeft,
+                //   }
+                //   : {
+                //     right: sizes.plusButtonRight,
+                //   }),
+                right: sizes.plusButtonRight,
                 bottom: sizes.plusButtonBottom,
                 shadowColor: sizes.plusButtonShadowColor,
                 shadowOffset: sizes.plusButtonShadowOffset,
@@ -367,7 +377,8 @@ const MyProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible, se
           setRequestProfessionData(null);
         }}
         onRequested={handleProfessionRequested}
-        onSwitchToSystemProfessions={switchToSystemProfessions}
+        onSwitchToSystemProfessions={handleSwitchToSystem}
+        showTabs={jobTypesController.userToSystemRequest.list.length > 0}
       />
       <SubmitModal
         visible={isSubmitModalVisible}

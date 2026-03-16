@@ -816,50 +816,94 @@ export default function sessionManager() {
     }
   }
 
-  // Смена существующего пароля
+    // Смена существующего пароля
   async function changePassword(oldPassword, newPassword) {
     try {
-      const email = user?.email;
+      // 1. Получаем токен доступа пользователя из текущей сессии
+      const accessToken = session?.access_token;
 
-      if (!email) return { success: false, error: 'User email not found' };
-
-      // 1. Сохраняем основную сессию
-      const mainSession = { ...session };
-
-      // 2. Проверяем правильность старого пароля
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password: oldPassword,
-      });
-
-      if (error) {
-        // восстановить основную сессию
-        await supabase.auth.setSession(mainSession);
-        return {
-          success: false,
-          error: 'Old password is incorrect',
-        };
+      if (!accessToken) {
+        return { success: false, error: 'user_not_authenticated' };
       }
 
-      // 3. Старый пароль верный — восстанавливаем основную сессию
-      await supabase.auth.setSession(mainSession);
-
-      // 4. Меняем пароль
-      const { data: upd, error: updErr } = await supabase.auth.updateUser({
-        password: newPassword,
+      // 2. Отправляем запрос на ваш сервер для смены пароля
+      const response = await fetch(`${API_BASE_URL}/api/security/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          old_password: oldPassword,
+          new_password: newPassword,
+          keep_count: 3, // N = 3 по умолчанию
+        }),
       });
 
-      if (updErr) {
-        return { success: false, error: updErr.message };
+      if (!response.ok) {
+        const data = await response.json();
+        // Возвращаем ошибку от сервера как ключ для перевода
+        const errorMessage = data.error || 'change_password_failed';
+        logError('Failed to change password via server endpoint:', errorMessage);
+        return { success: false, error: errorMessage };
       }
-      logInfo('Password was changed successfully');
+
+      // 3. При успехе выходим из системы, чтобы пользователь мог войти с новым паролем
+      logInfo('Password was changed successfully. Signing out.');
+      await signOut();
 
       return { success: true };
+
     } catch (e) {
-      logError('changePassword error:', e);
+      logError('changePassword client-side error:', e.message);
       return { success: false, error: e.message };
     }
   }
+  
+  // // Смена существующего пароля
+  // async function changePassword(oldPassword, newPassword) {
+  //   try {
+  //     const email = user?.email;
+
+  //     if (!email) return { success: false, error: 'User email not found' };
+
+  //     // 1. Сохраняем основную сессию
+  //     const mainSession = { ...session };
+
+  //     // 2. Проверяем правильность старого пароля
+  //     const { data, error } = await supabase.auth.signInWithPassword({
+  //       email,
+  //       password: oldPassword,
+  //     });
+
+  //     if (error) {
+  //       // восстановить основную сессию
+  //       await supabase.auth.setSession(mainSession);
+  //       return {
+  //         success: false,
+  //         error: 'Old password is incorrect',
+  //       };
+  //     }
+
+  //     // 3. Старый пароль верный — восстанавливаем основную сессию
+  //     await supabase.auth.setSession(mainSession);
+
+  //     // 4. Меняем пароль
+  //     const { data: upd, error: updErr } = await supabase.auth.updateUser({
+  //       password: newPassword,
+  //     });
+
+  //     if (updErr) {
+  //       return { success: false, error: updErr.message };
+  //     }
+  //     logInfo('Password was changed successfully');
+
+  //     return { success: true };
+  //   } catch (e) {
+  //     logError('changePassword error:', e);
+  //     return { success: false, error: e.message };
+  //   }
+  // }
 
   // Создание нового пароля для OTP-пользователя
   async function createPassword(newPassword) {
@@ -881,10 +925,36 @@ export default function sessionManager() {
 
       return { success: true };
     } catch (e) {
-      logError('createPassword error:', e);
+      logError('Ошибка создания пароля:', e.message);
       return { success: false, error: e.message };
     }
   }
+
+  // Получение номера WhatsApp с сервера
+  async function getWhatsAppNumber() {
+    try {
+      // ЗАГЛУШКА: Когда эндпоинт будет готов, замените это на реальный fetch
+      // const res = await fetch(`${API_BASE_URL}/settings/whatsapp-number`, {
+      //   headers: {
+      //     Authorization: `Bearer ${session?.access_token}`,
+      //   },
+      // });
+      // if (!res.ok) {
+      //   throw new Error('Failed to fetch WhatsApp number');
+      // }
+      // const data = await res.json();
+      // return data.phoneNumber;
+
+      // Возвращаем тестовый номер, пока эндпоинт не готов
+      logInfo('Используется тестовый номер WhatsApp из заглушки.');
+      return '+19876543210';
+    } catch (err) {
+      logError('Ошибка getWhatsAppNumber:', err.message);
+      // Возвращаем null или тестовый номер в случае ошибки, чтобы не ломать приложение
+      return '+1234567890';
+    }
+  }
+
   // Обновление пароля после сброса
   async function setNewPassword(newPassword) {
     await supabase.auth.setSession(trialSession);
@@ -928,6 +998,7 @@ export default function sessionManager() {
       createPassword: (newPassword) => createPassword(newPassword),
       resetPassword: isInPasswordReset,
       setNewPassword: (newPassword) => setNewPassword(newPassword),
+      getWhatsAppNumber: () => getWhatsAppNumber(),
       enrollPhoneNumber,
       challengePhoneNumber,
       verifyPhoneNumber,

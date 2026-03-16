@@ -1,46 +1,43 @@
+import React, { useState, useMemo } from 'react';
 import {
   Image,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TouchableOpacity,
   View,
-  Platform,
-  TextInput,
 } from 'react-native';
-import { useComponentContext } from '../../../context/globalAppContext';
-import CustomPicker from '../../../components/ui/CustomPicker';
-import { icons } from '../../../constants/icons';
-import { useState, useMemo, useEffect } from 'react';
-import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
-import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
-import BouncyCheckbox from 'react-native-bouncy-checkbox';
-import { sendFeedback, sendMessage } from '../../../src/api/support';
-import { useNotification } from '../../../src/render';
 import { logError, logInfo } from '../../../utils/log_util';
-import CustomSwitch from '../../../components/ui/CustomSwitch';
+import { sendFeedback, sendMessage } from '../../../src/api/support';
+import {
+  scaleByHeight,
+  scaleByHeightMobile,
+} from '../../../utils/resizeFuncs';
+import BouncyCheckbox from 'react-native-bouncy-checkbox';
+import CustomPicker from '../../../components/ui/CustomPicker';
 import CustomTextInput from '../../../components/ui/CustomTextInput';
-import { ModalContent } from './ModalContent';
+import { icons } from '../../../constants/icons';
+import { useComponentContext } from '../../../context/globalAppContext';
+import { useWindowInfo } from '../../../context/windowContext';
 
-// getResponsiveSize helper was unused and removed
-
-export default function Settings() {
-  const { themeController, languageController, geolocationController } = useComponentContext();
-  const { showError, showInfo } = useNotification();
-  const { height, isLandscape } = useWindowInfo();
+// Модальное содержимое
+export function ModalContent({
+  title,
+  onClose,
+  content,
+  avatar = false,
+  contactForm = false,
+  feedback = false,
+}) {
+  const { themeController, setAppLoading, session, languageController } =
+    useComponentContext();
   const { t } = useTranslation();
+  const { height, isLandscape } = useWindowInfo();
   const isRTL = languageController.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
-
-  // Toggles
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-
-  // Modals
-  const [aboutVisible, setAboutVisible] = useState(false);
-  const [regulationsVisible, setRegulationsVisible] = useState(false);
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -123,380 +120,8 @@ export default function Settings() {
     };
   }, [height, isWebLandscape, isRTL]);
 
-  useEffect(() => {
-    if (geolocationController.error) {
-      showError(geolocationController.error, [], () => {
-        geolocationController.clearError();
-      });
-    }
-  }, [geolocationController.error]);
-
-  useEffect(() => {
-    if (geolocationController.dialog) {
-      showInfo(geolocationController.dialog.message, geolocationController.dialog.buttons, () => {
-        geolocationController.dialog.buttons.forEach(btn => {
-          if (btn.key == 'deny') btn.onPress();
-        });
-        geolocationController.clearDialog();
-        geolocationController.clearError();
-      });
-    }
-  }, [geolocationController.dialog]);
-
-  // помощник для контейнеров-строк
-  const rowStyle = {
-    width: sizes.rowsWidth,
-    alignSelf: sizes.rowsAlign,
-    flexDirection: isWebLandscape ? (isRTL ? 'row-reverse' : 'row') : 'column',
-    justifyContent: isWebLandscape ? 'space-between' : 'center',
-    gap: sizes.colGap,
-    marginBottom: sizes.rowGap,
-  };
-
-  return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: themeController.current?.backgroundColor,
-          paddingVertical: sizes.containerPaddingVertical,
-          paddingHorizontal: sizes.containerPaddingHorizontal,
-        },
-      ]}
-    >
-      <ScrollView
-        contentContainerStyle={{
-          paddingBottom: sizes.scrollPaddingBottom,
-        }}
-      >
-        {/* Break Line */}
-        {/* <View
-          style={[
-            styles.breakLine,
-            {
-              backgroundColor: themeController.current?.breakLineColor,
-              marginVertical: sizes.rowGap,
-            },
-          ]}
-        /> */}
-        {/* Language + Theme */}
-        <View
-          style={[
-            rowStyle,
-            isWebLandscape
-              ? { height: sizes.inputHeight }
-              : { height: sizes.inputHeight * 2 + sizes.colGap },
-          ]}
-        >
-          <CustomPicker
-            label={t('settings.language')}
-            options={[
-              { label: t('settings.lang_en', 'English'), value: 'en' },
-              { label: t('settings.lang_he', 'עברית'), value: 'he' },
-            ]}
-            selectedValue={languageController.current}
-            onValueChange={(itemValue) => languageController.setLang(itemValue)}
-            isRTL={isRTL}
-            containerStyle={{ flex: 1 }}
-          />
-
-          <CustomPicker
-            label={t('settings.theme')}
-            options={[
-              { label: t('settings.theme_light', 'Light'), value: 'light' },
-              { label: t('settings.theme_dark', 'Dark'), value: 'dark' },
-            ]}
-            selectedValue={themeController.isTheme}
-            onValueChange={(itemValue) => themeController.setTheme(itemValue)}
-            isRTL={isRTL}
-            containerStyle={{ flex: 1 }}
-          />
-        </View>
-
-        {/* Break Line */}
-        <View
-          style={[
-            styles.breakLine,
-            {
-              backgroundColor: themeController.current?.breakLineColor,
-              marginVertical: sizes.rowGap,
-            },
-          ]}
-        />
-
-        {/* Switches */}
-        <View style={[rowStyle, { marginVertical: sizes.switchMargin }]}>
-          <View
-            style={[
-              styles.switchRow,
-              {
-                width: isWebLandscape ? '47%' : '100%',
-                flexDirection: isRTL ? 'row-reverse' : 'row',
-              },
-            ]}
-          >
-            <Text
-              style={[
-                // styles.switchName,
-                {
-                  color: themeController.current?.unactiveTextColor,
-                  fontSize: sizes.baseFont,
-                },
-              ]}
-            >
-              {t('settings.location')}
-            </Text>
-            <CustomSwitch
-              value={geolocationController.enabled}
-              onValueChange={geolocationController.toggleGeolocation}
-              width={sizes.switchWidth}
-              height={sizes.switchHeight}
-              circleSize={sizes.switchCircleSize}
-              padding={sizes.switchPadding}
-            />
-          </View>
-
-          {/* <View
-            style={[
-              styles.switchRow,
-              {
-                width: isWebLandscape ? '47%' : '100%',
-                flexDirection: isRTL ? 'row-reverse' : 'row',
-              },
-            ]}
-          >
-            <Text
-              style={[
-                // styles.switchName,
-                {
-                  color: themeController.current?.unactiveTextColor,
-                  fontSize: sizes.baseFont,
-                },
-              ]}
-            >
-              {t('settings.notifications')}
-            </Text>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-              trackColor={{
-                false: themeController.current?.switchTrackColor,
-                true: themeController.current?.switchTrackColor,
-              }}
-              thumbColor={
-                true ? themeController.current?.switchThumbColor : '#000'
-              }
-            />
-          </View> */}
-        </View>
-
-        {/* Break Line */}
-        <View
-          style={[
-            styles.breakLine,
-            {
-              backgroundColor: themeController.current?.breakLineColor,
-              marginVertical: sizes.rowGap,
-            },
-          ]}
-        />
-
-        {/* Buttons */}
-        <View style={rowStyle}>
-          <TouchableOpacity
-            style={[
-              styles.primaryBtn,
-              {
-                backgroundColor:
-                  themeController.current?.buttonColorPrimaryDefault,
-                padding: sizes.btnPadding,
-                flex: isWebLandscape ? 1 : undefined,
-                borderRadius: sizes.borderRadius,
-                height: sizes.btnHeightWeb,
-              },
-              isWebLandscape && {
-                alignItems: 'center',
-                justifyContent: 'center',
-              },
-            ]}
-            onPress={() => setAboutVisible(true)}
-          >
-            <Text
-              style={[
-                // styles.primaryText,
-                {
-                  color: themeController.current?.buttonTextColorPrimary,
-                  fontSize: sizes.btnFont,
-                },
-              ]}
-            >
-              {t('settings.about')}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.primaryBtn,
-              {
-                backgroundColor:
-                  themeController.current?.buttonColorPrimaryDefault,
-                padding: sizes.btnPadding,
-                borderRadius: sizes.borderRadius,
-                flex: isWebLandscape ? 1 : undefined,
-                height: sizes.btnHeightWeb,
-              },
-              isWebLandscape && {
-                alignItems: 'center',
-                justifyContent: 'center',
-              },
-            ]}
-            onPress={() => setRegulationsVisible(true)}
-          >
-            <Text
-              style={[
-                // styles.primaryText,
-                {
-                  color: themeController.current?.buttonTextColorPrimary,
-                  fontSize: sizes.btnFont,
-                },
-              ]}
-            >
-              {t('settings.regulations')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-
-      {/* Bottom Icons + Text — фиксируем у нижнего края в альбомном вебе */}
-      <View
-        style={[
-          styles.bottomRow,
-          {
-            flexDirection: isRTL ? 'row-reverse' : 'row',
-            position: isWebLandscape ? 'absolute' : 'relative',
-            bottom: sizes.bottomInset,
-            left: sizes.containerPadding,
-            right: sizes.containerPadding,
-            marginTop: sizes.rowGap,
-          },
-          isWebLandscape && { justifyContent: 'flex-start' },
-          isWebLandscape && { alignSelf: isRTL ? 'flex-end' : 'flex-start' },
-        ]}
-      >
-        <View
-          style={
-            isWebLandscape && {
-              [isRTL ? 'marginLeft' : 'marginRight']: sizes.bottomMr,
-              marginBottom: sizes.bottomMb,
-            }
-          }
-        >
-          <Text
-            style={[
-              styles.bottomText,
-              {
-                color: themeController.current?.unactiveTextColor,
-                fontSize: sizes.questionsFont,
-                textAlign: isRTL ? 'right' : 'left',
-              },
-            ]}
-          >
-            {t('settings.have_question')}
-          </Text>
-          <Text
-            style={[
-              styles.bottomText,
-              {
-                color: themeController.current?.unactiveTextColor,
-                fontSize: sizes.questionsFont,
-                textAlign: isRTL ? 'right' : 'left',
-              },
-            ]}
-          >
-            {t('settings.just_cheer')}
-          </Text>
-          <Text
-            style={[
-              styles.versionText,
-              {
-                color: themeController.current?.unactiveTextColor,
-                fontSize: sizes.questionsFont,
-                textAlign: isRTL ? 'right' : 'left',
-              },
-            ]}
-          >
-            v1.52
-          </Text>
-        </View>
-        <View
-          style={[
-            styles.connectBtnsContainer,
-            {
-              flexDirection: isRTL ? 'row-reverse' : 'row',
-              gap: sizes.connectBtnsGap,
-            },
-          ]}
-        ></View>
-      </View>
-
-      {/* About Modal */}
-      <Modal
-        visible={aboutVisible}
-        animationType='slide'
-        transparent={isWebLandscape}
-      >
-        <ModalContent
-          title={t('settings.about')}
-          onClose={() => setAboutVisible(false)}
-          isWebLandscape={isWebLandscape}
-          sizes={sizes}
-          content={t('settings.about_content')}
-          avatar={true}
-          isRTL={isRTL}
-          height={height}
-        />
-      </Modal>
-
-      {/* Regulations Modal */}
-      <Modal
-        visible={regulationsVisible}
-        animationType='slide'
-        transparent={isWebLandscape}
-      >
-        <ModalContent
-          title={t('settings.regulations')}
-          onClose={() => setRegulationsVisible(false)}
-          isWebLandscape={isWebLandscape}
-          sizes={sizes}
-          content={t('settings.regulations_content')}
-          isRTL={isRTL}
-          height={height}
-        />
-      </Modal>
-    </View>
-  );
-}
-
-// Модальное содержимое
-function ModalContent({
-  title,
-  onClose,
-  lines,
-  isWebLandscape,
-  sizes,
-  content,
-  avatar = false,
-  contactForm = false,
-  feedback = false,
-  isRTL,
-}) {
-  const { themeController, setAppLoading, session } = useComponentContext();
-  const { showError } = useNotification();
-  const { t } = useTranslation();
-  const { height } = useWindowInfo();
-
   const [accepted, setAccepted] = useState(false);
-  const [contactUsForm, setContactUsForm] = useState({
+  const [contactUsFormState, setContactUsFormState] = useState({
     topic: '',
     message: '',
     email: '',
@@ -537,11 +162,11 @@ function ModalContent({
       setAppLoading(true);
 
       const success = await sendMessage(session, {
-        name: contactUsForm.name,
-        email: contactUsForm.email,
-        topic: contactUsForm.topic,
-        reason: contactUsForm.reason,
-        message: contactUsForm.message,
+        name: contactUsFormState.name,
+        email: contactUsFormState.email,
+        topic: contactUsFormState.topic,
+        reason: contactUsFormState.reason,
+        message: contactUsFormState.message,
       });
 
       setAppLoading(false);
@@ -555,13 +180,6 @@ function ModalContent({
       }
     } catch (error) {
       logError('Error in confirmContactUs:', error);
-
-      // Check if rate limit exceeded
-      if (error?.response?.data?.type === 'RATE_LIMIT_EXCEEDED') {
-        showError(t('errors.rate_limit_exceeded'));
-      } else {
-        showError(error?.response?.data?.message || t('errors.unexpected_error'));
-      }
     } finally {
       setAppLoading(false);
     }
@@ -571,25 +189,18 @@ function ModalContent({
     try {
       setAppLoading(true);
 
-      if (contactUsForm.phoneNumber.trim() === '') {
+      if (contactUsFormState.phoneNumber.trim() === '') {
         throw new Error('Phone number is required for feedback');
       }
 
       const success = await sendFeedback(session, {
-        phoneNumber: contactUsForm.phoneNumber,
+        phoneNumber: contactUsFormState.phoneNumber,
       });
 
       setAppLoading(false);
       onClose();
     } catch (error) {
       logInfo('Error in confirmFeedback:', error);
-
-      // Check if rate limit exceeded
-      if (error?.response?.data?.type === 'RATE_LIMIT_EXCEEDED') {
-        showError(t('errors.rate_limit_exceeded'));
-      } else {
-        showError(error?.response?.data?.message || t('errors.unexpected_error'));
-      }
     } finally {
       setAppLoading(false);
     }
@@ -751,7 +362,7 @@ function ModalContent({
                           borderRadius: sizes.borderRadius,
                           // marginBottom: 0,
                           height: sizes.inputHeight,
-                          marginBottom: sizes.modalInputMarginBottom / 2,
+                          marginBottom: sizes.modalInputMarginBottom/2,
                         },
                       ]}
                     >
@@ -769,9 +380,9 @@ function ModalContent({
                         })}
                       </Text>
                       <CustomTextInput
-                        value={contactUsForm.topic}
+                        value={contactUsFormState.topic}
                         onChangeText={(v) =>
-                          setContactUsForm((p) => ({ ...p, topic: v }))
+                          setContactUsFormState((p) => ({ ...p, topic: v }))
                         }
                         placeholder={t(
                           'settings.modals.contact_us.topic.placeholder',
@@ -835,9 +446,9 @@ function ModalContent({
                         })}
                       </Text>
                       <CustomTextInput
-                        value={contactUsForm.message}
+                        value={contactUsFormState.message}
                         onChangeText={(v) =>
-                          setContactUsForm((p) => ({ ...p, message: v }))
+                          setContactUsFormState((p) => ({ ...p, message: v }))
                         }
                         placeholder={t(
                           'settings.modals.contact_us.message.placeholder',
@@ -889,9 +500,9 @@ function ModalContent({
                         })}
                       </Text>
                       <CustomTextInput
-                        value={contactUsForm.email}
+                        value={contactUsFormState.email}
                         onChangeText={(v) =>
-                          setContactUsForm((p) => ({ ...p, email: v }))
+                          setContactUsFormState((p) => ({ ...p, email: v }))
                         }
                         placeholder={t(
                           'settings.modals.contact_us.email.placeholder',
@@ -941,9 +552,9 @@ function ModalContent({
                         })}
                       </Text>
                       <CustomTextInput
-                        value={contactUsForm.name}
+                        value={contactUsFormState.name}
                         onChangeText={(v) =>
-                          setContactUsForm((p) => ({ ...p, name: v }))
+                          setContactUsFormState((p) => ({ ...p, name: v }))
                         }
                         placeholder={t(
                           'settings.modals.contact_us.name.placeholder',
@@ -999,9 +610,9 @@ function ModalContent({
                           value: 'feedback',
                         },
                       ]}
-                      selectedValue={contactUsForm.reason}
+                      selectedValue={contactUsFormState.reason}
                       onValueChange={(value) =>
-                        setContactUsForm((p) => ({ ...p, reason: value }))
+                        setContactUsFormState((p) => ({ ...p, reason: value }))
                       }
                       isRTL={isRTL}
                       containerStyle={{
@@ -1131,9 +742,9 @@ function ModalContent({
                         })}
                       </Text>
                       <CustomTextInput
-                        value={contactUsForm.phoneNumber}
+                        value={contactUsFormState.phoneNumber}
                         onChangeText={(v) =>
-                          setContactUsForm((p) => ({ ...p, phoneNumber: v }))
+                          setContactUsFormState((p) => ({ ...p, phoneNumber: v }))
                         }
                         placeholder={t(
                           'settings.modals.feedback.phone.placeholder',
@@ -1174,7 +785,7 @@ function ModalContent({
                     logInfo('submit form', {
                       contactForm,
                       feedback,
-                      contactUsForm,
+                      contactUsForm: contactUsFormState,
                     });
                     if (contactForm) {
                       confirmContactUs();
@@ -1221,44 +832,10 @@ function ModalContent({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  pickerContainer: {
-    justifyContent: 'space-between',
-    position: 'relative',
-  },
-  picker: { backgroundColor: 'transparent', borderWidth: 0 },
-  label: {
-    // position: 'absolute',
-  },
-  switchName: { fontWeight: 'bold' },
-  breakLine: { height: 1 },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   primaryBtn: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // primaryText: { fontWeight: 'bold' },
-  bottomRow: {
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  connectBtnsContainer: {},
-  bottomText: {},
-  versionText: {},
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-    justifyContent: 'space-between',
-  },
-  modalTitle: { color: '#0A62EA' },
-  modalContent: {},
-  modalText: {},
   inputBlock: {
     ...Platform.select({
       web: {

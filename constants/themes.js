@@ -50,6 +50,11 @@ export const LIGHT_THEME = {
   rateMeMarkerColor: '#C701FE',
   errorTextColor: '#EF4F6B',
   dropdownBorderColor: '#DDDDDD',
+  systemProfessionsTabColor: '#FFC107',
+  systemProfessionsTabColorInactive: '#FFC10780',
+  activeStarColor: '#FEBF01',
+  inactiveStarColor: '#9FAACD',
+  headerPickerDropdownBorder: '#0A62EA',
 };
 
 export const DARK_THEME = {
@@ -104,4 +109,9 @@ export const DARK_THEME = {
   rateMeMarkerColor: '#C701FE',
   errorTextColor: '#EF4F6B',
   dropdownBorderColor: '#444444',
+  systemProfessionsTabColor: '#FFC107',
+  systemProfessionsTabColorInactive: '#FFC10780',
+  activeStarColor: '#FEBF01',
+  inactiveStarColor: '#9FAACD',
+  headerPickerDropdownBorder: '#0A62EA',
 };

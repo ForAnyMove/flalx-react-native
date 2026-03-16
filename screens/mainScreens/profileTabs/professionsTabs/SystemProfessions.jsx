@@ -21,7 +21,7 @@ import UniversalProfessionComponent from '../../../../components/ui/UniversalPro
 import { PROFESSION_TYPES } from '../../../../constants/enums';
 import { useTranslation } from 'react-i18next';
 
-const SystemProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible, setSystemAddingPopupVisible }) => {
+const SystemProfessions = ({ openSystemRegistration }) => {
   const [searchValue, setSearchValue] = useState('');
   const { height, isLandscape } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
@@ -107,8 +107,7 @@ const SystemProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible
   }, [height, isWebLandscape]);
 
   const add = () => {
-    // Логика добавления новой профессии
-    setSystemAddingPopupVisible(true);
+    openSystemRegistration(false);
   };
 
   return (
@@ -161,13 +160,14 @@ const SystemProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible
                 justifyContent: 'center',
                 alignItems: 'center',
                 position: 'absolute',
-                ...(isRTL
-                  ? {
-                    left: sizes.plusButtonLeft,
-                  }
-                  : {
-                    right: sizes.plusButtonRight,
-                  }),
+                // ...(isRTL
+                //   ? {
+                //     left: sizes.plusButtonLeft,
+                //   }
+                //   : {
+                //     right: sizes.plusButtonRight,
+                //   }),
+                right: sizes.plusButtonRight,
                 bottom: sizes.plusButtonBottom,
                 shadowColor: sizes.plusButtonShadowColor,
                 shadowOffset: sizes.plusButtonShadowOffset,
@@ -246,10 +246,6 @@ const SystemProfessions = ({ switchToSystemProfessions, systemAddingPopupVisible
           </>
         )}
       </View>
-      <RegisterProfessionModal
-        visible={systemAddingPopupVisible}
-        onClose={() => setSystemAddingPopupVisible(false)}
-      />
     </>
   );
 };

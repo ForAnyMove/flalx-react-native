@@ -39,7 +39,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
   const { tField } = useLocalization(languageController.current);
   const { openWebView } = useWebView();
   const { showWarning } = useNotification();
-  const { width, height, isLandscape } = useWindowInfo();
+  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
   const isRTL = languageController.isRTL;
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -335,13 +335,18 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
       setAppLoading(false);
       setPurchaseModalVisible(false);
     } catch (error) {
-      if (error.response && error.response.status === 400 && error.response.data.code == 'NO_COUPONS_AVAILABLE') {
+      if (
+        error.response &&
+        error.response.status === 400 &&
+        error.response.data.code == 'NO_COUPONS_AVAILABLE'
+      ) {
         setAppLoading(false);
-        showWarning(t('errors.no_coupons', {
-          defaultValue: 'You have no coupons available',
-        }));
-      }
-      else {
+        showWarning(
+          t('errors.no_coupons', {
+            defaultValue: 'You have no coupons available',
+          })
+        );
+      } else {
         setAppLoading(false);
         setPurchaseModalVisible(false);
       }
@@ -381,7 +386,9 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
             )}
             <View>
               <Text style={dynamicStyles.nameText}>
-                {name} {surname}
+                {usersReveal.contains(userId)
+                  ? `${name} ${surname}`
+                  : `${name?.[0] || ''}. ${surname?.[0] || ''}.`}
               </Text>
               <Text style={dynamicStyles.professionText}>
                 {LICENSES[professions?.[0]]}
@@ -490,7 +497,9 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         : sizes.professionMarginBottom,
                     }}
                   >
-                    {name} {surname}
+                    {usersReveal.contains(userId)
+                      ? `${name} ${surname}`
+                      : `${name?.[0] || ''}. ${surname?.[0] || ''}.`}
                   </Text>
                   {professions?.[0] && (
                     <Text
@@ -982,7 +991,12 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                     >
                       {t('showJob.buttons.buyForPrice', {
                         defaultValue: 'Buy for {{price}}',
-                        price: usersReveal?.product ? formatCurrency(usersReveal.product.price, usersReveal.product.currency) : '',
+                        price: usersReveal?.product
+                          ? formatCurrency(
+                              usersReveal.product.price,
+                              usersReveal.product.currency
+                            )
+                          : '',
                       })}
                     </Text>
                   </TouchableOpacity>

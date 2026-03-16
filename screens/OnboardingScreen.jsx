@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useWindowInfo } from '../context/windowContext';
+import CustomPicker from '../components/ui/CustomPicker';
 
 export default function OnboardingScreen({ onFinish }) {
   const { t } = useTranslation();
@@ -91,6 +92,7 @@ export default function OnboardingScreen({ onFinish }) {
       buttonWidth: isWebLandscape ? web(331) : '100%',
       buttonMarginBottom: isWebLandscape ? 0 : mobile(15),
       buttonTextSize: isWebLandscape ? web(20) : mobile(16),
+      pickerWidth: isWebLandscape ? web(201) : mobile(201),
     };
   }, [isWebLandscape, height]);
 
@@ -108,29 +110,38 @@ export default function OnboardingScreen({ onFinish }) {
         isWebLandscape && { justifyContent: 'center' },
       ]}
     >
-      {/* Кнопка пропуска */}
-      <TouchableOpacity
-        onPress={onFinish}
-        style={[
-          styles.skipButton,
-          skipBtnStyle,
-          {
-            top: sizes.skipBtnTop,
-          },
-        ]}
-      >
-        <Text
-          style={[
-            styles.skipText,
-            {
-              color: themeController.current.textColor,
-              fontSize: sizes.skipTextSize,
-            },
+      <View style={[styles.topControlsContainer, { top: sizes.skipBtnTop }]}>
+        <CustomPicker
+          options={[
+            { label: t('settings.lang_en', 'English'), value: 'en' },
+            { label: t('settings.lang_he', 'עברית'), value: 'he' },
           ]}
+          selectedValue={languageController.current}
+          onValueChange={(itemValue) => languageController.setLang(itemValue)}
+          isRTL={isRTL}
+          containerStyle={{
+            width: sizes.pickerWidth,
+          }}
+          headerStyle={true}
+        />
+        {/* Кнопка пропуска */}
+        <TouchableOpacity
+          onPress={onFinish}
+          style={[styles.skipButton, skipBtnStyle]}
         >
-          {t('onboarding.skip')}
-        </Text>
-      </TouchableOpacity>
+          <Text
+            style={[
+              styles.skipText,
+              {
+                color: themeController.current.textColor,
+                fontSize: sizes.skipTextSize,
+              },
+            ]}
+          >
+            {t('onboarding.skip')}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       <Animated.View
         style={[
@@ -272,9 +283,16 @@ export default function OnboardingScreen({ onFinish }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  topControlsContainer: {
+    position: 'absolute',
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
   skipButton: {
     position: 'absolute',
-    zIndex: 10,
   },
   skipText: {},
   content: { flex: 1 },

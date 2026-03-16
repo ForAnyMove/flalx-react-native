@@ -205,7 +205,9 @@ const UserSummaryBlock = ({
                 fontFamily: 'Rubik-SemiBold',
               }}
             >
-              {name} {surname}
+              {usersReveal.contains(userId)
+                ? `${name} ${surname}`
+                : `${name?.[0] || ''}. ${surname?.[0] || ''}.`}
             </Text>
             <Text
               style={{

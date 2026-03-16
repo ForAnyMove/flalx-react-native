@@ -28,7 +28,16 @@ export function scaleByHeight(
   if (typeof baseHeight !== 'number' || baseHeight <= 0) baseHeight = BASE_DESIGN_HEIGHT;
 
   const scale = currentHeight / baseHeight;
-  const result = designValue * scale;
+  
+  let resizeKef;
+  if (baseHeight === MOBILE_DESIGN_HEIGHT) {
+    resizeKef = 1;
+  } else {
+    // Линейная интерполяция для коэффициента масштабирования от 1.0 при 1024 до 2.3 при 320
+    resizeKef = 2.3 - 1.3 * (currentHeight / BASE_DESIGN_HEIGHT);
+  }
+  
+  const result = designValue * scale * resizeKef;
 
   return round ? PixelRatio.roundToNearestPixel(result) : result;
 }

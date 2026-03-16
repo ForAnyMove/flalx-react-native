@@ -18,7 +18,7 @@ import { icons } from '../constants/icons';
 import { useNotification } from '../src/render';
 import CustomTextInput from './ui/CustomTextInput';
 
-const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
+const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) => {
   const { themeController, languageController, jobTypesController, setAppLoading } = useComponentContext();
   const { showWarning, showError } = useNotification();
   const { width, height, isLandscape } = useWindowInfo();
@@ -110,7 +110,11 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
   };
 
   const handleClose = () => {
-    onClose();
+    if (onBack) {
+      onBack();
+    } else {
+      onClose();
+    }
     // Reset state after a short delay to allow closing animation to finish
     setTimeout(() => {
       setIsSubmitted(false);

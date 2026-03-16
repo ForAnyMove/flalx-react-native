@@ -22,6 +22,8 @@ import { getUserExportData } from '../../../src/api/dataExport';
 import CouponsModal from '../../../components/CouponsModal';
 import { logError } from '../../../utils/log_util';
 import CustomTextInput from '../../../components/ui/CustomTextInput';
+import { ModalContent } from './ModalContent';
+import { Linking } from 'react-native';
 import { useNotification } from '../../../src/render';
 import { uploadAvatarForModeration } from '../../../src/api/images';
 import { convertImageToBase64 } from '../../../utils/imageToBase64';
@@ -53,6 +55,8 @@ export default function Profile() {
 
   const [subscriptionsModal, setSubscriptionsModal] = useState(false);
   const [couponsModalVisible, setCouponsModalVisible] = useState(false);
+  const [contactUsVisible, setContactUsVisible] = useState(false);
+  const [feedbackVisible, setFeedbackVisible] = useState(false);
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
@@ -159,6 +163,120 @@ export default function Profile() {
   const firstBtnsRow = isWebLandscape
     ? ['coupons', 'subscription', 'payment']
     : ['coupons', 'subscription'];
+  const secondBtnsRow = isWebLandscape
+    ? ['contact', 'feedback', 'whatsapp']
+    : ['contact', 'feedback', 'whatsapp'];
+
+  const openWhatsApp = async () => {
+    const number = await session.getWhatsAppNumber();
+    if (!number) {
+      console.log('Could not get WhatsApp number');
+      // Optionally, show an alert to the user
+      return;
+    }
+    const url = `whatsapp://send?phone=${number}`;
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        console.log("WhatsApp is not installed");
+        // Optionally, show an alert to the user
+      }
+    } catch (err) {
+      console.error('An error occurred', err);
+    }
+  };
+
+  const buttonsConfig = {
+    coupons: {
+      text: t('my_profile.coupons'),
+      action: () => setCouponsModalVisible(true),
+      style: 'primary',
+    },
+    subscription: {
+      text: t('my_profile.subscription'),
+      action: () => setSubscriptionsModal(true),
+      style: 'primary',
+    },
+    payment: {
+      text: t('my_profile.payment'),
+      action: () => { },
+      style: 'primary',
+      hidden: isWebLandscape,
+    },
+    contact: {
+      text: t('my_profile.contact_us'),
+      action: () => setContactUsVisible(true),
+      style: 'secondary',
+    },
+    feedback: {
+      text: t('my_profile.feedback'),
+      action: () => setFeedbackVisible(true),
+      style: 'secondary',
+    },
+    whatsapp: {
+      text: 'WhatsApp',
+      action: openWhatsApp,
+      style: 'secondary',
+    },
+  };
+
+  const renderButtons = (row) => (
+    <>
+      {row.map((key) => {
+        const btnConfig = buttonsConfig[key];
+        if (!btnConfig || btnConfig.hidden)
+          return (
+            <View
+              key={key}
+              style={{
+                height: sizes.btnHeight,
+                marginBottom: sizes.btnMargin,
+                width: sizes.btnWidth,
+              }}
+            />
+          );
+
+        const isPrimary = btnConfig.style === 'primary';
+
+        return (
+          <TouchableOpacity
+            key={key}
+            style={[
+              isPrimary ? styles.primaryBtn : styles.secondaryBtn,
+              {
+                backgroundColor: isPrimary
+                  ? themeController.current?.buttonColorPrimaryDefault
+                  : themeController.current?.buttonColorSecondaryDefault,
+                height: sizes.btnHeight,
+                marginBottom: sizes.btnMargin,
+                width: sizes.btnWidth,
+                borderRadius: sizes.infoFieldBorderRadius,
+              },
+              key === 'whatsapp' && { backgroundColor: '#25D366' },
+            ]}
+            onPress={btnConfig.action}
+          >
+            <Text
+              style={[
+                isPrimary ? styles.primaryText : styles.secondaryText,
+                {
+                  fontSize: sizes.btnFont,
+                  color: isPrimary
+                    ? themeController.current?.buttonTextColorPrimary
+                    : themeController.current?.buttonTextColorSecondary,
+                },
+              ]}
+            >
+              {btnConfig.text}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </>
+  );
+
   return (
     <ScrollView
       style={[
@@ -352,52 +470,38 @@ export default function Profile() {
         {/* Первые 3 кнопки */}
         <View
           style={{
-            flexDirection: isWebLandscape ? 'row' : 'column',
+            flexDirection: isWebLandscape
+              ? isRTL
+                ? 'row-reverse'
+                : 'row'
+              : 'column',
+            width: '100%',
+            flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
+            justifyContent: isWebLandscape ? 'space-between' : 'center',
+            gap: sizes.infoFieldsGap,
+            direction: isRTL ? 'rtl' : 'ltr',
+            marginBottom: isWebLandscape ? sizes.buttonsMarginBottom : sizes.infoFieldsGap,
+          }}
+        >
+          {renderButtons(firstBtnsRow)}
+        </View>
+
+        <View
+          style={{
+            flexDirection: isWebLandscape
+              ? isRTL
+                ? 'row-reverse'
+                : 'row'
+              : 'column',
+            gap: sizes.btnMargin,
+            width: '100%',
             flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
             justifyContent: isWebLandscape ? 'space-between' : 'center',
             gap: sizes.infoFieldsGap,
             direction: isRTL ? 'rtl' : 'ltr',
           }}
         >
-          {firstBtnsRow.map((key) => (
-            <TouchableOpacity
-              key={key}
-              style={[
-                styles.primaryBtn,
-                {
-                  backgroundColor:
-                    themeController.current?.buttonColorPrimaryDefault,
-                  height: sizes.btnHeight,
-                  marginBottom: sizes.btnMargin,
-                  width: sizes.btnWidth,
-                  borderRadius: sizes.infoFieldBorderRadius,
-                },
-                key === 'payment' && isWebLandscape && { visibility: 'hidden' },
-              ]}
-              onPress={() => {
-                /* Навигация по кнопкам */
-                if (key === 'subscription') {
-                  // Открыть модалку подписок
-                  setSubscriptionsModal(true);
-                }
-                if (key === 'coupons') {
-                  setCouponsModalVisible(true);
-                }
-              }}
-            >
-              <Text
-                style={[
-                  styles.primaryText,
-                  {
-                    fontSize: sizes.btnFont,
-                    color: themeController.current?.buttonTextColorPrimary,
-                  },
-                ]}
-              >
-                {t(`my_profile.${key}`)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {renderButtons(secondBtnsRow)}
         </View>
 
         <View
@@ -418,7 +522,7 @@ export default function Profile() {
             justifyContent: isWebLandscape ? 'space-between' : 'center',
             gap: sizes.infoFieldsGap,
             direction: isRTL ? 'rtl' : 'ltr',
-            marginBottom: sizes.buttonsMarginBottom,
+            marginBottom: isWebLandscape ? sizes.buttonsMarginBottom : sizes.infoFieldsGap,
           }}
         >
           {[
@@ -938,13 +1042,13 @@ export default function Profile() {
                       newPassword
                     );
                     if (!res.success) {
-                      alert(res.error);
+                      alert(t(`errors.${res.error}`));
                       return;
                     }
                   } else {
                     const res = await session.createPassword(newPassword);
                     if (!res.success) {
-                      alert(res.error);
+                      alert(t(`errors.${res.error}`));
                       return;
                     }
                   }
@@ -993,6 +1097,31 @@ export default function Profile() {
         visible={couponsModalVisible}
         onClose={() => setCouponsModalVisible(false)}
       />
+      <Modal
+        visible={contactUsVisible}
+        animationType='slide'
+        transparent={isWebLandscape}
+      >
+        <ModalContent
+          title={t('settings.contact_us')}
+          onClose={() => setContactUsVisible(false)}
+          content={''}
+          contactForm={true}
+        />
+      </Modal>
+
+      <Modal
+        visible={feedbackVisible}
+        animationType='slide'
+        transparent={isWebLandscape}
+      >
+        <ModalContent
+          title={t('settings.feedback')}
+          onClose={() => setFeedbackVisible(false)}
+          content={''}
+          feedback={true}
+        />
+      </Modal>
     </ScrollView>
   );
 }

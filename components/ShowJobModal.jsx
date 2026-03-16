@@ -1657,33 +1657,35 @@ export default function ShowJobModal({
         </ScrollView>
       </View>
     </View>,
-    <View
-      style={[
-        styles.inputBlock,
-        dynamicStyles.inputBlock,
-        { backgroundColor: themeController.current?.formInputBackground },
-      ]}
-      key='experience'
-    >
-      <Text
+    currentJobInfo?.experience ? (
+      <View
         style={[
-          styles.label,
-          dynamicStyles.label,
-          isRTL && { textAlign: 'right' },
+          styles.inputBlock,
+          dynamicStyles.inputBlock,
+          { backgroundColor: themeController.current?.formInputBackground },
         ]}
+        key='experience'
       >
-        {t('showJob.fields.experience', { defaultValue: 'Experience' })}
-      </Text>
-      <CustomTextInput
-        value={formatExperience(currentJobInfo?.experience, t)}
-        style={[
-          styles.input,
-          dynamicStyles.input,
-          isRTL && { textAlign: 'right' },
-        ]}
-        readOnly
-      />
-    </View>,
+        <Text
+          style={[
+            styles.label,
+            dynamicStyles.label,
+            isRTL && { textAlign: 'right' },
+          ]}
+        >
+          {t('showJob.fields.experience', { defaultValue: 'Experience' })}
+        </Text>
+        <CustomTextInput
+          value={formatExperience(currentJobInfo?.experience, t)}
+          style={[
+            styles.input,
+            dynamicStyles.input,
+            isRTL && { textAlign: 'right' },
+          ]}
+          readOnly
+        />
+      </View>
+    ) : null,
     <View
       style={[
         styles.row,
@@ -1725,7 +1727,7 @@ export default function ShowJobModal({
       )}
     </View>,
     ...extraUiByStatus(status),
-  ];
+  ].filter(Boolean);
 
   // Грид версия (только веб-альбомная)
   const bg = themeController.current?.formInputBackground;
@@ -1826,7 +1828,11 @@ export default function ShowJobModal({
                         ${scaleByHeight(64, height)}px 
                         ${scaleByHeight(75, height)}px 
                         ${scaleByHeight(75, height)}px 
-                        ${scaleByHeight(64, height)}px
+                        ${
+                          currentJobInfo?.experience
+                            ? `${scaleByHeight(64, height)}px`
+                            : ''
+                        }
                         ${scaleByHeight(64, height)}px 
                       `,
                     },
@@ -2222,61 +2228,74 @@ export default function ShowJobModal({
                   </View>
 
                   {/* Experience */}
-                  <View
-                    style={{
-                      gridArea: isRTL ? '6 / 2 / 7 / 3' : '6 / 1 / 7 / 2',
-                    }}
-                  >
+                  {currentJobInfo?.experience && (
                     <View
-                      style={[
-                        styles.inputBlock,
-                        {
-                          backgroundColor: bg,
-                          padding: 0,
-                          paddingHorizontal:
-                            sizes.inputContainerPaddingHorizontal,
-                          paddingVertical: sizes.inputContainerPaddingVertical,
-                          borderRadius: sizes.borderRadius,
-                          marginBottom: 0,
-                          height: sizes.inputHeight,
-                        },
-                      ]}
+                      style={{
+                        gridArea: isRTL ? '6 / 2 / 7 / 3' : '6 / 1 / 7 / 2',
+                      }}
                     >
-                      <Text
+                      <View
                         style={[
-                          styles.label,
+                          styles.inputBlock,
                           {
-                            color: themeController.current?.unactiveTextColor,
+                            backgroundColor: bg,
+                            padding: 0,
+                            paddingHorizontal:
+                              sizes.inputContainerPaddingHorizontal,
+                            paddingVertical:
+                              sizes.inputContainerPaddingVertical,
+                            borderRadius: sizes.borderRadius,
+                            marginBottom: 0,
+                            height: sizes.inputHeight,
                           },
-                          isRTL && { textAlign: 'right' },
-                          { fontSize: sizes.font },
                         ]}
                       >
-                        {t('showJob.fields.experience')}
-                      </Text>
-                      <CustomTextInput
-                        value={formatExperience(currentJobInfo?.experience, t)}
-                        style={{
-                          // fontWeight: '500',
-                          fontFamily: 'Rubik-Medium',
-                          padding: 0,
-                          paddingVertical: sizes.padding,
-                          color: themeController.current?.textColor,
-                          fontSize: sizes.inputFont,
-                          borderRadius: sizes.borderRadius,
-                          backgroundColor: 'transparent',
-                          textAlign: isRTL ? 'right' : 'left',
-                        }}
-                        keyboardType='numeric'
-                        readOnly
-                      />
+                        <Text
+                          style={[
+                            styles.label,
+                            {
+                              color:
+                                themeController.current?.unactiveTextColor,
+                            },
+                            isRTL && { textAlign: 'right' },
+                            { fontSize: sizes.font },
+                          ]}
+                        >
+                          {t('showJob.fields.experience')}
+                        </Text>
+                        <CustomTextInput
+                          value={formatExperience(
+                            currentJobInfo?.experience,
+                            t
+                          )}
+                          style={{
+                            // fontWeight: '500',
+                            fontFamily: 'Rubik-Medium',
+                            padding: 0,
+                            paddingVertical: sizes.padding,
+                            color: themeController.current?.textColor,
+                            fontSize: sizes.inputFont,
+                            borderRadius: sizes.borderRadius,
+                            backgroundColor: 'transparent',
+                            textAlign: isRTL ? 'right' : 'left',
+                          }}
+                          keyboardType='numeric'
+                          readOnly
+                        />
+                      </View>
                     </View>
-                  </View>
+                  )}
 
                   {/* Start date */}
                   <View
                     style={{
-                      gridArea: isRTL ? '7 / 2 / 8 / 3' : '7 / 1 / 8 / 2',
+                      gridArea: isRTL
+                        ? currentJobInfo?.experience
+                          ? '7 / 2 / 8 / 3'
+                          : '6 / 2 / 7 / 3'
+                        : currentJobInfo?.experience
+                        ? '7 / 1 / 8 / 2'
+                        : '6 / 1 / 7 / 2',
                     }}
                   >
                     <View
@@ -2306,7 +2325,13 @@ export default function ShowJobModal({
                   {/* End date */}
                   <View
                     style={{
-                      gridArea: isRTL ? '7 / 1 / 8 / 2' : '7 / 2 / 8 / 3',
+                      gridArea: isRTL
+                        ? currentJobInfo?.experience
+                          ? '7 / 1 / 8 / 2'
+                          : '6 / 1 / 7 / 2'
+                        : currentJobInfo?.experience
+                        ? '7 / 2 / 8 / 3'
+                        : '6 / 2 / 7 / 3',
                     }}
                   >
                     <View
