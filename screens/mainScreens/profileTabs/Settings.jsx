@@ -23,7 +23,6 @@ import { useNotification } from '../../../src/render';
 import { logError, logInfo } from '../../../utils/log_util';
 import CustomSwitch from '../../../components/ui/CustomSwitch';
 import CustomTextInput from '../../../components/ui/CustomTextInput';
-import { ModalContent } from './ModalContent';
 
 // getResponsiveSize helper was unused and removed
 

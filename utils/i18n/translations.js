@@ -246,7 +246,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         history_record_failed: 'Password changed, but failed to record it in the history.',
         internal_server_error: 'An internal server error occurred.',
         network_error: 'A network error occurred. Please check your connection and try again.',
-        change_password_failed: 'Failed to change password.'
+        change_password_failed: 'Failed to change password.',
         rate_limit_exceeded: 'You have reached the daily limit for this action. Please try again tomorrow.',
       },
       settings: {
@@ -818,7 +818,7 @@ After they register, you'll receive coupons.`,
         history_record_failed: 'הסיסמה שונתה, אך נכשל ברישום בהיסטוריה.',
         internal_server_error: 'אירעה שגיאת שרת פנימית.',
         network_error: 'אירעה שגיאת רשת. אנא בדוק את החיבור שלך ונסה שוב.',
-        change_password_failed: 'נכשל בשינוי הסיסמה.'
+        change_password_failed: 'נכשל בשינוי הסיסמה.',
         rate_limit_exceeded: 'הגעת למגבלת הפעולות היומית. אנא נסה שוב מחר.',
       },
       settings: {
