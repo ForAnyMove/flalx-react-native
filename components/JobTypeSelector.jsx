@@ -156,6 +156,7 @@ export default function JobTypeSelector({
       StyleSheet.create({
         container: {
           width: sizes.containerWidth,
+          maxWidth: '100%',
           marginBottom: sizes.containerMarginBottom,
           padding: sizes.containerPadding,
         },

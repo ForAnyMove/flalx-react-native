@@ -1,55 +1,111 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { useComponentContext } from '../../context/globalAppContext';
+import { logError, logInfo } from '../../utils/log_util';
 
 import LoginStep1_EmailPassword from './LoginStep1_EmailPassword';
-import LoginStep2_PhoneVerify from './LoginStep2_PhoneVerify';
-import { logInfo } from '../../utils/log_util';
+import LoginStep2_PhoneSetup from './LoginStep2_PhoneSetup';
+import LoginStep3_VerifyCode from './LoginStep3_VerifyCode';
 
-export default function MultiStepLoginScreen({ skipMFA = false, onGoToRegister, onGoToForgottenPassword }) {
-  const [step, setStep] = useState('email'); // email, phone_verify
-  const [loginData, setLoginData] = useState({
+export default function MultiStepLoginScreen({ onGoToRegister, onGoToForgottenPassword, skipMFA = false }) {
+  const { session } = useComponentContext();
+  const [step, setStep] = useState('email'); // email, phone_setup, verify_code, loading
+  const [mfaData, setMfaData] = useState({
     phone: '',
-    factorId: '',
-    challengeId: '',
-    // any other data needed between steps
+    isExistingUserWithMfa: false,
   });
+  const [error, setError] = useState(null);
 
-  const handleEmailNext = ({ phone, factorId, challengeId }) => {
+  useEffect(() => {
+    const checkMfaStatusOnMount = async () => {
+      // Проверяем, есть ли сессия, но MFA еще не пройдена
+      if (session.token && !session.mfaVerified) {
+        handleEmailNext(); // Запускаем тот же флоу, что и после логина
+      }
+    };
+
+    checkMfaStatusOnMount();
+  }, [skipMFA]);
+
+  const handleEmailNext = async () => {
     if (skipMFA) {
-      // Handle direct login logic here, for now just log
-      logInfo("Skipping MFA, logging in directly.");
-    } else {
-      setLoginData({ phone, factorId, challengeId });
-      setStep('phone_verify');
+      session.setMfaAsVerified(true);
+      return;
+    }
+    setStep('loading');
+    setError(null);
+    try {
+      const { success, data, error: apiError } = await session.getMfaStatus();
+      if (!success) {
+        throw new Error(apiError || 'Failed to get MFA status');
+      }
+
+      if (data.mfa_enabled && data.phone) {
+        // MFA is enabled, send login code
+        const sendResult = await session.sendMfaLoginCode();
+        if (sendResult.success) {
+          setMfaData({ phone: data.phone, isExistingUserWithMfa: true });
+          setStep('verify_code');
+        } else {
+          // Handle error, maybe show a popup
+          throw new Error(sendResult.error || 'Failed to send login code');
+        }
+      } else {
+        // MFA not set up, go to phone setup
+        setMfaData({ phone: '', isExistingUserWithMfa: false });
+        setStep('phone_setup');
+      }
+    } catch (e) {
+      logError('MFA Flow Error:', e);
+      setError(e.message);
+      setStep('email'); // Go back to email step on error
     }
   };
 
+  const handlePhoneSetupNext = (phone) => {
+    setMfaData({ phone, isExistingUserWithMfa: false });
+    setStep('verify_code');
+  };
+
   const handleVerifySuccess = () => {
-    // Final login success logic is handled by sessionManager,
-    // which will trigger a session update and app will navigate to main screen.
     logInfo("MFA verified, logging in.");
+    // The session manager now handles setting the mfaVerified flag,
+    // which App.js will use to navigate.
   };
 
   const handleBack = () => {
+    session.signOut();
     setStep('email');
   };
 
   const renderStep = () => {
     switch (step) {
+      case 'loading':
+        return <ActivityIndicator />;
       case 'email':
-        return <LoginStep1_EmailPassword
-          onNext={handleEmailNext}
-          onGoToRegister={onGoToRegister}
-          onGoToForgottenPassword={onGoToForgottenPassword}
-        />;
-      case 'phone_verify':
         return (
-          <LoginStep2_PhoneVerify
-            phone={loginData.phone}
-            factorId={loginData.factorId}
-            challengeId={loginData.challengeId}
-            onNext={handleVerifySuccess}
+          <LoginStep1_EmailPassword
+            onNext={handleEmailNext}
+            onGoToRegister={onGoToRegister}
+            onGoToForgottenPassword={onGoToForgottenPassword}
+            apiError={error}
+          />
+        );
+      case 'phone_setup':
+        return (
+          <LoginStep2_PhoneSetup
+            onNext={handlePhoneSetupNext}
             onBack={handleBack}
+          />
+        );
+
+      case 'verify_code':
+        return (
+          <LoginStep3_VerifyCode
+            phone={mfaData.phone}
+            isExistingUserWithMfa={mfaData.isExistingUserWithMfa}
+            onNext={handleVerifySuccess}
+            onBack={() => setStep(mfaData.isExistingUserWithMfa ? 'email' : 'phone_setup')}
           />
         );
       default:

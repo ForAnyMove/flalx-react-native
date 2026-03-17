@@ -8,6 +8,7 @@ import Step1_EmailPassword from './Step1_EmailPassword';
 import Step2_PhoneEnroll from './Step2_PhoneEnroll';
 import Step3_PhoneVerify from './Step3_PhoneVerify';
 import { useWindowInfo } from '../../context/windowContext';
+import Step_WaitForEmail from './Step_WaitForEmail';
 
 function PrimaryOutlineButton({
   title,
@@ -84,20 +85,24 @@ export default function MultiStepRegisterScreen({ skipMFA = false }) {
     email: '',
     password: '',
     phone: '',
-    factorId: null,
+    userId: null,
   });
 
-  const handleEmailNext = (email, password) => {
-    setUserData((prev) => ({ ...prev, email, password }));
-    if (skipMFA) {
+  const handleEmailNext = (email, password, userId) => {
+    setUserData((prev) => ({ ...prev, email, password, userId })); // Сохраняем email и password
+    setStep('wait_for_email');
+  };
+
+  const handleEmailVerified = () => {
+     if (skipMFA) {
       setStep('finished');
     } else {
       setStep('phone_enroll');
     }
-  };
+  }
 
-  const handlePhoneEnrollNext = (phone, factorId) => {
-    setUserData((prev) => ({ ...prev, phone, factorId }));
+  const handlePhoneEnrollNext = (phone) => {
+    setUserData((prev) => ({ ...prev, phone }));
     setStep('phone_verify');
   };
 
@@ -138,6 +143,8 @@ export default function MultiStepRegisterScreen({ skipMFA = false }) {
     switch (step) {
       case 'email':
         return <Step1_EmailPassword onNext={handleEmailNext} />;
+      case 'wait_for_email':
+        return <Step_WaitForEmail userId={userData.userId} onVerified={handleEmailVerified} />;
       case 'phone_enroll':
         return <Step2_PhoneEnroll onNext={handlePhoneEnrollNext} onBack={handleBack} />;
       case 'phone_verify':

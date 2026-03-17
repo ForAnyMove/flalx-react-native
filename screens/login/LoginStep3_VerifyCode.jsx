@@ -1,22 +1,18 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
+  Animated,
   Platform,
   KeyboardAvoidingView,
   ScrollView,
-  I18nManager,
-  Animated,
-  ActivityIndicator,
-  Image,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
-import { icons } from '../../constants/icons';
 import { useWindowInfo } from '../../context/windowContext';
 import CustomTextInput from '../../components/ui/CustomTextInput';
 
@@ -29,23 +25,18 @@ function PrimaryOutlineButton({
   theme,
   isLandscape,
   height,
-  containerStyle = {},
 }) {
-    const buttonDynamicStyles = useMemo(
+  const buttonDynamicStyles = useMemo(
     () => ({
       outlineBtn: {
         height: isLandscape && Platform.OS === 'web' ? scaleByHeight(62, height) : scaleByHeightMobile(62, height),
         width: isLandscape && Platform.OS === 'web' ? scaleByHeight(330, height) : '100%',
         marginTop: isLandscape && Platform.OS === 'web' ? scaleByHeight(38, height) : scaleByHeightMobile(12, height),
-        borderRadius: isLandscape && Platform.OS === 'web' ? scaleByHeight(8, height) : scaleByHeightMobile(12, height),  
+        borderRadius: isLandscape && Platform.OS === 'web' ? scaleByHeight(8, height) : scaleByHeightMobile(12, height),
       },
       outlineBtnText: {
         fontSize: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
         lineHeight: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
-      },
-      webLandscapeButton: {
-        width: scaleByHeight(330, height),
-        height: scaleByHeight(62, height),
       },
     }),
     [height, isLandscape]
@@ -58,12 +49,6 @@ function PrimaryOutlineButton({
         styles.outlineBtn,
         buttonDynamicStyles.outlineBtn,
         { borderColor: theme.primaryColor, opacity: disabled ? 0.6 : 1 },
-        isLandscape &&
-          Platform.OS === 'web' && {
-            width: scaleByHeight(330, height),
-            height: scaleByHeight(62, height),
-          },
-        containerStyle,
       ]}
     >
       {typeof title === 'string' ? (
@@ -83,22 +68,24 @@ function PrimaryOutlineButton({
   );
 }
 
-export default function Step3_PhoneVerify({ userId, phone, onNext, onBack }) {
+const LoginStep3_VerifyCode = ({ onNext, onBack, phone, isExistingUserWithMfa }) => {
   const { t } = useTranslation();
-  const { session, themeController, languageController } = useComponentContext();
+  const { themeController, session, languageController } = useComponentContext();
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
+
+  const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
+  const [verifying, setVerifying] = useState(false);
+  const [otpError, setOtpError] = useState(null);
+  const inputsRef = useRef([]);
+  const [cooldown, setCooldown] = useState(60);
+  const [resending, setResending] = useState(false);
+  const timerRef = useRef(null);
 
   const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
-  const [otp, setOtp] = useState(Array.from({ length: OTP_LENGTH }, () => ''));
-  const inputsRef = useRef([]);
-  const [verifying, setVerifying] = useState(false);
-  const [otpError, setOtpError] = useState(null);
-  const [cooldown, setCooldown] = useState(60);
-  const [resending, setResending] = useState(false);
-  const timerRef = useRef(null);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (cooldown > 0) {
@@ -110,80 +97,13 @@ export default function Step3_PhoneVerify({ userId, phone, onNext, onBack }) {
     }
     return () => clearInterval(timerRef.current);
   }, [cooldown]);
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
-        inputsRef.current[0]?.focus();
+      inputsRef.current[0]?.focus();
     }, 150);
     return () => clearTimeout(timer);
   }, []);
-
-  const handleVerify = async () => {
-    if (verifying) return;
-    const code = otp.join('');
-    if (code.length !== OTP_LENGTH) {
-      setOtpError('Please enter the complete 6-digit code.');
-      return;
-    }
-
-    setVerifying(true);
-    setOtpError(null);
-
-    try {
-      const result = await session.verifyPhoneCode(phone, code, userId);
-
-      if (result.success) {
-        onNext(); // Success, move to the finished screen
-      } else {
-        setOtpError(result.error || 'Invalid OTP. Please try again.');
-        setOtp(Array.from({ length: OTP_LENGTH }, () => ''));
-        inputsRef.current[0]?.focus();
-      }
-    } catch (e) {
-      setOtpError(String(e.message || e));
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  const handleResendCode = async () => {
-    if (resending || cooldown > 0) return;
-
-    setResending(true);
-    setOtpError(null);
-    try {
-      const result = await session.sendPhoneVerificationCode(phone, userId);
-      if (result.success) {
-        setCooldown(60); // Reset cooldown
-      } else {
-        setOtpError(result.error || 'Failed to resend code.');
-      }
-    } catch (e) {
-      setOtpError(String(e.message || e));
-    } finally {
-      setResending(false);
-    }
-  };
-
-  const onChangeOtpCell = (text, idx) => {
-    const value = text.replace(/[^0-9]/g, '').slice(-1);
-    const next = [...otp];
-    next[idx] = value;
-    setOtp(next);
-    if (otpError) setOtpError(null);
-
-    if (value && idx < OTP_LENGTH - 1) {
-      inputsRef.current[idx + 1]?.focus();
-    }
-  };
-
-  const onKeyPressOtp = (e, idx) => {
-    if (e.nativeEvent.key === 'Backspace' && !otp[idx] && idx > 0) {
-      inputsRef.current[idx - 1]?.focus();
-    }
-  };
-
-  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const sizes = useMemo(
     () => ({
@@ -242,6 +162,76 @@ export default function Step3_PhoneVerify({ userId, phone, onNext, onBack }) {
     };
   }, [sizes, isRTL]);
 
+  const handleOtpChange = (text, index) => {
+    const newOtp = [...otp];
+    newOtp[index] = text.slice(-1);
+    setOtp(newOtp);
+    setOtpError(null);
+
+    if (text && index < OTP_LENGTH - 1) {
+      inputsRef.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyPress = (e, index) => {
+    if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
+      inputsRef.current[index - 1]?.focus();
+    }
+  };
+
+  const handleVerify = async () => {
+    const code = otp.join('');
+    if (code.length !== OTP_LENGTH) {
+      setOtpError(t('login.otp.invalid_code'));
+      return;
+    }
+
+    setVerifying(true);
+    setOtpError(null);
+
+    let result;
+    if (isExistingUserWithMfa) {
+      result = await session.verifyMfaLogin(code);
+    } else {
+      result = await session.verifyMfaSetup(phone, code);
+    }
+
+    setVerifying(false);
+
+    if (result.success) {
+      onNext();
+    } else {
+      setOtpError(result.error || t('login.otp.verification_failed'));
+      setOtp(Array(OTP_LENGTH).fill(''));
+      inputsRef.current[0]?.focus();
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (resending || cooldown > 0) return;
+
+    setResending(true);
+    setOtpError(null);
+    try {
+      let result;
+      if (isExistingUserWithMfa) {
+        result = await session.sendMfaLoginCode();
+      } else {
+        result = await session.setupMfa(phone);
+      }
+
+      if (result.success) {
+        setCooldown(60); // Reset cooldown
+      } else {
+        setOtpError(result.error || 'Failed to resend code.');
+      }
+    } catch (e) {
+      setOtpError(String(e.message || e));
+    } finally {
+      setResending(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.select({ ios: 'padding', android: undefined })}
@@ -267,10 +257,10 @@ export default function Step3_PhoneVerify({ userId, phone, onNext, onBack }) {
             {t('auth.app_name')}
           </Text>
           <Text style={[styles.title, { fontSize: sizes.titleFontSize, color: theme.unactiveTextColor, textAlign: 'center' }]}>
-            {t('register.mfa_verify_title')}
+            {t('login.otp.title')}
           </Text>
           <Text style={[styles.subtitle, { fontSize: sizes.subtitleFontSize, marginBottom: sizes.subtitleMarginBottom, color: theme.unactiveTextColor, textAlign: 'center' }]}>
-            {t('register.mfa_verify_subtitle', { phone })}
+            {t('login.otp.subtitle', { phone })}
           </Text>
           <View style={dynamicStyles.otpRow}>
             {otp.map((digit, idx) => (
@@ -288,8 +278,8 @@ export default function Step3_PhoneVerify({ userId, phone, onNext, onBack }) {
                 keyboardType='number-pad'
                 maxLength={1}
                 value={digit}
-                onChangeText={(text) => onChangeOtpCell(text, idx)}
-                onKeyPress={(e) => onKeyPressOtp(e, idx)}
+                onChangeText={(text) => handleOtpChange(text, idx)}
+                onKeyPress={(e) => handleKeyPress(e, idx)}
               />
             ))}
           </View>
@@ -301,7 +291,7 @@ export default function Step3_PhoneVerify({ userId, phone, onNext, onBack }) {
           <View style={[styles.linksRow, dynamicStyles.linksRow, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: sizes.linksRowMarginTop }]}>
             <TouchableOpacity onPress={onBack}>
               <Text style={[styles.link, dynamicStyles.link, { color: theme.formInputLabelColor, textDecorationLine: 'none' }]}>
-                {t('register.back_to_phone')}
+                {t('common.back')}
               </Text>
             </TouchableOpacity>
             {cooldown > 0 ? (
@@ -328,7 +318,7 @@ export default function Step3_PhoneVerify({ userId, phone, onNext, onBack }) {
       </ScrollView>
     </KeyboardAvoidingView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   root: { flex: 1, width: '100%' },
@@ -370,3 +360,5 @@ const styles = StyleSheet.create({
   },
   link: {},
 });
+
+export default LoginStep3_VerifyCode;

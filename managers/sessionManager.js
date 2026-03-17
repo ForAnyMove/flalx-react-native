@@ -17,6 +17,7 @@ export default function sessionManager() {
   const [email, setEmail] = useState(null); // для verifyOtp
   const [phone, setPhone] = useState(null); // для verifyOtp с телефоном
   const [isInPasswordReset, setIsInPasswordReset] = useState(false);
+  const [mfaVerified, setMfaVerified] = useState(false); // Флаг для отслеживания прохождения MFA
   const preResetAuthCall = useRef(false);
 
   const [isLoader, setLoader] = useState(true);
@@ -408,6 +409,7 @@ export default function sessionManager() {
   async function signOut() {
     await supabase.auth.signOut();
     setSession(null);
+    setMfaVerified(false);
     if (Platform.OS === 'web') {
       localStorage.removeItem('supabase_session');
     } else {
@@ -437,6 +439,21 @@ export default function sessionManager() {
       logError('Ошибка updateUser:', err.message);
       throw err;
     }
+  }
+
+  // Обновить email пользователя
+  async function updateEmail(newEmail) {
+    const { data, error } = await supabase.auth.updateUser({
+      email: newEmail,
+    });
+
+    if (error) {
+      logError('Ошибка обновления email:', error.message);
+      return { success: false, error: error.message };
+    }
+
+    logInfo('Запрос на смену email отправлен:', data);
+    return { success: true, data };
   }
 
   // Сброс пароля (новая функция)
@@ -743,6 +760,107 @@ export default function sessionManager() {
     }
   }
 
+  
+  // >>> NEW MFA REGISTRATION FUNCTIONS <<<
+
+  /**
+   * Шаг 1: Регистрация пользователя на сервере
+   */
+  async function registerUserWithEmail(email, password) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/mfa/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
+      return { success: true, userId: data.userId };
+    } catch (e) {
+      logError('registerUserWithEmail error:', e.message);
+      return { success: false, error: e.message };
+    }
+  }
+
+  /**
+   * Шаг 2: Ожидание подтверждения email с сервера (Long-polling)
+   */
+  async function listenForEmailVerification(userId) {
+    logInfo(`[MFA] Starting to listen for email verification for userId: ${userId}`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+        logWarn(`[MFA] Client-side timeout reached for userId: ${userId}. Aborting fetch.`);
+        controller.abort();
+    }, 30 * 60 * 1000); // 30 минут, как на сервере
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/mfa/listen-for-verification/${userId}`, {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId); // Очищаем таймаут, так как ответ получен
+
+      const data = await response.json();
+       if (!response.ok) {
+        throw new Error(data.error || 'Verification listening failed');
+      }
+      logInfo(`[MFA] Email successfully verified for userId: ${userId}`);
+      return { success: true };
+    } catch (e) {
+      clearTimeout(timeoutId);
+      if (e.name === 'AbortError') {
+        logError('[MFA] Fetch aborted due to timeout.', e.message);
+        return { success: false, error: 'Verification timed out. Please try again.' };
+      }
+      logError('listenForEmailVerification error:', e.message);
+      return { success: false, error: e.message };
+    }
+  }
+
+  /**
+   * Шаг 3: Отправка кода верификации на телефон
+   */
+  async function sendPhoneVerificationCode(phoneNumber, userId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/mfa/send-phone-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber, userId }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send code');
+      }
+      return { success: true };
+    } catch (e) {
+      logError('sendPhoneVerificationCode error:', e.message);
+      return { success: false, error: e.message };
+    }
+  }
+  
+  /**
+   * Шаг 4: Проверка кода верификации телефона
+   */
+  async function verifyPhoneCode(phoneNumber, otp, userId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/mfa/verify-phone-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber, otp, userId }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Verification failed');
+      }
+      return { success: true };
+    } catch (e) {
+      logError('verifyPhoneCode error:', e.message);
+      return { success: false, error: e.message };
+    }
+  }
+
   // Создание пользователя по номеру телефона + пароль
   async function createUserWithPhone(phone, password) {
     try {
@@ -896,6 +1014,231 @@ export default function sessionManager() {
   //   }
   // }
 
+  // >>> NEW MFA LOGIN FUNCTIONS <<<
+
+  async function getMfaStatus() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        return { success: false, error: 'No active session' };
+      }
+      logInfo('Fetching MFA status for user with session:', session?.access_token);
+      const response = await fetch(`${API_BASE_URL}/api/auth/mfa/status`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: result.error || `HTTP error! status: ${response.status}` };
+      }
+
+      return { success: true, data: result };
+    } catch (e) {
+      logError('Error getting MFA status:', e);
+      return { success: false, error: e.message };
+    }
+  }
+
+  async function setupMfa(phone) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        return { success: false, error: 'No active session' };
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/mfa/setup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ phone }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: result.error || `HTTP error! status: ${response.status}` };
+      }
+
+      return { success: true, data: result };
+    } catch (e) {
+      logError('Error setting up MFA:', e);
+      return { success: false, error: e.message };
+    }
+  }
+
+  async function verifyMfaSetup(phone, code) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        return { success: false, error: 'No active session' };
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/mfa/setup/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ phone, code }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: result.error || `HTTP error! status: ${response.status}` };
+      }
+      
+      setMfaVerified(true);
+      return { success: true, data: result };
+    } catch (e) {
+      logError('Error verifying MFA setup:', e);
+      return { success: false, error: e.message };
+    }
+  }
+
+  async function sendMfaLoginCode() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        return { success: false, error: 'No active session' };
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/mfa/login/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: result.error || `HTTP error! status: ${response.status}` };
+      }
+
+      return { success: true, data: result };
+    } catch (e) {
+      logError('Error sending MFA login code:', e);
+      return { success: false, error: e.message };
+    }
+  }
+
+  async function verifyMfaLogin(code) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        return { success: false, error: 'No active session' };
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/mfa/login/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ code }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: result.error || `HTTP error! status: ${response.status}` };
+      }
+
+      setMfaVerified(true);
+      return { success: true, data: result };
+    } catch (e) {
+      logError('Error verifying MFA login:', e);
+      return { success: false, error: e.message };
+    }
+  }
+
+  function setMfaAsVerified() {
+    setMfaVerified(true);
+  }
+
+  async function rebindMfaPhoneNumber(phone) {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        return { success: false, error: 'No active session' };
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/mfa/rebind`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ phone }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: result.error || `HTTP error! status: ${response.status}`,
+        };
+      }
+
+      return { success: true, data: result };
+    } catch (e) {
+      logError('Error rebinding MFA phone number:', e);
+      return { success: false, error: e.message };
+    }
+  }
+
+  async function verifyRebindMfaPhoneNumber(phone, code) {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        return { success: false, error: 'No active session' };
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/auth/mfa/rebind/verify`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ phone, code }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: result.error || `HTTP error! status: ${response.status}`,
+        };
+      }
+
+      return { success: true, data: result };
+    } catch (e) {
+      logError('Error verifying rebind MFA phone number:', e);
+      return { success: false, error: e.message };
+    }
+  }
+
+
+  // >>> END NEW MFA LOGIN FUNCTIONS <<<
+
   // Создание нового пароля для OTP-пользователя
   async function createPassword(newPassword) {
     try {
@@ -969,6 +1312,7 @@ export default function sessionManager() {
     session: {
       status: !!session && !!user,
       token: session,
+      mfaVerified: mfaVerified,
       sendCode: (email) => signInWithEmail(email),
       signInWithPassword: (email, password) =>
         signInWithPassword(email, password),
@@ -993,10 +1337,25 @@ export default function sessionManager() {
       enrollPhoneNumber,
       challengePhoneNumber,
       verifyPhoneNumber,
+      // MFA-методы для регистрации нового пользователя
+      registerUserWithEmail,
+      listenForEmailVerification,
+      sendPhoneVerificationCode,
+      verifyPhoneCode,
+      // MFA-методы для входа
+      getMfaStatus,
+      setupMfa,
+      verifyMfaSetup,
+      sendMfaLoginCode,
+      verifyMfaLogin,
+      setMfaAsVerified,
+      rebindMfaPhoneNumber,
+      verifyRebindMfaPhoneNumber,
     },
     user: {
       current: user,
       update: updateUser,
+      updateEmail: updateEmail,
       delete: deleteUser,
     },
     subscription: {

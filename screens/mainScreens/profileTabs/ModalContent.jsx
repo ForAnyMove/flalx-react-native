@@ -12,10 +12,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { logError, logInfo } from '../../../utils/log_util';
 import { sendFeedback, sendMessage } from '../../../src/api/support';
-import {
-  scaleByHeight,
-  scaleByHeightMobile,
-} from '../../../utils/resizeFuncs';
+import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import CustomPicker from '../../../components/ui/CustomPicker';
 import CustomTextInput from '../../../components/ui/CustomTextInput';
@@ -238,7 +235,12 @@ export function ModalContent({
             width: sizes.regulationsModalWidth,
             height: heightByType(),
             borderRadius: sizes.borderRadius,
+            maxHeight: '100%',
           },
+          contactForm &&
+            isWebLandscape && {
+              justifyContent: 'space-between',
+            },
         ]}
       >
         <TouchableOpacity
@@ -312,7 +314,15 @@ export function ModalContent({
             </Text>
           </View>
         ) : (
-          <View style={[!isWebLandscape && { height: '100%', justifyContent: 'space-between' }]}>
+          <View
+            style={[
+              !isWebLandscape && {
+                height: '100%',
+                maxHeight: '100%',
+                justifyContent: 'space-between',
+              },
+            ]}
+          >
             <Text
               style={[
                 {
@@ -349,7 +359,15 @@ export function ModalContent({
             {contactForm || feedback ? (
               <>
                 {contactForm && (
-                  <ScrollView style={[{ width: '100%' }]}>
+                  <ScrollView
+                    style={[
+                      {
+                        width: '100%',
+                        maxHeight: '70%',
+                        marginBottom: sizes.modalInputMarginBottom / 2,
+                      },
+                    ]}
+                  >
                     <View
                       style={[
                         styles.inputBlock,
@@ -362,7 +380,7 @@ export function ModalContent({
                           borderRadius: sizes.borderRadius,
                           // marginBottom: 0,
                           height: sizes.inputHeight,
-                          marginBottom: sizes.modalInputMarginBottom/2,
+                          marginBottom: sizes.modalInputMarginBottom / 2,
                         },
                       ]}
                     >
@@ -744,7 +762,10 @@ export function ModalContent({
                       <CustomTextInput
                         value={contactUsFormState.phoneNumber}
                         onChangeText={(v) =>
-                          setContactUsFormState((p) => ({ ...p, phoneNumber: v }))
+                          setContactUsFormState((p) => ({
+                            ...p,
+                            phoneNumber: v,
+                          }))
                         }
                         placeholder={t(
                           'settings.modals.feedback.phone.placeholder',

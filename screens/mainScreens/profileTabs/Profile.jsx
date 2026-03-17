@@ -23,10 +23,14 @@ import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import SubscriptionsModal from '../../../components/SubscriptionsModal';
 import { getUserExportData } from '../../../src/api/dataExport';
 import CouponsModal from '../../../components/CouponsModal';
-import { logError } from '../../../utils/log_util';
+import { logError, logInfo } from '../../../utils/log_util';
 import CustomTextInput from '../../../components/ui/CustomTextInput';
 import { ModalContent } from './ModalContent';
 import { Linking } from 'react-native';
+import PaymentMethodsModal from '../../../components/PaymentMethodsModal';
+import UpdateUserDataModal from '../../../components/modals/UpdateUserDataModal';
+import UpdateEmailModal from '../../../components/modals/UpdateEmailModal';
+import UpdatePhoneModal from '../../../components/modals/UpdatePhoneModal';
 
 export default function Profile() {
   const { user, themeController, languageController, session } =
@@ -35,7 +39,7 @@ export default function Profile() {
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
-    () => () => { }
+    () => () => {}
   );
   const [changePasswordModal, showPasswordModal] = useState(false);
 
@@ -53,8 +57,15 @@ export default function Profile() {
 
   const [subscriptionsModal, setSubscriptionsModal] = useState(false);
   const [couponsModalVisible, setCouponsModalVisible] = useState(false);
+  const [paymentMethodsModalVisible, setPaymentMethodsModalVisible] =
+    useState(false);
   const [contactUsVisible, setContactUsVisible] = useState(false);
   const [feedbackVisible, setFeedbackVisible] = useState(false);
+  const [updateUserDataModalVisible, setUpdateUserDataModalVisible] =
+    useState(false);
+  const [updateEmailModalVisible, setUpdateEmailModalVisible] = useState(false);
+  const [updatePhoneModalVisible, setUpdatePhoneModalVisible] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
@@ -107,6 +118,59 @@ export default function Profile() {
       oneLineInputHeight: isWebLandscape ? web(20) : mobile(20),
     };
   }, [height, isWebLandscape]);
+
+  const handleSetDefaultPayment = (id) => {
+    logInfo(`Setting payment method ${id} as default.`);
+    // Here you would call the API to set the default payment method
+  };
+
+  const handleDeletePayment = (id) => {
+    logInfo(`Deleting payment method ${id}.`);
+    // Here you would call the API to delete the payment method
+  };
+
+  const handleUpdateUserData = async (data) => {
+    setIsUpdating(true);
+    try {
+      const updatedUser = await user.update(data);
+      if (updatedUser) {
+        setUserState(updatedUser);
+      }
+      setUpdateUserDataModalVisible(false);
+    } catch (error) {
+      console.error('Failed to update user data:', error);
+      // Optionally, show an error message to the user
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleUpdateEmail = (newEmail) => {
+    // The logic is now inside the modal.
+    // We can potentially update the user state here if needed,
+    // but Supabase handles the email change after verification.
+    // For now, we just close the modal, and the user will see the pending change.
+    setUpdateEmailModalVisible(false);
+    console.log(`Email change process initiated for ${newEmail}.`);
+  };
+
+  const handleUpdatePhone = async (newPhone) => {
+    setIsUpdating(true);
+    try {
+      // The actual update happens inside the modal flow now.
+      // We just need to update the local state and close the modal.
+      const updatedUser = await user.update({ phoneNumber: newPhone });
+      if (updatedUser) {
+        setUserState(updatedUser);
+      }
+      setUpdatePhoneModalVisible(false);
+      // Maybe show a success message
+    } catch (error) {
+      console.error('Failed to update user phone:', error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   // Функция загрузки и обновления аватара
   async function uploadAvatar(uri) {
@@ -174,12 +238,14 @@ export default function Profile() {
     }
   }
 
-  const firstBtnsRow = isWebLandscape
-    ? ['coupons', 'subscription', 'payment']
-    : ['coupons', 'subscription'];
-  const secondBtnsRow = isWebLandscape
-    ? ['contact', 'feedback', 'whatsapp']
-    : ['contact', 'feedback', 'whatsapp'];
+  // const firstBtnsRow = isWebLandscape
+  //   ? ['coupons', 'subscription', 'payment']
+  //   : ['coupons', 'subscription'];
+  // const secondBtnsRow = isWebLandscape
+  //   ? ['contact', 'feedback', 'whatsapp']
+  //   : ['contact', 'feedback', 'whatsapp'];
+  const firstBtnsRow = ['coupons', 'subscription', 'payment'];
+  const secondBtnsRow = ['contact', 'feedback', 'delete'];
 
   const openWhatsApp = async () => {
     const number = await session.getWhatsAppNumber();
@@ -194,7 +260,7 @@ export default function Profile() {
       if (supported) {
         await Linking.openURL(url);
       } else {
-        console.log("WhatsApp is not installed");
+        console.log('WhatsApp is not installed');
         // Optionally, show an alert to the user
       }
     } catch (err) {
@@ -215,9 +281,9 @@ export default function Profile() {
     },
     payment: {
       text: t('my_profile.payment'),
-      action: () => { },
+      action: () => setPaymentMethodsModalVisible(true),
       style: 'primary',
-      hidden: isWebLandscape,
+      // hidden: isWebLandscape,
     },
     contact: {
       text: t('my_profile.contact_us'),
@@ -232,6 +298,22 @@ export default function Profile() {
     whatsapp: {
       text: 'WhatsApp',
       action: openWhatsApp,
+      style: 'secondary',
+    },
+    delete: {
+      text: t('my_profile.delete'),
+      action: () => {
+        setAcceptModalVisible(true);
+        setAcceptModalVisibleTitle(t('my_profile.confirm_delete'));
+        setAcceptModalVisibleFunc(() => async () => {
+          try {
+            await user.delete();
+          } catch (err) {
+            logInfo('Ошибка удаления:', err.message);
+          }
+          setAcceptModalVisible(false);
+        });
+      },
       style: 'secondary',
     },
   };
@@ -371,37 +453,23 @@ export default function Profile() {
         >
           <View
             style={{
-              flexDirection: isWebLandscape ? 'row' : 'column',
-              flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
+              // flexDirection: isWebLandscape ? 'row' : 'column',
+              // flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
               justifyContent: isWebLandscape ? 'space-between' : 'center',
               gap: sizes.infoFieldsGap,
               direction: isRTL ? 'rtl' : 'ltr',
-              width: isWebLandscape ? '66.5%' : '100%',
+              width: isWebLandscape ? '32%' : '100%',
             }}
           >
             {[
               { key: 'first_name', value: userState?.name, field: 'name' },
               { key: 'surname', value: userState?.surname, field: 'surname' },
-              { key: 'email', value: userState?.email, field: 'email' },
-              {
-                key: 'phone',
-                value: userState?.phoneNumber,
-                field: 'phoneNumber',
-              },
             ].map((f) => (
               <InfoField
                 key={f.key}
                 label={t(`my_profile.${f.key}`)}
                 value={f.value}
-                changeInfo={async (v) => {
-                  setUserState((p) => ({ ...p, [f.field]: v }));
-                  try {
-                    const updated = await user.update({ [f.field]: v });
-                    setUserState(updated);
-                  } catch (err) {
-                    logInfo('Ошибка сохранения:', err.message);
-                  }
-                }}
+                onEditPress={() => setUpdateUserDataModalVisible(true)}
                 baseFont={sizes.fieldFont}
                 fieldPadding={sizes.fieldPadding}
                 btnHeight={sizes.btnHeight}
@@ -419,15 +487,7 @@ export default function Profile() {
             key='about'
             label={t(`my_profile.about`)}
             value={userState?.about}
-            changeInfo={async (v) => {
-              setUserState((p) => ({ ...p, ['about']: v }));
-              try {
-                const updated = await user.update({ ['about']: v });
-                setUserState(updated);
-              } catch (err) {
-                logInfo('Ошибка сохранения:', err.message);
-              }
-            }}
+            onEditPress={() => setUpdateUserDataModalVisible(true)}
             baseFont={sizes.fieldFont}
             fieldPadding={sizes.fieldPadding}
             btnHeight={sizes.btnHeight * 2 + sizes.infoFieldsGap}
@@ -439,6 +499,48 @@ export default function Profile() {
             sizes={sizes}
             isRTL={isRTL}
           />
+          <View
+            style={{
+              // flexDirection: isWebLandscape ? 'row' : 'column',
+              flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
+              justifyContent: isWebLandscape ? 'space-between' : 'center',
+              gap: sizes.infoFieldsGap,
+              direction: isRTL ? 'rtl' : 'ltr',
+              width: isWebLandscape ? '32%' : '100%',
+            }}
+          >
+            {[
+              { key: 'email', value: userState?.email, field: 'email' },
+              {
+                key: 'phone',
+                value: userState?.phoneNumber,
+                field: 'phoneNumber',
+              },
+            ].map((f) => (
+              <InfoField
+                key={f.key}
+                label={t(`my_profile.${f.key}`)}
+                value={f.value}
+                onEditPress={() => {
+                  if (f.key === 'email') {
+                    setUpdateEmailModalVisible(true);
+                  } else if (f.key === 'phone') {
+                    setUpdatePhoneModalVisible(true);
+                  }
+                }}
+                baseFont={sizes.fieldFont}
+                fieldPadding={sizes.fieldPadding}
+                btnHeight={sizes.btnHeight}
+                fieldMargin={sizes.fieldMargin}
+                iconSize={sizes.iconSize}
+                isLandscape={isLandscape}
+                multiline={f.multiline}
+                height={height}
+                sizes={sizes}
+                isRTL={isRTL}
+              />
+            ))}
+          </View>
         </View>
 
         <View
@@ -464,28 +566,10 @@ export default function Profile() {
             justifyContent: isWebLandscape ? 'space-between' : 'center',
             gap: sizes.infoFieldsGap,
             direction: isRTL ? 'rtl' : 'ltr',
-            marginBottom: isWebLandscape ? sizes.buttonsMarginBottom : sizes.infoFieldsGap,
+            // marginBottom: isWebLandscape ? sizes.buttonsMarginBottom : sizes.infoFieldsGap,
           }}
         >
           {renderButtons(firstBtnsRow)}
-        </View>
-
-        <View
-          style={{
-            flexDirection: isWebLandscape
-              ? isRTL
-                ? 'row-reverse'
-                : 'row'
-              : 'column',
-            gap: sizes.btnMargin,
-            width: '100%',
-            flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
-            justifyContent: isWebLandscape ? 'space-between' : 'center',
-            gap: sizes.infoFieldsGap,
-            direction: isRTL ? 'rtl' : 'ltr',
-          }}
-        >
-          {renderButtons(secondBtnsRow)}
         </View>
 
         <View
@@ -506,7 +590,7 @@ export default function Profile() {
             justifyContent: isWebLandscape ? 'space-between' : 'center',
             gap: sizes.infoFieldsGap,
             direction: isRTL ? 'rtl' : 'ltr',
-            marginBottom: isWebLandscape ? sizes.buttonsMarginBottom : sizes.infoFieldsGap,
+            // marginBottom: isWebLandscape ? sizes.buttonsMarginBottom : sizes.infoFieldsGap,
           }}
         >
           {[
@@ -583,7 +667,36 @@ export default function Profile() {
           ))}
         </View>
 
-        {/* Кнопка Delete */}
+        <View
+          style={[
+            styles.breakLine,
+            {
+              backgroundColor: themeController.current?.breakLineColor,
+              marginVertical: sizes.breakLineMarginVertical,
+            },
+          ]}
+        />
+
+        <View
+          style={{
+            flexDirection: isWebLandscape
+              ? isRTL
+                ? 'row-reverse'
+                : 'row'
+              : 'column',
+            gap: sizes.btnMargin,
+            width: '100%',
+            flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
+            justifyContent: isWebLandscape ? 'space-between' : 'center',
+            gap: sizes.infoFieldsGap,
+            direction: isRTL ? 'rtl' : 'ltr',
+            marginBottom: isWebLandscape
+              ? sizes.buttonsMarginBottom
+              : sizes.infoFieldsGap,
+          }}
+        >
+          {renderButtons(secondBtnsRow)}
+        </View>
         <View
           style={{
             flexDirection: isWebLandscape ? 'row' : 'column',
@@ -593,45 +706,7 @@ export default function Profile() {
             direction: isRTL ? 'rtl' : 'ltr',
           }}
         >
-          <TouchableOpacity
-            style={[
-              styles.secondaryBtn,
-              {
-                backgroundColor:
-                  themeController.current?.buttonColorSecondaryDefault,
-                borderColor:
-                  themeController.current?.buttonColorSecondaryDefault,
-                height: sizes.btnHeight,
-                marginBottom: sizes.btnMargin,
-                width: sizes.btnWidth,
-                borderRadius: sizes.infoFieldBorderRadius,
-              },
-            ]}
-            onPress={() => {
-              setAcceptModalVisible(true);
-              setAcceptModalVisibleTitle(t('my_profile.confirm_delete'));
-              setAcceptModalVisibleFunc(() => async () => {
-                try {
-                  await user.delete();
-                } catch (err) {
-                  logInfo('Ошибка удаления:', err.message);
-                }
-                setAcceptModalVisible(false);
-              });
-            }}
-          >
-            <Text
-              style={[
-                styles.secondaryText,
-                {
-                  fontSize: sizes.btnFont,
-                  color: themeController.current?.buttonTextColorSecondary,
-                },
-              ]}
-            >
-              {t('my_profile.delete')}
-            </Text>
-          </TouchableOpacity>
+          {renderButtons(['whatsapp'])}
         </View>
       </View>
 
@@ -1076,7 +1151,12 @@ export default function Profile() {
           setSubscriptionsModal(false);
         }}
       />
-
+      <PaymentMethodsModal
+        visible={paymentMethodsModalVisible}
+        onClose={() => setPaymentMethodsModalVisible(false)}
+        onSetDefault={handleSetDefaultPayment}
+        onDelete={handleDeletePayment}
+      />
       <CouponsModal
         visible={couponsModalVisible}
         onClose={() => setCouponsModalVisible(false)}
@@ -1106,6 +1186,31 @@ export default function Profile() {
           feedback={true}
         />
       </Modal>
+      <UpdateUserDataModal
+        visible={updateUserDataModalVisible}
+        onClose={() => setUpdateUserDataModalVisible(false)}
+        userData={{
+          name: userState?.name,
+          surname: userState?.surname,
+          about: userState?.about,
+        }}
+        onSave={handleUpdateUserData}
+        isLoading={isUpdating}
+      />
+      <UpdateEmailModal
+        visible={updateEmailModalVisible}
+        onClose={() => setUpdateEmailModalVisible(false)}
+        currentEmail={userState?.email}
+        onSave={handleUpdateEmail}
+        isLoading={isUpdating}
+      />
+      <UpdatePhoneModal
+        visible={updatePhoneModalVisible}
+        onClose={() => setUpdatePhoneModalVisible(false)}
+        currentPhone={userState?.phoneNumber}
+        onSave={handleUpdatePhone}
+        isLoading={isUpdating}
+      />
     </ScrollView>
   );
 }
@@ -1114,6 +1219,7 @@ function InfoField({
   label,
   value,
   changeInfo,
+  onEditPress,
   multiline = false,
   baseFont,
   fieldPadding,
@@ -1123,11 +1229,21 @@ function InfoField({
   btnHeight,
   height,
   sizes,
-  isRTL
+  isRTL,
 }) {
   const { themeController } = useComponentContext();
   const [editMode, setEditMode] = useState(false);
-  const [textValue, setTextValue] = useState(value);
+  const [currentValue, setCurrentValue] = useState(value);
+
+  const handleSave = () => {
+    changeInfo(currentValue);
+    setEditMode(false);
+  };
+
+  const handleCancel = () => {
+    setCurrentValue(value);
+    setEditMode(false);
+  };
 
   return (
     <View
@@ -1138,7 +1254,7 @@ function InfoField({
             Platform.OS === 'web' && isLandscape
               ? multiline
                 ? '32%'
-                : '49%'
+                : '100%'
               : '100%',
           height: btnHeight,
           marginBottom: fieldMargin,
@@ -1149,18 +1265,23 @@ function InfoField({
           paddingHorizontal: sizes.infoFieldPaddingH,
         },
         multiline && { alignItems: 'flex-start' },
-        multiline && isRTL && { flexDirection: 'row-reverse' }
+        multiline &&
+          Platform.OS === 'web' &&
+          isLandscape && {
+            [isRTL ? 'marginLeft' : 'marginRight']: sizes.infoFieldsGap*4,
+          },
+        multiline && isRTL && { flexDirection: 'row-reverse' },
       ]}
     >
       <View
         style={
           multiline
             ? {
-              paddingVertical: sizes.fieldPaddingVertical,
-              alignItems: 'flex-start',
-              flex: 1,
-              height: '100%',
-            }
+                paddingVertical: sizes.fieldPaddingVertical,
+                alignItems: 'flex-start',
+                flex: 1,
+                height: '100%',
+              }
             : { flex: 1 }
         }
       >
@@ -1172,7 +1293,7 @@ function InfoField({
               color: themeController.current?.formInputLabelColor,
               marginBottom: sizes.labelMarginBottom,
             },
-            multiline && isRTL && { alignSelf: 'flex-end'}
+            multiline && isRTL && { alignSelf: 'flex-end' },
           ]}
         >
           {label}
@@ -1188,9 +1309,10 @@ function InfoField({
               },
               multiline && { flex: 1 },
             ]}
-            value={textValue}
-            onChangeText={setTextValue}
+            value={currentValue}
+            onChangeText={setCurrentValue}
             multiline={multiline}
+            autoFocus={true}
           />
         ) : (
           <Text
@@ -1206,10 +1328,11 @@ function InfoField({
                 : { overflow: 'hidden', maxHeight: sizes.oneLineInputHeight },
             ]}
           >
-            {textValue}
+            {value}
           </Text>
         )}
       </View>
+
       {editMode ? (
         <View
           style={[
@@ -1253,7 +1376,7 @@ function InfoField({
         </View>
       ) : (
         <TouchableOpacity
-          onPress={() => setEditMode(true)}
+          onPress={onEditPress}
           style={[multiline && { marginTop: sizes.fieldPaddingVertical }]}
         >
           <Image

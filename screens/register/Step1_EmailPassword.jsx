@@ -167,21 +167,21 @@ export default function Step1_EmailPassword({ onNext }) {
     setPasswordError(null);
     setPasswordRepeatError(null);
 
-    let ok = true;
+    let isValid = true;
 
     if (!validateEmail(email)) {
       setEmailError(t('register.email_invalid'));
-      ok = false;
+      isValid = false;
     }
     if (!validatePassword(password)) {
       setPasswordError(t('register.password_invalid'));
-      ok = false;
+      isValid = false;
     }
     if (!passwordsMatch()) {
       setPasswordRepeatError(t('register.password_mismatch'));
-      ok = false;
+      isValid = false;
     }
-    if (!ok) return;
+    if (!isValid) return;
 
     try {
       setLoading(true);

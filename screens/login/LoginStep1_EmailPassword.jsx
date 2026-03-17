@@ -208,27 +208,25 @@ export default function LoginStep1_EmailPassword({ onNext, onGoToRegister, onGoT
       setEmailError(t('auth.invalid_email'));
       return;
     }
-
-    if (!password || password.length < 6) {
-      setEmailError(t('auth.invalid_password'));
+    if (!password) {
+      setEmailError(t('auth.password_required'));
       return;
     }
 
     setSending(true);
     setEmailError(null);
 
-    const { success, error, mfaRequired, phone, factorId, challengeId } = await session.signInWithPassword(
-      email,
-      password
-    );
-
-    if (mfaRequired) {
-        onNext({phone, factorId, challengeId});
-    } else if (!success) {
-      setEmailError(error || t('auth.login_error'));
-    }
+    const { success, error } = await session.signInWithPassword(email, password);
 
     setSending(false);
+
+    if (success) {
+      // Теперь мы не передаем данные MFA отсюда, 
+      // а просто вызываем onNext, который запустит проверку статуса MFA в MultiStepLoginScreen
+      onNext(); 
+    } else {
+      setEmailError(error);
+    }
   };
 
   return (

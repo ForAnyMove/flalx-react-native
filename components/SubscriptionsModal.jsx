@@ -25,7 +25,7 @@ import { useMemo } from 'react';
 import { useLocalization } from '../src/services/useLocalization';
 import { useWindowInfo } from '../context/windowContext';
 import { formatCurrency } from '../utils/currency_formatter';
-import { logError } from '../utils/log_util';
+import { logError, logInfo } from '../utils/log_util';
 
 function SubscriptionsModalContent({ closeModal }) {
   const {

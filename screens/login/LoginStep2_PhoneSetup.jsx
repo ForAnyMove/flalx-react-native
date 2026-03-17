@@ -1,25 +1,20 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
   Platform,
   KeyboardAvoidingView,
   ScrollView,
-  I18nManager,
   Animated,
-  ActivityIndicator,
-  Image,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
-import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
-import { icons } from '../../constants/icons';
-import { logError } from '../../utils/log_util';
 import { useWindowInfo } from '../../context/windowContext';
 import CustomTextInput from '../../components/ui/CustomTextInput';
+import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 
 function PrimaryOutlineButton({
   title,
@@ -28,7 +23,6 @@ function PrimaryOutlineButton({
   theme,
   isLandscape,
   height,
-  containerStyle = {},
 }) {
   const buttonDynamicStyles = useMemo(
     () => ({
@@ -42,10 +36,6 @@ function PrimaryOutlineButton({
         fontSize: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
         lineHeight: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
       },
-      webLandscapeButton: {
-        width: scaleByHeight(330, height),
-        height: scaleByHeight(62, height),
-      },
     }),
     [height, isLandscape]
   );
@@ -57,12 +47,6 @@ function PrimaryOutlineButton({
         styles.outlineBtn,
         buttonDynamicStyles.outlineBtn,
         { borderColor: theme.primaryColor, opacity: disabled ? 0.6 : 1 },
-        isLandscape &&
-        Platform.OS === 'web' && {
-          width: scaleByHeight(330, height),
-          height: scaleByHeight(62, height),
-        },
-        containerStyle,
       ]}
     >
       {typeof title === 'string' ? (
@@ -82,20 +66,18 @@ function PrimaryOutlineButton({
   );
 }
 
-
-export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
+const LoginStep2_PhoneSetup = ({ onNext, onBack }) => {
   const { t } = useTranslation();
-  const { session, themeController, languageController, registerControl } =
-    useComponentContext();
+  const { themeController, session, languageController } = useComponentContext();
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
 
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState(null);
+
   const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
-
-  const [phone, setPhone] = useState('');
-  const [phoneError, setPhoneError] = useState(null);
-  const [sending, setSending] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -121,8 +103,6 @@ export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
       linksRowWidth: isWebLandscape ? web(314) : '90%',
       linkFontSize: isWebLandscape ? web(14) : mobile(14),
       errorFontSize: isWebLandscape ? web(14) : mobile(14),
-      phoneDescriptionFontSize: isWebLandscape ? web(14) : mobile(14),
-      phoneDescriptionLineHeight: isWebLandscape ? web(18) : mobile(18),
       webLandscapeFieldBlockWidth: isWebLandscape ? web(330) : '100%',
       webLandscapeFieldBlockHeight: isWebLandscape ? web(76) : mobile(75),
       webLandscapeFieldBlockPaddingTop: web(8),
@@ -143,32 +123,27 @@ export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
   }, []);
 
   const isValidPhone = useMemo(() => {
-    // Basic validation for E.164 format
     const phoneRegex = /^\+[1-9]\d{1,14}$/;
-    const phoneRegex2 = /^\[1-9]\d{1,14}$/;
-    return phoneRegex.test(phone.trim()) || phoneRegex2.test(phone.trim());
-  }, [phone]);
+    return phoneRegex.test(phoneNumber.trim());
+  }, [phoneNumber]);
 
-  const handleSubmit = async () => {
+  const handleSendCode = async () => {
     if (!isValidPhone) {
-      setPhoneError(t('register.phone_invalid'));
+      setError(t('register.phone_invalid'));
       return;
     }
-    setPhoneError(null);
-    setSending(true);
 
-    try {
-      const result = await session.sendPhoneVerificationCode(phone.trim(), userId);
-      if (result.success) {
-        onNext(phone.trim());
-      } else {
-        throw new Error(result.error);
-      }
-    } catch (e) {
-      logError('Phone Enrollment Error:', e.message);
-      setPhoneError(e.message || 'An unknown error occurred.');
-    } finally {
-      setSending(false);
+    setSending(true);
+    setError(null);
+
+    const { success, error: apiError } = await session.setupMfa(phoneNumber);
+
+    setSending(false);
+
+    if (success) {
+      onNext(phoneNumber);
+    } else {
+      setError(apiError || t('errors.mfa_setup_failed'));
     }
   };
 
@@ -194,9 +169,7 @@ export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
         <Animated.View
           style={[
             styles.contentBlock,
-            isWebLandscape
-              ? { width: height * 0.5 }
-              : { width: '100%' },
+            isWebLandscape ? { width: height * 0.5 } : { width: '100%' },
             { opacity: fadeAnim },
           ]}
         >
@@ -224,7 +197,7 @@ export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
               },
             ]}
           >
-            {t('register.mfa_title')}
+            {t('login.phone_setup.title')}
           </Text>
           <Text
             style={[
@@ -237,7 +210,7 @@ export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
               },
             ]}
           >
-            {t('register.mfa_enroll_subtitle')}
+            {t('login.phone_setup.subtitle')}
           </Text>
 
           <View
@@ -270,7 +243,7 @@ export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
                   : null,
               ]}
             >
-              {t('register.phone_label')}
+              {t('login.phone_setup.phone_label')}
             </Text>
             <CustomTextInput
               ref={phoneInputRef}
@@ -295,11 +268,16 @@ export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
               keyboardType='phone-pad'
               autoCapitalize='none'
               autoCorrect={false}
-              value={phone}
-              onChangeText={setPhone}
+              value={phoneNumber}
+              onChangeText={setPhoneNumber}
               returnKeyType='done'
             />
           </View>
+          {error && (
+            <Text style={{ textAlign: 'center', color: theme.errorTextColor, fontSize: sizes.errorFontSize }}>
+              {error}
+            </Text>
+          )}
           <View
             style={[
               styles.linksRow,
@@ -323,7 +301,7 @@ export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
                   },
                 ]}
               >
-                {t('register.back_to_email')}
+                {t('common.back')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -336,17 +314,17 @@ export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
               sending ? (
                 <ActivityIndicator color={theme.primaryColor} />
               ) : (
-                t('auth.send_code')
+                t('login.phone_setup.send_code_button')
               )
             }
-            onPress={handleSubmit}
+            onPress={handleSendCode}
             disabled={sending || !isValidPhone}
           />
         </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   root: { flex: 1, width: '100%' },
@@ -398,12 +376,6 @@ const styles = StyleSheet.create({
   link: {
     textDecorationLine: 'underline',
   },
-  error: {
-    marginTop: 4,
-  },
-  phoneDescription: {
-    textAlign: 'center',
-    fontWeight: '500',
-    fontFamily: 'Rubik-Medium',
-  },
 });
+
+export default LoginStep2_PhoneSetup;

@@ -71,4 +71,7 @@ export const icons = {
   halfStar: require('../assets/icon/halfstar.png'),
   emptyStar: require('../assets/icon/emptystar.png'),
   language: require('../assets/icon/language.png'),
+  deleteCross: require('../assets/icon/delete-cross.png'),
+  radioOn: require('../assets/icon/radio-button-on.png'),
+  radioOff: require('../assets/icon/radio-button-off.png'),
 };

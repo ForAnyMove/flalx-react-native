@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import {
   StyleSheet,
   ActivityIndicator,
@@ -180,19 +180,35 @@ function App() {
 
   let content;
 
+  // const theme = themeController.current;
+
+  // if (!session.status || (session.token && !session.mfaVerified)) {
+  //   if (forgotPassControl.isGoToReset) {
+  //     return <ResetPasswordScreen />;
+  //   }
+  //   if (authControl.isGoToRegister) {
+  //     return <RegisterScreen />;
+  //   }
+  //   return <AuthScreen />;
+  // }
+
+  // if (!onboardingStatusChecked) {
+  //   return <LoadingStub />;
+  // }
+
   // 1. Онбординг
   if (!isOnboardingShowed) {
     content = <OnboardingScreen onFinish={handleOnboardingFinish} />;
   }
   // 2. Авторизация
-  else if (!session.status) {
+  else if (!(session.status && session.mfaVerified)) {
     // Авторизация с OTP
     if (authControl.state) {
       content = <AuthScreen />;
     } else {
       content = (
         <MultiStepLoginScreen
-          // skipMFA={true}
+          skipMFA={true}
           onGoToRegister={() => registerControl.goToRegisterScreen()}
           onGoToForgottenPassword={() => forgotPassControl.switch()}
         />
@@ -200,6 +216,7 @@ function App() {
       // content = <AuthScreenWithPass />;
     }
   }
+  
   // 3. Регистрация первого входа
   else if (user?.current?.firstauth) {
     content = <RegisterScreen />;
@@ -212,7 +229,6 @@ function App() {
       </WebSocketProvider>
     );
   }
-
   // Регистрация перед входом
   if (registerControl.state) {
     // content = <RegisterScreenWithPass />;
