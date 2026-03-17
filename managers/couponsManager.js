@@ -10,22 +10,28 @@ export default function couponsManager({ session }) {
     const token = session?.token?.access_token;
 
     useEffect(() => {
-        if (!session || !session?.token || loading) return;
+        // Сбрасываем состояние при смене аккаунта (или выходе)
+        setCouponsBalance(0);
+        setLink('');
+
+        if (!session || !session?.token) return;
 
         async function fetchCouponsData() {
             setLoading(true);
-
-            const balance = await getCouponsBalance(session);
-
-            const referralData = await getReferralLink(session);
-            setCouponsBalance(balance);
-
-            setLink(referralData.referral_link);
-            setLoading(false);
+            try {
+                const balance = await getCouponsBalance(session);
+                const referralData = await getReferralLink(session);
+                setCouponsBalance(balance);
+                setLink(referralData.referral_link);
+            } catch (error) {
+                logError('Error fetching coupons data:', error);
+            } finally {
+                setLoading(false);
+            }
         }
 
         fetchCouponsData();
-    }, [token, link]);
+    }, [token]); // Только token — избегаем loop через link
 
     async function refreshBalance() {
         try {

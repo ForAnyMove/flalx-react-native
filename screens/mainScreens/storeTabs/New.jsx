@@ -103,7 +103,7 @@ export default function NewScreen({
             //     // } else {
             //     //   const url =
             //     //     pendingJobRequest.payment?.paymentMetadata
-            //     //       ?.paypalApproval?.href;
+            //     //       ?.approval?.href;
             //     //   const message = [
             //     //     t('subscriptions.messages.pendingJob'),
             //     //     '',

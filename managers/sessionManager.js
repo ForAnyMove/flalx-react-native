@@ -456,6 +456,11 @@ export default function sessionManager() {
     return { success: true, data };
   }
 
+  // Обновить pending_avatar локально (без запроса на сервер)
+  function setPendingAvatar(avatarUrl) {
+    setUser(prev => ({ ...prev, pending_avatar: avatarUrl }));
+  }
+
   // Сброс пароля (новая функция)
   async function resetPassword(newPassword) {
     if (!trialSession) {
@@ -562,7 +567,11 @@ export default function sessionManager() {
 
   // Reveal user contacts
   async function tryReveal(userId, useCoupon = false) {
+    console.log('Trying to reveal user', userId, 'with coupon:', useCoupon);
+
     if (revealedUsers.includes(userId)) {
+      console.log('User already revealed, skipping API call');
+
       return;
     }
 
@@ -1357,6 +1366,7 @@ export default function sessionManager() {
       update: updateUser,
       updateEmail: updateEmail,
       delete: deleteUser,
+      setPendingAvatar: setPendingAvatar,
     },
     subscription: {
       current: subscription,

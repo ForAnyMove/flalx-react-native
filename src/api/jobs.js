@@ -11,7 +11,7 @@ async function createJob(jobData, session) {
             method: 'POST'
         });
         const returnData = {
-            paymentUrl: response.data?.payment?.paymentMetadata?.paypalApproval?.href,
+            paymentUrl: response.data?.payment?.paymentMetadata?.approval?.href,
             job: response.data?.job
         };
         return returnData;
@@ -30,7 +30,7 @@ async function payForJob(jobDataId, session, useCoupon = false) {
             method: 'POST'
         });
         const returnData = {
-            paymentUrl: response.data?.payment?.paymentMetadata?.paypalApproval?.href,
+            paymentUrl: response.data?.payment?.paymentMetadata?.approval?.href,
             job: response.data?.job
         };
         return returnData;

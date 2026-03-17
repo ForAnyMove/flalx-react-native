@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 export default function Header({ switchToProfile }) {
   const { themeController, user, languageController } = useComponentContext();
   const { width, height, isLandscape } = useWindowInfo();
-  const userAvatar = user.current?.avatar;
+  const userAvatar = user.current?.pending_avatar || user.current?.avatar;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const isRTL = languageController.isRTL;
   const { t } = useTranslation();

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Platform, I18nManager } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Localization from "expo-localization";
 import i18n from "../utils/i18n/i18n";
 
 export default function languageManager() {
@@ -19,10 +20,19 @@ export default function languageManager() {
       saved = await AsyncStorage.getItem("app_language");
     }
 
-    const lang = saved || (Platform.OS === "web"
-      ? navigator.language.split("-")[0]
-      : "en");
+    // Определяем системный язык
+    let systemLang = "en"; // fallback
 
+    if (Platform.OS === "web") {
+      // Для веба используем navigator.language
+      systemLang = navigator.language?.split("-")[0] || "en";
+    } else {
+      // Для мобильных используем expo-localization (системный язык устройства)
+      const locales = Localization.getLocales();
+      systemLang = locales?.length ? locales[0].languageCode : "en";
+    }
+
+    const lang = saved || systemLang;
     applyLang(lang);
   }
 
