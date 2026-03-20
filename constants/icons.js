@@ -74,4 +74,9 @@ export const icons = {
   deleteCross: require('../assets/icon/delete-cross.png'),
   radioOn: require('../assets/icon/radio-button-on.png'),
   radioOff: require('../assets/icon/radio-button-off.png'),
+  attention: require('../assets/icon/attention.png'),
+  method_card: require('../assets/icon/card-method.png'),
+  method_paypal: require('../assets/icon/paypal-method.png'),
+  // method_apple_pay: require('../assets/icon/method_apple_pay.png'),
+  // method_google_pay: require('../assets/icon/method_google_pay.png'),
 };

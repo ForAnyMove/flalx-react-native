@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -7,35 +7,89 @@ import {
   StyleSheet,
   Platform,
   Image,
-  FlatList,
   ActivityIndicator,
+  FlatList,
 } from 'react-native';
-import { useWindowInfo } from '../context/windowContext';
-import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
+import { useWindowInfo } from '../context/windowContext';
+import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 
-const PaymentMethodsModal = ({
-  visible,
-  onClose,
-  onSetDefault,
-  onDelete,
-}) => {
-  const { themeController, languageController } = useComponentContext();
+const PaymentMethodsModal = ({ visible, onClose }) => {
+  const { themeController, languageController, paymentsManagerController } =
+    useComponentContext();
   const theme = themeController.current;
   const { height, width, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 
-  // Mock data
-  const [paymentMethods, setPaymentMethods] = useState([
-    { id: 1, title: 'PayPal (user@email)', default: true },
-    { id: 2, title: 'Credit card •••• •••• •••• 4352', default: false },
-    { id: 3, title: 'Credit card •••• •••• •••• 2032', default: false },
-  ]);
+  const [step, setStep] = useState('list'); // 'list', 'confirmDelete', 'success', 'error', 'cantDelete'
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [selectedMethod, setSelectedMethod] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (visible) {
+      setPaymentMethods(paymentsManagerController.savedMethods);
+      setStep('list');
+      setIsLoading(false);
+      setError(null);
+    }
+  }, [visible, paymentsManagerController.savedMethods]);
+
+  const handleSetDefault = async (id) => {
+    setIsLoading(true);
+    await paymentsManagerController.changeDefaultPaymentMethod(id);
+    setIsLoading(false);
+  };
+
+  const handleDeletePress = (item) => {
+    if (item.isSubscription) {
+      setSelectedMethod(item);
+      setStep('cantDelete');
+    } else {
+      setSelectedMethod(item);
+      setStep('confirmDelete');
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedMethod) return;
+    setIsLoading(true);
+    try {
+      await paymentsManagerController.removePaymentMethod(selectedMethod.id);
+      setStep('success');
+    } catch (e) {
+      setError(t('errors.cant_remove_payment'));
+      setStep('error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getCardIcon = (type) => {
+    switch (type) {
+      case 'paypal':
+        return icons.paypal;
+      case 'card':
+        return icons.card;
+      default:
+        return icons.card;
+    }
+  };
+
+  const getMethodTitle = (method) => {
+    if (method.type === 'paypal') {
+      return `PayPal (${method.details.email})`;
+    }
+    if (method.type === 'card') {
+      return `Credit card ${method.details.cardNumber}`;
+    }
+    return 'Unknown Method';
+  };
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -64,56 +118,18 @@ const PaymentMethodsModal = ({
       itemTitleSize: scale(16),
       itemIconMargin: scale(16),
       itemDeleteIconSize: scale(24),
+      cardIconSize: scale(32),
+      // For confirmation/status screens
+      statusIconSize: scale(64),
+      statusTitleSize: scale(22),
+      statusTextSize: scale(16),
+      statusTextMarginTop: scale(12),
+      statusTextMarginBottom: scale(24),
+      buttonHeight: scale(52),
+      buttonTextSize: scale(18),
+      buttonMarginTop: scale(8),
     };
   }, [height, width, isWebLandscape]);
-
-  const renderItem = ({ item }) => {
-    const isDefault = item.default;
-    return (
-      <View
-        style={[
-          styles.itemContainer,
-          {
-            flexDirection: isRTL ? 'row-reverse' : 'row',
-          },
-          isDefault && {
-            backgroundColor: theme.defaultBlocksMockBackground,
-          },
-        ]}
-      >
-        <TouchableOpacity
-          style={styles.itemCircleTouchable}
-          onPress={() => onSetDefault(item.id)}
-        >
-          <Image
-            source={isDefault ? icons.radioOn : icons.radioOff}
-            style={[
-              styles.itemCircle,
-            ]}
-          />
-        </TouchableOpacity>
-        <Text style={styles.itemTitle} numberOfLines={1} ellipsizeMode='tail'>
-          {item.title}
-        </Text>
-        <TouchableOpacity
-          style={styles.itemDeleteButton}
-          onPress={() => onDelete(item.id)}
-        >
-          <Image
-            source={icons.deleteCross}
-            style={[
-              styles.itemDeleteIcon,
-              {
-                tintColor: isDefault
-                  ? theme.errorTextColor
-                  : theme.formInputLabelColor,
-              },
-            ]}
-          />
-        </TouchableOpacity>
-      </View>
-    );
-  };
 
   const styles = StyleSheet.create({
     modalOverlay: {
@@ -142,6 +158,7 @@ const PaymentMethodsModal = ({
       position: 'absolute',
       top: sizes.crossIconPosition,
       right: sizes.crossIconPosition,
+      zIndex: 1,
     },
     crossIcon: {
       width: sizes.crossIconSize,
@@ -163,13 +180,17 @@ const PaymentMethodsModal = ({
       paddingHorizontal: sizes.itemPaddingHorizontal,
       alignItems: 'center',
       marginBottom: sizes.itemMarginBottom,
+      flexDirection: 'row',
     },
     itemCircleTouchable: {
-      padding: 4, // Increase touchable area
+      padding: 4,
     },
     itemCircle: {
       width: sizes.itemCircleSize,
       height: sizes.itemCircleSize,
+      borderRadius: sizes.itemCircleSize / 2,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     itemInnerCircle: {
       width: sizes.itemInnerCircleSize,
@@ -177,12 +198,19 @@ const PaymentMethodsModal = ({
       borderRadius: sizes.itemInnerCircleSize / 2,
       backgroundColor: theme.primaryColor,
     },
+    cardIcon: {
+      width: sizes.cardIconSize,
+      height: sizes.cardIconSize,
+      resizeMode: 'contain',
+      marginHorizontal: sizes.itemIconMargin / 2,
+    },
     itemTitle: {
       flex: 1,
       fontSize: sizes.itemTitleSize,
       color: theme.textColor,
       marginHorizontal: sizes.itemIconMargin,
       fontFamily: 'Rubik-Medium',
+      textAlign: isRTL ? 'right' : 'left',
     },
     itemDeleteButton: {
       padding: 4, // Increase touchable area
@@ -197,13 +225,242 @@ const PaymentMethodsModal = ({
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: theme.backgroundColor+'CC', // Semi-transparent background
+      backgroundColor: theme.backgroundColor + 'CC', // Semi-transparent background
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: sizes.borderRadius,
       zIndex: 10,
     },
+    // Styles for confirmation and status screens
+    statusContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '100%',
+    },
+    statusIcon: {
+      width: sizes.statusIconSize,
+      height: sizes.statusIconSize,
+    },
+    errorIcon: {
+      width: sizes.statusIconSize,
+      height: sizes.statusIconSize,
+      tintColor: theme.error,
+    },
+    statusTitle: {
+      fontSize: sizes.statusTitleSize,
+      fontFamily: 'Rubik-Bold',
+      color: theme.textColor,
+      marginTop: sizes.statusTextMarginTop,
+      textAlign: 'center',
+    },
+    statusText: {
+      fontSize: sizes.statusTextSize,
+      color: theme.unactiveTextColor,
+      textAlign: 'center',
+      marginTop: sizes.statusTextMarginTop,
+      marginBottom: sizes.statusTextMarginBottom,
+      fontFamily: 'Rubik-Medium',
+    },
+    button: {
+      width: '100%',
+      height: sizes.buttonHeight,
+      borderRadius: sizes.borderRadius,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: sizes.buttonMarginTop,
+    },
+    primaryButton: {
+      backgroundColor: theme.buttonColorPrimaryDefault,
+    },
+    dangerButton: {
+      backgroundColor: theme.errorTextColor,
+    },
+    dangerButtonText: {
+      color: theme.buttonTextColorPrimary,
+    },
+    secondaryButton: {
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: theme.buttonColorPrimaryDefault,
+    },
+    buttonText: {
+      fontSize: sizes.buttonTextSize,
+      fontFamily: 'Rubik-Medium',
+    },
+    primaryButtonText: {
+      color: theme.buttonTextColorPrimary,
+    },
+    secondaryButtonText: {
+      color: theme.buttonColorPrimaryDefault,
+    },
   });
+
+  const renderItem = ({ item }) => {
+    const isDefault = item.default;
+    const itemStyle = [
+      styles.itemContainer,
+      { flexDirection: isRTL ? 'row-reverse' : 'row' },
+      isDefault && { backgroundColor: theme.defaultBlocksMockBackground },
+    ];
+
+    return (
+      <View style={itemStyle}>
+        <TouchableOpacity
+          style={styles.itemCircleTouchable}
+          onPress={() => handleSetDefault(item.id)}
+        >
+          <Image
+            source={isDefault ? icons.radioOn : icons.radioOff}
+            style={[styles.itemCircle]}
+          />
+        </TouchableOpacity>
+        <Text style={styles.itemTitle} numberOfLines={1} ellipsizeMode='tail'>
+          {item.type === 'card' && `Credit card ${item.details.cardNumber}`}
+          {item.type === 'paypal' && `PayPal ${item.details.email}`}
+        </Text>
+        <TouchableOpacity
+          style={styles.itemDeleteButton}
+          onPress={() => handleDeletePress(item)}
+        >
+          <Image
+            source={icons.deleteCross}
+            style={[
+              styles.itemDeleteIcon,
+              {
+                tintColor: isDefault
+                  ? theme.errorTextColor
+                  : theme.formInputLabelColor,
+              },
+            ]}
+          />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderList = () => (
+    <>
+      <Text style={styles.title}>{t('my_profile.payment')}</Text>
+      {paymentMethods.length > 0 ? (
+        <FlatList
+          data={paymentMethods}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+          style={styles.list}
+        />
+      ) : (
+        <Text style={styles.emptyText}>
+          {t('my_profile.no_payment_methods')}
+        </Text>
+      )}
+    </>
+  );
+
+  const renderConfirmDelete = () => (
+    <View style={styles.statusContainer}>
+      <Text style={styles.statusTitle}>
+        {t('my_profile.remove_payment_title')}
+      </Text>
+      <Text style={styles.statusText}>
+        {t('my_profile.remove_payment_text')}
+      </Text>
+      <TouchableOpacity
+        style={[styles.button, styles.secondaryButton]}
+        onPress={() => setStep('list')}
+      >
+        <Text style={[styles.buttonText, styles.secondaryButtonText]}>
+          {t('common.cancel')}
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.button, styles.dangerButton]}
+        onPress={handleDeleteConfirm}
+      >
+        <Text style={[styles.buttonText, styles.dangerButtonText]}>
+          {t('common.remove')}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderSuccess = () => (
+    <View style={styles.statusContainer}>
+      <Image source={icons.checkDefault} style={styles.statusIcon} />
+      <Text style={[styles.statusTitle, { color: theme.primaryColor }]}>
+        {t('my_profile.payment_removed_success_title')}
+      </Text>
+      <Text style={styles.statusText}>
+        {t('my_profile.payment_removed_success_text')}
+      </Text>
+      <TouchableOpacity
+        style={[styles.button, styles.primaryButton]}
+        onPress={() => setStep('list')}
+      >
+        <Text style={[styles.buttonText, styles.primaryButtonText]}>
+          {t('common.continue')}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderError = () => (
+    <View style={styles.statusContainer}>
+      <Image source={icons.attention} style={styles.errorIcon} />
+      <Text style={[styles.statusTitle, { color: theme.error }]}>
+        {t('errors.payment_failed_title')}
+      </Text>
+      <Text style={[styles.statusText, { color: theme.errorTextColor }]}>
+        {error || t('errors.unexpected_error')}
+      </Text>
+      <TouchableOpacity
+        style={[styles.button, styles.primaryButton]}
+        onPress={() => setStep('list')}
+      >
+        <Text style={[styles.buttonText, styles.primaryButtonText]}>
+          {t('common.back_to_list')}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderCantDelete = () => (
+    <View style={styles.statusContainer}>
+      <Text style={styles.statusTitle}>
+        {t('errors.cant_remove_payment_title')}
+      </Text>
+      <Text style={styles.statusText}>
+        {t('errors.cant_remove_payment_text')}
+      </Text>
+      <TouchableOpacity
+        style={[styles.button, styles.primaryButton]}
+        onPress={() => {
+          onClose();
+          // Here you might want to navigate to the subscription management screen
+        }}
+      >
+        <Text style={[styles.buttonText, styles.primaryButtonText]}>
+          {t('my_profile.manage_subscription')}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderContent = () => {
+    switch (step) {
+      case 'list':
+        return renderList();
+      case 'confirmDelete':
+        return renderConfirmDelete();
+      case 'success':
+        return renderSuccess();
+      case 'error':
+        return renderError();
+      case 'cantDelete':
+        return renderCantDelete();
+      default:
+        return renderList();
+    }
+  };
 
   return (
     <Modal visible={visible} transparent={true} animationType='fade'>
@@ -214,24 +471,17 @@ const PaymentMethodsModal = ({
               <ActivityIndicator size='large' color={theme.primaryColor} />
             </View>
           )}
-          <TouchableOpacity style={styles.crossButton} onPress={onClose}>
+          <TouchableOpacity
+            style={styles.crossButton}
+            onPress={() =>
+              step === 'confirmDelete' || step === 'cantDelete'
+                ? setStep('list')
+                : onClose()
+            }
+          >
             <Image source={icons.cross} style={styles.crossIcon} />
           </TouchableOpacity>
-
-          <Text style={styles.title}>Payment methods</Text>
-
-          {paymentMethods.length > 0 ? (
-            <FlatList
-              data={paymentMethods}
-              renderItem={renderItem}
-              keyExtractor={(item) => item.id.toString()}
-              style={styles.list}
-            />
-          ) : (
-            <Text style={styles.emptyText}>
-              You don't have any saved payment methods yet.
-            </Text>
-          )}
+          {renderContent()}
         </View>
       </View>
     </Modal>

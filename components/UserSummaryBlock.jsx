@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import CommentsSection from './CommentsSection';
+import PurchaseModal from './PurchaseModal';
 import { useWebView } from '../context/webViewContext';
 import { useWindowInfo } from '../context/windowContext';
 import { useLocalization } from '../src/services/useLocalization';
@@ -40,6 +41,7 @@ const UserSummaryBlock = ({
   const isRTL = languageController?.isRTL;
   const [modalVisible, setModalVisible] = useState(false);
   const [showContactInfo, setShowContactInfo] = useState(false);
+  const [purchaseModalVisible, setPurchaseModalVisible] = useState(false);
 
   const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -252,7 +254,7 @@ const UserSummaryBlock = ({
         >
           <View style={[styles.backdrop]}>
             {/* Контентная панель; клики внутри не закрывают */}
-            <TouchableWithoutFeedback>
+            <TouchableWithoutFeedback onPress={() => {}}>
               <View
                 style={[
                   styles.panel,
@@ -320,8 +322,8 @@ const UserSummaryBlock = ({
                       avatar
                         ? { uri: avatar }
                         : themeController.current.isTheme
-                        ? icons.defaultAvatar
-                        : icons.monotoneAvatar
+                          ? icons.defaultAvatar
+                          : icons.monotoneAvatar
                     }
                     style={[
                       styles.modalAvatar,
@@ -636,7 +638,7 @@ const UserSummaryBlock = ({
                                 sizes.unlockContactBtnPaddingHorizontal,
                             },
                           ]}
-                          onPress={handleUserRevealTry}
+                          onPress={() => setPurchaseModalVisible(true)}
                         >
                           <Text
                             style={[
@@ -850,6 +852,14 @@ const UserSummaryBlock = ({
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      <PurchaseModal
+        visible={purchaseModalVisible}
+        onClose={() => setPurchaseModalVisible(false)}
+        type='regular'
+        onPurchase={handleUserRevealTry}
+        price={`${usersReveal.product.price} ${usersReveal.product.currency}`}
+      />
     </>
   );
 };

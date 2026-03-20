@@ -468,7 +468,8 @@ export default function ShowJobModal({
 
     (async () => {
       try {
-        setLoading(true);
+        // Показываем лоадер только при первой загрузке; фоновые обновления — тихие
+        if (!currentJobInfo) setLoading(true);
         const job = await jobsController.actions.getJobById(
           currentJobId,
           session
@@ -494,7 +495,17 @@ export default function ShowJobModal({
     return () => {
       cancelled = true;
     };
-  }, [currentJobId, session]);
+  }, [
+    currentJobId,
+    session?.token?.access_token,
+    jobsController.creator.waiting,
+    jobsController.creator.inProgress,
+    jobsController.creator.done,
+    jobsController.executor.new,
+    jobsController.executor.waiting,
+    jobsController.executor.inProgress,
+    jobsController.executor.done,
+  ]);
 
   const [editableCommentState, setEditableCommentState] = useState(false);
   const [editableCommentValue, setEditableCommentValue] = useState(

@@ -12,6 +12,7 @@ import jobTypeManager from '../managers/jobTypeManager';
 import { useGeolocation } from '../managers/useGeolocation';
 import couponsManager from '../managers/couponsManager';
 import { logError } from '../utils/log_util';
+import paymentsManager from '../managers/paymentsManager';
 
 const ComponentContext = createContext();
 
@@ -27,6 +28,7 @@ export const ComponentProvider = ({ children }) => {
   const profileTabController = tabsManager({ name: 'profile', defaultTab: profileTabsList[0], list: profileTabsList });
   const geolocationController = useGeolocation();
   const couponsManagerController = couponsManager({ session });
+  const paymentsManagerController = paymentsManager();
 
   const { registerControl, authControl, forgotPassControl } = authTabsManager();
 
@@ -82,7 +84,8 @@ export const ComponentProvider = ({ children }) => {
         authControl,
         forgotPassControl,
         geolocationController,
-        couponsManagerController
+        couponsManagerController,
+        paymentsManagerController,
       }}
     >
       {children}

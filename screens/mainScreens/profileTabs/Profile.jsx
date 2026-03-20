@@ -128,16 +128,6 @@ export default function Profile() {
     };
   }, [height, isWebLandscape]);
 
-  const handleSetDefaultPayment = (id) => {
-    logInfo(`Setting payment method ${id} as default.`);
-    // Here you would call the API to set the default payment method
-  };
-
-  const handleDeletePayment = (id) => {
-    logInfo(`Deleting payment method ${id}.`);
-    // Here you would call the API to delete the payment method
-  };
-
   const handleUpdateUserData = async (data) => {
     setIsUpdating(true);
     try {
@@ -1170,8 +1160,6 @@ export default function Profile() {
       <PaymentMethodsModal
         visible={paymentMethodsModalVisible}
         onClose={() => setPaymentMethodsModalVisible(false)}
-        onSetDefault={handleSetDefaultPayment}
-        onDelete={handleDeletePayment}
       />
       <CouponsModal
         visible={couponsModalVisible}
