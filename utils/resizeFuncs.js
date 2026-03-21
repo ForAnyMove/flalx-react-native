@@ -19,29 +19,38 @@ export function scaleByHeight(
   designValue,
   currentHeight = Dimensions.get('window').height,
   baseHeight = BASE_DESIGN_HEIGHT,
-  { round = true } = {}
+  { round = true } = {},
 ) {
   if (typeof designValue !== 'number' || !isFinite(designValue)) return 0;
   if (typeof currentHeight !== 'number' || currentHeight <= 0) {
     currentHeight = Dimensions.get('window').height;
   }
-  if (typeof baseHeight !== 'number' || baseHeight <= 0) baseHeight = BASE_DESIGN_HEIGHT;
+  if (typeof baseHeight !== 'number' || baseHeight <= 0)
+    baseHeight = BASE_DESIGN_HEIGHT;
 
   const scale = currentHeight / baseHeight;
-  
+
   let resizeKef;
   if (baseHeight === MOBILE_DESIGN_HEIGHT) {
     resizeKef = 1;
   } else {
-    // Линейная интерполяция для коэффициента масштабирования от 1.0 при 1024 до 2.3 при 320
-    resizeKef = 2.3 - 1.3 * (currentHeight / BASE_DESIGN_HEIGHT);
+    if (currentHeight < BASE_DESIGN_HEIGHT) {
+      // Линейная интерполяция для коэффициента масштабирования от 1.0 при 1024 до 2.3 при 320
+      resizeKef = 2.3 - 1.3 * (currentHeight / BASE_DESIGN_HEIGHT);
+    }
   }
-  
+
   const result = designValue * scale * resizeKef;
 
   return round ? PixelRatio.roundToNearestPixel(result) : result;
 }
 
-export function scaleByHeightMobile(designValue, currentHeight = Dimensions.get('window').height, { round = true } = {}) {
-  return scaleByHeight(designValue, currentHeight, MOBILE_DESIGN_HEIGHT, { round });
+export function scaleByHeightMobile(
+  designValue,
+  currentHeight = Dimensions.get('window').height,
+  { round = true } = {},
+) {
+  return scaleByHeight(designValue, currentHeight, MOBILE_DESIGN_HEIGHT, {
+    round,
+  });
 }
