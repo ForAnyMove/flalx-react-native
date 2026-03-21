@@ -30,7 +30,7 @@ export function scaleByHeight(
 
   const scale = currentHeight / baseHeight;
 
-  let resizeKef;
+  let resizeKef = 1;
   if (baseHeight === MOBILE_DESIGN_HEIGHT) {
     resizeKef = 1;
   } else {
