@@ -208,7 +208,7 @@ function App() {
     } else {
       content = (
         <MultiStepLoginScreen
-          skipMFA={true}
+          // skipMFA={true}
           onGoToRegister={() => registerControl.goToRegisterScreen()}
           onGoToForgottenPassword={() => forgotPassControl.switch()}
         />

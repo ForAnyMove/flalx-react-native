@@ -116,6 +116,17 @@ export default function sessionManager() {
           token: { access_token: parsed.access_token },
           serverURL: API_BASE_URL,
         });
+
+        // Восстанавливаем факт MFA-верификации
+        let savedMfa;
+        if (Platform.OS === 'web') {
+          savedMfa = localStorage.getItem('mfa_verified');
+        } else {
+          savedMfa = await AsyncStorage.getItem('mfa_verified');
+        }
+        if (savedMfa === 'true') {
+          setMfaVerified(true);
+        }
       }
     } catch (e) {
       logError('Ошибка загрузки сессии:', e);
@@ -138,6 +149,27 @@ export default function sessionManager() {
       }
     } catch (e) {
       logError('Ошибка сохранения сессии:', e);
+    }
+  }
+
+  async function saveMfaVerifiedState(verified) {
+    try {
+      setMfaVerified(verified);
+      if (Platform.OS === 'web') {
+        if (verified) {
+          localStorage.setItem('mfa_verified', 'true');
+        } else {
+          localStorage.removeItem('mfa_verified');
+        }
+      } else {
+        if (verified) {
+          await AsyncStorage.setItem('mfa_verified', 'true');
+        } else {
+          await AsyncStorage.removeItem('mfa_verified');
+        }
+      }
+    } catch (e) {
+      logError('Ошибка сохранения MFA статуса:', e);
     }
   }
 
@@ -412,8 +444,10 @@ export default function sessionManager() {
     setMfaVerified(false);
     if (Platform.OS === 'web') {
       localStorage.removeItem('supabase_session');
+      localStorage.removeItem('mfa_verified');
     } else {
       await AsyncStorage.removeItem('supabase_session');
+      await AsyncStorage.removeItem('mfa_verified');
     }
   }
 
@@ -1104,7 +1138,7 @@ export default function sessionManager() {
         return { success: false, error: result.error || `HTTP error! status: ${response.status}` };
       }
       
-      setMfaVerified(true);
+      await saveMfaVerifiedState(true);
       return { success: true, data: result };
     } catch (e) {
       logError('Error verifying MFA setup:', e);
@@ -1162,7 +1196,7 @@ export default function sessionManager() {
         return { success: false, error: result.error || `HTTP error! status: ${response.status}` };
       }
 
-      setMfaVerified(true);
+      await saveMfaVerifiedState(true);
       return { success: true, data: result };
     } catch (e) {
       logError('Error verifying MFA login:', e);
@@ -1170,8 +1204,8 @@ export default function sessionManager() {
     }
   }
 
-  function setMfaAsVerified() {
-    setMfaVerified(true);
+  async function setMfaAsVerified() {
+    await saveMfaVerifiedState(true);
   }
 
   async function rebindMfaPhoneNumber(phone) {
