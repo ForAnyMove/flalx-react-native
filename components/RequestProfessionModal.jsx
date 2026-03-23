@@ -17,6 +17,7 @@ import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
 import { useNotification } from '../src/render';
 import CustomTextInput from './ui/CustomTextInput';
+import CustomExperiencePicker from './ui/CustomExperiencePicker';
 
 const RequestProfessionModal = ({
   visible,
@@ -37,6 +38,7 @@ const RequestProfessionModal = ({
 
   const [type, setType] = useState(null);
   const [subType, setSubType] = useState(null);
+  const [experience, setExperience] = useState(null);
 
   const jobTypesOptions = useMemo(() => {
     const options = {};
@@ -63,7 +65,7 @@ const RequestProfessionModal = ({
   }, [jobTypesController.jobTypesWithSubtypes, type]);
 
   const requiresVerification = useMemo(() => {
-    if (!mode || !type || !subType) return false;
+    if (!type || !subType) return false;
     const typeObj = jobTypesController.jobTypesWithSubtypes?.find((t) => t.key === type);
     const subtypeObj = typeObj?.subtypes?.find((st) => st.key === subType);
     if (!typeObj || !subtypeObj) return false;
@@ -71,7 +73,7 @@ const RequestProfessionModal = ({
       typeId: typeObj.id,
       subTypeId: subtypeObj.id,
     });
-  }, [mode, type, subType, jobTypesController.jobTypesWithSubtypes]);
+  }, [type, subType, jobTypesController.jobTypesWithSubtypes]);
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -123,6 +125,7 @@ const RequestProfessionModal = ({
           : null,
       passport_photo_urls: null,
       certificate_photo_urls: null,
+      experience: requiresVerification ? experience : null,
     };
 
     onRequested(data);
@@ -143,6 +146,7 @@ const RequestProfessionModal = ({
       setIsSubmitted(false);
       setType(null);
       setSubType(null);
+      setExperience(null);
     }, 300);
   };
 
@@ -437,6 +441,20 @@ const RequestProfessionModal = ({
                     {t('professions.request_modal_not_found_info')}
                   </Text>
                 </View>
+              )}
+
+              {requiresVerification && (
+                <CustomExperiencePicker
+                  label={t('register.experience_label')}
+                  selectedValue={experience}
+                  onValueChange={setExperience}
+                  isRTL={isRTL}
+                  containerStyle={{
+                    marginTop: sizes.inputGap,
+                    width: sizes.inputWidth,
+                  }}
+                  bottomDropdown={false}
+                />
               )}
 
               <TouchableOpacity
