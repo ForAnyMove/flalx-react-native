@@ -17,17 +17,29 @@ import { useComponentContext } from '../context/globalAppContext';
 import ImagePickerModal from '../components/ui/ImagePickerModal';
 import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
 import { icons } from '../constants/icons';
-import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
+import {
+  BASE_DESIGN_HEIGHT,
+  scaleByHeight,
+  scaleByHeightMobile,
+} from '../utils/resizeFuncs';
 import TagSelector from '../components/TagSelector';
 import CustomPicker from '../components/ui/CustomPicker';
 import { logError } from '../utils/log_util';
 import { useWindowInfo } from '../context/windowContext';
 import CustomTextInput from '../components/ui/CustomTextInput';
+import UniversalProfessionComponent from '../components/ui/UniversalProfessionComponent';
+import RequestProfessionModal from '../components/RequestProfessionModal';
+import { PROFESSION_TYPES } from '../constants/enums';
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
-  const { user, themeController, session, languageController } =
-    useComponentContext();
+  const {
+    user,
+    themeController,
+    session,
+    languageController,
+    jobTypesController,
+  } = useComponentContext();
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
 
@@ -43,7 +55,9 @@ export default function RegisterScreen() {
       scrollContentPaddingVertical: isWebLandscape ? web(0) : mobile(20),
       titleFontSize: isWebLandscape ? web(24) : mobile(24),
       titleMarginBottom: isWebLandscape ? web(0) : mobile(18),
-      step2TitleMarginBottom: isWebLandscape ? web(36) : mobile(36),
+      step2TitleMarginBottom: isWebLandscape
+        ? scaleByHeight(36, height, BASE_DESIGN_HEIGHT, { round: true }, true)
+        : mobile(36),
       buttonPaddingVertical: isWebLandscape ? web(12) : mobile(12),
       buttonBorderRadius: isWebLandscape ? web(8) : mobile(8),
       buttonWidth: isWebLandscape ? web(330) : '100%',
@@ -60,7 +74,9 @@ export default function RegisterScreen() {
       termsBoxTextFontSize: isWebLandscape ? web(16) : mobile(16),
       termsBoxTextLineHeight: isWebLandscape ? web(18) : mobile(18),
       termsCheckboxTextFontSize: isWebLandscape ? web(13) : mobile(13),
-      avatarContainerMarginBottom: isWebLandscape ? web(40) : mobile(40),
+      avatarContainerMarginBottom: isWebLandscape
+        ? scaleByHeight(40, height, BASE_DESIGN_HEIGHT, { round: true }, true)
+        : mobile(40),
       avatarContainerHeight: isWebLandscape ? web(158) : mobile(158),
       avatarWrapperBorderRadius: isWebLandscape ? web(50) : mobile(60),
       avatarImageBorderRadius: isWebLandscape ? web(50) : mobile(60),
@@ -72,7 +88,9 @@ export default function RegisterScreen() {
       avatarRecommendsTextPaddingHorizontal: isWebLandscape
         ? web(0)
         : mobile(20),
-      inputBlockMarginBottom: isWebLandscape ? web(32) : mobile(24),
+      inputBlockMarginBottom: isWebLandscape
+        ? scaleByHeight(32, height, BASE_DESIGN_HEIGHT, { round: true }, true)
+        : mobile(24),
       inputBlockBorderRadius: isWebLandscape ? web(8) : mobile(8),
       inputBlockPaddingVertical: isWebLandscape ? web(8) : mobile(8),
       labelPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
@@ -101,6 +119,16 @@ export default function RegisterScreen() {
       mobileSelectorPickersMarginVertical: mobile(24),
       inputHeight: isWebLandscape ? web(64) : mobile(64),
       inputWidth: isWebLandscape ? web(330) : '100%',
+      step3SubtitleFontSize: isWebLandscape ? web(18) : mobile(18),
+      step3SubtitleMarginBottom: isWebLandscape ? web(8) : mobile(8),
+      step3DescFontSize: isWebLandscape ? web(16) : mobile(16),
+      step3DescMarginBottom: isWebLandscape ? web(20) : mobile(20),
+      step3PlusIconSize: isWebLandscape ? web(24) : mobile(24),
+      step3RemoveIconSize: isWebLandscape ? web(24) : mobile(24),
+      step3CardHeight: isWebLandscape ? web(64) : mobile(64),
+      step3CardBorderRadius: isWebLandscape ? web(8) : mobile(8),
+      step3CardPadding: isWebLandscape ? web(16) : mobile(16),
+      step3SelectorMarginBottom: isWebLandscape ? web(10) : mobile(10),
     };
   }, [isWebLandscape, height]);
 
@@ -117,6 +145,33 @@ export default function RegisterScreen() {
   const [selectedJobTypes, setSelectedJobTypes] = useState([]);
   const [selectedLicenseTypes, setSelectedLicenseTypes] = useState([]);
   const [qualificationLevel, setQualificationLevel] = useState(null);
+
+  // Step 3 — professions
+  const [registrationProfessions, setRegistrationProfessions] = useState([]);
+  const [
+    isRegisterProfessionModalVisible,
+    setIsRegisterProfessionModalVisible,
+  ] = useState(false);
+
+  const handleRegisterProfessionRequested = (data) => {
+    const typeInfo = jobTypesController.jobTypesWithSubtypes?.find(
+      (t) => t.id === data.job_type_id,
+    );
+    const subtypeInfo = typeInfo?.subtypes?.find(
+      (st) => st.id === data.job_subtype_id,
+    );
+    setRegistrationProfessions((prev) => [
+      ...prev,
+      {
+        job_type_id: data.job_type_id,
+        job_subtype_id: data.job_subtype_id,
+        title: typeInfo?.name || '',
+        subtitle: subtypeInfo?.name || '',
+        type: PROFESSION_TYPES.PENDING,
+      },
+    ]);
+    setIsRegisterProfessionModalVisible(false);
+  };
 
   const isNameValid = form.name.trim().length > 1;
   const isSurnameValid = form.surname.trim().length > 1;
@@ -149,6 +204,50 @@ export default function RegisterScreen() {
       // if (experience) updatedUser.experience = experience;
 
       await user.update({ ...updatedUser, is_password_exist: true });
+
+      // Submit professions added during registration
+      if (registrationProfessions.length > 0) {
+        await Promise.allSettled(
+          registrationProfessions.map((p) =>
+            jobTypesController.userToUserRequest
+              .makeRequest({
+                job_type_id: p?.job_type_id,
+                job_subtype_id: p?.job_subtype_id,
+                passport_photo_urls: null,
+                certificate_photo_urls: null,
+              })
+              .then(() => {})
+              .catch((err) => {
+                if (err?.response?.status === 400) {
+                  showWarning(t('professions.warnings.validation_failed'), [
+                    {
+                      title: 'OK',
+                      backgroundColor: '#F59E0B',
+                      textColor: '#FFFFFF',
+                    },
+                  ]);
+                } else if (err?.response?.status === 409) {
+                  showWarning(t('professions.warnings.already_requested'), [
+                    {
+                      title: 'OK',
+                      backgroundColor: '#F59E0B',
+                      textColor: '#FFFFFF',
+                    },
+                  ]);
+                } else {
+                  showWarning(t('professions.warnings.unexpected_error'), [
+                    {
+                      title: 'OK',
+                      backgroundColor: '#F59E0B',
+                      textColor: '#FFFFFF',
+                    },
+                  ]);
+                }
+              }),
+          ),
+        );
+      }
+
       setFinished(true);
       setTimeout(() => {
         // navigation.replace("MainApp");
@@ -162,7 +261,7 @@ export default function RegisterScreen() {
 
   // === Прогресс (точки) ===
   // const totalSteps = 4;
-  const totalSteps = 2;
+  const totalSteps = 3;
   const ProgressDots = () => (
     <View
       style={[
@@ -268,10 +367,34 @@ export default function RegisterScreen() {
           { backgroundColor: theme.backgroundColor },
         ]}
       >
+        <View
+          style={{
+            width: sizes.avatarContainerHeight,
+            height: sizes.avatarContainerHeight,
+            borderRadius: sizes.avatarContainerHeight,
+            backgroundColor: theme.primaryColor + '20',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: sizes.avatarRecommendsTextMarginTop * 2,
+          }}
+        >
+          <Image
+            source={icons.checkMonotone}
+            style={{
+              width: sizes.avatarContainerHeight * 0.85,
+              height: sizes.avatarContainerHeight * 0.85,
+              resizeMode: 'contain',
+            }}
+          />
+        </View>
         <Text
           style={[
             styles.finishedText,
-            { color: theme.textColor, fontSize: sizes.finishedTextFontSize },
+            {
+              color: theme.primaryColor,
+              fontSize: sizes.finishedTextFontSize,
+              fontFamily: 'Rubik-Bold',
+            },
           ]}
         >
           {t('register.register_success')}
@@ -329,21 +452,40 @@ export default function RegisterScreen() {
           },
           !isWebLandscape && { height: '100%' },
           !isWebLandscape &&
-          step === 2 && {
-            paddingHorizontal: 0,
-          },
+            step === 2 && {
+              paddingHorizontal: 0,
+            },
           !isWebLandscape &&
-          step === 3 && {
-            paddingHorizontal: sizes.containerPaddingHorizontal,
-          },
+            step === 3 && {
+              paddingHorizontal: sizes.containerPaddingHorizontal,
+            },
+          !isWebLandscape &&
+            step === 4 && {
+              paddingHorizontal: sizes.containerPaddingHorizontal,
+            },
           isWebLandscape
             ? {
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: scaleByHeight(688, height),
-              boxSizing: 'border-box',
-              marginTop: scaleByHeight(180, height),
-            }
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: scaleByHeight(688, height),
+                maxHeight:
+                  height * 0.95 -
+                  scaleByHeight(
+                    180,
+                    height,
+                    BASE_DESIGN_HEIGHT,
+                    { round: true },
+                    true,
+                  ),
+                boxSizing: 'border-box',
+                marginTop: scaleByHeight(
+                  180,
+                  height,
+                  BASE_DESIGN_HEIGHT,
+                  { round: true },
+                  true,
+                ),
+              }
             : null,
         ]}
         keyboardShouldPersistTaps='handled'
@@ -355,15 +497,11 @@ export default function RegisterScreen() {
             contentWidthStyle,
             { height: '100%', justifyContent: 'space-between' },
             isWebLandscape &&
-            step === 2 && {
-              height: scaleByHeight(741, height),
-              width: scaleByHeight(354, height),
-            },
-            isWebLandscape &&
-            step === 3 && {
-              height: scaleByHeight(741, height),
-              width: scaleByHeight(951, height),
-            },
+              (step === 2 || step === 3) && {
+                height: scaleByHeight(741, height),
+                maxHeight: height * 0.95,
+                width: scaleByHeight(354, height),
+              },
           ]}
         >
           {step === 1 && (
@@ -582,12 +720,12 @@ export default function RegisterScreen() {
                       },
                       isWebLandscape
                         ? {
-                          // убираем чёрную обводку (RN Web)
-                          outlineStyle: 'none',
-                          outlineWidth: 0,
-                          outlineColor: 'transparent',
-                          boxShadow: 'none',
-                        }
+                            // убираем чёрную обводку (RN Web)
+                            outlineStyle: 'none',
+                            outlineWidth: 0,
+                            outlineColor: 'transparent',
+                            boxShadow: 'none',
+                          }
                         : null,
                     ]}
                     placeholderTextColor={theme.formInputPlaceholderColor}
@@ -643,12 +781,12 @@ export default function RegisterScreen() {
                       },
                       isWebLandscape
                         ? {
-                          // убираем чёрную обводку (RN Web)
-                          outlineStyle: 'none',
-                          outlineWidth: 0,
-                          outlineColor: 'transparent',
-                          boxShadow: 'none',
-                        }
+                            // убираем чёрную обводку (RN Web)
+                            outlineStyle: 'none',
+                            outlineWidth: 0,
+                            outlineColor: 'transparent',
+                            boxShadow: 'none',
+                          }
                         : null,
                     ]}
                     placeholderTextColor={theme.formInputPlaceholderColor}
@@ -707,12 +845,12 @@ export default function RegisterScreen() {
                       },
                       isWebLandscape
                         ? {
-                          // убираем чёрную обводку (RN Web)
-                          outlineStyle: 'none',
-                          outlineWidth: 0,
-                          outlineColor: 'transparent',
-                          boxShadow: 'none',
-                        }
+                            // убираем чёрную обводку (RN Web)
+                            outlineStyle: 'none',
+                            outlineWidth: 0,
+                            outlineColor: 'transparent',
+                            boxShadow: 'none',
+                          }
                         : null,
                     ]}
                     placeholderTextColor={theme.formInputPlaceholderColor}
@@ -744,22 +882,178 @@ export default function RegisterScreen() {
                   }}
                 />
                 <PrimaryButton
-                  // title={t('register.next')}
+                  title={t('register.next')}
+                  onPress={() => setStep(3)}
+                  disabled={!isNameValid || !isSurnameValid}
+                  customStyle={{ btn: { flex: 1 } }}
+                />
+              </View>
+            </>
+          )}
+          {step === 3 && (
+            <>
+              <Text
+                style={[
+                  styles.title,
+                  {
+                    color: theme.textColor,
+                    fontSize: sizes.titleFontSize,
+                    marginBottom: sizes.step2TitleMarginBottom,
+                  },
+                ]}
+              >
+                {t('register.profile_create')}
+              </Text>
+
+              <Text
+                style={{
+                  color: theme.textColor,
+                  fontSize: sizes.step3SubtitleFontSize,
+                  fontFamily: 'Rubik-SemiBold',
+                  textAlign: 'center',
+                  marginBottom: sizes.step3SubtitleMarginBottom,
+                }}
+              >
+                {t('professions.step3_title')}
+              </Text>
+              <Text
+                style={{
+                  color: theme.unactiveTextColor,
+                  fontSize: sizes.step3DescFontSize,
+                  textAlign: 'center',
+                  marginBottom: sizes.step3DescMarginBottom,
+                }}
+              >
+                {t('professions.step3_subtitle')}
+              </Text>
+
+              <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{ flexGrow: 1 }}
+                showsVerticalScrollIndicator={false}
+              >
+                {registrationProfessions.map((profession, index) => (
+                  <View
+                    key={index}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: theme.formInputBackground,
+                      borderRadius: sizes.step3CardBorderRadius,
+                      paddingVertical: sizes.step3CardBorderRadius,
+                      paddingHorizontal: sizes.step3CardPadding,
+                      marginBottom: sizes.step3SelectorMarginBottom,
+                      height: sizes.step3CardHeight,
+                    }}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{
+                          fontSize: sizes.step3SubtitleFontSize,
+                          color: theme.textColor,
+                          fontFamily: 'Rubik-SemiBold',
+                        }}
+                        numberOfLines={1}
+                      >
+                        {profession.title}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: sizes.step3DescFontSize,
+                          color: theme.textColor,
+                          marginTop: 2,
+                        }}
+                        numberOfLines={1}
+                      >
+                        {profession.subtitle}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() =>
+                        setRegistrationProfessions((prev) =>
+                          prev.filter((_, i) => i !== index),
+                        )
+                      }
+                      style={{ marginLeft: sizes.step3CardBorderRadius }}
+                    >
+                      <Image
+                        source={icons.cross}
+                        style={{
+                          width: sizes.step3RemoveIconSize,
+                          height: sizes.step3RemoveIconSize,
+                          tintColor: theme.errorTextColor,
+                        }}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+
+                {/* Add profession card */}
+                <TouchableOpacity
+                  onPress={() => setIsRegisterProfessionModalVisible(true)}
+                  style={{
+                    height: sizes.step3CardHeight,
+                    backgroundColor: theme.formInputBackground,
+                    borderRadius: sizes.step3CardBorderRadius,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginBottom: sizes.step3CardBorderRadius,
+                  }}
+                >
+                  <Image
+                    source={icons.plus}
+                    style={{
+                      width: sizes.step3PlusIconSize,
+                      height: sizes.step3PlusIconSize,
+                      tintColor: theme.unactiveTextColor,
+                    }}
+                  />
+                </TouchableOpacity>
+              </ScrollView>
+
+              <ProgressDots />
+
+              <View
+                style={{
+                  flexDirection: isRTL ? 'row-reverse' : 'row',
+                  justifyContent: 'space-between',
+                  gap: sizes.containerGap,
+                  paddingHorizontal: sizes.containerPaddingHorizontal,
+                }}
+              >
+                <PrimaryButton
+                  title={t('register.previous')}
+                  onPress={() => setStep(2)}
+                  customStyle={{
+                    btn: {
+                      flex: 1,
+                      backgroundColor: 'transparent',
+                      borderWidth: 1,
+                      borderColor: theme.primaryColor,
+                    },
+                    btnText: { color: theme.primaryColor },
+                  }}
+                />
+                <PrimaryButton
                   title={
                     loading ? (
-                      <ActivityIndicator
-                        color={theme.buttonTextColorPrimary}
-                      />
+                      <ActivityIndicator color={theme.buttonTextColorPrimary} />
                     ) : (
                       t('register.create')
                     )
                   }
-                  // onPress={() => setStep(3)}
                   onPress={handleSubmit}
-                  disabled={!isNameValid || !isSurnameValid || loading}
+                  disabled={loading}
                   customStyle={{ btn: { flex: 1 } }}
                 />
               </View>
+
+              <RequestProfessionModal
+                visible={isRegisterProfessionModalVisible}
+                onClose={() => setIsRegisterProfessionModalVisible(false)}
+                onRequested={handleRegisterProfessionRequested}
+                mode='register'
+              />
             </>
           )}
         </View>
@@ -854,7 +1148,6 @@ const styles = StyleSheet.create({
   label: {},
   input: {},
 });
-
 
 //
 // {step === 3 && (

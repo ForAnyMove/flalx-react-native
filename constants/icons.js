@@ -54,6 +54,7 @@ export const icons = {
   mobile: require('../assets/icon/mobile.png'),
   emailContact: require('../assets/icon/email-primary.png'),
   checkDefault: require('../assets/register/UserImages/check-default.png'),
+  checkMonotone: require('../assets/register/UserImages/check-monotone.png'),
   thumbUp: require('../assets/icon/thumb-up.png'),
   thumbDown: require('../assets/icon/thumb-down.png'),
   eyeOpen: require('../assets/icon/eye-open.png'),

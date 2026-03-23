@@ -53,7 +53,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         profile_description: 'About',
         description_placeholder: 'Tell about yourself...',
         create: 'Create',
-        register_success: 'All set!',
+        register_success: 'Everything is set!',
         profile_avatar_recommended: `We recommend putting a clear profile picture of you smiling to increase the number of leads you receive.`,
         job_types_title: 'What types of jobs are you looking for?',
         job_types_subtitle: 'You can choose more than one.',
@@ -560,6 +560,12 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
       },
       professions: {
         choose_profession: 'Choose your first profession',
+        step3_title: 'Choose your license type',
+        step3_subtitle: 'You can choose more than one.',
+        step3_no_professions: 'No professions added yet',
+        request_modal_register_title: 'Add Profession',
+        request_modal_not_found_info: "If you haven't found your profession, you can request it to be added to the admins later in the tab \"User Profile\" > \"My Professions\"",
+        request_modal_verification_warning: 'This profession requires verification and would be confirmed later',
         register_modal: {
           title: 'Register of a new profession',
           description: `If you don\'t find the type/subtype you need in the app,
@@ -1186,6 +1192,12 @@ After they register, you'll receive coupons.`,
       },
       professions: {
         choose_profession: 'בחר את המקצוע הראשון שלך',
+        step3_title: 'בחר את סוג הרישיון שלך',
+        step3_subtitle: 'ניתן לבחור יותר מאחד.',
+        step3_no_professions: 'לא נוספו מקצועות עדיין',
+        request_modal_register_title: 'הוסף מקצוע',
+        request_modal_not_found_info: 'אם לא מצאת את המקצוע שלך, תוכל לבקש להוסיף אותו למנהלים מאוחר יותר בכרטיסייה "פרופיל משתמש" > "המקצועות שלי"',
+        request_modal_verification_warning: 'מקצוע זה דורש אימות ויאושר מאוחר יותר',
         register_modal: {
           title: 'רישום מקצוע חדש',
           description:
