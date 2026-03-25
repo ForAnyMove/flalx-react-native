@@ -450,7 +450,7 @@ const RequestProfessionModal = ({
                   onValueChange={setExperience}
                   isRTL={isRTL}
                   containerStyle={{
-                    marginTop: sizes.inputGap,
+                    // marginTop: sizes.inputGap,
                     width: sizes.inputWidth,
                   }}
                   bottomDropdown={false}
