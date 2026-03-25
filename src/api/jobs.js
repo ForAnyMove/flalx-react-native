@@ -21,21 +21,33 @@ async function createJob(jobData, session) {
     }
 }
 
-async function payForJob(jobDataId, session, useCoupon = false) {
+async function payForJob(jobDataId, session, paymentOptions = {}) {
     try {
+        const { useCoupon = false, paymentMethod = 'paypal', currency = 'USD', savePaymentMethod, savedPaymentMethodId } = paymentOptions;
+        const data = {
+            currency,
+            ...(useCoupon
+                ? { use_coupon: true, paymentMethod: 'none' }
+                : savedPaymentMethodId
+                    ? { paymentMethod, savedPaymentMethodId }
+                    : { paymentMethod }
+            ),
+            ...(!useCoupon && !savedPaymentMethodId && savePaymentMethod !== undefined && { savePaymentMethod }),
+        };
         const response = await fetchWithSession({
             session,
             endpoint: `/api/jobs/${jobDataId}/pay`,
-            data: { paymentMethod: 'paypal', use_coupon: useCoupon },
+            data,
             method: 'POST'
         });
-        const returnData = {
+        return {
             paymentUrl: response.data?.payment?.paymentMetadata?.approval?.href,
-            job: response.data?.job
+            payment: response.data?.payment,
+            job: response.data?.job,
+            paymentMethodsSnapshot: response.data?.paymentMethodsSnapshot ?? null,
         };
-        return returnData;
     } catch (error) {
-        logError('Error creating new job:', error);
+        logError('Error paying for job:', error);
         throw error;
     }
 }
@@ -78,18 +90,27 @@ async function getJobProducts(session) {
     }
 }
 
-async function addSelfToJobProviders(jobId, session, useCoupon = false) {
+async function addSelfToJobProviders(jobId, session, paymentOptions = {}) {
     try {
+        const { useCoupon = false, paymentMethod = 'paypal', currency = 'USD', savePaymentMethod, savedPaymentMethodId } = paymentOptions;
+        console.log(useCoupon, paymentMethod);
+
+        const data = {
+            currency,
+            ...(useCoupon
+                ? { use_coupon: true, paymentMethod: 'none' }
+                : savedPaymentMethodId
+                    ? { paymentMethod, savedPaymentMethodId }
+                    : { paymentMethod }
+            ),
+            ...(!useCoupon && !savedPaymentMethodId && savePaymentMethod !== undefined && { savePaymentMethod }),
+        };
         const response = await fetchWithSession({
             session,
             endpoint: `/api/jobs/${jobId}/providers`,
-            data: {
-                paymentMethod: 'paypal',
-                use_coupon: useCoupon
-            },
+            data,
             method: 'POST'
         });
-
         return response.data;
     } catch (error) {
         logError('Error adding self to job providers:', error);

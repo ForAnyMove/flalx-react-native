@@ -27,6 +27,9 @@ import { icons } from '../constants/icons';
  *   onPurchase        {async function} — called when user confirms payment
  *   onPayWithCoupons  {function?}    — called when "Pay with coupons" is pressed
  *   onOpenSubscriptions {function?}  — called when "Get a subscription" is pressed
+ *   mode              {'purchase' | 'subscription'} — default 'purchase'
+ *   startStep         {'select' | 'method'} — initial screen, default 'select'
+ *   skipBackOnMethod  {boolean} — if true, Close button on 'method' screen closes modal instead of going back
  *
  * Screens (step state):
  *   'select'  — first screen: choose payment approach
@@ -36,7 +39,7 @@ import { icons } from '../constants/icons';
  *
  * Cross-button behaviour:
  *   select  → onClose()
- *   method  → setStep('select')
+ *   method  → skipBackOnMethod ? onClose() : setStep('select')
  *   success → onClose()
  *   error   → setStep('method')
  */
@@ -48,6 +51,9 @@ const PurchaseModal = ({
   onPurchase,
   onPayWithCoupons,
   onOpenSubscriptions,
+  mode = 'purchase', // 'purchase' | 'subscription'
+  startStep = 'select', // 'select' | 'method'
+  skipBackOnMethod = false,
 }) => {
   const {
     themeController,
@@ -73,13 +79,17 @@ const PurchaseModal = ({
   const savedMethods = paymentsManagerController?.savedMethods ?? [];
   const availableMethods = paymentsManagerController?.availableMethods ?? [];
   const couponsCount = couponsManagerController?.balance ?? 0;
+  // subscription mode: use the subscription-default method (not the purchase default)
   const defaultSavedMethod =
-    savedMethods.find((m) => m.default) ?? savedMethods[0];
+    mode === 'subscription'
+      ? (savedMethods.find((m) => m.isSubscription) ?? null)
+      : (savedMethods.find((m) => m.default) ?? savedMethods[0]);
 
   // ─── Reset on open ───────────────────────────────────────────────────────────
   useEffect(() => {
     if (!visible) return;
-    setStep('select');
+    couponsManagerController?.refreshBalance?.();
+    setStep(startStep);
     setIsLoading(false);
     setError(null);
     setSaveForFuture(false);
@@ -91,14 +101,18 @@ const PurchaseModal = ({
       setSelectedMethodId(availableMethods[0]);
       setSelectedSource('available');
     }
-  }, [visible]);
+  }, [visible, startStep]);
 
   // ─── Handlers ────────────────────────────────────────────────────────────────
   const handleCrossPress = () => {
     if (step === 'select' || step === 'success') {
       onClose();
     } else if (step === 'method') {
-      setStep('select');
+      if (skipBackOnMethod) {
+        onClose();
+      } else {
+        setStep('select');
+      }
     } else if (step === 'error') {
       setStep('method');
     } else {
@@ -109,20 +123,64 @@ const PurchaseModal = ({
   const runPurchase = async () => {
     setIsLoading(true);
     try {
-      await onPurchase?.();
-      setStep('success');
+      // Build payload: for saved methods pass the method type + savedPaymentMethodId (direct charge),
+      // for new methods pass type + optional savePaymentMethod flag
+      const paymentMethodType =
+        selectedSource === 'saved'
+          ? savedMethods.find((m) => m.id === selectedMethodId)?.type ?? 'paypal'
+          : selectedMethodId ?? 'paypal';
+
+      const payload = {
+        paymentMethod: paymentMethodType,
+        currency: 'USD',
+        ...(selectedSource === 'saved' && selectedMethodId && { savedPaymentMethodId: selectedMethodId }),
+        ...(selectedSource === 'available' && saveForFuture && { savePaymentMethod: true }),
+      };
+
+      const response = await onPurchase?.(payload);
+
+      // Keep saved methods in sync when backend returns a fresh snapshot
+      if (response?.paymentMethodsSnapshot) {
+        paymentsManagerController?.updateFromSnapshot(response.paymentMethodsSnapshot);
+      }
+
+      // Direct charge: payment completed instantly — show success
+      if (response?.directCharge || response?.payment?.paymentMetadata?.directCharge) {
+        setStep('success');
+      }
+      // Traditional redirect flow: the onPurchase handler already opened the WebView,
+      // so close the modal rather than showing a premature success screen
+      else if (
+        response?.payment?.paymentMetadata?.approval?.href ||
+        response?.paymentUrl ||
+        response?.redirectUrl
+      ) {
+        onClose();
+      }
+      // No redirect (e.g. coupon payment, already-revealed, subscription)
+      else {
+        setStep('success');
+      }
     } catch (e) {
-      setError(e?.message ?? null);
+      // Saved payment method was deleted/deactivated — refresh list and show specific message
+      if (e?.response?.status === 404 && e?.response?.data?.message?.includes('Payment method not found')) {
+        await paymentsManagerController?.refreshSavedMethods?.();
+        setError(t('payment_modal.error_method_not_found'));
+      } else {
+        setError(e?.message ?? null);
+      }
       setStep('error');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // First screen pay button: if saved methods exist → pay immediately,
+  // First screen pay button: if there is a relevant default method → pay immediately,
   // otherwise → go to method selection screen.
+  // In subscription mode only a subscription-default method qualifies; if none exists
+  // the user must go through method selection even if they have other saved methods.
   const handlePayButtonPress = () => {
-    if (savedMethods.length > 0) {
+    if (defaultSavedMethod) {
       runPurchase();
     } else {
       setStep('method');
@@ -132,7 +190,7 @@ const PurchaseModal = ({
   // ─── Helpers ─────────────────────────────────────────────────────────────────
   const getPayButtonLabel = () => {
     if (savedMethods.length > 0 && defaultSavedMethod) {
-      const methodName = t(`payment_modal.method_${defaultSavedMethod.type}`);
+      const methodName = t(`payment_modal.method_${defaultSavedMethod.type === 'hyp' ? 'card' : defaultSavedMethod.type}`);
       const methodTitle = defaultSavedMethod.details?.title ?? '';
       return `${t('payment_modal.pay_with')} ${methodName} (${methodTitle})`;
     }
@@ -140,13 +198,9 @@ const PurchaseModal = ({
   };
 
   const getSavedMethodLabel = (method) => {
-    if (method.type === 'paypal') {
-      return `PayPal (${method.details?.email ?? method.details?.title ?? ''})`;
-    }
-    if (method.type === 'card') {
-      return `Credit card ${method.details?.cardNumber ?? method.details?.title ?? ''}`;
-    }
-    return method.details?.title ?? method.type;
+    const methodName = t(`payment_modal.method_${method.type === 'hyp' ? 'card' : method.type}`);
+    const methodTitle = method.details?.title ?? '';
+    return `${methodName} (${methodTitle})`;
   };
 
   // ─── Sizes ───────────────────────────────────────────────────────────────────
@@ -181,8 +235,8 @@ const PurchaseModal = ({
       // Method icons sizes
       paypalMethodHeight: scale(38),
       paypalMethodWidth: scale(150),
-      cardMethodHeight: scale(34),
-      cardMethodWidth: scale(80),
+      hypMethodHeight: scale(34),
+      hypMethodWidth: scale(80),
       apple_payMethodHeight: scale(38),
       apple_payMethodWidth: scale(140),
       google_payMethodHeight: scale(38),
@@ -390,7 +444,7 @@ const PurchaseModal = ({
       alignItems: 'center',
     },
     checkboxInner: {
-      width: sizes.checkboxSize * 1.2 ,
+      width: sizes.checkboxSize * 1.2,
       height: sizes.checkboxSize * 1.2,
     },
     checkboxText: {
@@ -623,33 +677,43 @@ const PurchaseModal = ({
           </>
         )}
 
-        {/* ── Checkbox — место всегда зарезервировано, скрыт через opacity ── */}
-        <TouchableOpacity
-          style={[
-            styles.checkboxRow,
-            { flexDirection: isRTL ? 'row-reverse' : 'row' },
-            selectedSource !== 'available' && { opacity: 0 },
-          ]}
-          onPress={() => setSaveForFuture((v) => !v)}
-          disabled={selectedSource !== 'available'}
-        >
-          <View
-            style={[
-              styles.checkbox,
-              {
-                marginRight: isRTL ? 0 : 8,
-                marginLeft: isRTL ? 8 : 0,
-              },
-            ]}
-          >
-            {saveForFuture && (
-              <Image source={icons.arrowDown} style={styles.checkboxInner} />
-            )}
+        {/* ── Subscription: info label / Regular: save-for-future checkbox ── */}
+        {mode === 'subscription' ? (
+          <View style={[styles.checkboxRow, { opacity: selectedSource === 'available' ? 1 : 0 }]}>
+            <Text style={[styles.checkboxText, { textAlign: isRTL ? 'right' : 'left' }]}>
+              {skipBackOnMethod
+                ? t('payment_modal.subscription_add_method_info')
+                : t('payment_modal.subscription_save_info')}
+            </Text>
           </View>
-          <Text style={styles.checkboxText}>
-            {t('payment_modal.save_for_future')}
-          </Text>
-        </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[
+              styles.checkboxRow,
+              { flexDirection: isRTL ? 'row-reverse' : 'row' },
+              selectedSource !== 'available' && { opacity: 0 },
+            ]}
+            onPress={() => setSaveForFuture((v) => !v)}
+            disabled={selectedSource !== 'available'}
+          >
+            <View
+              style={[
+                styles.checkbox,
+                {
+                  marginRight: isRTL ? 0 : 8,
+                  marginLeft: isRTL ? 8 : 0,
+                },
+              ]}
+            >
+              {saveForFuture && (
+                <Image source={icons.arrowDown} style={styles.checkboxInner} />
+              )}
+            </View>
+            <Text style={styles.checkboxText}>
+              {t('payment_modal.save_for_future')}
+            </Text>
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           style={[styles.button, styles.primaryButton]}

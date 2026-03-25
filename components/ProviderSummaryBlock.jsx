@@ -23,6 +23,7 @@ import { useWebView } from '../context/webViewContext';
 import { useLocalization } from '../src/services/useLocalization';
 import SubscriptionsModal from './SubscriptionsModal';
 import { useNotification } from '../src/render';
+import PurchaseModal from './PurchaseModal';
 import { formatCurrency } from '../utils/currency_formatter';
 
 const ProviderSummaryBlock = ({ user, chooseUser }) => {
@@ -317,40 +318,30 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
     phoneNumber,
   } = user;
 
-  const handleUserRevealTry = async (useCoupon = false) => {
-    try {
-      setAppLoading(true);
-
-      const result = await usersReveal.tryReveal(user.id, useCoupon);
-      if (result.paymentUrl) {
-        openWebView(result.paymentUrl);
-      } else if (result.user) {
-        providersManager.appendUserData(
-          user.id,
-          result.user.email,
-          result.user.phoneNumber
-        );
-      }
-
-      setAppLoading(false);
-      setPurchaseModalVisible(false);
-    } catch (error) {
-      if (
-        error.response &&
-        error.response.status === 400 &&
-        error.response.data.code == 'NO_COUPONS_AVAILABLE'
-      ) {
-        setAppLoading(false);
-        showWarning(
-          t('errors.no_coupons', {
-            defaultValue: 'You have no coupons available',
-          })
-        );
-      } else {
-        setAppLoading(false);
-        setPurchaseModalVisible(false);
-      }
+  const handlePurchaseReveal = async (payload) => {
+    const data = await usersReveal.tryReveal(user.id, payload);
+    if (data?.user) {
+      providersManager.appendUserData(user.id, data.user.email, data.user.phoneNumber);
     }
+    return data;
+  };
+
+  const handlePayCouponsReveal = () => {
+    setPurchaseModalVisible(false);
+    setAppLoading(true);
+    usersReveal.tryReveal(user.id, { useCoupon: true })
+      .then((data) => {
+        if (data?.user) {
+          providersManager.appendUserData(user.id, data.user.email, data.user.phoneNumber);
+        }
+        couponsManagerController?.refreshBalance?.();
+      })
+      .catch((e) => {
+        if (e?.response?.status === 400 && e?.response?.data?.code === 'NO_COUPONS_AVAILABLE') {
+          showWarning(t('errors.no_coupons', { defaultValue: 'You have no coupons available' }));
+        }
+      })
+      .finally(() => setAppLoading(false));
   };
 
   return (
@@ -896,201 +887,18 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
         </TouchableWithoutFeedback>
 
         {/* OPEN CONTACT PURCHASE MODAL */}
-        <Modal visible={purchaseModalVisible} animationType='fade' transparent>
-          {/* кликабельная подложка с отступом под сайдбар на web-landscape */}
-          <View
-            style={[
-              styles.backdrop,
-              { flexDirection: isRTL ? 'row-reverse' : 'row' },
-            ]}
-          >
-            {/* рабочая область — центрируем карточку */}
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={() => setPurchaseModalVisible(false)}
-              style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}
-            >
-              <View
-                style={[
-                  styles.centerArea,
-                  // { width: isWebLandscape ? width - sidebarWidth : '100%' },
-                  { width: '100%' },
-                ]}
-              >
-                {/* сама карточка; клики внутри НЕ закрывают */}
-                <TouchableOpacity
-                  activeOpacity={1}
-                  onPress={(e) => e.stopPropagation()}
-                  style={[
-                    styles.modalCard,
-                    {
-                      backgroundColor: themeController.current?.backgroundColor,
-                      borderRadius: sizes.modalRadius,
-                      padding: sizes.modalPadding,
-                      width: sizes.modalCardW,
-                      position: 'relative',
-                      alignItems: 'center',
-                    },
-                  ]}
-                >
-                  <TouchableOpacity
-                    onPress={() => setPurchaseModalVisible(false)}
-                    style={{
-                      position: 'absolute',
-                      top: sizes.modalCrossTopRightPos,
-                      right: sizes.modalCrossTopRightPos,
-                    }}
-                  >
-                    <Image
-                      source={icons.cross}
-                      style={{
-                        width: sizes.iconSize,
-                        height: sizes.iconSize,
-                        tintColor: themeController.current?.textColor,
-                      }}
-                      resizeMode='contain'
-                    />
-                  </TouchableOpacity>
-                  {/* заголовок */}
-                  <Text
-                    style={{
-                      fontSize: sizes.modalTitle,
-                      fontFamily: 'Rubik-Bold',
-                      color: themeController.current?.textColor,
-                      textAlign: 'center',
-                      marginBottom: sizes.modalTitleMarginBottom,
-                    }}
-                  >
-                    {t('providerSection.modalContactPopupTitle', {
-                      defaultValue:
-                        'Select a method for receiving information about this contact',
-                    })}
-                  </Text>
-
-                  {/* кнопка подтверждения с ценой */}
-                  <TouchableOpacity
-                    onPress={() => handleUserRevealTry(false)}
-                    style={{
-                      height: sizes.btnH,
-                      width: sizes.btnW,
-                      borderRadius: sizes.modalRadius,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderWidth: 1,
-                      borderColor:
-                        themeController.current?.buttonColorPrimaryDefault,
-                      marginBottom: sizes.btnMB,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: sizes.modalSub,
-                        color:
-                          themeController.current?.buttonColorPrimaryDefault,
-                      }}
-                    >
-                      {t('showJob.buttons.buyForPrice', {
-                        defaultValue: 'Buy for {{price}}',
-                        price: usersReveal?.product
-                          ? formatCurrency(
-                              usersReveal.product.price,
-                              usersReveal.product.currency
-                            )
-                          : '',
-                      })}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {/* кнопка подтверждения с купонами */}
-                  <TouchableOpacity
-                    onPress={() => handleUserRevealTry(true)}
-                    style={{
-                      height: sizes.btnH,
-                      width: sizes.btnW,
-                      borderRadius: sizes.modalRadius,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderWidth: 1,
-                      borderColor:
-                        themeController.current?.buttonColorSecondaryDefault,
-                      marginBottom: sizes.btnMB,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      flexDirection: isRTL ? 'row-reverse' : 'row',
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: sizes.modalSub,
-                        color:
-                          themeController.current?.buttonColorSecondaryDefault,
-                      }}
-                    >
-                      {t('showJob.buttons.buyForCoupons', {
-                        defaultValue: 'Buy for 1',
-                        count: 1,
-                      })}
-                    </Text>
-                    <Image
-                      source={icons.coupon}
-                      style={{
-                        width: sizes.iconSize,
-                        height: sizes.iconSize,
-                        tintColor:
-                          themeController.current?.buttonColorSecondaryDefault,
-                      }}
-                    />
-                    <Text
-                      style={[
-                        {
-                          color:
-                            themeController.current
-                              ?.buttonColorSecondaryDefault,
-                          fontSize: sizes.modalSub,
-                        },
-                      ]}
-                    >
-                      {` (${couponsManagerController.balance || 0})`}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {/* кнопка тарифов */}
-                  {/* {subscription.current == null && */}
-                  {true && (
-                    <TouchableOpacity
-                      onPress={() => {
-                        setPlansModalVisible(true);
-                        setPurchaseModalVisible(false);
-                      }}
-                      style={{
-                        height: sizes.btnH,
-                        width: sizes.btnW,
-                        borderRadius: sizes.modalRadius,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor:
-                          themeController.current?.buttonColorPrimaryDefault,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: sizes.modalSub,
-                          color:
-                            themeController.current?.buttonTextColorPrimary,
-                        }}
-                      >
-                        {t('newJob.statusModal.buttons.viewPlans', {
-                          defaultValue: 'See pricing plans',
-                        })}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </Modal>
-
+        <PurchaseModal
+          visible={purchaseModalVisible}
+          onClose={() => setPurchaseModalVisible(false)}
+          type='regular'
+          price={usersReveal?.product ? `${usersReveal.product.price} ${usersReveal.product.currency}` : ''}
+          onPurchase={handlePurchaseReveal}
+          onPayWithCoupons={handlePayCouponsReveal}
+          onOpenSubscriptions={() => {
+            setPurchaseModalVisible(false);
+            setPlansModalVisible(true);
+          }}
+        />
         {/* PLANS MODAL (простая заглушка, такой же фон/центрирование) */}
         <SubscriptionsModal
           visible={plansModalVisible}

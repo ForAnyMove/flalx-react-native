@@ -1,169 +1,126 @@
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { logError } from '../utils/log_util';
+import {
+  fetchPaymentMethods,
+  deletePaymentMethod,
+  setDefaultPaymentMethod,
+  updateSubscriptionMethod,
+} from '../src/api/paymentMethods';
 
-const PAYMENT_METHODS = {
-  paypal: 'paypal',
-  card: 'card',
-  apple_pay: 'apple_pay',
-  google_pay: 'google_pay',
-};
+const WEB_PAYMENT_METHODS = ['paypal', 'hyp'];
+const ANDROID_PAYMENT_METHODS = ['google_pay'];
+const IOS_PAYMENT_METHODS = ['apple_pay'];
 
-const WEB_PAYMENT_METHODS = [PAYMENT_METHODS.paypal, PAYMENT_METHODS.card];
-const ANDROID_PAYMENT_METHODS = [PAYMENT_METHODS.google_pay];
-const IOS_PAYMENT_METHODS = [PAYMENT_METHODS.apple_pay];
+function getAvailablePaymentMethods() {
+  if (Platform.OS === 'web') return WEB_PAYMENT_METHODS;
+  if (Platform.OS === 'android') return ANDROID_PAYMENT_METHODS;
+  if (Platform.OS === 'ios') return IOS_PAYMENT_METHODS;
+  return [];
+}
 
-const SAVED_METHODS_MOCK = [
-  {
-    id: '1',
-    type: PAYMENT_METHODS.card,
+function transformBackendMethod(pm) {
+  return {
+    id: pm.id,
+    type: pm.provider.toLowerCase(), // "PAYPAL" → "paypal", "HYP" → "hyp"
     details: {
-      cardNumber: '**** **** **** 1234',
-      expiryDate: '12/24',
-      cardHolderName: 'John Doe',
-      title: '**** **** **** 1234',
+      title: pm.displayLabel ?? pm.provider,
+      email: pm.email ?? undefined,
+      cardNumber: pm.last4 ? `**** **** **** ${pm.last4}` : undefined,
+      expiryDate: pm.expiresAt ? pm.expiresAt.slice(0, 7) : undefined,
     },
-    default: false,
-    isSubscription: true, // Example of a subscription method
-  },
-  {
-    id: '2',
-    type: PAYMENT_METHODS.paypal,
-    details: {
-      email: 'john.doe@example.com',
-      title: 'john.doe@example.com',
-    },
-    default: true,
-  },
-  {
-    id: '3',
-    type: PAYMENT_METHODS.card,
-    details: {
-      cardNumber: '**** **** **** 5678',
-      expiryDate: '11/25',
-      cardHolderName: 'Jane Doe',
-      title: '**** **** **** 5678',
-    },
-    default: false,
-  },
-];
+    default: pm.isDefaultPurchase,
+    isSubscription: pm.isDefaultSubscription,
+  };
+}
 
-export default function paymentsManager() {
-  const [availablePaymentMethods, setAvailablePaymentMethods] = useState([]);
-  const [savedPaymentMethods, setSavedPaymentMethods] =
-    useState(SAVED_METHODS_MOCK);
+export default function paymentsManager({ session }) {
+  const [availablePaymentMethods] = useState(getAvailablePaymentMethods);
+  const [savedPaymentMethods, setSavedPaymentMethods] = useState([]);
 
+  const token = session?.token?.access_token;
+
+  // ─── Load saved methods on login ─────────────────────────────────────────────
   useEffect(() => {
-    const methods = getAvailablePaymentMethods();
-    setAvailablePaymentMethods(methods);
-  }, []);
+    setSavedPaymentMethods([]);
+    if (!session?.token) return;
 
-  useEffect(() => {
-    const currentMethods = getSavedPaymentMethods();
-    setSavedPaymentMethods(currentMethods);
-  }, [Platform.OS]);
+    fetchPaymentMethods(session)
+      .then((methods) => setSavedPaymentMethods(methods.map(transformBackendMethod)))
+      .catch((e) => logError('Failed to load saved payment methods:', e));
+  }, [token]);
 
-  function getAvailablePaymentMethods() {
+  // ─── Remove a saved method ────────────────────────────────────────────────────
+  async function removePaymentMethod(methodId) {
     try {
-      if (Platform.OS === 'web') {
-        return WEB_PAYMENT_METHODS;
-      } else if (Platform.OS === 'android') {
-        return ANDROID_PAYMENT_METHODS;
-      } else if (Platform.OS === 'ios') {
-        return IOS_PAYMENT_METHODS;
-      } else {
-        return [];
-      }
-    } catch (e) {
-      logError('Error determining available payment methods:', e);
-      return [];
-    }
-  }
-
-  function getSavedPaymentMethods() {
-    // Здесь должна быть логика получения сохраненных методов оплаты из бэкенда
-    return SAVED_METHODS_MOCK;
-  }
-
-  function removePaymentMethod(methodId) {
-    try {
-      // Здесь должна быть логика удаления метода оплаты на бэкенде
-      setSavedPaymentMethods((prev) => {
-        const methodToRemove = prev.find((method) => method.id === methodId);
-        if (!methodToRemove) {
-          return prev; // Метод не найден, ничего не делаем
-        }
-
-        const isDefault = methodToRemove.default;
-        let newMethods = prev.filter((method) => method.id !== methodId);
-
-        if (isDefault && newMethods.length > 0) {
-          // Назначаем первый элемент новым методом по умолчанию
-          newMethods = newMethods.map((method, index) => ({
-            ...method,
-            default: index === 0,
-          }));
-        }
-        return newMethods;
-      });
+      await deletePaymentMethod(session, methodId);
+      setSavedPaymentMethods((prev) => prev.filter((m) => m.id !== methodId));
       return { success: true };
     } catch (e) {
-      logError('Error removing payment method:', e);
+      if (e.response?.status === 409) {
+        const err = new Error('payment_method_in_use_subscription');
+        err.subscriptionId = e.response.data?.subscriptionId;
+        throw err;
+      }
+      logError('Failed to remove payment method:', e);
       throw e;
     }
   }
 
-  function addPaymentMethod(method) {
+  // ─── Change default method ────────────────────────────────────────────────────
+  async function changeDefaultPaymentMethod(methodId, type = 'purchase') {
     try {
-      // Здесь должна быть логика добавления нового метода оплаты на бэкенде
-      setSavedPaymentMethods((prev) => [...prev, method]);
-    } catch (e) {
-      logError('Error adding payment method:', e);
-    }
-  }
-
-  function changeDefaultPaymentMethod(methodId) {
-    try {
-      // Здесь должна быть логика обновления дефолтного метода оплаты на бэкенде
-
-      // После успешного обновления на бэкенде, обновляем состояние локально
-
+      await setDefaultPaymentMethod(session, methodId, type);
       setSavedPaymentMethods((prev) =>
-        prev.map((method) => ({
-          ...method,
-          default: method.id === methodId,
+        prev.map((m) => ({
+          ...m,
+          default: type === 'purchase' ? m.id === methodId : m.default,
+          isSubscription: type === 'subscription' ? m.id === methodId : m.isSubscription,
         }))
       );
     } catch (e) {
-      logError('Error changing default payment method:', e);
+      logError('Failed to change default payment method:', e);
+      throw e;
     }
   }
 
-  function updateSubscriptionPaymentMethod(methodId) {
+  // ─── Change subscription payment method ──────────────────────────────────────
+  async function updateSubscriptionPaymentMethod(subscriptionId, methodId) {
     try {
-      // Здесь должна быть логика обновления метода оплаты для подписки на бэкенде
-
-      // После успешного обновления на бэкенде, обновляем состояние локально
-      setSavedPaymentMethods((prev) =>
-        prev.map((method) => ({
-          ...method,
-          isSubscription:
-            method.id === methodId
-              ? !method.isSubscription
-              : method.isSubscription,
-        }))
-      );
+      await updateSubscriptionMethod(session, subscriptionId, methodId);
+      // Refresh to get updated isSubscription flags
+      const fresh = await fetchPaymentMethods(session);
+      setSavedPaymentMethods(fresh.map(transformBackendMethod));
     } catch (e) {
-      logError('Error updating subscription payment method:', e);
+      logError('Failed to update subscription payment method:', e);
+      throw e;
+    }
+  }
+
+  // ─── Update from purchase snapshot ───────────────────────────────────────────
+  function updateFromSnapshot(snapshot) {
+    if (!snapshot?.paymentMethods) return;
+    setSavedPaymentMethods(snapshot.paymentMethods.map(transformBackendMethod));
+  }
+
+  // ─── Refresh saved methods from API ──────────────────────────────────────────
+  async function refreshSavedMethods() {
+    if (!session?.token) return;
+    try {
+      const fresh = await fetchPaymentMethods(session);
+      setSavedPaymentMethods(fresh.map(transformBackendMethod));
+    } catch (e) {
+      logError('Failed to refresh saved payment methods:', e);
     }
   }
 
   return {
     availableMethods: availablePaymentMethods,
     savedMethods: savedPaymentMethods,
-    addPaymentMethod,
     removePaymentMethod,
     changeDefaultPaymentMethod,
     updateSubscriptionPaymentMethod,
+    updateFromSnapshot,
+    refreshSavedMethods,
   };
 }

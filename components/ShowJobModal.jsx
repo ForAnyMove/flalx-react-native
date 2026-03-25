@@ -43,6 +43,7 @@ import { useNotification } from '../src/render';
 import { formatExperience } from '../utils/experience_ulit';
 import { formatCurrency } from '../utils/currency_formatter';
 import { PublishJobModal } from './PublishJobModal';
+import PurchaseModal from './PurchaseModal';
 import { logError } from '../utils/log_util';
 import CustomTextInput from './ui/CustomTextInput';
 
@@ -512,36 +513,59 @@ export default function ShowJobModal({
     currentJobInfo?.job_comment?.comment || ''
   );
 
-  const handleAddingSelfToJobProviders = async (useCoupon) => {
+  // Direct call (no paywall) — used when user already has a subscription
+  const handleAddingSelfToJobProviders = async (paymentOptions = {}) => {
     try {
       setAppLoading(true);
-      const { success, payment } = await addSelfToJobProviders(
-        currentJobId,
-        session,
-        useCoupon
-      );
+      const result = await addSelfToJobProviders(currentJobId, session, paymentOptions);
 
-      if (success == true) {
-        if (payment != null) {
-          openWebView(payment?.paymentMetadata?.approval?.href);
+      if (result.success == true) {
+        if (result.payment?.paymentMetadata?.approval?.href) {
+          openWebView(result.payment.paymentMetadata.approval.href);
         } else {
           jobsController.reloadAll();
         }
       }
 
       setAppLoading(false);
-      setConfirmInterestModal(false);
     } catch (e) {
+      setAppLoading(false);
       if (e.response && e.response.status === 400 && e.response.data.code == 'NO_COUPONS_AVAILABLE') {
-        setAppLoading(false);
         showWarning(t('errors.no_coupons', {
           defaultValue: 'You have no coupons available',
         }));
-      } else {
-        setAppLoading(false);
-        setConfirmInterestModal(false);
       }
     }
+  };
+
+  // PurchaseModal: onPurchase handler for the interest/provider paywall
+  const handlePurchaseInterest = async (payload) => {
+    const result = await addSelfToJobProviders(currentJobId, session, payload);
+    if (result.payment?.paymentMetadata?.approval?.href) {
+      openWebView(result.payment.paymentMetadata.approval.href);
+    } else if (result.success) {
+      jobsController.reloadAll();
+    }
+    return result;
+  };
+
+  // PurchaseModal: onPayWithCoupons handler for the interest/provider paywall
+  const handlePayCouponsInterest = () => {
+    setConfirmInterestModal(false);
+    setAppLoading(true);
+    addSelfToJobProviders(currentJobId, session, { useCoupon: true })
+      .then((result) => {
+        if (result.success) {
+          couponsManagerController?.refreshBalance();
+          jobsController.reloadAll();
+        }
+      })
+      .catch((e) => {
+        if (e.response?.status === 400 && e.response.data?.code === 'NO_COUPONS_AVAILABLE') {
+          showWarning(t('errors.no_coupons', { defaultValue: 'You have no coupons available' }));
+        }
+      })
+      .finally(() => setAppLoading(false));
   };
 
   const handleInterestRequest = async () => {
@@ -553,7 +577,7 @@ export default function ShowJobModal({
         );
 
         if (ok) {
-          handleAddingSelfToJobProviders(false);
+          handleAddingSelfToJobProviders({});
           setInterestedRequest(true);
           return;
         }
@@ -563,7 +587,7 @@ export default function ShowJobModal({
 
       setConfirmInterestModal(true);
     } else {
-      handleAddingSelfToJobProviders(false);
+      handleAddingSelfToJobProviders({});
       setInterestedRequest(true);
     }
   };
@@ -1060,7 +1084,7 @@ export default function ShowJobModal({
               ]}
               onPress={() => {
                 if (subscription.current != null && currentJobInfo?.jobType == 'normal') {
-                  payToPublish(false);
+                  payToPublish({});
                 } else {
                   setPublishModalVisible(true);
                 }
@@ -1390,34 +1414,59 @@ export default function ShowJobModal({
     }
   }
 
-  async function payToPublish(useCoupon) {
+  // Direct publish (no paywall modal) — used when user has subscription
+  async function payToPublish(paymentOptions = {}) {
     try {
       setAppLoading(true);
-
-      const data = await payForJob(currentJobInfo.id, session, useCoupon);
+      const data = await payForJob(currentJobInfo.id, session, paymentOptions);
       if (data.paymentUrl) {
         openWebView(data.paymentUrl, () => { });
       } else {
         jobsController.reloadCreator();
       }
-
-      if (useCoupon) {
+      if (paymentOptions.useCoupon) {
         couponsManagerController?.refreshBalance();
       }
-
       setAppLoading(false);
       setPublishModalVisible(false);
     } catch (e) {
+      setAppLoading(false);
       if (e.response && e.response.status === 400 && e.response.data.code == 'NO_COUPONS_AVAILABLE') {
-        setAppLoading(false);
         showWarning(t('errors.no_coupons', {
           defaultValue: 'You have no coupons available',
         }));
       } else {
-        setAppLoading(false);
         setPublishModalVisible(false);
       }
     }
+  }
+
+  // PurchaseModal: onPurchase handler for the publish paywall
+  const handlePurchasePublish = async (payload) => {
+    const data = await payForJob(currentJobInfo.id, session, payload);
+    if (data.paymentUrl) {
+      openWebView(data.paymentUrl, () => { });
+    } else {
+      jobsController.reloadCreator();
+    }
+    return data;
+  };
+
+  // PurchaseModal: onPayWithCoupons handler for the publish paywall
+  const handlePayCouponsPublish = () => {
+    setPublishModalVisible(false);
+    setAppLoading(true);
+    payForJob(currentJobInfo.id, session, { useCoupon: true })
+      .then((data) => {
+        jobsController.reloadCreator();
+        couponsManagerController?.refreshBalance();
+      })
+      .catch((e) => {
+        if (e.response?.status === 400 && e.response.data?.code === 'NO_COUPONS_AVAILABLE') {
+          showWarning(t('errors.no_coupons', { defaultValue: 'You have no coupons available' }));
+        }
+      })
+      .finally(() => setAppLoading(false));
   }
 
   const formContent = [
@@ -1839,10 +1888,9 @@ export default function ShowJobModal({
                         ${scaleByHeight(64, height)}px 
                         ${scaleByHeight(75, height)}px 
                         ${scaleByHeight(75, height)}px 
-                        ${
-                          currentJobInfo?.experience
-                            ? `${scaleByHeight(64, height)}px`
-                            : ''
+                        ${currentJobInfo?.experience
+                          ? `${scaleByHeight(64, height)}px`
+                          : ''
                         }
                         ${scaleByHeight(64, height)}px 
                       `,
@@ -2305,8 +2353,8 @@ export default function ShowJobModal({
                           ? '7 / 2 / 8 / 3'
                           : '6 / 2 / 7 / 3'
                         : currentJobInfo?.experience
-                        ? '7 / 1 / 8 / 2'
-                        : '6 / 1 / 7 / 2',
+                          ? '7 / 1 / 8 / 2'
+                          : '6 / 1 / 7 / 2',
                     }}
                   >
                     <View
@@ -2341,8 +2389,8 @@ export default function ShowJobModal({
                           ? '7 / 1 / 8 / 2'
                           : '6 / 1 / 7 / 2'
                         : currentJobInfo?.experience
-                        ? '7 / 2 / 8 / 3'
-                        : '6 / 2 / 7 / 3',
+                          ? '7 / 2 / 8 / 3'
+                          : '6 / 2 / 7 / 3',
                     }}
                   >
                     <View
@@ -2471,16 +2519,18 @@ export default function ShowJobModal({
           />
         </Modal>
       )}
-      {currentJobInfo && <PublishJobModal
+      {currentJobInfo && <PurchaseModal
         visible={publishModalVisible}
-        setVisible={setPublishModalVisible}
-        jobType={currentJobInfo.jobType}
-        onSubscriptionPlans={() => {
+        onClose={() => setPublishModalVisible(false)}
+        price={formatCurrency(
+          jobsController.products?.find((p) => p.type === currentJobInfo.jobType)?.price,
+          jobsController.products?.find((p) => p.type === currentJobInfo.jobType)?.currency,
+        )}
+        onPurchase={handlePurchasePublish}
+        onPayWithCoupons={handlePayCouponsPublish}
+        onOpenSubscriptions={() => {
           setPlansModalVisible(true);
           setPublishModalVisible(false);
-        }}
-        onPublish={({ useCoupons }) => {
-          payToPublish(useCoupons);
         }}
       />}
 
@@ -2604,181 +2654,21 @@ export default function ShowJobModal({
           </View>
         </View>
       </Modal>
-      {/* Confirm interest modal */}
-      <Modal
+      {/* Confirm interest (paywall) modal */}
+      <PurchaseModal
         visible={showConfirmInterestModal}
-        transparent
-        animationType='fade'
-      >
-        <View style={styles.modalOverlay}>
-          <View
-            style={[
-              styles.modalCard,
-              {
-                backgroundColor: themeController.current?.backgroundColor,
-                width: sizes.modalWidth,
-                padding: sizes.modalPadding,
-                borderRadius: sizes.modalBtnBorderRadius,
-              },
-              // isWebLandscape && { height: sizes.doubleBtnLineModalHeight },
-            ]}
-          >
-            <TouchableOpacity
-              // onPress={() =>
-              //   router.canGoBack?.() ? router.back() : router.replace('/store')
-              // }
-              onPress={() => setConfirmInterestModal(false)}
-              style={[
-                {
-                  position: 'absolute',
-                  top: sizes.modalCloseBtnTopRightPosition,
-                  right: sizes.modalCloseBtnTopRightPosition,
-                },
-              ]}
-            >
-              <Image
-                source={icons.cross}
-                style={{
-                  width: sizes.iconSize,
-                  height: sizes.iconSize,
-                  tintColor: themeController.current?.textColor,
-                }}
-              />
-            </TouchableOpacity>
-            <Text
-              style={[
-                styles.modalText,
-                {
-                  fontSize: sizes.modalFont,
-                  marginBottom: sizes.modalTextMarginBottom,
-                  textAlign: 'center',
-                  color: themeController.current?.textColor,
-                  lineHeight: sizes.modalLineHeight,
-                },
-              ]}
-            >
-              {t('showJob.paywall.notice', {
-                defaultValue:
-                  'To continue this action, you need to pay or subscribe',
-              })}
-            </Text>
-            <View style={[styles.buttonColumn, { gap: sizes.btnsColumnGap }]}>
-              <TouchableOpacity
-                style={[
-                  styles.modalBtn,
-                  {
-                    backgroundColor:
-                      themeController.current?.buttonTextColorSecondary,
-                    borderColor:
-                      themeController.current?.buttonColorPrimaryDefault,
-                    height: sizes.modalBtnHeight,
-                    width: sizes.modalLongBtnWidth,
-                    borderRadius: sizes.modalBtnBorderRadius,
-                    borderWidth: 1,
-                  },
-                ]}
-                onPress={() => handleAddingSelfToJobProviders(false)}
-              >
-                <Text
-                  style={[
-                    {
-                      color: themeController.current?.buttonColorPrimaryDefault,
-                      fontSize: sizes.modalBtnFont,
-                    },
-                  ]}
-                >
-                  {t('showJob.buttons.buy', {
-                    defaultValue: 'Buy for {{price}}',
-                    price: formatCurrency(jobsController.providerProduct?.price, jobsController.providerProduct?.currency),
-                  })}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.modalBtn,
-                  {
-                    backgroundColor:
-                      themeController.current?.buttonTextColorSecondary,
-                    borderColor:
-                      themeController.current?.buttonColorSecondaryDefault,
-                    height: sizes.modalBtnHeight,
-                    width: sizes.modalLongBtnWidth,
-                    borderRadius: sizes.modalBtnBorderRadius,
-                    borderWidth: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    flexDirection: isRTL ? 'row-reverse' : 'row',
-                  },
-                ]}
-                onPress={() => handleAddingSelfToJobProviders(true)}
-              >
-                <Text
-                  style={[
-                    {
-                      color: themeController.current?.buttonColorSecondaryDefault,
-                      fontSize: sizes.modalBtnFont,
-                    },
-                  ]}
-                >
-                  {t('showJob.buttons.buyForCoupons', {
-                    defaultValue: 'Buy for 1',
-                    count: 1,
-                  })}
-                </Text>
-                <Image
-                  source={icons.coupon}
-                  style={{
-                    width: sizes.iconSize,
-                    height: sizes.iconSize,
-                    tintColor: themeController.current?.buttonColorSecondaryDefault,
-                  }}
-                />
-                <Text
-                  style={[
-                    {
-                      color: themeController.current?.buttonColorSecondaryDefault,
-                      fontSize: sizes.modalBtnFont,
-                    },
-                  ]}
-                >
-                  {` (${couponsManagerController.balance || 0})`}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.modalBtn,
-                  {
-                    backgroundColor:
-                      themeController.current?.buttonColorPrimaryDefault,
-                    height: sizes.modalBtnHeight,
-                    width: sizes.modalLongBtnWidth,
-                    borderRadius: sizes.modalBtnBorderRadius,
-                  },
-                ]}
-                onPress={() => {
-                  setPlansModalVisible(true);
-                  setConfirmInterestModal(false);
-                }}
-              // onPress={() => {
-              //   setConfirmInterestModal(false);
-              //   setInterestedRequest(true);
-              // }}
-              >
-                <Text
-                  style={{
-                    color: themeController.current?.buttonTextColorPrimary,
-                    fontSize: sizes.modalBtnFont,
-                  }}
-                >
-                  {t('showJob.buttons.getSubscription', {
-                    defaultValue: 'Get a subscription',
-                  })}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setConfirmInterestModal(false)}
+        price={formatCurrency(
+          jobsController.providerProduct?.price,
+          jobsController.providerProduct?.currency,
+        )}
+        onPurchase={handlePurchaseInterest}
+        onPayWithCoupons={handlePayCouponsInterest}
+        onOpenSubscriptions={() => {
+          setPlansModalVisible(true);
+          setConfirmInterestModal(false);
+        }}
+      />
       {/* <Modal visible={showHistoryModal} animationType='fade'>
         <View
           style={{

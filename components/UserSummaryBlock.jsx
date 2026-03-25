@@ -21,6 +21,7 @@ import { useWebView } from '../context/webViewContext';
 import { useWindowInfo } from '../context/windowContext';
 import { useLocalization } from '../src/services/useLocalization';
 import { logError } from '../utils/log_util';
+import { useNotification } from '../src/render';
 
 const UserSummaryBlock = ({
   user,
@@ -34,9 +35,11 @@ const UserSummaryBlock = ({
     languageController,
     usersReveal,
     setAppLoading,
+    couponsManagerController,
   } = useComponentContext();
   const { t } = useTranslation();
   const { openWebView } = useWebView();
+  const { showWarning } = useNotification();
   const { tField } = useLocalization(languageController.current);
   const isRTL = languageController?.isRTL;
   const [modalVisible, setModalVisible] = useState(false);
@@ -125,19 +128,37 @@ const UserSummaryBlock = ({
     phoneNumber,
   } = user.id ? user : user._j;
 
-  const handleUserRevealTry = async () => {
+  const handleUserRevealTry = async (payload = {}) => {
     try {
       setAppLoading(true);
 
-      const result = await usersReveal.tryReveal(user.id);
-      if (result.paymentUrl) {
+      const result = await usersReveal.tryReveal(user.id, payload);
+      if (result?.paymentUrl) {
         openWebView(result.paymentUrl);
       }
 
       setAppLoading(false);
+      return result;
     } catch (error) {
       logError('Error revealing user:', error);
+      setAppLoading(false);
+      throw error;
     }
+  };
+
+  const handlePayCouponsReveal = () => {
+    setPurchaseModalVisible(false);
+    setAppLoading(true);
+    usersReveal.tryReveal(user.id, { useCoupon: true })
+      .then(() => {
+        couponsManagerController?.refreshBalance?.();
+      })
+      .catch((e) => {
+        if (e?.response?.status === 400 && e?.response?.data?.code === 'NO_COUPONS_AVAILABLE') {
+          showWarning(t('errors.no_coupons', { defaultValue: 'You have no coupons available' }));
+        }
+      })
+      .finally(() => setAppLoading(false));
   };
 
   return (
@@ -254,7 +275,7 @@ const UserSummaryBlock = ({
         >
           <View style={[styles.backdrop]}>
             {/* Контентная панель; клики внутри не закрывают */}
-            <TouchableWithoutFeedback onPress={() => {}}>
+            <TouchableWithoutFeedback onPress={() => { }}>
               <View
                 style={[
                   styles.panel,
@@ -760,7 +781,7 @@ const UserSummaryBlock = ({
                           backgroundColor: usersReveal.contains(user.id)
                             ? themeController.current?.buttonColorPrimaryDefault
                             : themeController.current
-                                ?.buttonColorPrimaryDisabled,
+                              ?.buttonColorPrimaryDisabled,
                           borderRadius: sizes.borderRadius,
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -858,6 +879,7 @@ const UserSummaryBlock = ({
         onClose={() => setPurchaseModalVisible(false)}
         type='regular'
         onPurchase={handleUserRevealTry}
+        onPayWithCoupons={handlePayCouponsReveal}
         price={`${usersReveal.product.price} ${usersReveal.product.currency}`}
       />
     </>

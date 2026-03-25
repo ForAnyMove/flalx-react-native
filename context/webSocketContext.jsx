@@ -21,6 +21,7 @@ export const WebSocketProvider = ({ children }) => {
     subscription,
     jobsController,
     couponsManagerController,
+    paymentsManagerController,
   } = useComponentContext();
 
   const wsRef = useRef(null);
@@ -80,8 +81,21 @@ export const WebSocketProvider = ({ children }) => {
       case 'SUBSCRIPTION_PAYMENT_SUCCESS':
       case 'SUBSCRIPTION_PLAN_CHANGES_CANCELLED':
       case 'PLAN_UPGRADE_COMPLETED':
+      case 'SUBSCRIPTION_CANCELLED':
+      case 'SUBSCRIPTION_REACTIVATED':
       case 'SUBSCRIPTION_PENDING_APPROVAL': {
         subscription.refresh();
+        break;
+      }
+      case 'SUBSCRIPTION_PAYMENT_METHOD_CHANGED': {
+        subscription.refresh();
+        paymentsManagerController?.refreshSavedMethods?.();
+        break;
+      }
+      case 'PAYMENT_METHOD_ADDED':
+      case 'PAYMENT_METHOD_SET_AS_DEFAULT':
+      case 'PAYMENT_METHOD_DELETED': {
+        paymentsManagerController?.refreshSavedMethods?.();
         break;
       }
       case 'JOB_CREATED': { // notify all users

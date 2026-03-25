@@ -600,12 +600,10 @@ export default function sessionManager() {
   }
 
   // Reveal user contacts
-  async function tryReveal(userId, useCoupon = false) {
-    console.log('Trying to reveal user', userId, 'with coupon:', useCoupon);
+  async function tryReveal(userId, paymentOptions = {}) {
+    const resolvedOptions = typeof paymentOptions === 'boolean' ? { useCoupon: paymentOptions } : paymentOptions;
 
     if (revealedUsers.includes(userId)) {
-      console.log('User already revealed, skipping API call');
-
       return;
     }
 
@@ -613,13 +611,11 @@ export default function sessionManager() {
       const data = await revealUser(userId, {
         token: { access_token: session.access_token },
         serverURL: API_BASE_URL,
-      }, useCoupon);
+      }, resolvedOptions);
       if (data.user) {
         setRevealedUsers((prev) => [...prev, userId]);
-        return { user: data.user };
-      } else if (data.paymentUrl) {
-        return { paymentUrl: data.paymentUrl };
       }
+      return data;
     } catch (error) {
       throw error;
     }
@@ -803,7 +799,7 @@ export default function sessionManager() {
     }
   }
 
-  
+
   // >>> NEW MFA REGISTRATION FUNCTIONS <<<
 
   /**
@@ -834,19 +830,19 @@ export default function sessionManager() {
     logInfo(`[MFA] Starting to listen for email verification for userId: ${userId}`);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-        logWarn(`[MFA] Client-side timeout reached for userId: ${userId}. Aborting fetch.`);
-        controller.abort();
+      logWarn(`[MFA] Client-side timeout reached for userId: ${userId}. Aborting fetch.`);
+      controller.abort();
     }, 30 * 60 * 1000); // 30 минут, как на сервере
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/mfa/listen-for-verification/${userId}`, {
         signal: controller.signal
       });
-      
+
       clearTimeout(timeoutId); // Очищаем таймаут, так как ответ получен
 
       const data = await response.json();
-       if (!response.ok) {
+      if (!response.ok) {
         throw new Error(data.error || 'Verification listening failed');
       }
       logInfo(`[MFA] Email successfully verified for userId: ${userId}`);
@@ -882,7 +878,7 @@ export default function sessionManager() {
       return { success: false, error: e.message };
     }
   }
-  
+
   /**
    * Шаг 4: Проверка кода верификации телефона
    */
@@ -968,7 +964,7 @@ export default function sessionManager() {
     }
   }
 
-    // Смена существующего пароля
+  // Смена существующего пароля
   async function changePassword(oldPassword, newPassword) {
     try {
       // 1. Получаем токен доступа пользователя из текущей сессии
@@ -1011,7 +1007,7 @@ export default function sessionManager() {
       return { success: false, error: e.message };
     }
   }
-  
+
   // // Смена существующего пароля
   // async function changePassword(oldPassword, newPassword) {
   //   try {
@@ -1137,7 +1133,7 @@ export default function sessionManager() {
       if (!response.ok) {
         return { success: false, error: result.error || `HTTP error! status: ${response.status}` };
       }
-      
+
       await saveMfaVerifiedState(true);
       return { success: true, data: result };
     } catch (e) {
