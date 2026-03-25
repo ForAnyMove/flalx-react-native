@@ -18,12 +18,10 @@ import { useWindowInfo } from '../../../../context/windowContext';
 import { useComponentContext } from '../../../../context/globalAppContext';
 import { PROFESSION_TYPES } from '../../../../constants/enums';
 import { icons } from '../../../../constants/icons';
-import AddProfessionModal from '../../../../components/AddProfessionModal';
 import RequestProfessionModal from '../../../../components/RequestProfessionModal';
 import { useTranslation } from 'react-i18next';
 import { SubmitModal } from '../../../../components/modals/misc/SubmitModal';
 import { useNotification } from '../../../../src/render';
-import { logError } from '../../../../utils/log_util';
 
 const MyProfessions = ({ openSystemRegistration, onBackFromSystemRegistration, isRequestModalVisible, setIsRequestModalVisible }) => {
   const [searchValue, setSearchValue] = useState('');
@@ -33,8 +31,6 @@ const MyProfessions = ({ openSystemRegistration, onBackFromSystemRegistration, i
   const { themeController, languageController, jobTypesController, setAppLoading } = useComponentContext();
   const isRTL = languageController.isRTL;
   const { t } = useTranslation();
-
-  const [requestProfessionData, setRequestProfessionData] = useState(null);
 
   const formattedUserRequests = useMemo(() => {
     const requests = [];
@@ -86,7 +82,6 @@ const MyProfessions = ({ openSystemRegistration, onBackFromSystemRegistration, i
     });
   }, [formattedUserRequests, searchValue]);
 
-  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [isSubmitModalVisible, setIsSubmitModalVisible] = useState(false);
 
   const sizes = useMemo(() => {
@@ -133,68 +128,11 @@ const MyProfessions = ({ openSystemRegistration, onBackFromSystemRegistration, i
   }
 
   const handleProfessionRequested = (data) => {
-    if (jobTypesController.checkIfVerificationNeeded({ typeId: data.job_type_id, subTypeId: data.job_subtype_id })) {
-      setRequestProfessionData(data);
-      setIsRequestModalVisible(false);
-      setIsAddModalVisible(true);
-    } else {
-
-      setAppLoading(true);
-
-      jobTypesController.userToUserRequest.makeRequest(data)
-        .then(() => {
-          setIsRequestModalVisible(false);
-          setIsSubmitModalVisible(true);
-        }).catch((err) => {
-          if (err?.response?.status === 400) {
-            showWarning(t('professions.warnings.validation_failed'), [
-              {
-                title: 'OK',
-                backgroundColor: '#F59E0B',
-                textColor: '#FFFFFF'
-              },
-            ]);
-          } else if (err?.response?.status === 409) {
-            showWarning(t('professions.warnings.already_requested'), [
-              {
-                title: 'OK',
-                backgroundColor: '#F59E0B',
-                textColor: '#FFFFFF'
-              },
-            ]);
-          } else {
-            showWarning(t('professions.warnings.unexpected_error'), [
-              {
-                title: 'OK',
-                backgroundColor: '#F59E0B',
-                textColor: '#FFFFFF'
-              },
-            ]);
-          }
-        }).finally(() => {
-          setAppLoading(false);
-        });
-    }
-  }
-
-  const handleDocumentsProvided = (data) => {
-    const requestData = {
-      job_type_id: requestProfessionData?.job_type_id,
-      job_subtype_id: requestProfessionData?.job_subtype_id,
-      passport_photo_urls: data.passport_photos,
-      certificate_photo_urls: data.certificate_photos,
-    }
-
-    if (!requestData.job_type_id || !requestData.job_subtype_id) {
-      logError('Missing job type or subtype ID for profession request.');
-      return;
-    }
-
     setAppLoading(true);
 
-    jobTypesController.userToUserRequest.makeRequest(requestData)
+    jobTypesController.userToUserRequest.makeRequest(data)
       .then(() => {
-        setIsAddModalVisible(false);
+        setIsRequestModalVisible(false);
         setIsSubmitModalVisible(true);
       }).catch((err) => {
         if (err?.response?.status === 400) {
@@ -365,17 +303,9 @@ const MyProfessions = ({ openSystemRegistration, onBackFromSystemRegistration, i
           </>
         )}
       </View>
-      <AddProfessionModal
-        visible={isAddModalVisible}
-        onClose={() => setIsAddModalVisible(false)}
-        onSubmit={handleDocumentsProvided}
-      />
       <RequestProfessionModal
         visible={isRequestModalVisible}
-        onClose={() => {
-          setIsRequestModalVisible(false);
-          setRequestProfessionData(null);
-        }}
+        onClose={() => setIsRequestModalVisible(false)}
         onRequested={handleProfessionRequested}
         onSwitchToSystemProfessions={handleSwitchToSystem}
         showTabs={jobTypesController.userToSystemRequest.list.length > 0}
