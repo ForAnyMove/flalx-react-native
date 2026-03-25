@@ -55,6 +55,7 @@ export const LIGHT_THEME = {
   activeStarColor: '#FEBF01',
   inactiveStarColor: '#9FAACD',
   headerPickerDropdownBorder: '#0A62EA',
+  warningTextColor: '#FF8D28',
 };
 
 export const DARK_THEME = {
@@ -114,4 +115,5 @@ export const DARK_THEME = {
   activeStarColor: '#FEBF01',
   inactiveStarColor: '#9FAACD',
   headerPickerDropdownBorder: '#0A62EA',
+  warningTextColor: '#FF8D28',
 };

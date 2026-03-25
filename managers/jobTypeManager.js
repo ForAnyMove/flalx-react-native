@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { getSystemTypesWithSubtypes } from "../src/api/jobTypes";
 import { fetchUserTypeCreationRequests, sendUserTypeCreationRequest } from "../src/api/jobTypesRegistration";
 import { fetchUserProfessions, fetchUserTypeRequests, sendUserTypeRequest } from "../src/api/jobTypesRequests";
-import { logError } from "../utils/log_util";
+import { logError, logInfo } from "../utils/log_util";
 
 function professionRequests({ session }) {
     const [professionsRequestedToSystem, setProfessionsRequestedToSystem] = useState([]);
@@ -74,7 +74,7 @@ function professionRequests({ session }) {
             return data;
         }
         catch (err) {
-            logInfo('Error sending profession request to user:', err);
+            logError('Error sending profession request to user:', err);
             throw err;
         }
     }

@@ -17,6 +17,7 @@ import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
 import { useNotification } from '../src/render';
 import CustomTextInput from './ui/CustomTextInput';
+import CustomExperiencePicker from './ui/CustomExperiencePicker';
 
 const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) => {
   const { themeController, languageController, jobTypesController, setAppLoading } = useComponentContext();
@@ -29,6 +30,14 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
   const [type, setType] = useState(null);
   const [subtype, setSubtype] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [experience, setExperience] = useState(null);
+
+  const requiresVerification = useMemo(() => {
+    if (!type) return false;
+    const typeObj = jobTypesController.jobTypesWithSubtypes?.find((t) => t.key === type);
+    if (!typeObj) return false;
+    return typeObj.requires_verification === true;
+  }, [type, jobTypesController.jobTypesWithSubtypes]);
 
   const jobTypesOptions = useMemo(() => {
     const options = {};
@@ -93,6 +102,7 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
       requested_type_name: jobTypesOptions[type] || type,
       requested_subtype_name: subtype.trim(),
       selected_type_id: jobTypesOptions[type] ? jobTypesController.jobTypesWithSubtypes.find(t => t.key === type)?.id : null,
+      experience: requiresVerification ? experience : null,
     }).then((data) => {
       setIsSubmitted(true);
       onRequestDone && onRequestDone(data);
@@ -120,6 +130,7 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
       setIsSubmitted(false);
       setType(null);
       setSubtype('');
+      setExperience(null);
     }, 300);
   };
 
@@ -355,6 +366,20 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
                   onChangeText={applySelectedSubtype}
                 />
               </View>
+
+              {requiresVerification && (
+                <CustomExperiencePicker
+                  label={t('register.experience_label')}
+                  selectedValue={experience}
+                  onValueChange={setExperience}
+                  isRTL={isRTL}
+                  containerStyle={{
+                    marginBottom: sizes.inputGap,
+                    width: sizes.inputWidth,
+                  }}
+                  bottomDropdown={false}
+                />
+              )}
 
               <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
                 <Text style={styles.sendButtonText}>

@@ -249,6 +249,7 @@ function App() {
     content = <ResetPasswordScreen />;
   }
 
+    // content = <RegisterScreen />;
   return (
     <SafeAreaProvider>
       <SafeAreaView

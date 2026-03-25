@@ -2,7 +2,7 @@ import { Dimensions, PixelRatio } from 'react-native';
 
 // utils/resizeFuncs.js
 
-const BASE_DESIGN_HEIGHT = 1024;
+export const BASE_DESIGN_HEIGHT = 1024;
 export const MOBILE_DESIGN_HEIGHT = 892;
 
 /**
@@ -20,6 +20,7 @@ export function scaleByHeight(
   currentHeight = Dimensions.get('window').height,
   baseHeight = BASE_DESIGN_HEIGHT,
   { round = true } = {},
+  isRevertResize = false,
 ) {
   if (typeof designValue !== 'number' || !isFinite(designValue)) return 0;
   if (typeof currentHeight !== 'number' || currentHeight <= 0) {
@@ -36,7 +37,11 @@ export function scaleByHeight(
   } else {
     if (currentHeight < BASE_DESIGN_HEIGHT) {
       // Линейная интерполяция для коэффициента масштабирования от 1.0 при 1024 до 2.3 при 320
-      resizeKef = 2.3 - 1.3 * (currentHeight / BASE_DESIGN_HEIGHT);
+      if (isRevertResize) {
+        resizeKef = 2.3 - (2.3 - 1.3 * (currentHeight / BASE_DESIGN_HEIGHT));
+      } else {
+        resizeKef = 2.3 - 1.3 * (currentHeight / BASE_DESIGN_HEIGHT);
+      }
     }
   }
 
