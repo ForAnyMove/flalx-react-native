@@ -1,12 +1,19 @@
 import { fetchWithSession } from './apiBase';
 import { logError } from '../../utils/log_util';
 
-async function createSubscription(session, planId) {
+async function createSubscription(session, planId, paymentOptions = {}) {
+    const { paymentMethod = 'paypal', savedPaymentMethodId } = paymentOptions;
+    const providerMap = { paypal: 'PAYPAL', hyp: 'HYP', card: 'HYP' };
+    const provider = providerMap[paymentMethod] ?? 'PAYPAL';
     try {
         const response = await fetchWithSession({
             session,
             endpoint: '/api/billing/subscriptions/initialize',
-            data: { planId, provider: 'hyp' },
+            data: {
+                planId,
+                provider,
+                ...(savedPaymentMethodId && { savedPaymentMethodId }),
+            },
             method: 'POST'
         });
 
@@ -128,4 +135,66 @@ async function payForPlanUpgrade(session, currentSubscriptionId) {
     }
 }
 
-export { getSubscriptionPlans, createSubscription, getUserSubscription, upgradeSubscription, downgradeSubscription, payForPlanUpgrade };
+async function cancelSubscription(session, subscriptionId, immediate = false) {
+    try {
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/api/billing/subscriptions/${subscriptionId}/cancel`,
+            data: { immediate },
+            method: 'POST'
+        });
+        return response.data;
+    } catch (error) {
+        logError('Error cancelling subscription:', error);
+        throw error;
+    }
+}
+
+async function reactivateSubscription(session, subscriptionId, paymentMethodId) {
+    try {
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/api/billing/subscriptions/${subscriptionId}/reactivate`,
+            data: paymentMethodId ? { paymentMethodId } : {},
+            method: 'POST'
+        });
+        return response.data;
+    } catch (error) {
+        logError('Error reactivating subscription:', error);
+        throw error;
+    }
+}
+
+async function updateSubscriptionPaymentMethod(session, subscriptionId, paymentMethodId) {
+    try {
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/api/billing/subscriptions/${subscriptionId}/payment-method`,
+            data: { paymentMethodId },
+            method: 'PUT'
+        });
+        return response.data;
+    } catch (error) {
+        logError('Error updating subscription payment method:', error);
+        throw error;
+    }
+}
+
+async function addPaymentMethodToSubscription(session, subscriptionId, paymentMethod = 'paypal') {
+    const providerMap = { paypal: 'PAYPAL', hyp: 'HYP', card: 'HYP' };
+    const provider = providerMap[paymentMethod] ?? 'PAYPAL';
+    try {
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/api/billing/subscriptions/${subscriptionId}/add-payment-method`,
+            data: { provider },
+            method: 'POST'
+        });
+        return response.data;
+    } catch (error) {
+        logError('Error adding payment method to subscription:', error);
+        throw error;
+    }
+}
+
+export { getSubscriptionPlans, createSubscription, getUserSubscription, upgradeSubscription, downgradeSubscription, payForPlanUpgrade, cancelSubscription, reactivateSubscription, updateSubscriptionPaymentMethod, addPaymentMethodToSubscription };

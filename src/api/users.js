@@ -19,13 +19,24 @@ async function getRevealedUsers(session) {
     }
 }
 
-async function revealUser(userId, session, useCoupon = false) {
+async function revealUser(userId, session, paymentOptions = {}) {
     try {
+        const { useCoupon = false, paymentMethod = 'paypal', currency = 'USD', savePaymentMethod, savedPaymentMethodId } = paymentOptions;
+        const data = {
+            currency,
+            ...(useCoupon
+                ? { use_coupon: true, paymentMethod: 'none' }
+                : savedPaymentMethodId
+                    ? { paymentMethod, savedPaymentMethodId }
+                    : { paymentMethod }
+            ),
+            ...(!useCoupon && !savedPaymentMethodId && savePaymentMethod !== undefined && { savePaymentMethod }),
+        };
         const response = await fetchWithSession({
             session,
             endpoint: `/api/user-info/reveal/${userId}`,
             method: 'POST',
-            data: { use_coupon: useCoupon }
+            data,
         });
 
         logInfo('Reveal user response:', response);
@@ -34,6 +45,10 @@ async function revealUser(userId, session, useCoupon = false) {
 
         if (response.data?.isAlreadyRevealed) {
             returnData.user = response.data;
+        } else if (response.data?.payment?.paymentMetadata?.directCharge) {
+            returnData.payment = response.data.payment;
+            returnData.paymentMethodsSnapshot = response.data.paymentMethodsSnapshot ?? null;
+            returnData.user = response.data.user ?? null;
         } else if (response.data?.paymentRequired == true) {
             returnData.paymentUrl = response.data.paymentUrl;
         }

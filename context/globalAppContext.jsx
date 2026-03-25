@@ -28,7 +28,7 @@ export const ComponentProvider = ({ children }) => {
   const profileTabController = tabsManager({ name: 'profile', defaultTab: profileTabsList[0], list: profileTabsList });
   const geolocationController = useGeolocation();
   const couponsManagerController = couponsManager({ session });
-  const paymentsManagerController = paymentsManager();
+  const paymentsManagerController = paymentsManager({ session });
 
   const { registerControl, authControl, forgotPassControl } = authTabsManager();
 

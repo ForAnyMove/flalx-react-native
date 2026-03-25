@@ -74,7 +74,7 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
     switch (type) {
       case 'paypal':
         return icons.paypal;
-      case 'card':
+      case 'hyp':
         return icons.card;
       default:
         return icons.card;
@@ -85,7 +85,7 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
     if (method.type === 'paypal') {
       return `PayPal (${method.details.email})`;
     }
-    if (method.type === 'card') {
+    if (method.type === 'hyp') {
       return `Credit card ${method.details.cardNumber}`;
     }
     return 'Unknown Method';
@@ -295,6 +295,12 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
     },
   });
 
+  const getMethodLabel = (method) => {
+    const methodName = t(`payment_modal.method_${method.type === 'hyp' ? 'card' : method.type}`);
+    const methodTitle = method.details?.title ?? '';
+    return `${methodName} (${methodTitle})`;
+  };
+
   const renderItem = ({ item }) => {
     const isDefault = item.default;
     const itemStyle = [
@@ -315,8 +321,7 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
           />
         </TouchableOpacity>
         <Text style={styles.itemTitle} numberOfLines={1} ellipsizeMode='tail'>
-          {item.type === 'card' && `Credit card ${item.details.cardNumber}`}
-          {item.type === 'paypal' && `PayPal ${item.details.email}`}
+          {getMethodLabel(item)}
         </Text>
         <TouchableOpacity
           style={styles.itemDeleteButton}

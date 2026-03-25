@@ -216,7 +216,7 @@ function App() {
       // content = <AuthScreenWithPass />;
     }
   }
-  
+
   // 3. Регистрация первого входа
   else if (user?.current?.firstauth) {
     content = <RegisterScreen />;
