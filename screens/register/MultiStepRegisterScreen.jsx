@@ -90,7 +90,8 @@ export default function MultiStepRegisterScreen({ skipMFA = false }) {
 
   const handleEmailNext = (email, password, userId) => {
     setUserData((prev) => ({ ...prev, email, password, userId })); // Сохраняем email и password
-    setStep('wait_for_email');
+    // setStep('wait_for_email');
+    handleEmailVerified(); // Для упрощения пропускаем этап верификации email
   };
 
   const handleEmailVerified = () => {

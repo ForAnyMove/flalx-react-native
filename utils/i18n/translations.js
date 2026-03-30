@@ -390,6 +390,7 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         remove: 'Remove',
         continue: 'Continue',
         back_to_list: 'Back to list',
+        next: 'Next',
       },
       extra_markers: {
         verified: 'Verified',
@@ -1045,6 +1046,7 @@ After they register, you'll receive coupons.`,
         remove: 'הסר',
         continue: 'המשך',
         back_to_list: 'חזור לרשימה',
+        next: 'הבא',
       },
       extra_markers: {
         verified: 'מְאוּמָת',

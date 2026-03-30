@@ -18,6 +18,7 @@ import { icons } from '../constants/icons';
 import { useNotification } from '../src/render';
 import CustomTextInput from './ui/CustomTextInput';
 import CustomExperiencePicker from './ui/CustomExperiencePicker';
+import AddProfessionModal from './AddProfessionModal';
 
 const RequestProfessionModal = ({
   visible,
@@ -39,6 +40,7 @@ const RequestProfessionModal = ({
   const [type, setType] = useState(null);
   const [subType, setSubType] = useState(null);
   const [experience, setExperience] = useState(null);
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
 
   const jobTypesOptions = useMemo(() => {
     const options = {};
@@ -111,24 +113,36 @@ const RequestProfessionModal = ({
     };
   }, [height, width, isWebLandscape]);
 
-  const handleSend = async () => {
-    const data = {
-      job_type_id: type
-        ? jobTypesController.jobTypesWithSubtypes.find((t) => t.key === type)
-            ?.id
-        : null,
-      job_subtype_id:
-        type && subType
-          ? jobTypesController.jobTypesWithSubtypes
-              .find((t) => t.key === type)
-              ?.subtypes.find((st) => st.key === subType)?.id
-          : null,
+  const handleSend = () => {
+    if (requiresVerification) {
+      setIsAddModalVisible(true);
+      return;
+    }
+    const typeObj = jobTypesController.jobTypesWithSubtypes?.find((t) => t.key === type);
+    const subtypeObj = typeObj?.subtypes?.find((st) => st.key === subType);
+    onRequested({
+      job_type_id: typeObj?.id ?? null,
+      job_subtype_id: subtypeObj?.id ?? null,
       passport_photo_urls: null,
       certificate_photo_urls: null,
-      experience: requiresVerification ? experience : null,
-    };
+      experience,
+    });
+  };
 
-    onRequested(data);
+  const handleDocumentsProvided = (docs) => {
+    const typeObj = jobTypesController.jobTypesWithSubtypes?.find((t) => t.key === type);
+    const subtypeObj = typeObj?.subtypes?.find((st) => st.key === subType);
+    onRequested({
+      job_type_id: typeObj?.id ?? null,
+      job_subtype_id: subtypeObj?.id ?? null,
+      passport_photo_urls: docs.passport_photos,
+      certificate_photo_urls: docs.certificate_photos,
+      experience,
+    });
+  };
+
+  const handleAddModalClose = () => {
+    setIsAddModalVisible(false);
   };
 
   const handleSwitch = () => {
@@ -147,6 +161,7 @@ const RequestProfessionModal = ({
       setType(null);
       setSubType(null);
       setExperience(null);
+      setIsAddModalVisible(false);
     }, 300);
   };
 
@@ -285,7 +300,8 @@ const RequestProfessionModal = ({
   });
 
   return (
-    <Modal visible={visible} transparent={true} animationType='fade'>
+    <>
+    <Modal visible={visible && !isAddModalVisible} transparent={true} animationType='fade'>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           {isSubmitted ? (
@@ -350,6 +366,7 @@ const RequestProfessionModal = ({
                 onValueChange={setType}
                 setValue={setType}
                 selectedValue={type}
+                value={type}
                 isRTL={isRTL}
                 containerStyle={{
                   marginBottom: sizes.inputGap,
@@ -386,6 +403,7 @@ const RequestProfessionModal = ({
                 onValueChange={setSubType}
                 setValue={setSubType}
                 selectedValue={subType}
+                value={subType}
                 isRTL={isRTL}
                 containerStyle={{
                   marginBottom: sizes.inputGap,
@@ -450,7 +468,6 @@ const RequestProfessionModal = ({
                   onValueChange={setExperience}
                   isRTL={isRTL}
                   containerStyle={{
-                    marginTop: sizes.inputGap,
                     width: sizes.inputWidth,
                   }}
                   bottomDropdown={false}
@@ -468,7 +485,7 @@ const RequestProfessionModal = ({
                 onPress={handleSend}
               >
                 <Text style={styles.sendButtonText}>
-                  {t('professions.request_modal.send_button')}
+                  {requiresVerification ? t('common.next') : t('professions.request_modal.send_button')}
                 </Text>
               </TouchableOpacity>
             </>
@@ -476,6 +493,12 @@ const RequestProfessionModal = ({
         </View>
       </View>
     </Modal>
+    <AddProfessionModal
+      visible={visible && isAddModalVisible}
+      onClose={handleAddModalClose}
+      onSubmit={handleDocumentsProvided}
+    />
+    </>
   );
 };
 

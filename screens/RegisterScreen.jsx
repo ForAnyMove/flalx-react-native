@@ -165,6 +165,8 @@ export default function RegisterScreen() {
       {
         job_type_id: data.job_type_id,
         job_subtype_id: data.job_subtype_id,
+        passport_photo_urls: data.passport_photo_urls ?? null,
+        certificate_photo_urls: data.certificate_photo_urls ?? null,
         title: typeInfo?.name || '',
         subtitle: subtypeInfo?.name || '',
         type: PROFESSION_TYPES.PENDING,
@@ -213,8 +215,8 @@ export default function RegisterScreen() {
               .makeRequest({
                 job_type_id: p?.job_type_id,
                 job_subtype_id: p?.job_subtype_id,
-                passport_photo_urls: null,
-                certificate_photo_urls: null,
+                passport_photo_urls: p?.passport_photo_urls ?? null,
+                certificate_photo_urls: p?.certificate_photo_urls ?? null,
               })
               .then(() => {})
               .catch((err) => {
