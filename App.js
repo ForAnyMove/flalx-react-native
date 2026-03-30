@@ -38,6 +38,7 @@ import RegisterScreenWithPassSms from './screens/RegisterScreenWithPassSms';
 import MultiStepLoginScreen from './screens/login/MultiStepLoginScreen';
 import MultiStepRegisterScreen from './screens/register/MultiStepRegisterScreen';
 import { logError } from './utils/log_util';
+import usePushNotifications from './managers/pushNotificationsManager';
 
 // // --- Безопасная глобальная подмена TextInput ---
 // const originalCreateElement = React.createElement;
@@ -86,6 +87,8 @@ function App() {
     authControl,
     forgotPassControl,
   } = useComponentContext();
+
+  usePushNotifications({ session });
   const [isOnboardingShowed, setOnboardingShowed] = useState(false);
   const [onboardingStatusChecked, setOnboardingStatusChecked] = useState(false);
   const { width, height, isLandscape, isKeyboardVisible, focusedInputs } =
@@ -249,7 +252,7 @@ function App() {
     content = <ResetPasswordScreen />;
   }
 
-    // content = <RegisterScreen />;
+  // content = <RegisterScreen />;
   return (
     <SafeAreaProvider>
       <SafeAreaView

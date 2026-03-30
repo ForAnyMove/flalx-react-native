@@ -48,6 +48,7 @@ function showTitleByStatus(status, t) {
 
 function UserSummaryBlockWrapper({
   userId,
+  jobAgreement,
   status,
   currentJobId,
   closeAllModal,
@@ -75,6 +76,7 @@ function UserSummaryBlockWrapper({
       currentJobId={currentJobId}
       closeAllModal={closeAllModal}
       isFullScreen={isFullScreen}
+      jobAgreement={jobAgreement}
     />
   );
 }
@@ -147,17 +149,16 @@ export default function ProvidersSection({
   // сетка 3×N для веб-альбомной
   const gridContainerStyleWeb = isWebLandscape
     ? {
-        display: 'grid',
-        gridTemplateColumns: `repeat(${
-          isShortProviderBlock ? 1 : 3
+      display: 'grid',
+      gridTemplateColumns: `repeat(${isShortProviderBlock ? 1 : 3
         }, minmax(0, 1fr))`,
-        gridAutoRows: 'auto',
-        gridColumnGap: sizes.horizontalGap || sizes.gridGap,
-        gridRowGap: sizes.horizontalGap || sizes.gridGap,
-        alignItems: 'start',
-        justifyItems: 'stretch',
-        direction: isRTL ? 'rtl' : 'ltr',
-      }
+      gridAutoRows: 'auto',
+      gridColumnGap: sizes.horizontalGap || sizes.gridGap,
+      gridRowGap: sizes.horizontalGap || sizes.gridGap,
+      alignItems: 'start',
+      justifyItems: 'stretch',
+      direction: isRTL ? 'rtl' : 'ltr',
+    }
     : null;
 
   function checkListByStatus() {
@@ -178,6 +179,11 @@ export default function ProvidersSection({
   }
 
   const providerList = checkListByStatus();
+
+  if (status === 'store-waiting' && providerList?.length > 0) {
+    console.log('[ProvidersSection] providers:', JSON.stringify(providerList.map(p => ({ id: p?.id || p, job_agreement: p?.job_agreement }))));
+  }
+
   const renderProviderList = () => (
     <>
       {Platform.OS === 'web' ? (
@@ -189,6 +195,7 @@ export default function ProvidersSection({
               <UserSummaryBlockWrapper
                 status={status}
                 userId={item?.id || item}
+                jobAgreement={item?.job_agreement}
                 currentJobId={currentJobInfo?.id}
                 closeAllModal={closeAllModal}
                 providersController={providersController}
@@ -203,12 +210,15 @@ export default function ProvidersSection({
           data={providerList || []}
           keyExtractor={(_, index) => index.toString()}
           renderItem={({ item }) => (
-            <UserSummaryBlock
-              status={status}
-              user={providersController.getUserById(item.id || item)}
-              currentJobId={currentJobInfo?.id}
-              closeAllModal={closeAllModal}
-            />
+            <View style={styleRow.gridItem}>
+              <UserSummaryBlock
+                status={status}
+                user={providersController.getUserById(item?.id || item)}
+                jobAgreement={item?.job_agreement}
+                currentJobId={currentJobInfo?.id}
+                closeAllModal={closeAllModal}
+              />
+            </View>
           )}
           contentContainerStyle={styles.container}
           keyboardShouldPersistTaps='handled'

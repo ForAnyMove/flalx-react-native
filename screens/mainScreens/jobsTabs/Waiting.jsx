@@ -21,7 +21,7 @@ export default function WaitingScreen({
   setCurrentJobId,
   setJobModalStatus,
 }) {
-  const { themeController, jobsController, languageController } =
+  const { themeController, jobsController, languageController, user } =
     useComponentContext();
   const { tField } = useLocalization(languageController.current);
   const { height, isLandscape } = useWindowInfo();
@@ -125,6 +125,10 @@ export default function WaitingScreen({
         >
           {filteredJobsList.map((job, index) => {
             const hasImage = job.images && job.images.length > 0;
+            const myEntry = user.current?.id
+              ? job?.providers?.find((p) => (p?.id || p) === user.current.id)
+              : null;
+            const needsAgreement = myEntry && myEntry.job_agreement != null && myEntry.job_agreement !== 'agreed';
 
             return (
               <TouchableOpacity
@@ -269,6 +273,38 @@ export default function WaitingScreen({
                       </Text>
                     </View>
                   )}
+                  {needsAgreement && (
+                    <View
+                      style={[
+                        styles.specialMarkerContainer,
+                        {
+                          backgroundColor: themeController.current?.primaryColor,
+                          paddingVertical: sizes.personalMarkerVP,
+                          paddingHorizontal: sizes.personalMarkerHP,
+                          bottom: 0,
+                          top: undefined,
+                        },
+                        isRTL
+                          ? {
+                            left: 0,
+                            borderTopRightRadius: sizes.personalMarkerBottomAngleRadius,
+                          }
+                          : {
+                            right: 0,
+                            borderTopLeftRadius: sizes.personalMarkerBottomAngleRadius,
+                          },
+                      ]}
+                    >
+                      <Text
+                        style={{
+                          color: '#fff',
+                          fontSize: sizes.personalMarkerFontSize,
+                        }}
+                      >
+                        {t('extra_markers.updated', { defaultValue: 'Updated' })}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </TouchableOpacity>
             );
@@ -333,5 +369,6 @@ const styles = {
   specialMarkerContainer: {
     position: 'absolute',
     top: 0,
+    alignSelf: 'flex-start',
   },
 };

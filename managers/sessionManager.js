@@ -750,7 +750,7 @@ export default function sessionManager() {
             isUserExists: true,
           };
         }
-        logError('Ошибка регистрации в Supabase:', error.message);
+        logError('Ошибка регистрации в Supabase:', JSON.stringify(error));
         return { success: false, error: error.message };
       }
 

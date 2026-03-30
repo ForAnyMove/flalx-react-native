@@ -33,8 +33,10 @@ import {
   completeJob,
   payForJob,
   updateJobComment,
+  respondToJobAgreement,
 } from '../src/api/jobs';
 import { useWebView } from '../context/webViewContext';
+import { useWebSocket } from '../context/webSocketContext';
 import SubscriptionsModal from './SubscriptionsModal';
 import CommentsSection from './CommentsSection';
 import CompleteJobModal from './CompleteJobModal';
@@ -73,6 +75,88 @@ async function editJobById(jobId, updates, session) {
   }
 }
 
+/**
+ * Format field values for display in agreement modal.
+ * Converts IDs to names for type/subtype fields, formats dates, etc.
+ */
+function formatFieldValue(field, value, jobTypesController, t) {
+  if (value == null) return '—';
+
+  switch (field) {
+    case 'type':
+      return jobTypesController?.jobTypesWithSubtypes?.find(t => t.id === value)?.name || String(value);
+    case 'subType':
+      return jobTypesController?.jobTypesWithSubtypes?.flatMap(t => t.subtypes || []).find(st => st.id === value)?.name || String(value);
+    case 'start':
+    case 'startDateTime':
+    case 'end':
+    case 'endDateTime': {
+      const date = new Date(value);
+      if (isNaN(date)) return String(value);
+      return date.toLocaleString();
+    }
+    case 'location':
+      return typeof value === 'object' ? (value?.address || String(value)) : String(value);
+    case 'experience':
+      return typeof value === 'object' ? `${value.min || 0}-${value.max || 0}` : String(value);
+    default:
+      return String(value);
+  }
+}
+
+/**
+ * Given a job's changes_history array and the agreement_change_date of the
+ * provider, compute the before→after diff to display in the agreement modal.
+ *
+ * Algorithm:
+ * 1. Find anchor entry A whose date is within ±2 s of agreementChangeDate
+ * 2. BLOCK_WILL: merge changes from A onwards (last-write-wins per field)
+ * 3. BLOCK_WAS: for each field in BLOCK_WILL, walk backwards from A-1 to
+ *    find the last known previous value
+ * 4. Return array of { field, was, will } objects
+ */
+function computeAgreementDiff(changesHistory, agreementChangeDate) {
+  if (!Array.isArray(changesHistory) || !agreementChangeDate) return null;
+
+  const sorted = [...changesHistory].sort(
+    (a, b) => new Date(a.date) - new Date(b.date)
+  );
+
+  const anchorMs = new Date(agreementChangeDate).getTime();
+
+  const anchorIdx = sorted.findIndex(
+    (e) => Math.abs(new Date(e.date).getTime() - anchorMs) <= 2000
+  );
+  console.log(anchorIdx, agreementChangeDate);
+  if (anchorIdx === -1) return null;
+
+  // BLOCK_WILL: accumulate from anchor onwards (last entry wins per field)
+  const blockWill = {};
+  for (let i = anchorIdx + 1; i < sorted.length; i++) {
+    Object.assign(blockWill, sorted[i].changes || {});
+    console.log(blockWill);
+
+  }
+
+  // BLOCK_WAS: walk backwards before anchor to find last value per field
+  const blockWas = {};
+  for (const field of Object.keys(blockWill)) {
+    for (let i = anchorIdx; i >= 0; i--) {
+      const prev = sorted[i].changes || {};
+      if (Object.prototype.hasOwnProperty.call(prev, field)) {
+        blockWas[field] = prev[field];
+        break;
+      }
+    }
+  }
+
+  return Object.keys(blockWill).map((field) => ({
+    field,
+    was: Object.prototype.hasOwnProperty.call(blockWas, field) ? blockWas[field] : null,
+    will: blockWill[field],
+  }));
+}
+
 export default function ShowJobModal({
   closeModal,
   status: initialStatus,
@@ -81,17 +165,20 @@ export default function ShowJobModal({
   const {
     themeController,
     session,
+    user,
     jobsController,
     languageController,
     setAppLoading,
     subscription,
     couponsManagerController,
+    jobTypesController,
   } = useComponentContext();
   const { tField } = useLocalization(languageController.current);
   const { showError, showWarning } = useNotification();
   const { t } = useTranslation();
   const { width, height, isLandscape } = useWindowInfo();
   const { openWebView } = useWebView();
+  const { lastMessage } = useWebSocket();
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
@@ -457,6 +544,9 @@ export default function ShowJobModal({
 
   const [plansModalVisible, setPlansModalVisible] = useState(false);
 
+  const [agreementModalVisible, setAgreementModalVisible] = useState(false);
+  const [agreementChanges, setAgreementChanges] = useState(null);
+
   const [currentJobInfo, setCurrentJobInfo] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -480,6 +570,19 @@ export default function ShowJobModal({
         setCurrentJobInfo(job);
         if (job?.job_comment) {
           setEditableCommentValue(job?.job_comment?.comment);
+        }
+
+        // Auto-show agreement modal if provider hasn't agreed to current job version
+        if (status.startsWith('jobs') && user.current?.id) {
+          const myEntry = job?.providers?.find((p) => (p?.id || p) === user.current.id);
+          if (myEntry && myEntry.job_agreement != null && myEntry.job_agreement !== 'agreed') {
+            const diff = computeAgreementDiff(
+              job?.changes_history,
+              myEntry.agreement_change_date
+            );
+            setAgreementChanges(diff);
+            setAgreementModalVisible(true);
+          }
         }
 
         const isProvider = await jobsController.actions.checkIsProviderInJob(
@@ -589,6 +692,47 @@ export default function ShowJobModal({
     } else {
       handleAddingSelfToJobProviders({});
       setInterestedRequest(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!lastMessage) return;
+    if (lastMessage.type === 'JOB_UPDATED_REQUIRES_AGREEMENT' &&
+      lastMessage.payload?.jobId === currentJobId &&
+      status.startsWith('jobs')) {
+      const diff = computeAgreementDiff(
+        currentJobInfo?.changes_history,
+        lastMessage.payload?.changeDate
+      );
+      setAgreementChanges(diff);
+      setAgreementModalVisible(true);
+    }
+  }, [lastMessage]);
+
+  const handleAgreeToJobUpdate = async () => {
+    try {
+      setAppLoading(true);
+      await respondToJobAgreement(currentJobId, session, true);
+      setAgreementModalVisible(false);
+      jobsController.reloadExecutor();
+    } catch {
+      // silently ignore
+    } finally {
+      setAppLoading(false);
+    }
+  };
+
+  const handleDeclineJobUpdate = async () => {
+    try {
+      setAppLoading(true);
+      await respondToJobAgreement(currentJobId, session, false);
+      setAgreementModalVisible(false);
+      jobsController.reloadExecutor();
+      closeModal();
+    } catch {
+      // silently ignore
+    } finally {
+      setAppLoading(false);
     }
   };
 
@@ -2828,6 +2972,176 @@ export default function ShowJobModal({
           );
         }}
       />
+      <Modal visible={agreementModalVisible} transparent animationType='fade'>
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalCard,
+              {
+                backgroundColor: themeController.current?.backgroundColor,
+                width: sizes.modalWidth,
+                padding: sizes.modalPadding,
+                borderRadius: sizes.modalBtnBorderRadius,
+              },
+            ]}
+          >
+            <TouchableOpacity
+              style={[
+                {
+                  position: 'absolute',
+                  top: sizes.modalCloseBtnTopRightPosition,
+                  right: sizes.modalCloseBtnTopRightPosition,
+                },
+              ]}
+              onPress={() => {
+                setAgreementModalVisible(false);
+                closeModal();
+              }}
+            >
+              <Image
+                source={icons.cross}
+                style={{
+                  width: sizes.iconSize,
+                  height: sizes.iconSize,
+                  tintColor: themeController.current?.textColor,
+                }}
+              />
+            </TouchableOpacity>
+            <Text
+              style={[
+                styles.modalText,
+                {
+                  fontSize: sizes.modalFont,
+                  marginBottom: sizes.modalTextMarginBottom,
+                  textAlign: 'center',
+                  color: themeController.current?.textColor,
+                  lineHeight: sizes.modalLineHeight,
+                },
+              ]}
+            >
+              {t('showJob.agreement.title', {
+                defaultValue: 'The job has been updated. Do you agree to the new terms?',
+              })}
+            </Text>
+            {agreementChanges && Array.isArray(agreementChanges) && agreementChanges.length > 0 && (
+              <View style={{ marginBottom: sizes.modalTextMarginBottom, alignSelf: 'stretch', alignItems: 'center' }}>
+                {agreementChanges.map(({ field, was, will }, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      {
+                        flexDirection: isRTL ? 'row-reverse' : 'row',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 4,
+                        marginBottom: 6,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        fontSize: sizes.inputFont,
+                        fontFamily: 'Rubik-SemiBold',
+                        color: themeController.current?.textColor,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {t(`showJob.fields.${field}`, { defaultValue: field })}:
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: sizes.inputFont,
+                        color: themeController.current?.unactiveTextColor,
+                        textDecorationLine: 'line-through',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {formatFieldValue(field, was, jobTypesController, t)}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: sizes.inputFont,
+                        color: themeController.current?.unactiveTextColor,
+                        textAlign: 'center',
+                      }}
+                    >
+                      →
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: sizes.inputFont,
+                        fontFamily: 'Rubik-SemiBold',
+                        color: themeController.current?.primaryColor,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {formatFieldValue(field, will, jobTypesController, t)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            <View
+              style={[
+                styles.modalButtonsRow,
+                {
+                  flexDirection: isRTL ? 'row-reverse' : 'row',
+                  gap: sizes.modalBtnsGap,
+                },
+              ]}
+            >
+              <TouchableOpacity
+                style={[
+                  styles.modalBtn,
+                  {
+                    backgroundColor:
+                      themeController.current?.buttonTextColorSecondary,
+                    borderColor:
+                      themeController.current?.buttonColorPrimaryDefault,
+                    height: sizes.modalBtnHeight,
+                    width: sizes.modalBtnWidth,
+                    borderRadius: sizes.modalBtnBorderRadius,
+                    borderWidth: 1,
+                  },
+                ]}
+                onPress={handleDeclineJobUpdate}
+              >
+                <Text
+                  style={{
+                    color: themeController.current?.buttonColorPrimaryDefault,
+                    fontSize: sizes.modalBtnFont,
+                  }}
+                >
+                  {t('showJob.agreement.decline', { defaultValue: 'Decline' })}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.modalBtn,
+                  {
+                    backgroundColor:
+                      themeController.current?.buttonColorPrimaryDefault,
+                    height: sizes.modalBtnHeight,
+                    width: sizes.modalBtnWidth,
+                    borderRadius: sizes.modalBtnBorderRadius,
+                  },
+                ]}
+                onPress={handleAgreeToJobUpdate}
+              >
+                <Text
+                  style={{
+                    color: themeController.current?.buttonTextColorPrimary || 'white',
+                    fontSize: sizes.modalBtnFont,
+                  }}
+                >
+                  {t('showJob.agreement.agree', { defaultValue: 'Agree' })}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }

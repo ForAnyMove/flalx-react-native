@@ -397,6 +397,15 @@ export const WebSocketProvider = ({ children }) => {
         jobsController.reloadCreator();
         break;
       }
+      case 'JOB_UPDATED_REQUIRES_AGREEMENT': {
+        jobsController.reloadExecutor();
+        break;
+      }
+      case 'JOB_PROVIDER_AGREED':
+      case 'JOB_PROVIDER_DECLINED': {
+        jobsController.reloadCreator();
+        break;
+      }
       case 'COUPON_EARNED':
       case 'COUPON_USED':
         couponsManagerController.refreshBalance();

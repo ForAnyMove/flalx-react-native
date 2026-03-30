@@ -204,6 +204,36 @@ async function noticeJobRejection(jobId, session) {
     }
 }
 
+async function respondToJobAgreement(jobId, session, agreed) {
+    try {
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/api/jobs/${jobId}/providers/agreement`,
+            data: { agreed },
+            method: 'POST'
+        });
+        return response.data;
+    } catch (error) {
+        logError('Error responding to job agreement:', error);
+        throw error;
+    }
+}
+
+async function assignExecutor(jobId, session, executorId) {
+    try {
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/api/jobs/${jobId}/assign-executor`,
+            data: { executorId },
+            method: 'POST'
+        });
+        return response.data;
+    } catch (error) {
+        logError('Error assigning executor:', error);
+        throw error;
+    }
+}
+
 export {
     createJob,
     checkHasPendingJob,
@@ -215,5 +245,7 @@ export {
     completeJob,
     updateJobComment,
     payForJob,
-    noticeJobRejection
+    noticeJobRejection,
+    respondToJobAgreement,
+    assignExecutor
 };

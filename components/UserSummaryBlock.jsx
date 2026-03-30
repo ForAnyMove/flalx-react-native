@@ -28,6 +28,7 @@ const UserSummaryBlock = ({
   status = 'store-waiting',
   currentJobId,
   closeAllModal,
+  jobAgreement,
 }) => {
   const {
     themeController,
@@ -754,11 +755,11 @@ const UserSummaryBlock = ({
 
                 {status === 'store-waiting' && (
                   <View>
-                    {!usersReveal.contains(user.id) && (
+                    {(jobAgreement != null && jobAgreement !== 'agreed') ? (
                       <Text
                         style={[
                           {
-                            color: '#f33',
+                            color: themeController.current?.unactiveTextColor,
                             textAlign: 'center',
                             fontSize: sizes.small,
                             marginBottom: sizes.showContactInfoMarginBottom,
@@ -768,58 +769,81 @@ const UserSummaryBlock = ({
                           },
                         ]}
                       >
-                        {t('userSummary.openContactHint', {
+                        {t('userSummary.providerNotAgreed', {
                           defaultValue:
-                            'Open contact information to be able to approve provider',
+                            'Provider has not yet agreed to the updated job terms',
                         })}
                       </Text>
+                    ) : (
+                      <>
+                        {!usersReveal.contains(user.id) && (
+                          <Text
+                            style={[
+                              {
+                                color: '#f33',
+                                textAlign: 'center',
+                                fontSize: sizes.small,
+                                marginBottom: sizes.showContactInfoMarginBottom,
+                              },
+                              isWebLandscape && {
+                                textAlign: isRTL ? 'right' : 'left',
+                              },
+                            ]}
+                          >
+                            {t('userSummary.openContactHint', {
+                              defaultValue:
+                                'Open contact information to be able to approve provider',
+                            })}
+                          </Text>
+                        )}
+                        <TouchableOpacity
+                          style={[
+                            styles.primaryBtn,
+                            {
+                              backgroundColor: usersReveal.contains(user.id)
+                                ? themeController.current?.buttonColorPrimaryDefault
+                                : themeController.current
+                                  ?.buttonColorPrimaryDisabled,
+                              borderRadius: sizes.borderRadius,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: 0,
+                              height: sizes.createRequestBtnHeight,
+                            },
+                            isWebLandscape && {
+                              width: '30%',
+                              alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                              marginBottom: sizes.infoSectionMarginBottom,
+                            },
+                          ]}
+                          onPress={() => {
+                            if (usersReveal.contains(user.id)) {
+                              setAppLoading(true);
+                              jobsController.actions
+                                .approveProvider(currentJobId, userId)
+                                .then(() => {
+                                  setModalVisible(false);
+                                  setShowContactInfo(false);
+                                  closeAllModal();
+                                  setAppLoading(false);
+                                });
+                            }
+                          }}
+                        >
+                          <Text
+                            style={[
+                              {
+                                fontSize: sizes.professionSize,
+                                color:
+                                  themeController.current?.buttonTextColorPrimary,
+                              },
+                            ]}
+                          >
+                            {t('userSummary.approve', { defaultValue: 'Approve' })}
+                          </Text>
+                        </TouchableOpacity>
+                      </>
                     )}
-                    <TouchableOpacity
-                      style={[
-                        styles.primaryBtn,
-                        {
-                          backgroundColor: usersReveal.contains(user.id)
-                            ? themeController.current?.buttonColorPrimaryDefault
-                            : themeController.current
-                              ?.buttonColorPrimaryDisabled,
-                          borderRadius: sizes.borderRadius,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: 0,
-                          height: sizes.createRequestBtnHeight,
-                        },
-                        isWebLandscape && {
-                          width: '30%',
-                          alignSelf: isRTL ? 'flex-end' : 'flex-start',
-                          marginBottom: sizes.infoSectionMarginBottom,
-                        },
-                      ]}
-                      onPress={() => {
-                        if (usersReveal.contains(user.id)) {
-                          setAppLoading(true);
-                          jobsController.actions
-                            .approveProvider(currentJobId, userId)
-                            .then(() => {
-                              setModalVisible(false);
-                              setShowContactInfo(false);
-                              closeAllModal();
-                              setAppLoading(false);
-                            });
-                        }
-                      }}
-                    >
-                      <Text
-                        style={[
-                          {
-                            fontSize: sizes.professionSize,
-                            color:
-                              themeController.current?.buttonTextColorPrimary,
-                          },
-                        ]}
-                      >
-                        {t('userSummary.approve', { defaultValue: 'Approve' })}
-                      </Text>
-                    </TouchableOpacity>
                   </View>
                 )}
 
