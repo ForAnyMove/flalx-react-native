@@ -126,6 +126,7 @@ const UserSummaryBlock = ({
     about,
     email,
     phoneNumber,
+    is_deleted,
   } = user.id ? user : user._j;
 
   const handleUserRevealTry = async (payload = {}) => {
@@ -149,16 +150,35 @@ const UserSummaryBlock = ({
   const handlePayCouponsReveal = () => {
     setPurchaseModalVisible(false);
     setAppLoading(true);
-    usersReveal.tryReveal(user.id, { useCoupon: true })
+    usersReveal
+      .tryReveal(user.id, { useCoupon: true })
       .then(() => {
         couponsManagerController?.refreshBalance?.();
       })
       .catch((e) => {
-        if (e?.response?.status === 400 && e?.response?.data?.code === 'NO_COUPONS_AVAILABLE') {
-          showWarning(t('errors.no_coupons', { defaultValue: 'You have no coupons available' }));
+        if (
+          e?.response?.status === 400 &&
+          e?.response?.data?.code === 'NO_COUPONS_AVAILABLE'
+        ) {
+          showWarning(
+            t('errors.no_coupons', {
+              defaultValue: 'You have no coupons available',
+            }),
+          );
         }
       })
       .finally(() => setAppLoading(false));
+  };
+
+  const formatExperience = (exp) => {
+    if (!exp) return null;
+    const years = exp.years || 0;
+    const months = exp.months || 0;
+    if (!years && !months) return null;
+    const parts = [];
+    if (years) parts.push(`${years} year${years !== 1 ? 's' : ''}`);
+    if (months) parts.push(`${months} month${months !== 1 ? 's' : ''}`);
+    return parts.join(' ');
   };
 
   return (
@@ -187,7 +207,31 @@ const UserSummaryBlock = ({
             },
           ]}
         >
-          {avatar ? (
+          {is_deleted ? (
+            <View
+              style={[
+                styles.avatarPlaceholder,
+                {
+                  width: sizes.avatar,
+                  height: sizes.avatar,
+                  borderRadius: sizes.avatar / 2,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: themeController.current?.backgroundColor,
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  fontSize: sizes.smallFont,
+                  color: themeController.current?.unactiveTextColor,
+                  fontFamily: 'Rubik-SemiBold',
+                }}
+              >
+                {t('common.deleted')}
+              </Text>
+            </View>
+          ) : avatar ? (
             <Image
               source={{ uri: avatar }}
               style={[
@@ -228,18 +272,22 @@ const UserSummaryBlock = ({
                 fontFamily: 'Rubik-SemiBold',
               }}
             >
-              {usersReveal.contains(userId)
+              {is_deleted
+                ? t('profile.deleted_user')
+                : usersReveal.contains(userId)
                 ? `${name} ${surname}`
-                : `${name?.[0] || ''}. ${surname?.[0] || ''}.`}
+                : `${name?.[0] ?  name?.[0]+'.' : ''} ${surname?.[0] ? surname?.[0]+'.' : ''}`}
             </Text>
-            <Text
-              style={{
-                fontSize: sizes.smallFont,
-                color: themeController.current?.unactiveTextColor,
-              }}
-            >
-              {LICENSES[professions?.[0]]}
-            </Text>
+            {!is_deleted && (
+              <Text
+                style={{
+                  fontSize: sizes.smallFont,
+                  color: themeController.current?.unactiveTextColor,
+                }}
+              >
+                {LICENSES[professions?.[0]]}
+              </Text>
+            )}
           </View>
         </View>
         <TouchableOpacity
@@ -275,7 +323,7 @@ const UserSummaryBlock = ({
         >
           <View style={[styles.backdrop]}>
             {/* Контентная панель; клики внутри не закрывают */}
-            <TouchableWithoutFeedback onPress={() => { }}>
+            <TouchableWithoutFeedback onPress={() => {}}>
               <View
                 style={[
                   styles.panel,
@@ -338,26 +386,55 @@ const UserSummaryBlock = ({
                 </View>
 
                 <ScrollView contentContainerStyle={{}}>
-                  <Image
-                    source={
-                      avatar
-                        ? { uri: avatar }
-                        : themeController.current.isTheme
-                          ? icons.defaultAvatar
-                          : icons.monotoneAvatar
-                    }
-                    style={[
-                      styles.modalAvatar,
-                      {
-                        width: sizes.modalAvatar,
-                        height: sizes.modalAvatar,
-                        borderRadius: sizes.modalAvatar / 2,
-                        alignSelf: 'center',
-                        marginTop: sizes.avatarMarginTop,
-                        marginBottom: sizes.avatarMarginBottom,
-                      },
-                    ]}
-                  />
+                  {is_deleted ? (
+                    <View
+                      style={[
+                        styles.modalAvatarPlaceholder,
+                        {
+                          width: sizes.modalAvatar,
+                          height: sizes.modalAvatar,
+                          borderRadius: sizes.modalAvatar / 2,
+                          alignSelf: 'center',
+                          marginTop: sizes.avatarMarginTop,
+                          marginBottom: sizes.avatarMarginBottom,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          backgroundColor: themeController.current?.formInputBackground,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={{
+                          fontSize: sizes.professionSize,
+                          color: themeController.current?.unactiveTextColor,
+                          fontFamily: 'Rubik-SemiBold',
+                        }}
+                      >
+                        {t('common.deleted')}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Image
+                      source={
+                        avatar
+                          ? { uri: avatar }
+                          : themeController.current.isTheme
+                            ? icons.defaultAvatar
+                            : icons.monotoneAvatar
+                      }
+                      style={[
+                        styles.modalAvatar,
+                        {
+                          width: sizes.modalAvatar,
+                          height: sizes.modalAvatar,
+                          borderRadius: sizes.modalAvatar / 2,
+                          alignSelf: 'center',
+                          marginTop: sizes.avatarMarginTop,
+                          marginBottom: sizes.avatarMarginBottom,
+                        },
+                      ]}
+                    />
+                  )}
                   <Text
                     style={[
                       styles.modalName,
@@ -366,15 +443,19 @@ const UserSummaryBlock = ({
                         fontFamily: 'Rubik-Bold',
                         textAlign: 'center',
                         color: themeController.current?.textColor,
-                        marginBottom: professions?.[0]
+                        marginBottom: professions?.[0] && !is_deleted
                           ? sizes.titleMarginBottom
                           : sizes.professionMarginBottom,
                       },
                     ]}
                   >
-                    {name} {surname}
+                    {is_deleted
+                      ? t('profile.user_deleted')
+                      : usersReveal.contains(userId)
+                      ? `${name} ${surname}`
+                      : `${name?.[0] ?  name?.[0]+'.' : ''} ${surname?.[0] ? surname?.[0]+'.' : ''}`}
                   </Text>
-                  {professions?.[0] && (
+                  {professions?.[0] && !is_deleted && (
                     <Text
                       style={{
                         fontSize: sizes.professionSize,
@@ -403,12 +484,12 @@ const UserSummaryBlock = ({
                       isWebLandscape && { width: '66%' },
                     ]}
                   >
-                    {/* Job Types */}
-                    {professions && professions?.length > 0 && (
+                    {/* Specialist of */}
+                    {professions && professions?.length > 0 && !is_deleted && (
                       <View
                         style={[
                           isWebLandscape && {
-                            width: '48%',
+                            width: '100%',
                             marginBottom: sizes.infoSectionMarginBottom,
                           },
                         ]}
@@ -423,109 +504,46 @@ const UserSummaryBlock = ({
                             },
                           ]}
                         >
-                          {t('profile.job_types')}
+                          {t('profile.specialist_of', { defaultValue: 'Specialist of' })}
                         </Text>
                         <View
                           style={[
                             styles.wrapRow,
-                            ,
                             { gap: sizes.badgeGap },
                             isRTL && { justifyContent: 'flex-end' },
                           ]}
                         >
-                          {professions?.map((p, i) => (
-                            <View
-                              key={i}
-                              style={[
-                                styles.typeBadge,
-                                {
-                                  borderRadius: sizes.borderRadius / 2,
-                                  borderColor:
-                                    themeController.current
-                                      ?.formInputLabelColor,
-                                  paddingHorizontal:
-                                    sizes.badgePaddingHorizontal,
-                                  height: sizes.badgeHeight,
-                                },
-                              ]}
-                            >
-                              <Text
+                          {professions?.map((p, i) => {
+                            const typeLabel = tField(p.job_type, 'name');
+                            const subtypeLabel = tField(p.job_subtype, 'name');
+                            const expLabel = formatExperience(p.experience);
+                            const chipLabel = expLabel
+                              ? `${typeLabel} · ${subtypeLabel} · ${expLabel}`
+                              : `${typeLabel} · ${subtypeLabel}`;
+                            return (
+                              <View
+                                key={i}
                                 style={[
-                                  styles.typeText,
+                                  styles.typeBadge,
                                   {
-                                    fontSize: sizes.small,
-                                    color:
-                                      themeController.current
-                                        ?.formInputLabelColor,
+                                    borderRadius: sizes.borderRadius / 2,
+                                    borderColor: themeController.current?.formInputLabelColor,
+                                    paddingHorizontal: sizes.badgePaddingHorizontal,
+                                    height: sizes.badgeHeight,
                                   },
                                 ]}
                               >
-                                {tField(p.job_type, 'name')}
-                              </Text>
-                            </View>
-                          ))}
-                        </View>
-                      </View>
-                    )}
-                    {/* Professions */}
-                    {professions && professions?.length > 0 && (
-                      <View
-                        style={[
-                          isWebLandscape && {
-                            width: '48%',
-                            marginBottom: sizes.infoSectionMarginBottom,
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.sectionTitle,
-                            {
-                              fontSize: sizes.sectionTitleSize,
-                              color: themeController.current?.textColor,
-                              marginBottom: sizes.infoSectionMarginBottom / 2,
-                            },
-                          ]}
-                        >
-                          {t('profile.job_subtypes')}
-                        </Text>
-                        <View
-                          style={[
-                            styles.centerRow,
-                            { gap: sizes.badgeGap },
-                            isRTL && { justifyContent: 'flex-end' },
-                          ]}
-                        >
-                          {professions?.map((p, i) => (
-                            <View
-                              key={i}
-                              style={[
-                                styles.professionBadge,
-                                {
-                                  borderRadius: sizes.borderRadius / 2,
-                                  borderColor:
-                                    themeController.current
-                                      ?.formInputLabelColor,
-                                  paddingHorizontal:
-                                    sizes.badgePaddingHorizontal,
-                                  height: sizes.badgeHeight,
-                                },
-                              ]}
-                            >
-                              <Text
-                                style={[
-                                  {
+                                <Text
+                                  style={{
                                     fontSize: sizes.small,
-                                    color:
-                                      themeController.current
-                                        ?.formInputLabelColor,
-                                  },
-                                ]}
-                              >
-                                {tField(p.job_subtype, 'name')}
-                              </Text>
-                            </View>
-                          ))}
+                                    color: themeController.current?.formInputLabelColor,
+                                  }}
+                                >
+                                  {chipLabel}
+                                </Text>
+                              </View>
+                            );
+                          })}
                         </View>
                       </View>
                     )}
@@ -781,7 +799,7 @@ const UserSummaryBlock = ({
                           backgroundColor: usersReveal.contains(user.id)
                             ? themeController.current?.buttonColorPrimaryDefault
                             : themeController.current
-                              ?.buttonColorPrimaryDisabled,
+                                ?.buttonColorPrimaryDisabled,
                           borderRadius: sizes.borderRadius,
                           alignItems: 'center',
                           justifyContent: 'center',
