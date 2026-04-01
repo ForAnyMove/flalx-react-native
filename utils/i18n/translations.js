@@ -401,6 +401,7 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         quickly: 'Quickly',
         rate_me: 'Rate me',
         for_you: 'For you',
+        updated: 'Updated',
       },
       profile: {
         professions: 'License levels I work at',
@@ -566,6 +567,11 @@ Electrician and ____ since ____. Being independent is not easy. I myself have go
         completeModal: {
           title: 'Closure of request',
           sub_title: 'To close the request, upload the work you have done.',
+        },
+        agreement: {
+          title: 'The job has been updated. Do you agree to the new terms?',
+          agree: 'Agree',
+          decline: 'Decline',
         },
       },
       reset: {
@@ -1056,6 +1062,7 @@ After they register, you'll receive coupons.`,
         quickly: 'במהירות',
         rate_me: 'דרג אותי',
         for_you: 'בשבילך',
+        updated: 'עודכן',
       },
       profile: {
         professions: 'רמות רישוי שאני עובד בהן',
@@ -1221,6 +1228,11 @@ After they register, you'll receive coupons.`,
         completeModal: {
           title: 'סגירת הבקשה',
           sub_title: 'כדי לסגור את הבקשה, העלה את העבודה שביצעת.',
+        },
+        agreement: {
+          title: 'העבודה עודכנה. האם אתה מסכים לתנאים החדשים?',
+          agree: 'מסכים',
+          decline: 'דוחה',
         },
       },
       reset: {
