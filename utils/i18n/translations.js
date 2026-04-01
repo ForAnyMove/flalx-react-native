@@ -247,6 +247,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         remove_payment_text: 'This payment method will be removed from your saved payment methods.',
         payment_removed_success_title: 'Removed successfully',
         payment_removed_success_text: 'The payment method has been removed.',
+        email_change_info: 'We will send a confirmation email to this address',
       },
       payment_modal: {
         select_title: 'Select a method for receiving information about this contact',
@@ -898,6 +899,7 @@ After they register, you'll receive coupons.`,
         remove_payment_text: 'אמצעי תשלום זה יוסר מאמצעי התשלום השמורים שלך.',
         payment_removed_success_title: 'הוסר בהצלחה',
         payment_removed_success_text: 'אמצעי התשלום הוסר.',
+        email_change_info: 'נשלחה הודעת אישור לאימייל שלך. אנא בדוק את תיבת הדואר הנכנס שלך להשלמת העדכון.',
       },
       payment_modal: {
         select_title: 'בחר שיטה לקבלת מידע על איש קשר זה',

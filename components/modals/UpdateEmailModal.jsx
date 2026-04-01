@@ -24,7 +24,7 @@ const UpdateEmailModal = ({
   isLoading,
 }) => {
   const { t } = useTranslation();
-  const { themeController, languageController, session } = useComponentContext();
+  const { themeController, languageController, user } = useComponentContext();
   const theme = themeController.current;
   const { height, isLandscape } = useWindowInfo();
   const isRTL = languageController.isRTL;
@@ -57,7 +57,7 @@ const UpdateEmailModal = ({
 
     setError(null);
     setInternalLoading(true);
-    const result = await session.user.updateEmail(email);
+    const result = await user.updateEmail(email);
     setInternalLoading(false);
 
     if (result.success) {
@@ -83,13 +83,16 @@ const UpdateEmailModal = ({
       titleBottomMargin: scale(24),
       crossIconSize: scale(24),
       crossIconPosition: scale(12),
-      inputHeight: scale(52),
+      inputHeight: scale(76),
       inputMarginBottom: scale(16),
       inputPaddingHorizontal: scale(16),
-      labelSize: scale(12),
-      inputSize: scale(16),
-      saveButtonHeight: scale(52),
+      inputPaddingTop: scale(15),
+      labelSize: scale(16),
+      inputSize: scale(18),
+      saveButtonHeight: scale(62),
+      continueButtonTextSize: scale(20),
       errorTextSize: scale(14),
+      errorTextMarginBottom: scale(12),
       successIconSize: scale(64),
       successTextSize: scale(16),
       successTextMarginTop: scale(16),
@@ -152,7 +155,7 @@ const UpdateEmailModal = ({
     input: {
       fontSize: sizes.inputSize,
       color: theme.formInputTextColor,
-      paddingTop: 15,
+      paddingTop: sizes.inputPaddingTop,
       textAlign: isRTL ? 'right' : 'left',
     },
     saveButton: {
@@ -165,8 +168,7 @@ const UpdateEmailModal = ({
     },
     saveButtonText: {
       color: theme.buttonTextColorPrimary,
-      fontSize: 18,
-      fontWeight: 'bold',
+      fontSize: sizes.continueButtonTextSize,
     },
     loadingOverlay: {
       position: 'absolute',
@@ -181,9 +183,9 @@ const UpdateEmailModal = ({
       zIndex: 10,
     },
     errorText: {
-      color: theme.error,
+      color: theme.errorTextColor,
       fontSize: sizes.errorTextSize,
-      marginBottom: 10,
+      marginBottom: sizes.errorTextMarginBottom,
       alignSelf: 'flex-start',
     },
     successContainer: {
@@ -218,8 +220,11 @@ const UpdateEmailModal = ({
         />
       </View>
       {error && <Text style={styles.errorText}>{error}</Text>}
+      <Text style={{ ...styles.errorText, color: theme.unactiveTextColor, alignSelf: 'center' }}>
+        {t('my_profile.email_change_info')}
+      </Text>
       <TouchableOpacity style={styles.saveButton} onPress={handleSendLink}>
-        <Text style={styles.saveButtonText}>{t('common.save')}</Text>
+        <Text style={styles.saveButtonText}>{t('common.continue')}</Text>
       </TouchableOpacity>
     </>
   );

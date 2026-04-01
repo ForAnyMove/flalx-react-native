@@ -56,6 +56,7 @@ export const LIGHT_THEME = {
   inactiveStarColor: '#9FAACD',
   headerPickerDropdownBorder: '#0A62EA',
   warningTextColor: '#FF8D28',
+  whatsappBtnColor: '#25D366',
 };
 
 export const DARK_THEME = {
@@ -116,4 +117,5 @@ export const DARK_THEME = {
   inactiveStarColor: '#9FAACD',
   headerPickerDropdownBorder: '#0A62EA',
   warningTextColor: '#FF8D28',
+  whatsappBtnColor: '#25D366',
 };

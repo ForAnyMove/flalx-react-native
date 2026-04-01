@@ -41,7 +41,7 @@ export default function Profile() {
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
-    () => () => {}
+    () => () => {},
   );
   const [changePasswordModal, showPasswordModal] = useState(false);
 
@@ -68,6 +68,9 @@ export default function Profile() {
   const [updateEmailModalVisible, setUpdateEmailModalVisible] = useState(false);
   const [updatePhoneModalVisible, setUpdatePhoneModalVisible] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  const [baseInfoEditMode, setBaseInfoEditMode] = useState(false);
+  const [editingFields, setEditingFields] = useState({});
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
@@ -115,7 +118,7 @@ export default function Profile() {
       modalIconSize: isWebLandscape ? web(22) : mobile(22),
       modalFieldMargin: isWebLandscape ? web(18) : mobile(18),
       profileBackHeight: isWebLandscape ? web(250) : mobile(250),
-      profileBackMarginBottom: isWebLandscape ? web(15) : mobile(15),
+      profileBackMarginBottom: isWebLandscape ? web(10) : mobile(15),
       profileBackBorderRadius: isWebLandscape ? web(10) : mobile(10),
       infoFieldsGap: isWebLandscape ? web(6) : mobile(6),
       breakLineMarginVertical: isWebLandscape ? web(15) : mobile(15),
@@ -149,7 +152,7 @@ export default function Profile() {
     // We can potentially update the user state here if needed,
     // but Supabase handles the email change after verification.
     // For now, we just close the modal, and the user will see the pending change.
-    setUpdateEmailModalVisible(false);
+    // setUpdateEmailModalVisible(false);
     console.log(`Email change process initiated for ${newEmail}.`);
   };
 
@@ -180,14 +183,17 @@ export default function Profile() {
       const { base64, fileType } = await convertImageToBase64(uri);
 
       // 2. Отправить на сервер
-      const { pending_avatar } = await uploadAvatarForModeration(base64, fileType, session);
+      const { pending_avatar } = await uploadAvatarForModeration(
+        base64,
+        fileType,
+        session,
+      );
 
       // 3. Обновить локальный стейт
       user.setPendingAvatar(pending_avatar);
-      setUserState(prev => ({ ...prev, pending_avatar }));
+      setUserState((prev) => ({ ...prev, pending_avatar }));
 
       showInfo(t('my_profile.avatar_uploaded_for_moderation'));
-
     } catch (err) {
       logError('Ошибка загрузки аватара:', err.message);
       showError(err.message || t('errors.unexpected_error'));
@@ -221,7 +227,7 @@ export default function Profile() {
   //   ? ['contact', 'feedback', 'whatsapp']
   //   : ['contact', 'feedback', 'whatsapp'];
   const firstBtnsRow = ['coupons', 'subscription', 'payment'];
-  const secondBtnsRow = ['contact', 'feedback', 'delete'];
+  const secondBtnsRow = ['contact', 'feedback', 'whatsapp'];
 
   const openWhatsApp = async () => {
     const number = await session.getWhatsAppNumber();
@@ -326,7 +332,12 @@ export default function Profile() {
                 width: sizes.btnWidth,
                 borderRadius: sizes.infoFieldBorderRadius,
               },
-              key === 'whatsapp' && { backgroundColor: '#25D366' },
+              key === 'whatsapp' && {
+                backgroundColor: themeController.current?.whatsappBtnColor,
+              },
+              key === 'delete' && {
+                backgroundColor: themeController.current?.errorTextColor,
+              },
             ]}
             onPress={btnConfig.action}
           >
@@ -419,11 +430,14 @@ export default function Profile() {
 
             {/* Текст о модерации аватарки */}
             {userState.pending_avatar && (
-              <View style={{ marginTop: sizes.infoFieldsGap, alignItems: 'center' }}>
+              <View
+                style={{ marginTop: sizes.infoFieldsGap, alignItems: 'center' }}
+              >
                 <Text
                   style={{
                     fontSize: sizes.labelFont,
-                    color: themeController.current?.textColorSecondary || '#666',
+                    color:
+                      themeController.current?.textColorSecondary || '#666',
                     fontFamily: 'Rubik-Medium',
                   }}
                 >
@@ -432,7 +446,8 @@ export default function Profile() {
                 <Text
                   style={{
                     fontSize: sizes.labelFont * 0.85,
-                    color: themeController.current?.textColorSecondary || '#999',
+                    color:
+                      themeController.current?.textColorSecondary || '#999',
                     fontFamily: 'Rubik-Regular',
                   }}
                 >
@@ -443,6 +458,29 @@ export default function Profile() {
           </View>
         </ImageBackground>
 
+        <View
+          style={{
+            width: '100%',
+            alignItems: isRTL ? 'flex-start' : 'flex-end',
+            marginBottom: sizes.labelMarginBottom * 2,
+          }}
+        >
+          <TouchableOpacity
+            // onPress={() => setUpdateUserDataModalVisible(true)}
+            onPress={() => setBaseInfoEditMode(true)}
+            style={{ visibility: baseInfoEditMode ? 'hidden' : 'visible' }}
+          >
+            <Image
+              source={icons.edit}
+              style={{
+                width: sizes.iconSize,
+                height: sizes.iconSize,
+                resizeMode: 'contain',
+                tintColor: themeController.current?.unactiveTextColor,
+              }}
+            />
+          </TouchableOpacity>
+        </View>
         {/* Инфо-поля */}
         <View
           style={{
@@ -464,7 +502,7 @@ export default function Profile() {
               justifyContent: isWebLandscape ? 'space-between' : 'center',
               gap: sizes.infoFieldsGap,
               direction: isRTL ? 'rtl' : 'ltr',
-              width: isWebLandscape ? '32%' : '100%',
+              width: isWebLandscape ? '48.5%' : '100%',
             }}
           >
             {[
@@ -486,6 +524,9 @@ export default function Profile() {
                 height={height}
                 sizes={sizes}
                 isRTL={isRTL}
+                field={f.field}
+                editMode={baseInfoEditMode}
+                setEditingFields={setEditingFields}
               />
             ))}
           </View>
@@ -504,51 +545,133 @@ export default function Profile() {
             height={height}
             sizes={sizes}
             isRTL={isRTL}
+            field='about'
+            editMode={baseInfoEditMode}
+            setEditingFields={setEditingFields}
           />
+        </View>
+        {baseInfoEditMode && (
           <View
             style={{
-              // flexDirection: isWebLandscape ? 'row' : 'column',
-              flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
-              justifyContent: isWebLandscape ? 'space-between' : 'center',
-              gap: sizes.infoFieldsGap,
-              direction: isRTL ? 'rtl' : 'ltr',
-              width: isWebLandscape ? '32%' : '100%',
+              width: '100%',
+              alignItems: isRTL ? 'flex-start' : 'flex-end',
             }}
           >
-            {[
-              { key: 'email', value: userState?.email, field: 'email' },
-              {
-                key: 'phone',
-                value: userState?.phoneNumber,
-                field: 'phoneNumber',
-              },
-            ].map((f) => (
-              <InfoField
-                key={f.key}
-                label={t(`my_profile.${f.key}`)}
-                value={f.value}
-                onEditPress={() => {
-                  if (f.key === 'email') {
-                    setUpdateEmailModalVisible(true);
-                  } else if (f.key === 'phone') {
-                    setUpdatePhoneModalVisible(true);
-                  }
+            <View
+              style={{
+                width: '48.5%',
+                flexDirection: 'row',
+                justifyContent: 'flex-end',
+                gap: '5%',
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => {
+                  handleUpdateUserData({});
+                  setBaseInfoEditMode(false);
                 }}
-                baseFont={sizes.fieldFont}
-                fieldPadding={sizes.fieldPadding}
-                btnHeight={sizes.btnHeight}
-                fieldMargin={sizes.fieldMargin}
-                iconSize={sizes.iconSize}
-                isLandscape={isLandscape}
-                multiline={f.multiline}
-                height={height}
-                sizes={sizes}
-                isRTL={isRTL}
-              />
-            ))}
+                style={[
+                  styles.secondaryReverseBtn,
+                  {
+                    flex: 1,
+                    backgroundColor: themeController.current?.backgroundColor,
+                    borderColor:
+                      themeController.current?.buttonColorSecondaryDefault,
+                    height: sizes.btnHeight,
+                    borderRadius: sizes.infoFieldBorderRadius,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    color: themeController.current?.buttonColorSecondaryDefault,
+                    fontSize: sizes.btnFont,
+                  }}
+                >
+                  {t('common.cancel')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  handleUpdateUserData(editingFields);
+                  setBaseInfoEditMode(false);
+                }}
+                style={[
+                  styles.primaryBtn,
+                  {
+                    flex: 1,
+                    backgroundColor:
+                      themeController.current?.buttonColorPrimaryDefault,
+                    height: sizes.btnHeight,
+                    borderRadius: sizes.infoFieldBorderRadius,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    color: themeController.current?.buttonTextColorPrimary,
+                    fontSize: sizes.btnFont,
+                  }}
+                >
+                  {t('common.save')}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        )}
 
+        <View
+          style={[
+            styles.breakLine,
+            {
+              backgroundColor: themeController.current?.breakLineColor,
+              marginVertical: sizes.breakLineMarginVertical,
+            },
+          ]}
+        />
+        <View
+          style={{
+            flexDirection: isWebLandscape ? 'row' : 'column',
+            flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
+            justifyContent: isWebLandscape ? 'space-between' : 'center',
+            gap: sizes.infoFieldsGap,
+            direction: isRTL ? 'rtl' : 'ltr',
+            width: '100%',
+          }}
+        >
+          {[
+            { key: 'email', value: userState?.email, field: 'email' },
+            {
+              key: 'phone',
+              value: userState?.phoneNumber,
+              field: 'phoneNumber',
+            },
+          ].map((f) => (
+            <InfoField
+              key={f.key}
+              label={t(`my_profile.${f.key}`)}
+              value={f.value}
+              onEditPress={() => {
+                if (f.key === 'email') {
+                  setUpdateEmailModalVisible(true);
+                } else if (f.key === 'phone') {
+                  setUpdatePhoneModalVisible(true);
+                }
+              }}
+              baseFont={sizes.fieldFont}
+              fieldPadding={sizes.fieldPadding}
+              btnHeight={sizes.btnHeight}
+              fieldMargin={sizes.fieldMargin}
+              iconSize={sizes.iconSize}
+              isLandscape={isLandscape}
+              multiline={f.multiline}
+              height={height}
+              sizes={sizes}
+              isRTL={isRTL}
+              field={f.field}
+            />
+          ))}
+        </View>
         <View
           style={[
             styles.breakLine,
@@ -696,13 +819,24 @@ export default function Profile() {
             justifyContent: isWebLandscape ? 'space-between' : 'center',
             gap: sizes.infoFieldsGap,
             direction: isRTL ? 'rtl' : 'ltr',
-            marginBottom: isWebLandscape
-              ? sizes.buttonsMarginBottom
-              : sizes.infoFieldsGap,
+            // marginBottom: isWebLandscape
+            //   ? sizes.buttonsMarginBottom
+            //   : sizes.infoFieldsGap,
           }}
         >
           {renderButtons(secondBtnsRow)}
         </View>
+
+        <View
+          style={[
+            styles.breakLine,
+            {
+              backgroundColor: themeController.current?.breakLineColor,
+              marginVertical: sizes.breakLineMarginVertical,
+            },
+          ]}
+        />
+
         <View
           style={{
             flexDirection: isWebLandscape ? 'row' : 'column',
@@ -712,7 +846,7 @@ export default function Profile() {
             direction: isRTL ? 'rtl' : 'ltr',
           }}
         >
-          {renderButtons(['whatsapp'])}
+          {renderButtons(['delete'])}
         </View>
       </View>
 
@@ -1104,7 +1238,7 @@ export default function Profile() {
                   if (user.current?.is_password_exist) {
                     const res = await session.changePassword(
                       oldPassword,
-                      newPassword
+                      newPassword,
                     );
                     if (!res.success) {
                       alert(t(`errors.${res.error}`));
@@ -1234,20 +1368,22 @@ function InfoField({
   height,
   sizes,
   isRTL,
+  field,
+  editMode = false,
+  setEditingFields,
 }) {
   const { themeController } = useComponentContext();
-  const [editMode, setEditMode] = useState(false);
   const [currentValue, setCurrentValue] = useState(value);
 
-  const handleSave = () => {
-    changeInfo(currentValue);
-    setEditMode(false);
-  };
+  // const handleSave = () => {
+  //   changeInfo(currentValue);
+  //   setEditMode(false);
+  // };
 
-  const handleCancel = () => {
-    setCurrentValue(value);
-    setEditMode(false);
-  };
+  // const handleCancel = () => {
+  //   setCurrentValue(value);
+  //   setEditMode(false);
+  // };
 
   return (
     <View
@@ -1256,8 +1392,8 @@ function InfoField({
         {
           width:
             Platform.OS === 'web' && isLandscape
-              ? multiline
-                ? '32%'
+              ? multiline || field === 'email' || field === 'phoneNumber'
+                ? '48.5%'
                 : '100%'
               : '100%',
           height: btnHeight,
@@ -1269,11 +1405,11 @@ function InfoField({
           paddingHorizontal: sizes.infoFieldPaddingH,
         },
         multiline && { alignItems: 'flex-start' },
-        multiline &&
-          Platform.OS === 'web' &&
-          isLandscape && {
-            [isRTL ? 'marginLeft' : 'marginRight']: sizes.infoFieldsGap*4,
-          },
+        // multiline &&
+        //   Platform.OS === 'web' &&
+        //   isLandscape && {
+        //     [isRTL ? 'marginLeft' : 'marginRight']: sizes.infoFieldsGap * 4,
+        //   },
         multiline && isRTL && { flexDirection: 'row-reverse' },
       ]}
     >
@@ -1314,7 +1450,10 @@ function InfoField({
               multiline && { flex: 1 },
             ]}
             value={currentValue}
-            onChangeText={setCurrentValue}
+            onChangeText={(text) => {
+              setEditingFields((prev) => ({ ...prev, [field]: text }));
+              setCurrentValue(text);
+            }}
             multiline={multiline}
             autoFocus={true}
           />
@@ -1337,48 +1476,49 @@ function InfoField({
         )}
       </View>
 
-      {editMode ? (
-        <View
-          style={[
-            styles.editPanel,
-            { gap: sizes.editPanelGap },
-            multiline && { marginTop: sizes.fieldPaddingVertical },
-          ]}
-        >
-          <TouchableOpacity
-            onPress={() => {
-              setEditMode(false);
-              setTextValue(value);
-            }}
-          >
-            <Image
-              source={icons.cancel}
-              style={{
-                width: iconSize,
-                height: iconSize,
-                resizeMode: 'contain',
-                tintColor: themeController.current?.unactiveTextColor,
-              }}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={async () => {
-              setEditMode(false);
-              await changeInfo(textValue);
-            }}
-          >
-            <Image
-              source={icons.checkCircle}
-              style={{
-                width: iconSize,
-                height: iconSize,
-                resizeMode: 'contain',
-                tintColor: themeController.current?.unactiveTextColor,
-              }}
-            />
-          </TouchableOpacity>
-        </View>
-      ) : (
+      {!editMode && (field === 'email' || field === 'phoneNumber') && (
+        // ? (
+        //   <View
+        //     style={[
+        //       styles.editPanel,
+        //       { gap: sizes.editPanelGap },
+        //       multiline && { marginTop: sizes.fieldPaddingVertical },
+        //     ]}
+        //   >
+        //     <TouchableOpacity
+        //       onPress={() => {
+        //         setEditMode(false);
+        //         setTextValue(value);
+        //       }}
+        //     >
+        //       <Image
+        //         source={icons.cancel}
+        //         style={{
+        //           width: iconSize,
+        //           height: iconSize,
+        //           resizeMode: 'contain',
+        //           tintColor: themeController.current?.unactiveTextColor,
+        //         }}
+        //       />
+        //     </TouchableOpacity>
+        //     <TouchableOpacity
+        //       onPress={async () => {
+        //         setEditMode(false);
+        //         await changeInfo(textValue);
+        //       }}
+        //     >
+        //       <Image
+        //         source={icons.checkCircle}
+        //         style={{
+        //           width: iconSize,
+        //           height: iconSize,
+        //           resizeMode: 'contain',
+        //           tintColor: themeController.current?.unactiveTextColor,
+        //         }}
+        //       />
+        //     </TouchableOpacity>
+        //   </View>
+        // ) :
         <TouchableOpacity
           onPress={onEditPress}
           style={[multiline && { marginTop: sizes.fieldPaddingVertical }]}
