@@ -54,6 +54,7 @@ const PurchaseModal = ({
   mode = 'purchase', // 'purchase' | 'subscription'
   startStep = 'select', // 'select' | 'method'
   skipBackOnMethod = false,
+  footerText,
 }) => {
   const {
     themeController,
@@ -559,6 +560,12 @@ const PurchaseModal = ({
               </Text>
             </TouchableOpacity>
           </>
+        )}
+
+        {footerText && (
+          <Text style={[styles.statusText, { marginTop: sizes.gap || 16, fontSize: sizes.disclosureSize || 14 }]}>
+            {footerText}
+          </Text>
         )}
       </View>
     );

@@ -48,6 +48,7 @@ import { formatCurrency } from '../utils/currency_formatter';
 import { PublishJobModal } from './PublishJobModal';
 import PurchaseModal from './PurchaseModal';
 import ChosenUserModal from './ChosenUserModal';
+import InterestRequestModal from './InterestRequestModal';
 import { logError } from '../utils/log_util';
 import CustomTextInput from './ui/CustomTextInput';
 
@@ -590,9 +591,13 @@ export default function ShowJobModal({
 
   const [showCancelRequestModal, setCancelRequestModal] = useState(false);
   const [showConfirmInterestModal, setConfirmInterestModal] = useState(false);
+  const [showInterestRequestModal, setShowInterestRequestModal] = useState(false);
   const [completeJobModalVisible, setCompleteJobModalVisible] = useState(false);
 
   const [publishModalVisible, setPublishModalVisible] = useState(false);
+  const [interestFormData, setInterestFormData] = useState({ price: '', startDate: null, endDate: null });
+  const [interestStep, setInterestStep] = useState(1);
+  const [plansModalReturnTarget, setPlansModalReturnTarget] = useState(null); // 'interest' | 'purchase' | 'publish'
 
   const [showHistoryModal, setHistoryModal] = useState(false);
 
@@ -714,7 +719,15 @@ export default function ShowJobModal({
 
   // PurchaseModal: onPurchase handler for the interest/provider paywall
   const handlePurchaseInterest = async (payload) => {
-    const result = await addSelfToJobProviders(currentJobId, session, payload);
+    const finalPayload = {
+      ...payload,
+      ...(interestFormData && {
+        provider_price: interestFormData.price,
+        provider_start_date: interestFormData.startDate,
+        provider_end_date: interestFormData.endDate,
+      }),
+    };
+    const result = await addSelfToJobProviders(currentJobId, session, finalPayload);
     if (result.payment?.paymentMetadata?.approval?.href) {
       openWebView(result.payment.paymentMetadata.approval.href);
     } else if (result.success) {
@@ -725,9 +738,18 @@ export default function ShowJobModal({
 
   // PurchaseModal: onPayWithCoupons handler for the interest/provider paywall
   const handlePayCouponsInterest = () => {
+    const payload = {
+      useCoupon: true,
+      ...(interestFormData && {
+        provider_price: interestFormData.price,
+        provider_start_date: interestFormData.startDate,
+        provider_end_date: interestFormData.endDate,
+      }),
+    };
     setConfirmInterestModal(false);
+    setShowInterestRequestModal(false);
     setAppLoading(true);
-    addSelfToJobProviders(currentJobId, session, { useCoupon: true })
+    addSelfToJobProviders(currentJobId, session, payload)
       .then((result) => {
         if (result.success) {
           couponsManagerController?.refreshBalance();
@@ -743,26 +765,46 @@ export default function ShowJobModal({
   };
 
   const handleInterestRequest = async () => {
-    if (subscription.current == null) {
-      try {
-        setAppLoading(true);
-        const ok = await jobsController.actions.checkWasProviderInJob(
-          currentJobId
-        );
+    // We don't reset formData here to allow persistence across payment flows
+    const isBusinessJob = currentJobInfo?.creator?.account_type === 'provider';
+    const hasSubscription = subscription.current != null;
 
-        if (ok) {
-          handleAddingSelfToJobProviders({});
-          setInterestedRequest(true);
-          return;
-        }
-      } finally {
-        setAppLoading(false);
+    if (isBusinessJob) {
+      if (hasSubscription) {
+        handleAddingSelfToJobProviders({});
+        setInterestedRequest(true);
+      } else {
+        setConfirmInterestModal(true);
       }
-
-      setConfirmInterestModal(true);
     } else {
-      handleAddingSelfToJobProviders({});
+      // If we are starting a fresh request (no price entered), reset step to 1
+      if (!interestFormData.price) setInterestStep(1);
+      setShowInterestRequestModal(true);
+    }
+  };
+
+  const handleConfirmInterestRequest = async (formData, paymentOptions = {}) => {
+    try {
+      setInterestFormData(formData);
+      setAppLoading(true);
+      // Combine form data (price, date) with payment options if any
+      const finalOptions = {
+        ...paymentOptions,
+        provider_price: formData.price,
+        provider_start_date: formData.startDate,
+        provider_end_date: formData.endDate,
+      };
+
+      await handleAddingSelfToJobProviders(finalOptions);
       setInterestedRequest(true);
+      setShowInterestRequestModal(false);
+      setConfirmInterestModal(false);
+      return { success: true };
+    } catch (error) {
+      logError('Error adding self to job providers:', error.message);
+      throw error;
+    } finally {
+      setAppLoading(false);
     }
   };
 
@@ -2901,9 +2943,32 @@ export default function ShowJobModal({
         onPurchase={handlePurchaseInterest}
         onPayWithCoupons={handlePayCouponsInterest}
         onOpenSubscriptions={() => {
+          setPlansModalReturnTarget('purchase');
           setPlansModalVisible(true);
           setConfirmInterestModal(false);
         }}
+        footerText={t('interestRequest.funds_disclosure')}
+      />
+      <InterestRequestModal
+        visible={showInterestRequestModal}
+        onClose={() => setShowInterestRequestModal(false)}
+        isBusinessJob={currentJobInfo?.creator?.account_type === 'provider'}
+        hasSubscription={subscription.current != null}
+        price={formatCurrency(
+          jobsController.providerProduct?.price,
+          jobsController.providerProduct?.currency,
+        )}
+        onConfirm={handleConfirmInterestRequest}
+        onPayWithCoupons={handlePayCouponsInterest}
+        onOpenSubscriptions={() => {
+          setPlansModalReturnTarget('interest');
+          setPlansModalVisible(true);
+          setShowInterestRequestModal(false);
+        }}
+        formData={interestFormData}
+        setFormData={setInterestFormData}
+        step={interestStep}
+        setStep={setInterestStep}
       />
       <ChosenUserModal
         visible={showChosenUserModal}
@@ -3053,8 +3118,12 @@ export default function ShowJobModal({
         main={false}
         closeModal={() => {
           setPlansModalVisible(false);
-          if (subscription.current == null && currentJobInfo.status != 'pending') setConfirmInterestModal(true);
-          if (subscription.current == null && currentJobInfo.status == 'pending') setPublishModalVisible(true);
+          if (subscription.current == null) {
+            if (plansModalReturnTarget === 'interest') setShowInterestRequestModal(true);
+            else if (plansModalReturnTarget === 'purchase') setConfirmInterestModal(true);
+            else if (plansModalReturnTarget === 'publish' || currentJobInfo.status === 'pending') setPublishModalVisible(true);
+          }
+          setPlansModalReturnTarget(null);
         }}
       />
       <CompleteJobModal
