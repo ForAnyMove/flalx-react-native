@@ -43,11 +43,11 @@ const mock = [
     "startDateTime": "2026-01-14T10:57:00+00:00",
     "endDateTime": "2026-01-30T10:57:00+00:00",
     "createdAt": "2026-01-18T10:57:30.787203+00:00",
-    "status": "waiting",
+    "status": "expired",
     "creator": "4f04025a-eeaa-451d-a25c-586f6bdcf8f9",
     "doneComment": null,
     "extraMarker": null,
-    "providerStatus": "choosed",
+    "providerStatus": 'obsolete',
     "myProviderSource": 'personal',
     "executor_expectations": {
       "salary": "50",
@@ -285,9 +285,13 @@ export default function WaitingScreen({
                     return false;
                 }
               }
+              if (job?.status === 'expired') {
+                return true;
+              }
               if (job?.myProviderSource === 'personal') {
                 return true;
               }
+
 
               return false;
             }
@@ -302,6 +306,9 @@ export default function WaitingScreen({
                   default:
                     return '';
                 }
+              }
+              if (job?.status === 'expired') {
+                return t('extra_markers.deleted', { defaultValue: 'Deleted' });
               }
               if (job?.myProviderSource === 'personal') {
                 return t('extra_markers.for_you');
@@ -319,6 +326,9 @@ export default function WaitingScreen({
                   default:
                     return '';
                 }
+              }
+              if (job?.status === 'expired') {
+                return themeController.current?.errorTextColor;
               }
               if (job?.myProviderSource === 'personal') {
                 return themeController.current?.personalMarkerColor;
@@ -428,9 +438,9 @@ export default function WaitingScreen({
                         {job.description}
                       </Text>
                     ) : null}
-                    <JobExpectationsBadge 
-                      expectations={job.executor_expectations} 
-                      isRTL={isRTL} 
+                    <JobExpectationsBadge
+                      expectations={job.executor_expectations}
+                      isRTL={isRTL}
                     />
                   </View>
                   {checkIsBadgeExist() && (
@@ -439,6 +449,8 @@ export default function WaitingScreen({
                         styles.specialMarkerContainer,
                         {
                           backgroundColor: getBadgeBackgroundColor(),
+                          // borderWidth: job.status === 'expired' ? 1 : 0,
+                          borderColor: getBadgeBackgroundColor(),
                           paddingVertical: sizes.personalMarkerVP,
                           paddingHorizontal: sizes.personalMarkerHP,
                         },
@@ -462,8 +474,7 @@ export default function WaitingScreen({
                       <Text
                         style={[
                           {
-                            color: '#fff',
-                            // fontWeight: 'bold',
+                            color: themeController.current?.tabBarTextColorActive,
                             fontSize: sizes.personalMarkerFontSize,
                           },
                         ]}

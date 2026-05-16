@@ -49,6 +49,7 @@ import { PublishJobModal } from './PublishJobModal';
 import PurchaseModal from './PurchaseModal';
 import ChosenUserModal from './ChosenUserModal';
 import InterestRequestModal from './InterestRequestModal';
+import AlertModal from './AlertModal';
 import { logError } from '../utils/log_util';
 import CustomTextInput from './ui/CustomTextInput';
 
@@ -615,13 +616,23 @@ export default function ShowJobModal({
   const [currentJobInfo, setCurrentJobInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showChosenUserModal, setShowChosenUserModal] = useState(false);
+  const [alertModalVisible, setAlertModalVisible] = useState(false);
+  const [alertModalTitle, setAlertModalTitle] = useState('');
 
   useEffect(() => {
     if (currentJobInfo?.providerStatus === 'choosed' && status.startsWith('jobs')) {
       setShowChosenUserModal(true);
       console.log('Showing chosen user modal for job:', currentJobInfo);
     }
-  }, [currentJobInfo?.providerStatus, status]);
+    if (currentJobInfo?.status === 'expired') {
+      setAlertModalTitle(t('showJobModal.job_expired', { defaultValue: 'Job has expired' }));
+      setAlertModalVisible(true);
+    }
+    if (currentJobInfo?.providerStatus === 'obsolete') {
+      setAlertModalTitle(t('showJobModal.provider_obsolete', { defaultValue: 'The application is obsolete' }));
+      setAlertModalVisible(true);
+    }
+  }, [currentJobInfo?.providerStatus, currentJobInfo?.status, status]);
 
   const location = currentJobInfo?.location;
 
@@ -2970,6 +2981,20 @@ export default function ShowJobModal({
         step={interestStep}
         setStep={setInterestStep}
       />
+      <AlertModal
+        visible={alertModalVisible}
+        title={alertModalTitle}
+        onConfirm={() => {
+          setAlertModalVisible(false);
+          closeModal();
+        }}
+        onClose={() => {
+          setAlertModalVisible(false);
+          closeModal();
+        }}
+        useConfirmAsClose={true}
+      />
+
       <ChosenUserModal
         visible={showChosenUserModal}
         onClose={() => setShowChosenUserModal(false)}
