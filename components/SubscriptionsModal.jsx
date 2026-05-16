@@ -45,7 +45,7 @@ function SubscriptionsModalContent({ closeModal }) {
   const { tField } = useLocalization(languageController?.current);
   const { showWarning, showInfo, showError } = useNotification();
   const { openWebView } = useWebView();
-  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
+  const { width, height, isLandscape, effectiveSidebarWidth } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -340,7 +340,7 @@ function SubscriptionsModalContent({ closeModal }) {
           activeOpacity={1}
           style={{
             height: height,
-            width: isWebLandscape ? width - sidebarWidth : width,
+            width: isWebLandscape ? width - effectiveSidebarWidth : width,
             backgroundColor: themeController.current?.backgroundColor,
             alignSelf: isRTL ? 'flex-start' : 'flex-end',
             paddingHorizontal: sizes.containerPaddingHorizontal,

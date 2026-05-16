@@ -49,7 +49,7 @@ export default function Store() {
 
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
-  const { width, height, sidebarWidth, isLandscape } = useWindowInfo();
+  const { width, height, effectiveSidebarWidth, isLandscape } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
 
   const orderedTabs = isRTL ? TAB_TITLES_RTL : TAB_TITLES;
@@ -57,7 +57,7 @@ export default function Store() {
     ? [DoneScreen, InProgressScreen, WaitingScreen, NewScreen]
     : [NewScreen, WaitingScreen, InProgressScreen, DoneScreen];
 
-  const SCREEN_WIDTH = isWebLandscape ? width - sidebarWidth : width;
+  const SCREEN_WIDTH = isWebLandscape ? width - effectiveSidebarWidth : width;
 
   const screenWidthRef = useRef(SCREEN_WIDTH);
   const [screenWidth, setScreenWidth] = useState(SCREEN_WIDTH);

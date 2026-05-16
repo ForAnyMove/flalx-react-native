@@ -94,21 +94,96 @@ export default function WaitingScreen({
       )
     );
 
-  const filteredJobsList = jobsController.creator.waiting
-    .filter((job) =>
-      filteredJobs.length > 0
-        ? filteredJobs.includes(job.type.key) ||
-        filteredJobs.includes(job.subType.key)
-        : true
-    )
-    .filter((job) =>
-      [tField(job.type, 'name'), job.description].some((field) =>
-        field.toLowerCase().includes(searchValue.toLowerCase())
+  const mockJob = {
+    id: 'mock-job-id',
+    type: {
+      id: '7d0d9b2d-135d-47a5-89a1-743209e43bac',
+      key: 'cleaner',
+      name: 'Cleaner',
+      name_i18n: {
+        en: 'Cleaner',
+        he: 'מנקה',
+      },
+    },
+    subType: {
+      id: '5ca068e1-3eee-41a4-85bd-3cbcf4ce49d7',
+      key: 'house_cleaning',
+      name: 'House Cleaning',
+      name_i18n: {
+        en: 'House Cleaning',
+        he: 'ניקיון בית',
+      },
+    },
+    description: 'Mock Job for Testing',
+    price: '333',
+    images: [],
+    startDateTime: '2026-01-14T10:57:00+00:00',
+    endDateTime: '2026-01-30T10:57:00+00:00',
+    createdAt: '2026-01-18T10:57:30.787203+00:00',
+    status: 'waiting',
+    creator: '4f04025a-eeaa-451d-a25c-586f6bdcf8f9',
+    creator_account_type: 'client',
+    providerStatus: 'choosed',
+    providers: [
+      {
+        id: 'p1',
+        name: 'John Doe',
+        rating: 4.8,
+        avatar: null,
+        professions: ['cleaner'],
+        executor_expectations: {
+          salary: '50',
+          startDateTime: '2026-01-14T10:57:00+00:00',
+          endDateTime: '2026-01-30T10:57:00+00:00',
+        },
+      },
+      {
+        id: 'p2',
+        name: 'Jane Smith',
+        rating: 3.5,
+        avatar: null,
+        professions: ['cleaner'],
+        executor_expectations: {
+          salary: '45',
+          startDateTime: '2026-01-15T12:00:00+00:00',
+          endDateTime: '2026-01-25T18:00:00+00:00',
+        },
+      },
+    ],
+  };
+
+  const filteredJobsList = [
+    mockJob,
+    ...jobsController.creator.waiting
+      .filter((job) =>
+        filteredJobs.length > 0
+          ? filteredJobs.includes(job.type.key) ||
+            filteredJobs.includes(job.subType.key)
+          : true
       )
-    ).filter(job => job.status !== 'rejected');
+      .filter((job) =>
+        [tField(job.type, 'name'), job.description].some((field) =>
+          field.toLowerCase().includes(searchValue.toLowerCase())
+        )
+      )
+      .filter((job) => job.status !== 'rejected'),
+  ];
 
   const drawJobCard = (job, index) => {
     const hasImage = job.images && job.images.length > 0;
+
+    const getStatusText = (status) => {
+      switch (status) {
+        case 'pending':
+          return t('common.pending');
+        case 'expired':
+          return t('common.expired');
+        case 'pending_moderation':
+          return t('common.pending_moderation');
+        default:
+          return t('common.waiting_payment');
+      }
+    }
     return (
       <TouchableOpacity
         key={index}
@@ -234,13 +309,13 @@ export default function WaitingScreen({
               </Text>
             </View>
           )}
-          {(job.status === 'pending' ||
+          {(job.status === 'pending' || job.status === 'expired' ||
             job.status === 'pending_moderation') && (
               <View
                 style={[
                   styles.badge,
                   {
-                    backgroundColor: themeController.current?.mainBadgeBackground,
+                    backgroundColor: job.status === 'expired' ? themeController.current?.expiredBadgeBackground : themeController.current?.mainBadgeBackground,
                     minWidth: sizes.badgeSize,
                     height: sizes.badgeSize,
                     borderRadius: sizes.badgeSize / 4,
@@ -262,9 +337,7 @@ export default function WaitingScreen({
                     },
                   ]}
                 >
-                  {job.status === 'pending_moderation'
-                    ? t('common.pending_moderation')
-                    : t('common.waiting_payment')}
+                  {getStatusText(job.status)}
                 </Text>
               </View>
             )}

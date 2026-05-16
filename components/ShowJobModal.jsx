@@ -19,6 +19,7 @@ import { LICENSES } from '../constants/licenses';
 import { useComponentContext } from '../context/globalAppContext';
 import JobHistoryModal from './JobHistoryModal';
 import NewJobModal from './NewJobModal';
+import JobExpectationsBadge from './ui/JobExpectationsBadge';
 import ProvidersSection from './ProvidersSection';
 import CustomFlatList from './ui/CustomFlatList';
 import DateTimeInput from './ui/DateTimeInput';
@@ -46,6 +47,7 @@ import { formatExperience } from '../utils/experience_ulit';
 import { formatCurrency } from '../utils/currency_formatter';
 import { PublishJobModal } from './PublishJobModal';
 import PurchaseModal from './PurchaseModal';
+import ChosenUserModal from './ChosenUserModal';
 import { logError } from '../utils/log_util';
 import CustomTextInput from './ui/CustomTextInput';
 
@@ -79,6 +81,64 @@ async function editJobById(jobId, updates, session) {
  * Format field values for display in agreement modal.
  * Converts IDs to names for type/subtype fields, formats dates, etc.
  */
+const MOCK_JOB = {
+  id: 'mock-job-id',
+  type: {
+    id: '7d0d9b2d-135d-47a5-89a1-743209e43bac',
+    key: 'cleaner',
+    name: 'Cleaner',
+    name_i18n: {
+      en: 'Cleaner',
+      he: 'מנקה',
+    },
+  },
+  subType: {
+    id: '5ca068e1-3eee-41a4-85bd-3cbcf4ce49d7',
+    key: 'house_cleaning',
+    name: 'House Cleaning',
+    name_i18n: {
+      en: 'House Cleaning',
+      he: 'ניקיון בית',
+    },
+  },
+  description: 'Mock Job for Testing',
+  price: '333',
+  images: [],
+  startDateTime: '2026-01-14T10:57:00+00:00',
+  endDateTime: '2026-01-30T10:57:00+00:00',
+  createdAt: '2026-01-18T10:57:30.787203+00:00',
+  status: 'waiting',
+  creator: '4f04025a-eeaa-451d-a25c-586f6bdcf8f9',
+  creator_account_type: 'client',
+  providerStatus: 'choosed',
+  providers: [
+    {
+      id: 'p1',
+      name: 'John Doe',
+      rating: 4.8,
+      avatar: null,
+      professions: ['cleaner'],
+      executor_expectations: {
+        salary: '50',
+        startDateTime: '2026-01-14T10:57:00+00:00',
+        endDateTime: '2026-01-30T10:57:00+00:00',
+      },
+    },
+    {
+      id: 'p2',
+      name: 'Jane Smith',
+      rating: 3.5,
+      avatar: null,
+      professions: ['cleaner'],
+      executor_expectations: {
+        salary: '45',
+        startDateTime: '2026-01-15T12:00:00+00:00',
+        endDateTime: '2026-01-25T18:00:00+00:00',
+      },
+    },
+  ],
+};
+
 function formatFieldValue(field, value, jobTypesController, t) {
   if (value == null) return '—';
 
@@ -549,6 +609,14 @@ export default function ShowJobModal({
 
   const [currentJobInfo, setCurrentJobInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showChosenUserModal, setShowChosenUserModal] = useState(false);
+
+  useEffect(() => {
+    if (currentJobInfo?.providerStatus === 'choosed' && status.startsWith('jobs')) {
+      setShowChosenUserModal(true);
+      console.log('Showing chosen user modal for job:', currentJobInfo);
+    }
+  }, [currentJobInfo?.providerStatus, status]);
 
   const location = currentJobInfo?.location;
 
@@ -561,10 +629,13 @@ export default function ShowJobModal({
       try {
         // Показываем лоадер только при первой загрузке; фоновые обновления — тихие
         if (!currentJobInfo) setLoading(true);
-        const job = await jobsController.actions.getJobById(
-          currentJobId,
-          session
-        );
+
+        let job;
+        if (currentJobId === 'mock-job-id') {
+          job = MOCK_JOB;
+        } else {
+          job = await jobsController.actions.getJobById(currentJobId, session);
+        }
 
         if (cancelled) return;
         setCurrentJobInfo(job);
@@ -956,6 +1027,13 @@ export default function ShowJobModal({
           //     </Text>
           //   </TouchableOpacity>
           // ),
+          <ProvidersSection
+            key='providers'
+            styles={styles}
+            currentJobInfo={currentJobInfo}
+            status={status}
+            closeAllModal={closeModal}
+          />,
         ];
       case 'jobs-waiting':
         return [
@@ -1046,6 +1124,13 @@ export default function ShowJobModal({
           //     </Text>
           //   </TouchableOpacity>
           // ),
+          <ProvidersSection
+            key='providers'
+            styles={styles}
+            currentJobInfo={currentJobInfo}
+            status={status}
+            closeAllModal={closeModal}
+          />,
         ];
       case 'jobs-in-progress':
         return [
@@ -1552,6 +1637,13 @@ export default function ShowJobModal({
           //   key='done-view'
           // >
           // </View>,
+          <CommentsSection
+            key='commentsSection'
+            jobId={currentJobInfo?.id}
+            userId={currentJobInfo?.creator}
+            allowAdd={currentJobInfo?.comments?.length == 0}
+            allowAddOnly={true}
+          />
         ];
       default:
         return [];
@@ -2812,6 +2904,12 @@ export default function ShowJobModal({
           setPlansModalVisible(true);
           setConfirmInterestModal(false);
         }}
+      />
+      <ChosenUserModal
+        visible={showChosenUserModal}
+        onClose={() => setShowChosenUserModal(false)}
+        job={currentJobInfo}
+        onConfirmPayment={() => new Promise((resolve) => setTimeout(() => resolve(Math.random() > 0.5), 50000))}
       />
       {/* <Modal visible={showHistoryModal} animationType='fade'>
         <View

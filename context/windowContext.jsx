@@ -45,6 +45,7 @@ export function WindowProvider({ children }) {
   };
 
   const [windowInfo, setWindowInfo] = useState(getWindow());
+  const [sidebarOverride, setSidebarOverride] = useState(null);
 
   useEffect(() => {
     const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
@@ -110,15 +111,23 @@ export function WindowProvider({ children }) {
   }, [isKeyboardVisible, focusedInputs]);
 
   const value = useMemo(
-    () => ({
-      ...windowInfo,
-      isKeyboardVisible,
-      focusedInputs,
-      addFocusedInput,
-      removeFocusedInput,
-    }),
+    () => {
+      const effectiveSidebarWidth =
+        sidebarOverride !== null ? sidebarOverride : windowInfo.sidebarWidth;
+        
+      return {
+        ...windowInfo,
+        effectiveSidebarWidth,
+        setSidebarOverride,
+        isKeyboardVisible,
+        focusedInputs,
+        addFocusedInput,
+        removeFocusedInput,
+      };
+    },
     [
       windowInfo,
+      sidebarOverride,
       isKeyboardVisible,
       focusedInputs,
       addFocusedInput,

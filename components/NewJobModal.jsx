@@ -127,10 +127,11 @@ export default function NewJobModal({
     jobTypesController,
   } = useComponentContext();
   const { tField } = useLocalization(languageController.current);
-  const { width, height, isLandscape, sidebarWidth = 0 } = useWindowInfo();
+  const { width, height, isLandscape, effectiveSidebarWidth = 0 } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const isClient = user.current?.account_type === 'client';
 
   // Объявляем состояния сначала, чтобы они были доступны в useMemo
   const [type, setType] = useState(
@@ -342,7 +343,7 @@ export default function NewJobModal({
   const requiredFields = [
     'type',
     'subType',
-    'price',
+    ...(isClient ? [] : ['price']),
     // 'location',
     // 'description',
   ];
@@ -633,55 +634,57 @@ export default function NewJobModal({
         multiline
       />
     </View>,
-    <View
-      style={[
-        styles.inputBlock,
-        {
-          padding: 0,
-          paddingHorizontal: sizes.inputContainerPaddingHorizontal,
-          paddingVertical: sizes.inputContainerPaddingVertical,
-          borderRadius: sizes.borderRadius,
-          height: sizes.inputHeight,
-          backgroundColor: themeController.current?.formInputBackground,
-        },
-        fieldErrors.price && styles.errorBorder,
-      ]}
-      key='price'
-    >
-      <Text
+    !isClient && (
+      <View
         style={[
-          styles.label,
+          styles.inputBlock,
           {
-            color: fieldErrors.price
-              ? 'red'
-              : themeController.current?.unactiveTextColor,
-            fontSize: sizes.font,
+            padding: 0,
+            paddingHorizontal: sizes.inputContainerPaddingHorizontal,
+            paddingVertical: sizes.inputContainerPaddingVertical,
+            borderRadius: sizes.borderRadius,
+            height: sizes.inputHeight,
+            backgroundColor: themeController.current?.formInputBackground,
           },
-          isRTL && { textAlign: 'right' },
-          isWebLandscape && { fontSize: sizes.font },
+          fieldErrors.price && styles.errorBorder,
         ]}
+        key='price'
       >
-        {t('newJob.price', { defaultValue: 'Price' })}
-      </Text>
-      <CustomTextInput
-        value={price}
-        onChangeText={(text) => setPrice(text.replace(/[^0-9]/g, ''))}
-        placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
-        placeholderTextColor={
-          themeController.current?.formInputPlaceholderColor
-        }
-        style={[
-          styles.input,
-          {
-            color: themeController.current?.textColor,
-            fontSize: sizes.inputFont,
-            fontFamily: 'Rubik-Regular',
-          },
-          isRTL && { textAlign: 'right' },
-        ]}
-        keyboardType='numeric'
-      />
-    </View>,
+        <Text
+          style={[
+            styles.label,
+            {
+              color: fieldErrors.price
+                ? 'red'
+                : themeController.current?.unactiveTextColor,
+              fontSize: sizes.font,
+            },
+            isRTL && { textAlign: 'right' },
+            isWebLandscape && { fontSize: sizes.font },
+          ]}
+        >
+          {t('newJob.price', { defaultValue: 'Price' })}
+        </Text>
+        <CustomTextInput
+          value={price}
+          onChangeText={(text) => setPrice(text.replace(/[^0-9]/g, ''))}
+          placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
+          placeholderTextColor={
+            themeController.current?.formInputPlaceholderColor
+          }
+          style={[
+            styles.input,
+            {
+              color: themeController.current?.textColor,
+              fontSize: sizes.inputFont,
+              fontFamily: 'Rubik-Regular',
+            },
+            isRTL && { textAlign: 'right' },
+          ]}
+          keyboardType='numeric'
+        />
+      </View>
+    ),
     <View style={styles.imageInputBlock} key='images'>
       <Text
         style={[
@@ -800,54 +803,56 @@ export default function NewJobModal({
         bottomDropdown={false}
       />
     ) : null,
-    <View
-      style={[
-        styles.row,
-        {
-          gap: sizes.dateTimeGapMobile,
-          paddingBottom: sizes.mobileBottomPaddingExtraSpace, // чтобы не закрывались кнопками
-        },
-        isRTL && { flexDirection: 'row-reverse' },
-      ]}
-      key='dateTimeRange'
-    >
-      {Platform.OS !== 'android' ? (
-        <DateTimeInput
-          key='startDateTime'
-          label={t('newJob.startDateTime', {
-            defaultValue: 'Start date and time',
-          })}
-          value={startDateTime}
-          onChange={setStartDateTime}
-        />
-      ) : (
-        <DateTimeInputDouble
-          label={t('newJob.startDateTime', {
-            defaultValue: 'Start date and time',
-          })}
-          value={startDateTime}
-          onChange={setStartDateTime}
-        />
-      )}
-      {Platform.OS !== 'android' ? (
-        <DateTimeInput
-          key='endDateTime'
-          label={t('newJob.endDateTime', {
-            defaultValue: 'End date and time',
-          })}
-          value={endDateTime}
-          onChange={setEndDateTime}
-        />
-      ) : (
-        <DateTimeInputDouble
-          label={t('newJob.endDateTime', {
-            defaultValue: 'End date and time',
-          })}
-          value={endDateTime}
-          onChange={setEndDateTime}
-        />
-      )}
-    </View>,
+    !isClient && (
+      <View
+        style={[
+          styles.row,
+          {
+            gap: sizes.dateTimeGapMobile,
+            paddingBottom: sizes.mobileBottomPaddingExtraSpace, // чтобы не закрывались кнопками
+          },
+          isRTL && { flexDirection: 'row-reverse' },
+        ]}
+        key='dateTimeRange'
+      >
+        {Platform.OS !== 'android' ? (
+          <DateTimeInput
+            key='startDateTime'
+            label={t('newJob.startDateTime', {
+              defaultValue: 'Start date and time',
+            })}
+            value={startDateTime}
+            onChange={setStartDateTime}
+          />
+        ) : (
+          <DateTimeInputDouble
+            label={t('newJob.startDateTime', {
+              defaultValue: 'Start date and time',
+            })}
+            value={startDateTime}
+            onChange={setStartDateTime}
+          />
+        )}
+        {Platform.OS !== 'android' ? (
+          <DateTimeInput
+            key='endDateTime'
+            label={t('newJob.endDateTime', {
+              defaultValue: 'End date and time',
+            })}
+            value={endDateTime}
+            onChange={setEndDateTime}
+          />
+        ) : (
+          <DateTimeInputDouble
+            label={t('newJob.endDateTime', {
+              defaultValue: 'End date and time',
+            })}
+            value={endDateTime}
+            onChange={setEndDateTime}
+          />
+        )}
+      </View>
+    ),
   ].filter(Boolean); // Фильтруем null значения
 
   const bg = themeController.current?.formInputBackground;
@@ -1116,74 +1121,76 @@ export default function NewJobModal({
                     />
                   </View>
 
-                  <View
-                    key='price'
-                    style={[
-                      styles.gridHalf,
-                      {
-                        // marginBottom: sizes.margin,
-                        zIndex: 6,
-                        gridArea: isRTL ? '3 / 1 / 4 / 2' : '3 / 2 / 4 / 3',
-                      },
-                    ]}
-                  >
+                  {!isClient && (
                     <View
+                      key='price'
                       style={[
-                        styles.inputBlock,
-                        { backgroundColor: bg },
+                        styles.gridHalf,
                         {
-                          padding: 0,
-                          paddingHorizontal:
-                            sizes.inputContainerPaddingHorizontal,
-                          paddingVertical: sizes.inputContainerPaddingVertical,
-                          borderRadius: sizes.borderRadius,
-                          marginBottom: 0,
-                          height: sizes.inputHeight,
+                          // marginBottom: sizes.margin,
+                          zIndex: 6,
+                          gridArea: isRTL ? '3 / 1 / 4 / 2' : '3 / 2 / 4 / 3',
                         },
-                        fieldErrors.price && styles.errorBorder,
                       ]}
                     >
-                      <Text
+                      <View
                         style={[
-                          styles.label,
-                          isRTL && { textAlign: 'right' },
+                          styles.inputBlock,
+                          { backgroundColor: bg },
                           {
-                            fontSize: sizes.font,
-                            color: fieldErrors.price
-                              ? 'red'
-                              : themeController.current?.unactiveTextColor,
+                            padding: 0,
+                            paddingHorizontal:
+                              sizes.inputContainerPaddingHorizontal,
+                            paddingVertical: sizes.inputContainerPaddingVertical,
+                            borderRadius: sizes.borderRadius,
+                            marginBottom: 0,
+                            height: sizes.inputHeight,
                           },
+                          fieldErrors.price && styles.errorBorder,
                         ]}
                       >
-                        {t('newJob.price', { defaultValue: 'Price' })}
-                      </Text>
-                      <CustomTextInput
-                        key='priceInput'
-                        value={price}
-                        onChangeText={(text) =>
-                          setPrice(text.replace(/[^0-9]/g, ''))
-                        }
-                        placeholder={t('newJob.typePlaceholder', {
-                          defaultValue: 'Type...',
-                        })}
-                        placeholderTextColor={
-                          themeController.current?.formInputPlaceholderColor
-                        }
-                        style={{
-                          padding: 0,
-                          paddingVertical: sizes.padding,
-                          color: fieldErrors.price
-                            ? 'red'
-                            : themeController.current?.textColor,
-                          fontSize: sizes.inputFont,
-                          borderRadius: sizes.borderRadius,
-                          backgroundColor: 'transparent',
-                          textAlign: isRTL ? 'right' : 'left',
-                        }}
-                        keyboardType='numeric'
-                      />
+                        <Text
+                          style={[
+                            styles.label,
+                            isRTL && { textAlign: 'right' },
+                            {
+                              fontSize: sizes.font,
+                              color: fieldErrors.price
+                                ? 'red'
+                                : themeController.current?.unactiveTextColor,
+                            },
+                          ]}
+                        >
+                          {t('newJob.price', { defaultValue: 'Price' })}
+                        </Text>
+                        <CustomTextInput
+                          key='priceInput'
+                          value={price}
+                          onChangeText={(text) =>
+                            setPrice(text.replace(/[^0-9]/g, ''))
+                          }
+                          placeholder={t('newJob.typePlaceholder', {
+                            defaultValue: 'Type...',
+                          })}
+                          placeholderTextColor={
+                            themeController.current?.formInputPlaceholderColor
+                          }
+                          style={{
+                            padding: 0,
+                            paddingVertical: sizes.padding,
+                            color: fieldErrors.price
+                              ? 'red'
+                              : themeController.current?.textColor,
+                            fontSize: sizes.inputFont,
+                            borderRadius: sizes.borderRadius,
+                            backgroundColor: 'transparent',
+                            textAlign: isRTL ? 'right' : 'left',
+                          }}
+                          keyboardType='numeric'
+                        />
+                      </View>
                     </View>
-                  </View>
+                  )}
 
                   {/* Row 4: Uploading photos (full) */}
                   <View
@@ -1332,77 +1339,81 @@ export default function NewJobModal({
                   )}
 
                   {/* Дата и время начала */}
-                  <View
-                    style={[
-                      styles.gridHalf,
-                      {
-                        /* zIndex: 3, */
-                        gridArea: isExperienceRequired
-                          ? isRTL
-                            ? '7 / 2 / 8 / 3'
-                            : '7 / 1 / 8 / 2'
-                          : isRTL
-                          ? '6 / 2 / 7 / 3'
-                          : '6 / 1 / 7 / 2',
-                      },
-                      { flexDirection: isRTL ? 'row-reverse' : 'row' },
-                    ]}
-                  >
-                    {Platform.OS !== 'android' ? (
-                      <DateTimeInput
-                        key='startDateTime'
-                        label={t('newJob.startDateTime', {
-                          defaultValue: 'Start date and time',
-                        })}
-                        value={startDateTime}
-                        onChange={setStartDateTime}
-                      />
-                    ) : (
-                      <DateTimeInputDouble
-                        label={t('newJob.startDateTime', {
-                          defaultValue: 'Start date and time',
-                        })}
-                        value={startDateTime}
-                        onChange={setStartDateTime}
-                      />
-                    )}
-                  </View>
+                  {!isClient && (
+                    <>
+                      <View
+                        style={[
+                          styles.gridHalf,
+                          {
+                            /* zIndex: 3, */
+                            gridArea: isExperienceRequired
+                              ? isRTL
+                                ? '7 / 2 / 8 / 3'
+                                : '7 / 1 / 8 / 2'
+                              : isRTL
+                              ? '6 / 2 / 7 / 3'
+                              : '6 / 1 / 7 / 2',
+                          },
+                          { flexDirection: isRTL ? 'row-reverse' : 'row' },
+                        ]}
+                      >
+                        {Platform.OS !== 'android' ? (
+                          <DateTimeInput
+                            key='startDateTime'
+                            label={t('newJob.startDateTime', {
+                              defaultValue: 'Start date and time',
+                            })}
+                            value={startDateTime}
+                            onChange={setStartDateTime}
+                          />
+                        ) : (
+                          <DateTimeInputDouble
+                            label={t('newJob.startDateTime', {
+                              defaultValue: 'Start date and time',
+                            })}
+                            value={startDateTime}
+                            onChange={setStartDateTime}
+                          />
+                        )}
+                      </View>
 
-                  <View
-                    style={[
-                      styles.gridHalf,
-                      {
-                        /* zIndex: 2, */
-                        gridArea: isExperienceRequired
-                          ? isRTL
-                            ? '7 / 1 / 8 / 2'
-                            : '7 / 2 / 8 / 3'
-                          : isRTL
-                          ? '6 / 1 / 7 / 2'
-                          : '6 / 2 / 7 / 3',
-                      },
-                      { flexDirection: isRTL ? 'row-reverse' : 'row' },
-                    ]}
-                  >
-                    {Platform.OS !== 'android' ? (
-                      <DateTimeInput
-                        key='endDateTime'
-                        label={t('newJob.endDateTime', {
-                          defaultValue: 'End date and time',
-                        })}
-                        value={endDateTime}
-                        onChange={setEndDateTime}
-                      />
-                    ) : (
-                      <DateTimeInputDouble
-                        label={t('newJob.endDateTime', {
-                          defaultValue: 'End date and time',
-                        })}
-                        value={endDateTime}
-                        onChange={setEndDateTime}
-                      />
-                    )}
-                  </View>
+                      <View
+                        style={[
+                          styles.gridHalf,
+                          {
+                            /* zIndex: 2, */
+                            gridArea: isExperienceRequired
+                              ? isRTL
+                                ? '7 / 1 / 8 / 2'
+                                : '7 / 2 / 8 / 3'
+                              : isRTL
+                              ? '6 / 1 / 7 / 2'
+                              : '6 / 2 / 7 / 3',
+                          },
+                          { flexDirection: isRTL ? 'row-reverse' : 'row' },
+                        ]}
+                      >
+                        {Platform.OS !== 'android' ? (
+                          <DateTimeInput
+                            key='endDateTime'
+                            label={t('newJob.endDateTime', {
+                              defaultValue: 'End date and time',
+                            })}
+                            value={endDateTime}
+                            onChange={setEndDateTime}
+                          />
+                        ) : (
+                          <DateTimeInputDouble
+                            label={t('newJob.endDateTime', {
+                              defaultValue: 'End date and time',
+                            })}
+                            value={endDateTime}
+                            onChange={setEndDateTime}
+                          />
+                        )}
+                      </View>
+                    </>
+                  )}
                   {/* Кнопка отправки */}
                   <View
                     style={[
@@ -1569,7 +1580,7 @@ export default function NewJobModal({
             <TouchableOpacity
               activeOpacity={1}
               onPress={() => setStatusModalVisible(false)}
-              style={{ width: sidebarWidth, height: '100%' }}
+              style={{ width: effectiveSidebarWidth, height: '100%' }}
             />
           ) : null} */}
 
@@ -1582,7 +1593,7 @@ export default function NewJobModal({
             <View
               style={[
                 styles.centerArea,
-                // { width: isWebLandscape ? width - sidebarWidth : '100%' },
+                // { width: isWebLandscape ? width - effectiveSidebarWidth : '100%' },
                 { width: '100%' },
               ]}
             >

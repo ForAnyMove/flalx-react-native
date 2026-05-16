@@ -40,7 +40,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
   const { tField } = useLocalization(languageController.current);
   const { openWebView } = useWebView();
   const { showWarning } = useNotification();
-  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
+  const { width, height, isLandscape, effectiveSidebarWidth } = useWindowInfo();
   const isRTL = languageController.isRTL;
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -416,7 +416,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                   paddingBottom: sizes.padding,
                   paddingHorizontal: sizes.pagePaddingHorizontal,
                   // Веб-альбомная: узкая панель справа, с пустой кликабельной зоной слева
-                  // width: isWebLandscape ? width - sidebarWidth : '100%',
+                  // width: isWebLandscape ? width - effectiveSidebarWidth : '100%',
                   alignSelf: isRTL ? 'flex-start' : 'flex-end',
                   height: '100%',
                 }}

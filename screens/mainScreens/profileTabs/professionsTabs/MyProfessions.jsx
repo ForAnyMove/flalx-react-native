@@ -25,7 +25,7 @@ import { useNotification } from '../../../../src/render';
 
 const MyProfessions = ({ openSystemRegistration, onBackFromSystemRegistration, isRequestModalVisible, setIsRequestModalVisible }) => {
   const [searchValue, setSearchValue] = useState('');
-  const { height, width, isLandscape, sidebarWidth } = useWindowInfo();
+  const { height, width, isLandscape, effectiveSidebarWidth } = useWindowInfo();
   const { showWarning } = useNotification();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
   const { themeController, languageController, jobTypesController, setAppLoading } = useComponentContext();

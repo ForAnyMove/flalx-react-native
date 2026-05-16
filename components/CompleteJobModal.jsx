@@ -38,7 +38,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
     // subscriptionPlans,
     // subscription,
   } = useComponentContext();
-  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
+  const { width, height, isLandscape, effectiveSidebarWidth } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -306,7 +306,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
         activeOpacity={1}
         style={{
           height: height,
-          width: width - (isLandscape ? sidebarWidth : 0),
+          width: width - (isLandscape ? effectiveSidebarWidth : 0),
           backgroundColor: themeController.current?.backgroundColor,
           alignSelf: isRTL ? 'flex-start' : 'flex-end',
           paddingHorizontal: sizes.containerPaddingHorizontal,

@@ -83,7 +83,7 @@ export const SendJobToModerationModal = ({
                 <View
                     style={[
                         styles.centerArea,
-                        // { width: isWebLandscape ? width - sidebarWidth : '100%' },
+                        // { width: isWebLandscape ? width - effectiveSidebarWidth : '100%' },
                         { width: '100%' },
                     ]}
                 >

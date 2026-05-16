@@ -18,6 +18,7 @@ import { useWindowInfo } from '../context/windowContext';
 
 export default function AppScreen() {
   const {
+    user,
     appTabController,
     profileTabController,
     themeController,
@@ -28,12 +29,29 @@ export default function AppScreen() {
   const [screenName, setScreenName] = useState('app');
   const isRTL = languageController.isRTL;
 
-  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
+  const { width, height, isLandscape, effectiveSidebarWidth, setSidebarOverride } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
-  // const sidebarWidth = isWebLandscape ? Math.max(200, width * 0.15) : 0;
+  const isClient = user?.current?.account_type === 'client';
   const theme = themeController.current;
   const tabController =
     screenName === 'app' ? appTabController : profileTabController;
+
+  const filteredTabList = useMemo(() => {
+    if (screenName === 'app' && isClient) {
+      return tabController.list.filter(tab => tab === 'client');
+    }
+    return tabController.list;
+  }, [tabController.list, screenName, isClient]);
+
+  const shouldHideNav = screenName === 'app' && isClient && filteredTabList.length <= 1;
+
+  React.useEffect(() => {
+    if (shouldHideNav) {
+      setSidebarOverride(0);
+    } else {
+      setSidebarOverride(null);
+    }
+  }, [shouldHideNav, setSidebarOverride]);
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -133,6 +151,8 @@ export default function AppScreen() {
   };
 
   const renderNav = () => {
+    if (shouldHideNav) return null;
+
     if (Platform.OS === 'web' && isLandscape) {
       // боковая панель
       return (
@@ -141,14 +161,14 @@ export default function AppScreen() {
             styles.sidebar,
             {
               backgroundColor: theme.tabBarBackground,
-              width: sidebarWidth,
+              width: effectiveSidebarWidth,
               paddingHorizontal: sizes.sideBarPaddingHorizontal,
               paddingVertical: sizes.sideBarPaddingVertical,
             },
             isRTL ? { right: 0 } : { left: 0 },
           ]}
         >
-          {tabController.list.map((tab) => (
+          {filteredTabList.map((tab) => (
             <View key={tab}>
               {renderTab(tab)}
               {screenName === 'app' &&
@@ -176,7 +196,7 @@ export default function AppScreen() {
           },
         ]}
       >
-        {tabController.list.map((tab) => renderTab(tab))}
+        {filteredTabList.map((tab) => renderTab(tab))}
       </View>
     );
   };
@@ -193,12 +213,12 @@ export default function AppScreen() {
       >
         {screenName === 'app' ? (
           <AppMainScreen
-            sidebarWidth={sidebarWidth}
+            sidebarWidth={effectiveSidebarWidth}
             switchToProfile={() => setScreenName('profile')}
           />
         ) : (
           <AppProfileScreen
-            sidebarWidth={sidebarWidth}
+            sidebarWidth={effectiveSidebarWidth}
             switchToApp={() => setScreenName('app')}
           />
         )}

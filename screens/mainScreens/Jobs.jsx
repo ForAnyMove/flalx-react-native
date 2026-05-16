@@ -41,7 +41,7 @@ export default function Jobs() {
   } = useComponentContext();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
-  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
+  const { width, height, isLandscape, effectiveSidebarWidth } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
 
   const orderedTabs = isRTL ? TAB_TITLES_RTL : TAB_TITLES;
@@ -49,7 +49,7 @@ export default function Jobs() {
     ? [DoneScreen, InProgressScreen, WaitingScreen, NewScreen]
     : [NewScreen, WaitingScreen, InProgressScreen, DoneScreen];
 
-  const SCREEN_WIDTH = isWebLandscape ? width - sidebarWidth : width;
+  const SCREEN_WIDTH = isWebLandscape ? width - effectiveSidebarWidth : width;
 
   const screenWidthRef = useRef(SCREEN_WIDTH);
   const [screenWidth, setScreenWidth] = useState(SCREEN_WIDTH);

@@ -6,9 +6,15 @@ import Header from '../components/Header';
 import Jobs from './mainScreens/Jobs';
 
 export default function AppMainScreen({ switchToProfile, sidebarWidth }) {
-  const { session, appTabController } = useComponentContext();
+  const { session, appTabController, user } = useComponentContext();
 
   function renderScreen() {
+    const isClient = user?.current?.account_type === 'client';
+    
+    if (isClient) {
+      return <Store sidebarWidth={sidebarWidth} />;
+    }
+
     switch (appTabController.active) {
       case 'client':
         return <Store sidebarWidth={sidebarWidth} />;

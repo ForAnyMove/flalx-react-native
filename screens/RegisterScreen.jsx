@@ -129,14 +129,26 @@ export default function RegisterScreen() {
       step3CardBorderRadius: isWebLandscape ? web(8) : mobile(8),
       step3CardPadding: isWebLandscape ? web(16) : mobile(16),
       step3SelectorMarginBottom: isWebLandscape ? web(10) : mobile(10),
+      roleCardBorderRadius: isWebLandscape ? web(8) : mobile(8),
+      roleCardPaddingVertical: isWebLandscape ? web(20) : mobile(20),
+      roleCardPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
+      roleCardMarginBottom: isWebLandscape ? web(16) : mobile(16),
+      roleCardBorderWidth: 1,
+      roleIconSize: isWebLandscape ? web(20) : mobile(20),
+      roleTitleFontSize: isWebLandscape ? web(15) : mobile(15),
+      roleDescFontSize: isWebLandscape ? web(13) : mobile(13),
+      roleIconMargin: isWebLandscape ? web(18) : mobile(18),
+      roleSectionMarginBottom: isWebLandscape ? web(20) : mobile(20),
     };
   }, [isWebLandscape, height]);
 
   const [step, setStep] = useState(1);
   const [accepted, setAccepted] = useState(false);
+  const [selectedRole, setSelectedRole] = useState('client');
   const [form, setForm] = useState({
     name: '',
     surname: '',
+    role: 'client',
   });
   const [loading, setLoading] = useState(false);
   const [finished, setFinished] = useState(false);
@@ -203,12 +215,13 @@ export default function RegisterScreen() {
         updatedUser.professions = selectedLicenseTypes;
       if (qualificationLevel)
         updatedUser.qualificationLevel = qualificationLevel;
+      updatedUser.account_type = form.role || 'client';
       // if (experience) updatedUser.experience = experience;
 
       await user.update({ ...updatedUser, is_password_exist: true });
 
-      // Submit professions added during registration
-      if (registrationProfessions.length > 0) {
+      // Submit professions only when user registered as provider
+      if (selectedRole === 'provider' && registrationProfessions.length > 0) {
         await Promise.allSettled(
           registrationProfessions.map((p) =>
             jobTypesController.userToUserRequest
@@ -218,7 +231,7 @@ export default function RegisterScreen() {
                 passport_photo_urls: p?.passport_photo_urls ?? null,
                 certificate_photo_urls: p?.certificate_photo_urls ?? null,
               })
-              .then(() => {})
+              .then(() => { })
               .catch((err) => {
                 if (err?.response?.status === 400) {
                   showWarning(t('professions.warnings.validation_failed'), [
@@ -260,6 +273,64 @@ export default function RegisterScreen() {
       setLoading(false);
     }
   }
+
+  // === Role Card component ===
+  const RoleCard = ({ roleKey, title, description }) => {
+    const isSelected = selectedRole === roleKey;
+    return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => {
+          setSelectedRole(roleKey);
+          setForm(prev => ({ ...prev, role: roleKey }));
+        }}
+        style={[
+          {
+            flexDirection: isRTL ? 'row-reverse' : 'row',
+            alignItems: 'center',
+            backgroundColor: isSelected ? theme.formInputBackground : undefined,
+            borderRadius: sizes.roleCardBorderRadius,
+            paddingVertical: sizes.roleCardPaddingVertical,
+            paddingHorizontal: sizes.roleCardPaddingHorizontal,
+            marginBottom: sizes.roleCardMarginBottom,
+            borderWidth: sizes.roleCardBorderWidth,
+            borderColor: isSelected ? theme.primaryColor : theme.formInputLabelColor,
+          },
+        ]}
+      >
+        <Image
+          source={isSelected ? icons.radioOn : icons.radioOff}
+          style={{
+            width: sizes.roleIconSize,
+            height: sizes.roleIconSize,
+            tintColor: theme.primaryColor,
+            [isRTL ? 'marginLeft' : 'marginRight']: sizes.roleIconMargin,
+          }}
+        />
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{
+              fontSize: sizes.roleTitleFontSize,
+              color: theme.textColor,
+              fontFamily: 'Rubik-SemiBold',
+              marginBottom: 4,
+            }}
+          >
+            {title}
+          </Text>
+          <Text
+            style={{
+              fontSize: sizes.roleDescFontSize,
+              color: theme.unactiveTextColor,
+              fontFamily: 'Rubik-Regular',
+            }}
+          >
+            {description}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   // === Прогресс (точки) ===
   // const totalSteps = 4;
@@ -454,40 +525,40 @@ export default function RegisterScreen() {
           },
           !isWebLandscape && { height: '100%' },
           !isWebLandscape &&
-            step === 2 && {
-              paddingHorizontal: 0,
-            },
+          step === 2 && {
+            paddingHorizontal: 0,
+          },
           !isWebLandscape &&
-            step === 3 && {
-              paddingHorizontal: sizes.containerPaddingHorizontal,
-            },
+          step === 3 && {
+            paddingHorizontal: sizes.containerPaddingHorizontal,
+          },
           !isWebLandscape &&
-            step === 4 && {
-              paddingHorizontal: sizes.containerPaddingHorizontal,
-            },
+          step === 4 && {
+            paddingHorizontal: sizes.containerPaddingHorizontal,
+          },
           isWebLandscape
             ? {
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: scaleByHeight(688, height),
-                maxHeight:
-                  height * 0.95 -
-                  scaleByHeight(
-                    180,
-                    height,
-                    BASE_DESIGN_HEIGHT,
-                    { round: true },
-                    true,
-                  ),
-                boxSizing: 'border-box',
-                marginTop: scaleByHeight(
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: scaleByHeight(688, height),
+              maxHeight:
+                height * 0.95 -
+                scaleByHeight(
                   180,
                   height,
                   BASE_DESIGN_HEIGHT,
                   { round: true },
                   true,
                 ),
-              }
+              boxSizing: 'border-box',
+              marginTop: scaleByHeight(
+                180,
+                height,
+                BASE_DESIGN_HEIGHT,
+                { round: true },
+                true,
+              ),
+            }
             : null,
         ]}
         keyboardShouldPersistTaps='handled'
@@ -499,11 +570,11 @@ export default function RegisterScreen() {
             contentWidthStyle,
             { height: '100%', justifyContent: 'space-between' },
             isWebLandscape &&
-              (step === 2 || step === 3) && {
-                height: scaleByHeight(741, height),
-                maxHeight: height * 0.95,
-                width: scaleByHeight(354, height),
-              },
+            (step === 2 || step === 3) && {
+              height: scaleByHeight(741, height),
+              maxHeight: height * 0.95,
+              width: scaleByHeight(354, height),
+            },
           ]}
         >
           {step === 1 && (
@@ -722,12 +793,12 @@ export default function RegisterScreen() {
                       },
                       isWebLandscape
                         ? {
-                            // убираем чёрную обводку (RN Web)
-                            outlineStyle: 'none',
-                            outlineWidth: 0,
-                            outlineColor: 'transparent',
-                            boxShadow: 'none',
-                          }
+                          // убираем чёрную обводку (RN Web)
+                          outlineStyle: 'none',
+                          outlineWidth: 0,
+                          outlineColor: 'transparent',
+                          boxShadow: 'none',
+                        }
                         : null,
                     ]}
                     placeholderTextColor={theme.formInputPlaceholderColor}
@@ -783,12 +854,12 @@ export default function RegisterScreen() {
                       },
                       isWebLandscape
                         ? {
-                            // убираем чёрную обводку (RN Web)
-                            outlineStyle: 'none',
-                            outlineWidth: 0,
-                            outlineColor: 'transparent',
-                            boxShadow: 'none',
-                          }
+                          // убираем чёрную обводку (RN Web)
+                          outlineStyle: 'none',
+                          outlineWidth: 0,
+                          outlineColor: 'transparent',
+                          boxShadow: 'none',
+                        }
                         : null,
                     ]}
                     placeholderTextColor={theme.formInputPlaceholderColor}
@@ -847,12 +918,12 @@ export default function RegisterScreen() {
                       },
                       isWebLandscape
                         ? {
-                            // убираем чёрную обводку (RN Web)
-                            outlineStyle: 'none',
-                            outlineWidth: 0,
-                            outlineColor: 'transparent',
-                            boxShadow: 'none',
-                          }
+                          // убираем чёрную обводку (RN Web)
+                          outlineStyle: 'none',
+                          outlineWidth: 0,
+                          outlineColor: 'transparent',
+                          boxShadow: 'none',
+                        }
                         : null,
                     ]}
                     placeholderTextColor={theme.formInputPlaceholderColor}
@@ -907,110 +978,160 @@ export default function RegisterScreen() {
                 {t('register.profile_create')}
               </Text>
 
-              <Text
-                style={{
-                  color: theme.textColor,
-                  fontSize: sizes.step3SubtitleFontSize,
-                  fontFamily: 'Rubik-SemiBold',
-                  textAlign: 'center',
-                  marginBottom: sizes.step3SubtitleMarginBottom,
-                }}
-              >
-                {t('professions.step3_title')}
-              </Text>
-              <Text
-                style={{
-                  color: theme.unactiveTextColor,
-                  fontSize: sizes.step3DescFontSize,
-                  textAlign: 'center',
-                  marginBottom: sizes.step3DescMarginBottom,
-                }}
-              >
-                {t('professions.step3_subtitle')}
-              </Text>
-
               <ScrollView
                 style={{ flex: 1 }}
                 contentContainerStyle={{ flexGrow: 1 }}
                 showsVerticalScrollIndicator={false}
               >
-                {registrationProfessions.map((profession, index) => (
-                  <View
-                    key={index}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      backgroundColor: theme.formInputBackground,
-                      borderRadius: sizes.step3CardBorderRadius,
-                      paddingVertical: sizes.step3CardBorderRadius,
-                      paddingHorizontal: sizes.step3CardPadding,
-                      marginBottom: sizes.step3SelectorMarginBottom,
-                      height: sizes.step3CardHeight,
-                    }}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text
+                {/* ── Role selection ── */}
+                <Text
+                  style={{
+                    color: theme.textColor,
+                    fontSize: sizes.step3SubtitleFontSize,
+                    fontFamily: 'Rubik-SemiBold',
+                    textAlign: 'center',
+                    marginBottom: sizes.step3SubtitleMarginBottom,
+                  }}
+                >
+                  {t('professions.role_section_title')}
+                </Text>
+                <Text
+                  style={{
+                    color: theme.unactiveTextColor,
+                    fontSize: sizes.step3DescFontSize,
+                    textAlign: 'center',
+                    marginBottom: sizes.step3DescMarginBottom,
+                  }}
+                >
+                  {t('professions.role_section_subtitle')}
+                </Text>
+
+                <RoleCard
+                  roleKey='client'
+                  title={t('professions.role_client_title')}
+                  description={t('professions.role_client_description')}
+                />
+                <RoleCard
+                  roleKey='business'
+                  title={t('professions.role_provider_title')}
+                  description={t('professions.role_provider_description')}
+                />
+
+                {/* ── Professions block — only for provider ── */}
+                {selectedRole === 'provider' && (
+                  <View style={{ marginTop: sizes.roleSectionMarginBottom }}>
+                    <Text
+                      style={{
+                        color: theme.textColor,
+                        fontSize: sizes.step3SubtitleFontSize,
+                        fontFamily: 'Rubik-SemiBold',
+                        textAlign: 'center',
+                        marginBottom: sizes.step3SubtitleMarginBottom,
+                      }}
+                    >
+                      {t('professions.step3_title')}
+                    </Text>
+                    <Text
+                      style={{
+                        color: theme.unactiveTextColor,
+                        fontSize: sizes.step3DescFontSize,
+                        textAlign: 'center',
+                        marginBottom: sizes.step3DescMarginBottom,
+                      }}
+                    >
+                      {t('professions.step3_subtitle')}
+                    </Text>
+
+                    {registrationProfessions.map((profession, index) => (
+                      <View
+                        key={index}
                         style={{
-                          fontSize: sizes.step3SubtitleFontSize,
-                          color: theme.textColor,
-                          fontFamily: 'Rubik-SemiBold',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          backgroundColor: theme.formInputBackground,
+                          borderRadius: sizes.step3CardBorderRadius,
+                          paddingVertical: sizes.step3CardBorderRadius,
+                          paddingHorizontal: sizes.step3CardPadding,
+                          marginBottom: sizes.step3SelectorMarginBottom,
+                          height: sizes.step3CardHeight,
                         }}
-                        numberOfLines={1}
                       >
-                        {profession.title}
-                      </Text>
+                        <View style={{ flex: 1 }}>
+                          <Text
+                            style={{
+                              fontSize: sizes.step3SubtitleFontSize,
+                              color: theme.textColor,
+                              fontFamily: 'Rubik-SemiBold',
+                            }}
+                            numberOfLines={1}
+                          >
+                            {profession.title}
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: sizes.step3DescFontSize,
+                              color: theme.textColor,
+                              marginTop: 2,
+                            }}
+                            numberOfLines={1}
+                          >
+                            {profession.subtitle}
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          onPress={() =>
+                            setRegistrationProfessions((prev) =>
+                              prev.filter((_, i) => i !== index),
+                            )
+                          }
+                          style={{ [isRTL ? 'marginRight' : 'marginLeft']: sizes.step3CardBorderRadius }}
+                        >
+                          <Image
+                            source={icons.cross}
+                            style={{
+                              width: sizes.step3RemoveIconSize,
+                              height: sizes.step3RemoveIconSize,
+                              tintColor: theme.errorTextColor,
+                            }}
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+
+                    {/* Add profession button */}
+                    <TouchableOpacity
+                      onPress={() => setIsRegisterProfessionModalVisible(true)}
+                      style={{
+                        height: sizes.step3CardHeight,
+                        backgroundColor: theme.formInputBackground,
+                        borderRadius: sizes.step3CardBorderRadius,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        marginBottom: sizes.step3CardBorderRadius,
+                        flexDirection: 'row',
+                        gap: 8,
+                      }}
+                    >
+                      <Image
+                        source={icons.plus}
+                        style={{
+                          width: sizes.step3PlusIconSize,
+                          height: sizes.step3PlusIconSize,
+                          tintColor: theme.unactiveTextColor,
+                        }}
+                      />
                       <Text
                         style={{
                           fontSize: sizes.step3DescFontSize,
-                          color: theme.textColor,
-                          marginTop: 2,
+                          color: theme.unactiveTextColor,
+                          fontFamily: 'Rubik-Regular',
                         }}
-                        numberOfLines={1}
                       >
-                        {profession.subtitle}
+                        {t('professions.step3_title')}
                       </Text>
-                    </View>
-                    <TouchableOpacity
-                      onPress={() =>
-                        setRegistrationProfessions((prev) =>
-                          prev.filter((_, i) => i !== index),
-                        )
-                      }
-                      style={{ marginLeft: sizes.step3CardBorderRadius }}
-                    >
-                      <Image
-                        source={icons.cross}
-                        style={{
-                          width: sizes.step3RemoveIconSize,
-                          height: sizes.step3RemoveIconSize,
-                          tintColor: theme.errorTextColor,
-                        }}
-                      />
                     </TouchableOpacity>
                   </View>
-                ))}
-
-                {/* Add profession card */}
-                <TouchableOpacity
-                  onPress={() => setIsRegisterProfessionModalVisible(true)}
-                  style={{
-                    height: sizes.step3CardHeight,
-                    backgroundColor: theme.formInputBackground,
-                    borderRadius: sizes.step3CardBorderRadius,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    marginBottom: sizes.step3CardBorderRadius,
-                  }}
-                >
-                  <Image
-                    source={icons.plus}
-                    style={{
-                      width: sizes.step3PlusIconSize,
-                      height: sizes.step3PlusIconSize,
-                      tintColor: theme.unactiveTextColor,
-                    }}
-                  />
-                </TouchableOpacity>
+                )}
               </ScrollView>
 
               <ProgressDots />
@@ -1045,7 +1166,7 @@ export default function RegisterScreen() {
                     )
                   }
                   onPress={handleSubmit}
-                  disabled={loading}
+                  disabled={loading || (selectedRole === 'provider' && registrationProfessions.length === 0)}
                   customStyle={{ btn: { flex: 1 } }}
                 />
               </View>

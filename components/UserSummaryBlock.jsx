@@ -22,6 +22,7 @@ import { useWindowInfo } from '../context/windowContext';
 import { useLocalization } from '../src/services/useLocalization';
 import { logError } from '../utils/log_util';
 import { useNotification } from '../src/render';
+import JobExpectationsBadge from './ui/JobExpectationsBadge';
 
 const UserSummaryBlock = ({
   user,
@@ -29,6 +30,7 @@ const UserSummaryBlock = ({
   currentJobId,
   closeAllModal,
   jobAgreement,
+  isClientCreator = false,
 }) => {
   const {
     themeController,
@@ -47,7 +49,7 @@ const UserSummaryBlock = ({
   const [showContactInfo, setShowContactInfo] = useState(false);
   const [purchaseModalVisible, setPurchaseModalVisible] = useState(false);
 
-  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
+  const { width, height, isLandscape, effectiveSidebarWidth } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   // компактные размеры для веб-альбомной (меньше, чем на мобильном)
@@ -61,8 +63,10 @@ const UserSummaryBlock = ({
       smallFont: scale(14),
       sectionTitleSize: scale(18),
       small: scale(14),
+      starSize: scale(24),
+      ratingSize: scale(18),
       inputFont: isWebLandscape ? height * 0.013 : mobile(10),
-      padding: isWebLandscape ? height * 0.009 : mobile(8),
+      padding: isWebLandscape ? web(16) : mobile(8),
       paddingHorizontal: scale(17),
       margin: isWebLandscape ? height * 0.01 : mobile(10),
       borderRadius: scale(8),
@@ -110,7 +114,16 @@ const UserSummaryBlock = ({
       createRequestBtnHeight: isWebLandscape
         ? scaleByHeight(62, height)
         : scaleByHeightMobile(62, height),
-      aboutMaxHeight: isWebLandscape ? web(100) : mobile(100),
+      aboutMaxHeight: isWebLandscape ? web(100) : mobile(100), headerMarginBottom: scale(20),
+      modalHeaderPadding: scale(20),
+      expBadgePaddingHorizontal: scale(10),
+      expBadgePaddingVertical: scale(2),
+      expBadgeRadius: scale(4),
+      placeholderHeight: scale(24),
+      placeholderMarginVertical: scale(8),
+      placeholderSmallWidth: scale(150),
+      placeholderLargeWidth: scale(220),
+      lockIconSize: scale(60),
     };
   }, [isWebLandscape, width, height]);
 
@@ -128,6 +141,7 @@ const UserSummaryBlock = ({
     email,
     phoneNumber,
     is_deleted,
+    executor_expectations,
   } = user.id ? user : user._j;
 
   const handleUserRevealTry = async (payload = {}) => {
@@ -182,15 +196,70 @@ const UserSummaryBlock = ({
     return parts.join(' ');
   };
 
+  const renderStars = (rating) => {
+    const stars = [];
+    const fullStars = Math.floor(rating || 0);
+    const hasHalfStar = (rating || 0) - fullStars >= 0.5;
+
+    for (let i = 1; i <= 5; i++) {
+      let iconSource = icons.star;
+
+      if (i > fullStars) {
+        if (i === fullStars + 1 && hasHalfStar) {
+          iconSource = icons.halfStar;
+        } else {
+          iconSource = icons.emptyStar;
+        }
+      }
+
+      stars.push(
+        <Image
+          key={i}
+          source={iconSource}
+          style={{
+            width: sizes.starSize,
+            height: sizes.starSize,
+          }}
+        />
+      );
+    }
+    return (
+      <View
+        style={{
+          flexDirection: isRTL ? 'row-reverse' : 'row',
+          alignItems: 'center',
+          gap: 2,
+        }}
+      >
+        {stars}
+        <Text
+          style={{
+            fontSize: sizes.ratingSize,
+            color: themeController.current?.textColor,
+            marginLeft: isRTL ? 0 : 4,
+            marginRight: isRTL ? 4 : 0,
+            fontFamily: 'Rubik-Bold',
+          }}
+        >
+          {rating ? rating.toFixed(1).replace('.', ',') : '0,0'}
+        </Text>
+      </View>
+    );
+  };
+
   return (
     <>
       {/* Summary Block */}
-      <View
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => setModalVisible(true)}
         style={[
           styles.summaryContainer,
           // isRTL && { flexDirection: 'row-reverse' },
           {
-            height: sizes.containerHeight,
+            height: 'auto',
+            minHeight: sizes.containerHeight,
+            paddingVertical: sizes.padding,
             width: sizes.cardWidth,
             flexDirection: isRTL ? 'row-reverse' : 'row',
             backgroundColor: themeController.current?.formInputBackground,
@@ -200,118 +269,123 @@ const UserSummaryBlock = ({
         ]}
       >
         <View
-          style={[
-            styles.avatarNameContainer,
-            {
-              flexDirection: isRTL ? 'row-reverse' : 'row',
-              gap: sizes.providerInfoGap,
-            },
-          ]}
+          style={{
+            flex: 1,
+            flexDirection: isRTL ? 'row-reverse' : 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
         >
-          {is_deleted ? (
-            <View
-              style={[
-                styles.avatarPlaceholder,
-                {
-                  width: sizes.avatar,
-                  height: sizes.avatar,
-                  borderRadius: sizes.avatar / 2,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  backgroundColor: themeController.current?.backgroundColor,
-                },
-              ]}
-            >
-              <Text
-                style={{
-                  fontSize: sizes.smallFont,
-                  color: themeController.current?.unactiveTextColor,
-                  fontFamily: 'Rubik-SemiBold',
-                }}
-              >
-                {t('common.deleted')}
-              </Text>
-            </View>
-          ) : avatar ? (
-            <Image
-              source={{ uri: avatar }}
-              style={[
-                styles.avatar,
-                {
-                  width: sizes.avatar,
-                  height: sizes.avatar,
-                  borderRadius: sizes.avatar / 2,
-                },
-              ]}
-            />
-          ) : (
-            <View
-              style={[
-                styles.avatarPlaceholder,
-                {
-                  width: sizes.avatar,
-                  height: sizes.avatar,
-                  borderRadius: sizes.avatar / 2,
-                },
-              ]}
-            >
-              <Image
-                source={
-                  themeController.current.isTheme
-                    ? icons.defaultAvatar
-                    : icons.monotoneAvatar
-                }
-                style={{ width: '100%', height: '100%' }}
-              />
-            </View>
-          )}
-          <View>
-            <Text
-              style={{
-                fontSize: sizes.font,
-                color: themeController.current?.textColor,
-                fontFamily: 'Rubik-SemiBold',
-              }}
-            >
-              {is_deleted
-                ? t('profile.deleted_user')
-                : usersReveal.contains(userId)
-                ? `${name} ${surname}`
-                : `${name?.[0] ?  name?.[0]+'.' : ''} ${surname?.[0] ? surname?.[0]+'.' : ''}`}
-            </Text>
-            {!is_deleted && (
-              <Text
-                style={{
-                  fontSize: sizes.smallFont,
-                  color: themeController.current?.unactiveTextColor,
-                }}
-              >
-                {LICENSES[professions?.[0]]}
-              </Text>
-            )}
-          </View>
-        </View>
-        <TouchableOpacity
-          onPress={() => setModalVisible(true)}
-          style={[
-            {
-              // borderRadius: sizes.borderRadius,
-            },
-          ]}
-        >
-          <Text
+          <View
             style={[
-              styles.visitButtonText,
+              styles.avatarNameContainer,
               {
-                color: themeController.current?.primaryColor,
-                fontSize: sizes.font,
+                flexDirection: isRTL ? 'row-reverse' : 'row',
+                gap: sizes.providerInfoGap * 1.5,
+                flex: 1,
               },
             ]}
           >
-            {t('userSummary.visit', { defaultValue: 'Visit' })}
-          </Text>
-        </TouchableOpacity>
-      </View>
+            {is_deleted ? (
+              <View
+                style={[
+                  styles.avatarPlaceholder,
+                  {
+                    width: sizes.avatar * 1.5,
+                    height: sizes.avatar * 1.5,
+                    borderRadius: (sizes.avatar * 1.5) / 2,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: themeController.current?.backgroundColor,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    fontSize: sizes.smallFont,
+                    color: themeController.current?.unactiveTextColor,
+                    fontFamily: 'Rubik-SemiBold',
+                  }}
+                >
+                  {t('common.deleted')}
+                </Text>
+              </View>
+            ) : avatar ? (
+              <Image
+                source={{ uri: avatar }}
+                style={[
+                  styles.avatar,
+                  {
+                    width: sizes.avatar * 1.5,
+                    height: sizes.avatar * 1.5,
+                    borderRadius: (sizes.avatar * 1.5) / 2,
+                  },
+                ]}
+              />
+            ) : (
+              <View
+                style={[
+                  styles.avatarPlaceholder,
+                  {
+                    width: sizes.avatar * 1.5,
+                    height: sizes.avatar * 1.5,
+                    borderRadius: (sizes.avatar * 1.5) / 2,
+                  },
+                ]}
+              >
+                <Image
+                  source={
+                    themeController.current.isTheme
+                      ? icons.monotoneAvatar
+                      : icons.defaultAvatar
+                  }
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </View>
+            )}
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: sizes.font,
+                  color: themeController.current?.textColor,
+                  fontFamily: 'Rubik-SemiBold',
+                }}
+              >
+                {is_deleted
+                  ? t('profile.deleted_user')
+                  : usersReveal.contains(userId)
+                    ? `${name} ${surname}`
+                    : `${name} ${surname?.[0] ? surname?.[0] + '.' : ''}`}
+              </Text>
+              {!is_deleted && (
+                <Text
+                  style={{
+                    fontSize: sizes.smallFont,
+                    color: themeController.current?.unactiveTextColor,
+                    marginBottom: executor_expectations ? 4 : 0,
+                  }}
+                >
+                  {LICENSES[professions?.[0]] || professions?.[0] || ''}
+                </Text>
+              )}
+              {isClientCreator && executor_expectations && (
+                <JobExpectationsBadge
+                  expectations={executor_expectations}
+                  isRTL={isRTL}
+                  containerStyle={{ marginTop: 4, justifyContent: 'flex-start' }}
+                  badgeStyle={{ paddingVertical: 2, paddingHorizontal: 6 }}
+                  textStyle={{ fontSize: sizes.smallFont - 2 }}
+                />
+              )}
+            </View>
+          </View>
+
+          {/* Right side: Rating */}
+          <View style={{ alignItems: isRTL ? 'flex-start' : 'flex-end' }}>
+            {user?.rating && renderStars(user.rating)}
+          </View>
+        </View>
+      </TouchableOpacity>
 
       {/* Fullscreen Modal (прозрачная, клик по пустой зоне закрывает) */}
       <Modal visible={modalVisible} animationType='slide' transparent>
@@ -324,7 +398,7 @@ const UserSummaryBlock = ({
         >
           <View style={[styles.backdrop]}>
             {/* Контентная панель; клики внутри не закрывают */}
-            <TouchableWithoutFeedback onPress={() => {}}>
+            <TouchableWithoutFeedback onPress={() => { }}>
               <View
                 style={[
                   styles.panel,
@@ -335,7 +409,7 @@ const UserSummaryBlock = ({
                     paddingBottom: sizes.padding,
                     paddingHorizontal: sizes.pagePaddingHorizontal,
                     // Веб-альбомная: узкая панель справа, с пустой кликабельной зоной слева
-                    width: isWebLandscape ? width - sidebarWidth : '100%',
+                    width: isWebLandscape ? width - effectiveSidebarWidth : '100%',
                     alignSelf: isRTL ? 'flex-start' : 'flex-end',
                     height: '100%',
                   },
@@ -436,26 +510,38 @@ const UserSummaryBlock = ({
                       ]}
                     />
                   )}
-                  <Text
-                    style={[
-                      styles.modalName,
-                      {
-                        fontSize: sizes.nameSize,
-                        fontFamily: 'Rubik-Bold',
-                        textAlign: 'center',
-                        color: themeController.current?.textColor,
-                        marginBottom: professions?.[0] && !is_deleted
+                  <View
+                    style={{
+                      flexDirection: isRTL ? 'row-reverse' : 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: sizes.badgeGap / 2,
+                      marginBottom:
+                        professions?.[0] && !is_deleted
                           ? sizes.titleMarginBottom
                           : sizes.professionMarginBottom,
-                      },
-                    ]}
+                    }}
                   >
-                    {is_deleted
-                      ? t('profile.user_deleted')
-                      : usersReveal.contains(userId)
-                      ? `${name} ${surname}`
-                      : `${name?.[0] ?  name?.[0]+'.' : ''} ${surname?.[0] ? surname?.[0]+'.' : ''}`}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.modalName,
+                        {
+                          fontSize: sizes.nameSize,
+                          fontFamily: 'Rubik-Bold',
+                          textAlign: 'center',
+                          color: themeController.current?.textColor,
+                          marginBottom: 0,
+                        },
+                      ]}
+                    >
+                      {is_deleted
+                        ? t('profile.user_deleted')
+                        : usersReveal.contains(userId)
+                          ? `${name} ${surname}`
+                          : `${name?.[0] ? name?.[0] + '.' : ''} ${surname?.[0] ? surname?.[0] + '.' : ''
+                          }`}
+                    </Text>
+                  </View>
                   {professions?.[0] && !is_deleted && (
                     <Text
                       style={{
@@ -485,11 +571,11 @@ const UserSummaryBlock = ({
                       isWebLandscape && { width: '66%' },
                     ]}
                   >
-                    {/* Specialist of */}
+                    {/* Professions */}
                     {professions && professions?.length > 0 && !is_deleted && (
                       <View
                         style={[
-                          isWebLandscape && {
+                          {
                             width: '100%',
                             marginBottom: sizes.infoSectionMarginBottom,
                           },
@@ -505,43 +591,53 @@ const UserSummaryBlock = ({
                             },
                           ]}
                         >
-                          {t('profile.specialist_of', { defaultValue: 'Specialist of' })}
+                          {t('profile.professions', { defaultValue: 'Professions' })}
                         </Text>
-                        <View
-                          style={[
-                            styles.wrapRow,
-                            { gap: sizes.badgeGap },
-                            isRTL && { justifyContent: 'flex-end' },
-                          ]}
-                        >
+                        <View style={{ gap: sizes.badgeGap }}>
                           {professions?.map((p, i) => {
                             const typeLabel = tField(p.job_type, 'name');
                             const subtypeLabel = tField(p.job_subtype, 'name');
                             const expLabel = formatExperience(p.experience);
-                            const chipLabel = expLabel
-                              ? `${typeLabel} · ${subtypeLabel} · ${expLabel}`
-                              : `${typeLabel} · ${subtypeLabel}`;
                             return (
                               <View
                                 key={i}
-                                style={[
-                                  styles.typeBadge,
-                                  {
-                                    borderRadius: sizes.borderRadius / 2,
-                                    borderColor: themeController.current?.formInputLabelColor,
-                                    paddingHorizontal: sizes.badgePaddingHorizontal,
-                                    height: sizes.badgeHeight,
-                                  },
-                                ]}
+                                style={{
+                                  flexDirection: isRTL ? 'row-reverse' : 'row',
+                                  alignItems: 'center',
+                                  backgroundColor: themeController.current?.formInputBackground,
+                                  padding: sizes.padding,
+                                  borderRadius: sizes.borderRadius,
+                                }}
                               >
-                                <Text
+                                <Text style={{ fontSize: sizes.font, color: themeController.current?.textColor, fontFamily: 'Rubik-Medium' }}>
+                                  {typeLabel}
+                                </Text>
+                                <Image
+                                  source={icons.forward}
                                   style={{
-                                    fontSize: sizes.small,
-                                    color: themeController.current?.formInputLabelColor,
+                                    width: sizes.iconSmall,
+                                    height: sizes.iconSmall,
+                                    tintColor: themeController.current?.unactiveTextColor,
+                                    marginHorizontal: sizes.badgeGap,
+                                    transform: [{ rotate: isRTL ? '180deg' : '0deg' }],
+                                  }}
+                                />
+                                <Text style={{ fontSize: sizes.font, color: themeController.current?.textColor }}>
+                                  {subtypeLabel}
+                                </Text>
+                                <View style={{ flex: 1 }} />
+                                <View
+                                  style={{
+                                    backgroundColor: `${themeController.current?.primaryColor}1A`,
+                                    paddingHorizontal: sizes.expBadgePaddingHorizontal,
+                                    paddingVertical: sizes.expBadgePaddingVertical,
+                                    borderRadius: sizes.expBadgeRadius,
                                   }}
                                 >
-                                  {chipLabel}
-                                </Text>
+                                  <Text style={{ fontSize: sizes.smallFont, color: themeController.current?.primaryColor, fontFamily: 'Rubik-Medium' }}>
+                                    {expLabel}
+                                  </Text>
+                                </View>
                               </View>
                             );
                           })}
@@ -606,8 +702,8 @@ const UserSummaryBlock = ({
                     {/* About */}
                     <View
                       style={[
-                        isWebLandscape && {
-                          width: '48%',
+                        {
+                          width: '100%',
                           marginBottom: sizes.infoSectionMarginBottom,
                         },
                       ]}
@@ -638,11 +734,10 @@ const UserSummaryBlock = ({
                       </Text>
                     </View>
 
-                    {/* Contact Info */}
                     <View
                       style={[
-                        isWebLandscape && {
-                          width: '48%',
+                        {
+                          width: '100%',
                           marginBottom: sizes.infoSectionMarginBottom,
                         },
                       ]}
@@ -661,47 +756,71 @@ const UserSummaryBlock = ({
                           defaultValue: 'Contact information',
                         })}
                       </Text>
-                      {!usersReveal.contains(user.id) ? (
-                        <TouchableOpacity
-                          style={[
-                            styles.primaryBtn,
-                            {
-                              backgroundColor:
-                                themeController.current
-                                  ?.buttonColorPrimaryDefault,
-                              height: sizes.unlockContactBtnHeight,
-                              justifyContent: 'center',
-                              borderRadius: sizes.btnRadius,
-                              width: 'max-content',
-                              alignSelf: isRTL ? 'flex-end' : 'flex-start',
-                              paddingHorizontal:
-                                sizes.unlockContactBtnPaddingHorizontal,
-                            },
-                          ]}
-                          onPress={() => setPurchaseModalVisible(true)}
+                      {!(status === 'store-in-progress' || status === 'store-done' || status === 'jobs-in-progress' || status === 'jobs-done') ? (
+                        <View
+                          style={{
+                            backgroundColor: themeController.current?.formInputBackground,
+                            padding: sizes.padding,
+                            borderRadius: sizes.borderRadius,
+                            flexDirection: isRTL ? 'row-reverse' : 'row',
+                            alignItems: 'center',
+                          }}
                         >
-                          <Text
-                            style={[
-                              {
-                                fontSize: sizes.unlockContactBtnFontSize,
-                                color:
-                                  themeController.current
-                                    ?.buttonTextColorPrimary,
-                              },
-                            ]}
+                          <View
+                            style={{
+                              [isRTL ? 'marginLeft' : 'marginRight']: sizes.padding,
+                            }}
                           >
-                            {t('common.purchase')}
-                          </Text>
-                        </TouchableOpacity>
+                            <Image
+                              source={icons.lock}
+                              style={{ width: sizes.lockIconSize, height: sizes.lockIconSize }}
+                            />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text
+                              style={{
+                                fontSize: sizes.font,
+                                color: themeController.current?.textColor,
+                                fontFamily: 'Rubik-Medium',
+                                textAlign: isRTL ? 'right' : 'left',
+                              }}
+                            >
+                              {status === 'store-waiting' || status === 'store-new'
+                                ? t('profile.available_after_selection')
+                                : t('profile.available_if_creator_chooses')}
+                            </Text>
+                            <View
+                              style={{
+                                flexDirection: isRTL ? 'row-reverse' : 'row',
+                                gap: sizes.badgeGap * 2,
+                                marginVertical: sizes.placeholderMarginVertical,
+                                justifyContent: isRTL ? 'flex-end' : 'flex-start',
+                              }}
+                            >
+                              <View style={{ width: sizes.placeholderSmallWidth, height: sizes.placeholderHeight, backgroundColor: `${themeController.current?.primaryColor}1A`, borderRadius: sizes.expBadgeRadius }} />
+                              <View style={{ width: sizes.placeholderLargeWidth, height: sizes.placeholderHeight, backgroundColor: `${themeController.current?.primaryColor}1A`, borderRadius: sizes.expBadgeRadius }} />
+                            </View>
+                            <Text
+                              style={{
+                                fontSize: sizes.smallFont,
+                                color: themeController.current?.formInputLabelColor,
+                                textAlign: isRTL ? 'right' : 'left',
+                              }}
+                            >
+                              {status === 'store-waiting' || status === 'store-new'
+                                ? t('profile.contact_reveal_provider_confirms')
+                                : t('profile.contact_reveal_choosen')}
+                            </Text>
+                          </View>
+                        </View>
                       ) : (
                         <View
-                          style={
-                            isWebLandscape && {
-                              flexDirection: isRTL ? 'row-reverse' : 'row',
-                              alignItems: 'center',
-                              height: sizes.contactInfoHeight,
-                            }
-                          }
+                          style={{
+                            flexDirection: isRTL ? 'row-reverse' : 'row',
+                            alignItems: 'center',
+                            height: sizes.contactInfoHeight,
+                            gap: sizes.padding,
+                          }}
                         >
                           {phoneNumber && (
                             <View
@@ -713,10 +832,10 @@ const UserSummaryBlock = ({
                               <Image
                                 source={icons.mobile}
                                 style={{
-                                  width: sizes.icon,
-                                  height: sizes.icon,
-                                  [isRTL ? 'marginLeft' : 'marginRight']:
-                                    sizes.iconMargin,
+                                  width: sizes.iconSmall,
+                                  height: sizes.iconSmall,
+                                  [isRTL ? 'marginLeft' : 'marginRight']: sizes.iconMargin,
+                                  tintColor: themeController.current?.primaryColor,
                                 }}
                               />
                               <Text
@@ -724,9 +843,7 @@ const UserSummaryBlock = ({
                                   styles.contactInfo,
                                   {
                                     fontSize: sizes.small,
-                                    color:
-                                      themeController.current
-                                        ?.unactiveTextColor,
+                                    color: themeController.current?.textColor,
                                   },
                                 ]}
                               >
@@ -744,19 +861,17 @@ const UserSummaryBlock = ({
                               <Image
                                 source={icons.emailContact}
                                 style={{
-                                  width: sizes.icon,
-                                  height: sizes.icon,
-                                  [isRTL ? 'marginLeft' : 'marginRight']:
-                                    sizes.iconMargin,
+                                  width: sizes.iconSmall,
+                                  height: sizes.iconSmall,
+                                  [isRTL ? 'marginLeft' : 'marginRight']: sizes.iconMargin,
+                                  tintColor: themeController.current?.primaryColor,
                                 }}
                               />
                               <Text
                                 style={[
                                   {
                                     fontSize: sizes.small,
-                                    color:
-                                      themeController.current
-                                        ?.unactiveTextColor,
+                                    color: themeController.current?.textColor,
                                   },
                                 ]}
                               >
@@ -794,26 +909,6 @@ const UserSummaryBlock = ({
                       </Text>
                     ) : (
                       <>
-                        {!usersReveal.contains(user.id) && (
-                          <Text
-                            style={[
-                              {
-                                color: '#f33',
-                                textAlign: 'center',
-                                fontSize: sizes.small,
-                                marginBottom: sizes.showContactInfoMarginBottom,
-                              },
-                              isWebLandscape && {
-                                textAlign: isRTL ? 'right' : 'left',
-                              },
-                            ]}
-                          >
-                            {t('userSummary.openContactHint', {
-                              defaultValue:
-                                'Open contact information to be able to approve provider',
-                            })}
-                          </Text>
-                        )}
                         <TouchableOpacity
                           style={[
                             styles.primaryBtn,
@@ -932,8 +1027,16 @@ export default UserSummaryBlock;
 
 const styles = StyleSheet.create({
   summaryContainer: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    // borderWidth: 1,
+    // borderColor: 'rgba(0,0,0,0.05)',
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.05,
+    // shadowRadius: 4,
+    // elevation: 2,
   },
   avatarNameContainer: {
     alignItems: 'center',

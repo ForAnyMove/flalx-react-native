@@ -80,4 +80,8 @@ export const icons = {
   method_paypal: require('../assets/icon/paypal-method.png'),
   // method_apple_pay: require('../assets/icon/method_apple_pay.png'),
   // method_google_pay: require('../assets/icon/method_google_pay.png'),
+  calendar: require('../assets/icon/calendar.png'),
+  salary: require('../assets/icon/salary.png'),
+  chosen_user: require('../assets/icon/chosen_user.png'),
+  lock: require('../assets/icon/lock.png'),
 };

@@ -30,7 +30,7 @@ export default function Profession() {
 
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
-  const { width, height, sidebarWidth, isLandscape } = useWindowInfo();
+  const { width, height, effectiveSidebarWidth, isLandscape } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
 
   const [systemAddingPopupVisible, setSystemAddingPopupVisible] =
@@ -46,7 +46,7 @@ export default function Profession() {
     ? [SystemProfessions, MyProfessions]
     : [MyProfessions, SystemProfessions];
 
-  const SCREEN_WIDTH = isWebLandscape ? width - sidebarWidth : width;
+  const SCREEN_WIDTH = isWebLandscape ? width - effectiveSidebarWidth : width;
 
   const screenWidthRef = useRef(SCREEN_WIDTH);
   const [screenWidth, setScreenWidth] = useState(SCREEN_WIDTH);
