@@ -24,7 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { t } from 'i18next';
 import SubscriptionsModal from './SubscriptionsModal';
-import { createJob } from '../src/api/jobs';
+import { createJob, payForJob } from '../src/api/jobs';
 import { useWebView } from '../context/webViewContext';
 import AutocompletePicker from './ui/AutocompletePicker';
 import AddressPicker from './ui/AddressPicker';
@@ -34,6 +34,7 @@ import CustomExperiencePicker from './ui/CustomExperiencePicker';
 import { formatCurrency } from '../utils/currency_formatter';
 import { logError } from '../utils/log_util';
 import CustomTextInput from './ui/CustomTextInput';
+import PublishStatusModal from './PublishStatusModal';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -61,13 +62,35 @@ async function editJobById(jobId, updates, session) {
   }
 }
 
-async function createNewJob(jobData, session, openWebView, updateJobsList) {
+async function createNewJob(jobData, session, openWebView, updateJobsList, paymentOptions = {}) {
   try {
     const data = await createJob(jobData, session);
-    if (data.paymentUrl) {
+    if (data.job) {
+      if (
+        paymentOptions.useCoupon ||
+        paymentOptions.paymentMethod ||
+        paymentOptions.savedPaymentMethodId
+      ) {
+        try {
+          const payResult = await payForJob(data.job.id, session, paymentOptions);
+          if (payResult.paymentUrl) {
+            openWebView(payResult.paymentUrl, () => {});
+          } else {
+            updateJobsList?.();
+          }
+        } catch (payErr) {
+          logError('Ошибка оплаты job:', payErr.message);
+          updateJobsList?.();
+        }
+      } else {
+        if (data.paymentUrl) {
+          openWebView(data.paymentUrl, () => {});
+        } else {
+          updateJobsList?.();
+        }
+      }
+    } else if (data.paymentUrl) {
       openWebView(data.paymentUrl, () => {});
-    } else if (data.job) {
-      updateJobsList?.();
     }
   } catch (error) {
     logInfo('Ошибка создания job:', error.message);
@@ -329,6 +352,7 @@ export default function NewJobModal({
   
 
   const [statusModalVisible, setStatusModalVisible] = useState(false);
+  const [publishStep, setPublishStep] = useState(1);
   const [plansModalVisible, setPlansModalVisible] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -371,7 +395,7 @@ export default function NewJobModal({
     return null;
   };
 
-  const handleCreate = () => {
+  const handleCreate = (paymentOptions = {}) => {
     const newErrors = {};
     requiredFields.forEach((field) => {
       // Проверяем, заполнено ли поле. Для location нужна особая проверка.
@@ -457,10 +481,16 @@ export default function NewJobModal({
 
       setAppLoading(true);
 
-      createNewJob(newJob, session, openWebView, () => {
-        jobsController.reloadCreator();
-        setAppLoading(false);
-      }).then(() => {
+      createNewJob(
+        newJob,
+        session,
+        openWebView,
+        () => {
+          jobsController.reloadCreator();
+          setAppLoading(false);
+        },
+        paymentOptions
+      ).then(() => {
         setAppLoading(false);
       });
     }
@@ -1567,340 +1597,28 @@ export default function NewJobModal({
         </View>
       </Modal> */}
       {/* jobType PICKER MODAL */}
-      <Modal visible={statusModalVisible} animationType='fade' transparent>
-        {/* кликабельная подложка с отступом под сайдбар на web-landscape */}
-        <View
-          style={[
-            styles.backdrop,
-            { flexDirection: isRTL ? 'row-reverse' : 'row' },
-          ]}
-        >
-          {/* пустая зона над сайдбаром — клик закрывает */}
-          {/* {isWebLandscape ? (
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={() => setStatusModalVisible(false)}
-              style={{ width: effectiveSidebarWidth, height: '100%' }}
-            />
-          ) : null} */}
+      <PublishStatusModal
+        visible={statusModalVisible}
+        onClose={() => {
+          setStatusModalVisible(false);
+          setPublishStep(1);
+        }}
+        jobType={jobType}
+        setJobType={setJobType}
+        step={publishStep}
+        setStep={setPublishStep}
+        onSubmit={(paymentOptions) => {
+          if (paymentOptions?.viewPlans) {
+            setStatusModalVisible(false);
+            setPlansModalVisible(true);
+          } else {
+            setStatusModalVisible(false);
+            setPublishStep(1);
+            handleCreate(paymentOptions);
+          }
+        }}
+      />
 
-          {/* рабочая область — центрируем карточку */}
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={() => setStatusModalVisible(false)}
-            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}
-          >
-            <View
-              style={[
-                styles.centerArea,
-                // { width: isWebLandscape ? width - effectiveSidebarWidth : '100%' },
-                { width: '100%' },
-              ]}
-            >
-              {/* сама карточка; клики внутри НЕ закрывают */}
-              <TouchableOpacity
-                activeOpacity={1}
-                onPress={(e) => e.stopPropagation()}
-                style={[
-                  styles.modalCard,
-                  {
-                    backgroundColor: themeController.current?.backgroundColor,
-                    borderRadius: sizes.modalRadius,
-                    padding: sizes.modalPadding,
-                    width: sizes.modalCardW,
-                    position: 'relative',
-                    alignItems: 'center',
-                  },
-                ]}
-              >
-                <TouchableOpacity
-                  onPress={() => setStatusModalVisible(false)}
-                  style={{
-                    position: 'absolute',
-                    top: sizes.modalCrossTopRightPos,
-                    right: sizes.modalCrossTopRightPos,
-                  }}
-                >
-                  <Image
-                    source={icons.cross}
-                    style={{
-                      width: sizes.iconSize,
-                      height: sizes.iconSize,
-                      tintColor: themeController.current?.textColor,
-                    }}
-                    resizeMode='contain'
-                  />
-                </TouchableOpacity>
-                {/* заголовок */}
-                <Text
-                  style={{
-                    fontSize: sizes.modalTitle,
-                    fontFamily: 'Rubik-Bold',
-                    color: themeController.current?.textColor,
-                    textAlign: 'center',
-                    marginBottom: sizes.modalTitleMarginBottom,
-                  }}
-                >
-                  {t('newJob.statusModal.title', {
-                    defaultValue: 'Choose the post type to publish',
-                  })}
-                </Text>
-
-                {/* подзаголовок (второй ряд) */}
-                {/* <Text
-                  style={{
-                    fontSize: sizes.modalSub,
-                    color: themeController.current?.formInputLabelColor,
-                    textAlign: 'center',
-                    marginBottom: sizes.modalPadding,
-                  }}
-                >
-                  {t('newJob.statusModal.subtitle', {
-                    defaultValue: 'Select how your request will be shown',
-                  })}
-                </Text> */}
-
-                {/* плашки статусов */}
-                <View
-                  style={{
-                    flexDirection: isRTL ? 'row-reverse' : 'row',
-                    flexWrap: 'wrap',
-                    gap: sizes.chipGap,
-                    marginBottom: sizes.chipMarginBottom,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {jobsController.products.map((opt) => {
-                    const productType = opt.type;
-                    const productName = tField(opt, 'name');
-                    const active = jobType === productType;
-
-                    return (
-                      <TouchableOpacity
-                        key={productType}
-                        onPress={() => setJobType(productType)}
-                        style={[
-                          styles.chip,
-                          {
-                            height: sizes.chipHeight,
-                            paddingHorizontal: sizes.chipPadH,
-                            borderRadius: sizes.modalRadius / 2,
-                            borderWidth: 1,
-                            borderColor: active
-                              ? themeController.current
-                                  ?.buttonColorPrimaryDefault
-                              : themeController.current
-                                  ?.formInputPlaceholderColor,
-                            backgroundColor: active
-                              ? themeController.current
-                                  ?.buttonColorPrimaryDefault
-                              : 'transparent',
-                            flexDirection: isRTL ? 'row-reverse' : 'row',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={{
-                            fontSize: sizes.chipFont,
-                            color: active
-                              ? themeController.current?.buttonTextColorPrimary
-                              : themeController.current
-                                  ?.formInputPlaceholderColor,
-                          }}
-                        >
-                          {productName}
-                        </Text>
-
-                        {/* маленький PRO-бейдж для некоторых опций */}
-                        {/* {opt.pro && (
-                    <View
-                      style={{
-                        marginHorizontal: isRTL ? 0 : RFValue(6),
-                        marginLeft: isRTL ? RFValue(6) : 0,
-                        backgroundColor: themeController.current?.formInputBackground,
-                        paddingHorizontal: sizes.chipPadH * 0.5,
-                        paddingVertical: sizes.chipPadV * 0.5,
-                        borderRadius: sizes.modalRadius * 0.7,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: isWebLandscape ? height * 0.012 : RFValue(10),
-                          color: themeController.current?.formInputLabelColor,
-                          fontWeight: '600',
-                        }}
-                      >
-                        {t('newJob.statusModal.proBadge', {
-                          defaultValue: 'For PRO users',
-                        })}
-                      </Text>
-                    </View>
-                  )} */}
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
-                <View
-                  style={{
-                    flexDirection: isRTL ? 'row-reverse' : 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: sizes.chipMarginBottom,
-                    gap: sizes.margin / 4,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: sizes.modalSub,
-                      color: themeController.current?.buttonColorPrimaryDefault,
-                    }}
-                  >
-                    {t('', {
-                      defaultValue: '{{price}}',
-                      price:
-                        subscription.current != null &&
-                        selectedOption.type == 'normal'
-                          ? t('newJob.statusModal.free', {
-                              defaultValue: 'Free',
-                            })
-                          : `${formatCurrency(
-                              selectedOption.price,
-                              selectedOption.currency
-                            )}`,
-                    })}
-                  </Text>
-                  {subscription.current == null &&
-                    selectedOption.type == 'normal' && (
-                      <Text
-                        style={{
-                          fontSize: sizes.modalSub,
-                          color: themeController.current?.formInputLabelColor,
-                          marginLeft: isRTL ? 0 : sizes.margin / 4,
-                          marginRight: isRTL ? sizes.margin / 4 : 0,
-                        }}
-                      >
-                        {t('common.or', { defaultValue: 'or' })}
-                      </Text>
-                    )}
-                  {subscription.current == null &&
-                    selectedOption.type == 'normal' && (
-                      <Text
-                        style={{
-                          fontSize: sizes.modalSub,
-                          color:
-                            themeController.current
-                              ?.buttonColorSecondaryDefault,
-                          marginLeft: isRTL ? 0 : sizes.margin / 4,
-                          marginRight: isRTL ? sizes.margin / 4 : 0,
-                        }}
-                      >
-                        1
-                      </Text>
-                    )}
-                  {subscription.current == null &&
-                    selectedOption.type == 'normal' && (
-                      <Image
-                        source={icons.coupon}
-                        style={{
-                          width: sizes.iconSize,
-                          height: sizes.iconSize,
-                          tintColor:
-                            themeController.current
-                              ?.buttonColorSecondaryDefault,
-                        }}
-                      />
-                    )}
-                </View>
-
-                {(subscription.current == null ||
-                  selectedOption.type != 'normal') && (
-                  <Text
-                    style={{
-                      fontSize: sizes.chipFont,
-                      color: themeController.current?.formInputLabelColor,
-                      marginBottom: sizes.chipMarginBottom,
-                      textAlign: 'center',
-                    }}
-                  >
-                    You must pay for publishing this type of ad after
-                    moderation.
-                  </Text>
-                )}
-
-                {/* кнопка подтверждения с ценой */}
-                <TouchableOpacity
-                  onPress={() => {
-                    handleCreate();
-                    setStatusModalVisible(false);
-                  }}
-                  style={[
-                    {
-                      height: sizes.btnH,
-                      width: sizes.btnW,
-                      borderRadius: sizes.modalRadius,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderWidth: 1,
-                      borderColor:
-                        themeController.current?.buttonColorPrimaryDefault,
-                    },
-                    isWebLandscape && {
-                      marginBottom: sizes.borderRadius * 2,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={{
-                      fontSize: sizes.modalSub,
-                      color: themeController.current?.buttonColorPrimaryDefault,
-                    }}
-                  >
-                    {t('newJob.statusModal.buttons.sendToModeration', {
-                      defaultValue: 'Send to moderation',
-                    })}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* кнопка тарифов */}
-                {/* {subscription.current == null &&
-                  selectedOption?.type == 'normal' && (
-                    <TouchableOpacity
-                      onPress={() => {
-                        setPlansModalVisible(true);
-                        setStatusModalVisible(false);
-                      }}
-                      style={{
-                        height: sizes.btnH,
-                        width: sizes.btnW,
-                        borderRadius: sizes.modalRadius,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor:
-                          themeController.current?.buttonColorPrimaryDefault,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: sizes.modalSub,
-                          color:
-                            themeController.current?.buttonTextColorPrimary,
-                        }}
-                      >
-                        {t('newJob.statusModal.buttons.viewPlans', {
-                          defaultValue: 'See pricing plans',
-                        })}
-                      </Text>
-                    </TouchableOpacity>
-                  )} */}
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </View>
-      </Modal>
 
       {/* PLANS MODAL (простая заглушка, такой же фон/центрирование) */}
       <SubscriptionsModal
