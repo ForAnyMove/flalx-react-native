@@ -84,4 +84,6 @@ export const icons = {
   salary: require('../assets/icon/salary.png'),
   chosen_user: require('../assets/icon/chosen_user.png'),
   lock: require('../assets/icon/lock.png'),
+  access_time: require('../assets/icon/access-time.png'),
+  check: require('../assets/icon/check.png'),
 };

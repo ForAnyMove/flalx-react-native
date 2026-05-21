@@ -13,9 +13,10 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
-import { useWindowInfo } from '../context/windowContext';
-import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
+import { scale, scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
+import BaseActionModal from './BaseActionModal';
+import PaymentFlowStep from './PaymentFlowStep';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 // ─── Internal Helper Components (Defined outside to prevent focus loss) ───
@@ -176,11 +177,14 @@ const InterestRequestModal = ({
   const [selectedMethodId, setSelectedMethodId] = useState(null);
   const [saveForFuture, setSaveForFuture] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({ price: false, date: false });
+  const [showAddMethod, setShowAddMethod] = useState(false);
+  const [newMethodId, setNewMethodId] = useState(null);
 
   // Date Picker States
   const [pickerMode, setPickerMode] = useState(null); // 'start' | 'end' | null
 
   const savedMethods = paymentsManagerController?.savedMethods ?? [];
+  const availableMethods = paymentsManagerController?.availableMethods ?? [];
 
   // ─── Effect: Reset/Initialize ────────────────────────────────────────────────
   useEffect(() => {
@@ -190,6 +194,8 @@ const InterestRequestModal = ({
         setStep(2);
       }
       setFieldErrors({ price: false, date: false });
+      setShowAddMethod(false);
+      setNewMethodId(availableMethods.length > 0 ? availableMethods[0] : null);
       if (savedMethods.length > 0) {
         const defaultMethod = savedMethods.find(m => m.default) || savedMethods[0];
         setSelectedMethodId(defaultMethod.id);
@@ -272,6 +278,17 @@ const InterestRequestModal = ({
       paymentHeaderMarginBottom: scale(24),
       methodsSectionMarginBottom: scale(16),
       confirmTextLineHeight: scale(22),
+      // Method icons sizes
+      paypalMethodHeight: scale(38),
+      paypalMethodWidth: scale(150),
+      hypMethodHeight: scale(34),
+      hypMethodWidth: scale(80),
+      apple_payMethodHeight: scale(38),
+      apple_payMethodWidth: scale(140),
+      google_payMethodHeight: scale(38),
+      google_payMethodWidth: scale(140),
+      methodIconWidth: scale(80),
+      methodIconHeight: scale(34),
     };
   }, [height, width, isWebLandscape]);
 
@@ -296,6 +313,15 @@ const InterestRequestModal = ({
     const paymentOptions = {
       paymentMethodId: selectedMethodId,
       saveForFuture,
+    };
+    onConfirm(formData, paymentOptions);
+  };
+
+  const handleAddMethodPay = () => {
+    const paymentOptions = {
+      paymentMethod: newMethodId,
+      saveForFuture,
+      isNewMethod: true,
     };
     onConfirm(formData, paymentOptions);
   };
@@ -326,92 +352,11 @@ const InterestRequestModal = ({
     }
   };
 
-  // ─── Render Content ──────────────────────────────────────────────────────────
-  const renderForm = () => {
-    const showHeader = hasSubscription;
-    return (
-      <View style={styles.content}>
-        {showHeader ? (
-          <SuccessHeader
-            subtitle={t('interestRequest.sub_active_no_fee', { defaultValue: 'Subscription active - no fee' })}
-            sizes={sizes}
-            theme={theme}
-          />
-        ) : (
-          <PaginationDots activeStep={1} sizes={sizes} theme={theme} t={t} />
-        )}
-
-        <Text style={[styles.modalTitle, { color: theme.textColor, fontSize: sizes.titleSize, marginBottom: sizes.titleBottomMargin }]}>
-          {t('interestRequest.your_application', { defaultValue: 'Your application' })}
-        </Text>
-
-        <FormInput
-          label={t('interestRequest.price_header', { defaultValue: 'Price' })}
-          value={formData.price}
-          onChangeText={(v) => {
-            setFormData(p => ({ ...p, price: v }));
-            setFieldErrors(p => ({ ...p, price: false }));
-          }}
-          placeholder="$0"
-          hint={t('interestRequest.price_hint', { defaultValue: 'Enter the amount you are willing to work for' })}
-          sizes={sizes}
-          theme={theme}
-          isRTL={isRTL}
-          error={fieldErrors.price}
-          t={t}
-        />
-
-        <View style={[styles.timeSection, { marginBottom: sizes.sectionMarginBottom }]}>
-          <Text style={[styles.inputLabelOutside, { color: theme.textColor, fontSize: sizes.sectionHeaderFontSize, marginBottom: sizes.sectionHeaderMarginBottom, textAlign: isRTL ? 'right' : 'left' }]}>
-            {t('interestRequest.time_label', { defaultValue: 'Available time' })}
-          </Text>
-          <View style={[styles.row, { gap: sizes.itemMarginBottom, marginBottom: 8 }]}>
-            <DateInput
-              label={t('common.from', { defaultValue: 'From' })}
-              value={formData.startDate}
-              onPress={() => Platform.OS !== 'web' && setPickerMode('start')}
-              mode="start"
-              sizes={sizes}
-              theme={theme}
-              handleWebDateChange={handleWebDateChange}
-              isRTL={isRTL}
-              t={t}
-              error={fieldErrors.date}
-            />
-            <DateInput
-              label={t('common.to', { defaultValue: 'To' })}
-              value={formData.endDate}
-              onPress={() => Platform.OS !== 'web' && setPickerMode('end')}
-              mode="end"
-              sizes={sizes}
-              theme={theme}
-              handleWebDateChange={handleWebDateChange}
-              isRTL={isRTL}
-              t={t}
-              error={fieldErrors.date}
-            />
-          </View>
-          <Text style={[styles.hintText, { color: theme.unactiveTextColor, fontSize: sizes.hintSize, textAlign: isRTL ? 'right' : 'left' }]}>
-            {t('interestRequest.time_hint', { defaultValue: 'If exact — pick same date for both' })}
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.primaryButton, { backgroundColor: theme.primaryColor, height: sizes.buttonHeight, borderRadius: sizes.borderRadius }]}
-          onPress={handleContinue}
-        >
-          <Text style={[styles.buttonText, { color: theme.buttonTextColorPrimary, fontSize: sizes.buttonTextSize }]}>
-            {hasSubscription ? t('interestRequest.submit_application', { defaultValue: 'Submit application' }) : t('interestRequest.continue_to_payment', { defaultValue: 'Continue to payment' })}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
   const renderPayment = () => {
     const isClientJob = !isBusinessJob;
-    return (
-      <View style={styles.content}>
+
+    const step2Header = (
+      <>
         {isClientJob && <PaginationDots activeStep={2} sizes={sizes} theme={theme} t={t} />}
 
         <View style={[styles.paymentHeader, { marginBottom: sizes.paymentHeaderMarginBottom }]}>
@@ -422,71 +367,52 @@ const InterestRequestModal = ({
             {t('interestRequest.total', { defaultValue: 'Total:' })} <Text style={{ color: theme.primaryColor }}>{price}</Text>
           </Text>
         </View>
+      </>
+    );
 
-        <View style={[styles.methodsSection, { marginBottom: sizes.methodsSectionMarginBottom }]}>
-          <Text style={[styles.methodsLabel, { color: theme.formInputLabelColor, fontSize: sizes.sectionHeaderFontSize, textAlign: isRTL ? 'right' : 'left', marginBottom: sizes.paginationMarginBottom }]}>
-            {t('payment_modal.saved_methods', { defaultValue: 'Saved methods' })}
-          </Text>
-          <ScrollView style={[styles.methodsScroll, { maxHeight: sizes.methodScrollMaxHeight }]} showsVerticalScrollIndicator={false}>
-            {savedMethods.map((method, index) => {
-              const isSelected = selectedMethodId === method.id;
-              const label = method.type === 'paypal' ? `PayPal (${method.details?.title || 'user@email'})` : `Credit card •••• •••• •••• ${method.details?.last4 || '4352'}`;
-              return (
-                <TouchableOpacity
-                  key={method.id}
-                  onPress={() => setSelectedMethodId(method.id)}
-                  style={[styles.methodItem, {
-                    height: sizes.itemHeight,
-                    borderRadius: sizes.itemBorderRadius,
-                    borderColor: isSelected ? theme.primaryColor : 'transparent',
-                    borderWidth: 1,
-                    backgroundColor: isSelected ? theme.primaryColor + '10' : theme.defaultBlocksMockBackground + '33',
-                    paddingHorizontal: sizes.itemPaddingHorizontal,
-                    marginBottom: index === savedMethods.length - 1 ? 0 : sizes.itemMarginBottom,
-                    flexDirection: isRTL ? 'row-reverse' : 'row',
-                  }]}
-                >
-                  <Image source={isSelected ? icons.radioOn : icons.radioOff} style={{ width: sizes.itemCircleSize, height: sizes.itemCircleSize, tintColor: isSelected ? theme.primaryColor : theme.formInputLabelColor }} />
-                  <Text style={[styles.methodLabel, { color: theme.textColor, fontSize: sizes.itemTitleSize, marginLeft: isRTL ? 0 : sizes.itemContentMarginHorizontal, marginRight: isRTL ? sizes.itemContentMarginHorizontal : 0 }]}>{label}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-          <TouchableOpacity style={[styles.addMethodLink, { marginTop: sizes.changeLinkMarginTop }]}>
-            <Text style={[styles.addMethodText, { color: theme.primaryColor, fontSize: sizes.changeLinkTextSize }]}>+Add new payment method</Text>
-          </TouchableOpacity>
-        </View>
-
+    const step2Footer = (
+      <View>
         <TouchableOpacity
-          style={[styles.checkboxRow, { marginBottom: sizes.checkboxMarginBottom, flexDirection: isRTL ? 'row-reverse' : 'row' }]}
-          onPress={() => setSaveForFuture(!saveForFuture)}
+          style={[styles.outlineButton, { borderColor: theme.primaryColor, height: sizes.buttonHeight, borderRadius: sizes.borderRadius, backgroundColor: theme.backgroundColor }]}
+          onPress={handleFinalSubmit}
         >
-          <View style={[styles.checkbox, { width: sizes.checkboxSize, height: sizes.checkboxSize, borderRadius: sizes.checkboxRadius, borderColor: theme.primaryColor, backgroundColor: saveForFuture ? theme.primaryColor : 'transparent', marginRight: isRTL ? 0 : 10, marginLeft: isRTL ? 10 : 0 }]}>
-            {saveForFuture && <Image source={icons.checkDefault} style={{ width: sizes.checkboxSize * 0.7, height: sizes.checkboxSize * 0.7, tintColor: '#fff' }} />}
-          </View>
-          <Text style={[styles.checkboxText, { color: theme.unactiveTextColor, fontSize: sizes.checkboxTextSize, textAlign: isRTL ? 'right' : 'left' }]}>Save payment method for future purchases</Text>
+          <Text style={[styles.outlineButtonText, { color: theme.primaryColor, fontSize: sizes.buttonTextSize }]}>
+            {t('interestRequest.pay_and_submit', { price, defaultValue: `Pay ${price} & Submit` })}
+          </Text>
         </TouchableOpacity>
 
-        <View>
-          <TouchableOpacity
-            style={[styles.outlineButton, { borderColor: theme.primaryColor, height: sizes.buttonHeight, borderRadius: sizes.borderRadius, backgroundColor: theme.backgroundColor }]}
-            onPress={handleFinalSubmit}
-          >
-            <Text style={[styles.outlineButtonText, { color: theme.primaryColor, fontSize: sizes.buttonTextSize }]}>
-              {t('interestRequest.pay_and_submit', { price, defaultValue: `Pay ${price} & Submit` })}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.primaryButton, { backgroundColor: theme.primaryColor, height: sizes.buttonHeight, borderRadius: sizes.borderRadius, marginTop: 12 }]}
-            onPress={onOpenSubscriptions}
-          >
-            <Text style={[styles.buttonText, { color: theme.buttonTextColorPrimary, fontSize: sizes.buttonTextSize }]}>
-              {t('payment_modal.get_subscription', { defaultValue: 'Get a subscription' })}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.primaryButton, { backgroundColor: theme.primaryColor, height: sizes.buttonHeight, borderRadius: sizes.borderRadius, marginTop: 12 }]}
+          onPress={onOpenSubscriptions}
+        >
+          <Text style={[styles.buttonText, { color: theme.buttonTextColorPrimary, fontSize: sizes.buttonTextSize }]}>
+            {t('payment_modal.get_subscription', { defaultValue: 'Get a subscription' })}
+          </Text>
+        </TouchableOpacity>
       </View>
+    );
+
+    return (
+      <PaymentFlowStep
+        showAddMethod={showAddMethod}
+        setShowAddMethod={setShowAddMethod}
+        availableMethods={availableMethods}
+        savedMethods={savedMethods}
+        selectedMethodId={selectedMethodId}
+        setSelectedMethodId={setSelectedMethodId}
+        newMethodId={newMethodId}
+        setNewMethodId={setNewMethodId}
+        saveForFuture={saveForFuture}
+        setSaveForFuture={setSaveForFuture}
+        sizes={sizes}
+        theme={theme}
+        t={t}
+        isRTL={isRTL}
+        step2Header={step2Header}
+        step2Footer={step2Footer}
+        onAddMethodPay={handleAddMethodPay}
+        addMethodPayLabel={`${t('payment_modal.pay')} ${price}`}
+      />
     );
   };
 
@@ -529,21 +455,22 @@ const InterestRequestModal = ({
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.overlay}>
-        <View style={[styles.container, {
-          width: sizes.modalWidth,
-          paddingVertical: sizes.containerPaddingVertical,
-          paddingHorizontal: sizes.modalPaddingHorizontal,
-          backgroundColor: theme.backgroundColor,
-          borderRadius: sizes.borderRadius
-        }]}>
-          <TouchableOpacity onPress={onClose} style={[styles.closeBtn, { top: sizes.crossIconPosition, right: sizes.crossIconPosition }]}>
-            <Image source={icons.cross} style={{ width: sizes.crossIconSize, height: sizes.crossIconSize, tintColor: theme.textColor }} />
-          </TouchableOpacity>
-          {content}
-        </View>
-      </View>
+    <>
+      <BaseActionModal
+        visible={visible}
+        onClose={() => {
+          if (showAddMethod) {
+            setShowAddMethod(false);
+          } else {
+            onClose();
+          }
+        }}
+        sizes={sizes}
+        theme={theme}
+        overlayColor="rgba(59, 70, 99, 0.6)"
+      >
+        {content}
+      </BaseActionModal>
       {Platform.OS !== 'web' && pickerMode && (
         <DateTimePicker
           value={formData[pickerMode === 'start' ? 'startDate' : 'endDate'] ? new Date(formData[pickerMode === 'start' ? 'startDate' : 'endDate']) : new Date()}
@@ -552,7 +479,7 @@ const InterestRequestModal = ({
           onChange={onDateChange}
         />
       )}
-    </Modal>
+    </>
   );
 };
 
