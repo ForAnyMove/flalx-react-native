@@ -20,7 +20,9 @@ const ChosenUserModal = ({
   visible,
   onClose,
   job,
-  onConfirmPayment,
+  onConfirm,
+  onDecline,
+  chargeEvent,
 }) => {
   const { themeController, languageController } = useComponentContext();
   const theme = themeController.current;
@@ -29,37 +31,61 @@ const ChosenUserModal = ({
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 
-  // 'info' | 'loading' | 'success' | 'error'
+  // 'info' | 'loading' | 'retrying' | 'success' | 'error'
   const [step, setStep] = useState('info');
+  const [retryInfo, setRetryInfo] = useState(null);
+  const [errorReason, setErrorReason] = useState(null);
 
   useEffect(() => {
     if (visible) {
       setStep('info');
+      setRetryInfo(null);
+      setErrorReason(null);
     }
   }, [visible]);
+
+  useEffect(() => {
+    if (!chargeEvent) return;
+    switch (chargeEvent.type) {
+      case 'JOB_CHARGE_COMPLETED':
+        setStep('success');
+        break;
+      case 'JOB_CHARGE_FAILED_RETRYING':
+        setRetryInfo(chargeEvent.payload);
+        setStep('retrying');
+        break;
+      case 'JOB_CHARGE_FINAL_FAILED':
+        setErrorReason(chargeEvent.payload?.reason);
+        setStep('error');
+        break;
+    }
+  }, [chargeEvent]);
 
   const handleCrossPress = () => {
     onClose();
   };
 
-  const handleDecline = () => {
-    onClose();
+  const handleDecline = async () => {
+    try {
+      await onDecline?.(job?.id);
+    } finally {
+      onClose();
+    }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setStep('loading');
-    // Stub logic
-    if (onConfirmPayment) {
-      onConfirmPayment().then((success) => {
-        setStep(success ? 'success' : 'error');
-      }).catch(() => {
-        setStep('error');
-      });
+    try {
+      await onConfirm?.(job?.id);
+      // 202 response — stay in loading; WS event drives next state
+    } catch {
+      setErrorReason(null);
+      setStep('error');
     }
   };
 
   const jobTitle = job?.type?.name_i18n?.[languageController.current] || job?.type?.name || 'this job';
-  const price = job?.executor_expectations?.salary || '0';
+  const price = job?.proposed_price || '0';
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -204,11 +230,11 @@ const ChosenUserModal = ({
         />
       </Text>
 
-      {job?.executor_expectations && (
+      {(job?.proposed_price || job?.proposed_time_from) && (
         <View style={{ alignItems: 'center', width: '100%' }}>
           <Text style={styles.yourBid}>{t('chosen_user_modal.your_bid')}</Text>
           <JobExpectationsBadge
-            expectations={job.executor_expectations}
+            expectations={job}
             isRTL={isRTL}
             containerStyle={{ justifyContent: 'center' }}
           />
@@ -238,18 +264,27 @@ const ChosenUserModal = ({
       <Text style={styles.title}>{t('chosen_user_modal.title_loading')}</Text>
       <Text style={[styles.desc, { marginBottom: 0 }]}>{t('chosen_user_modal.desc_loading')}</Text>
       <ActivityIndicator size={sizes.loadingIndicatorSize} color={theme.primaryColor} style={{ marginVertical: 20 }} />
-
-      {/* Stub buttons for manual testing */}
-      <View style={[styles.buttonsRow, { marginTop: 0 }]}>
-        <TouchableOpacity style={[styles.button, styles.primaryButton, { flex: 1 }]} onPress={() => setStep('success')}>
-          <Text style={[styles.buttonText, styles.primaryButtonText]}>{t('chosen_user_modal.btn_success_stub')}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, { backgroundColor: theme.errorTextColor, flex: 1 }]} onPress={() => setStep('error')}>
-          <Text style={[styles.buttonText, styles.primaryButtonText]}>{t('chosen_user_modal.btn_fail_stub')}</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
+
+  const renderRetrying = () => {
+    const nextAttemptTime = retryInfo?.nextAttemptAt
+      ? new Date(retryInfo.nextAttemptAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : '';
+    return (
+      <View style={styles.contentContainer}>
+        <Image source={icons.attention} style={styles.errorIcon} />
+        <Text style={styles.title}>{t('chosen_user_modal.title_retrying')}</Text>
+        <Text style={styles.desc}>
+          {t('chosen_user_modal.desc_retrying', {
+            attempt: retryInfo?.attempt,
+            maxAttempts: retryInfo?.maxAttempts,
+            time: nextAttemptTime,
+          })}
+        </Text>
+      </View>
+    );
+  };
 
   const renderSuccess = () => (
     <View style={styles.contentContainer}>
@@ -270,23 +305,34 @@ const ChosenUserModal = ({
     </View>
   );
 
-  const renderError = () => (
-    <View style={styles.contentContainer}>
-      <Image source={icons.attention} style={styles.errorIcon} />
-      <Text style={[styles.title, { color: theme.errorTextColor }]}>{t('chosen_user_modal.title_error')}</Text>
-      <Text style={styles.desc}>{t('chosen_user_modal.desc_error')}</Text>
-      <TouchableOpacity style={[styles.button, styles.primaryButton, { width: '100%' }]} onPress={onClose}>
-        <Text style={[styles.buttonText, styles.primaryButtonText]}>
-          {t('chosen_user_modal.btn_close')}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
+  const renderError = () => {
+    const titleKey = errorReason === 'client_charge'
+      ? 'chosen_user_modal.title_error_client_charge'
+      : 'chosen_user_modal.title_error';
+    const descKey = errorReason === 'client_charge'
+      ? 'chosen_user_modal.desc_error_client_charge'
+      : errorReason === 'provider_charge'
+        ? 'chosen_user_modal.desc_error_provider_charge'
+        : 'chosen_user_modal.desc_error';
+    return (
+      <View style={styles.contentContainer}>
+        <Image source={icons.attention} style={styles.errorIcon} />
+        <Text style={[styles.title, { color: theme.errorTextColor }]}>{t(titleKey)}</Text>
+        <Text style={styles.desc}>{t(descKey)}</Text>
+        <TouchableOpacity style={[styles.button, styles.primaryButton, { width: '100%' }]} onPress={onClose}>
+          <Text style={[styles.buttonText, styles.primaryButtonText]}>
+            {t('chosen_user_modal.btn_close')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   const renderContent = () => {
     switch (step) {
       case 'info': return renderInfo();
       case 'loading': return renderLoading();
+      case 'retrying': return renderRetrying();
       case 'success': return renderSuccess();
       case 'error': return renderError();
       default: return renderInfo();

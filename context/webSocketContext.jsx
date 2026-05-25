@@ -7,6 +7,9 @@ import React, {
 } from 'react';
 import { connectWebSocket } from '../src/services/webSocketService';
 import { useComponentContext } from './globalAppContext';
+import { useNotification } from '../src/render';
+import { useArchivedRefs } from '../src/services/useArchivedRefs';
+import { useTranslation } from 'react-i18next';
 
 const WebSocketContext = createContext();
 
@@ -22,11 +25,43 @@ export const WebSocketProvider = ({ children }) => {
     jobsController,
     couponsManagerController,
     paymentsManagerController,
+    languageController,
   } = useComponentContext();
 
   const wsRef = useRef(null);
   const [lastMessage, setLastMessage] = useState(null);
   const [connected, setConnected] = useState(false);
+
+  const { showInfo } = useNotification();
+  const { refs, fetchRefs, markSeen } = useArchivedRefs(session);
+  const { t } = useTranslation();
+  const showingRefId = useRef(null);
+
+  // Show archived-ref banners one at a time (each on close → markSeen → next appears)
+  useEffect(() => {
+    if (refs.length === 0) return;
+
+    const ref = refs[0];
+    // Already showing this banner — don't interrupt (e.g. refs re-fetched mid-display)
+    if (showingRefId.current === ref.job_id) return;
+
+    const lang = languageController?.current ?? 'en';
+    const key = `${ref.reason}_${ref.role}`;
+    const baseText = t(`archivedRefs.${key}`, { defaultValue: '' });
+    if (!baseText) {
+      // Unknown reason+role — silently mark as seen and move on
+      markSeen(ref.job_id);
+      return;
+    }
+    const jobSummary = ref.job_snapshot?.markdown_summary_i18n?.[lang] ?? ref.job_snapshot?.markdown_summary_i18n?.en;
+    const text = jobSummary ? `${baseText}\n\n${jobSummary}` : baseText;
+
+    showingRefId.current = ref.job_id;
+    showInfo(text, [], () => {
+      showingRefId.current = null;
+      markSeen(ref.job_id);
+    });
+  }, [refs]);
 
   useEffect(() => {
     if (!session || !user.current?.id || !session.serverURL) return;
@@ -390,6 +425,41 @@ export const WebSocketProvider = ({ children }) => {
         // notify user about approaching rate limit (development mode)
         break;
       }
+      case 'JOB_CONFIRMATION_EXPIRED': {
+        fetchRefs();
+        jobsController.reloadAll();
+        break;
+      }
+      case 'JOB_PROVIDER_SELECTED': {
+        jobsController.reloadAll();
+        break;
+      }
+      case 'JOB_PROVIDER_CONFIRMED': {
+        jobsController.reloadAll();
+        break;
+      }
+      case 'JOB_PROVIDER_REJECTED': {
+        fetchRefs();
+        jobsController.reloadAll();
+        break;
+      }
+      case 'JOB_CHARGING_STARTED': {
+        jobsController.reloadAll();
+        break;
+      }
+      case 'JOB_CHARGE_COMPLETED': {
+        jobsController.reloadAll();
+        break;
+      }
+      case 'JOB_CHARGE_FAILED_RETRYING': {
+        // ChosenUserModal handles this via lastMessage — no global action needed
+        break;
+      }
+      case 'JOB_CHARGE_FINAL_FAILED': {
+        fetchRefs();
+        jobsController.reloadAll();
+        break;
+      }
       case 'JOB_CREATED_BY_YOU':
       case 'JOB_APPROVED':
       case 'JOB_UPDATE_REJECTED':
@@ -416,7 +486,7 @@ export const WebSocketProvider = ({ children }) => {
   };
 
   return (
-    <WebSocketContext.Provider value={{ lastMessage, connected }}>
+    <WebSocketContext.Provider value={{ lastMessage, connected, fetchArchivedRefs: fetchRefs }}>
       {children}
     </WebSocketContext.Provider>
   );

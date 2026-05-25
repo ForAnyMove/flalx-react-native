@@ -29,7 +29,8 @@ export default function JobExpectationsBadge({ expectations, isRTL, iconStyle, t
 
   if (!expectations) return null;
 
-  const { salary, startDateTime, endDateTime } = expectations;
+  const { proposed_price, proposed_time_from, proposed_time_to } = expectations;
+  if (!proposed_price && !proposed_time_from && !proposed_time_to) return null;
 
   const formatDateTime = (dateString) => {
     if (!dateString) return '';
@@ -59,16 +60,16 @@ export default function JobExpectationsBadge({ expectations, isRTL, iconStyle, t
   };
 
   let dateText = '';
-  if (startDateTime && endDateTime) {
-    if (startDateTime === endDateTime) {
-      dateText = formatDateTime(startDateTime);
+  if (proposed_time_from && proposed_time_to) {
+    if (proposed_time_from === proposed_time_to) {
+      dateText = formatDateTime(proposed_time_from);
     } else {
-      dateText = `${formatDateTime(startDateTime)} - ${formatDateTime(endDateTime)}`;
+      dateText = `${formatDateTime(proposed_time_from)} - ${formatDateTime(proposed_time_to)}`;
     }
-  } else if (startDateTime) {
-    dateText = formatDateTime(startDateTime);
-  } else if (endDateTime) {
-    dateText = formatDateTime(endDateTime);
+  } else if (proposed_time_from) {
+    dateText = formatDateTime(proposed_time_from);
+  } else if (proposed_time_to) {
+    dateText = formatDateTime(proposed_time_to);
   }
 
   const defaultBadgeStyle = {
@@ -116,10 +117,10 @@ export default function JobExpectationsBadge({ expectations, isRTL, iconStyle, t
       marginTop: sizes.marginTop,
       gap: sizes.gap
     }, containerStyle]}>
-      {salary && (
+      {proposed_price && (
         <View style={defaultBadgeStyle}>
           <Image source={icons.salary} style={defaultIconStyle} />
-          <Text style={defaultTextStyle}>${salary}</Text>
+          <Text style={defaultTextStyle}>${proposed_price}</Text>
         </View>
       )}
       {dateText !== '' && (

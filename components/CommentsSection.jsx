@@ -22,6 +22,7 @@ export default function CommentsSection({
   userId,
   allowAdd = false,
   allowAddOnly = false,
+  onRated,
 }) {
   const { width, height } = useWindowInfo();
   const { themeController, providersController, languageController } =
@@ -30,7 +31,6 @@ export default function CommentsSection({
   const isRTL = languageController.isRTL;
 
   const [comments, setComments] = useState([]);
-  const [activeTab, setActiveTab] = useState('all'); // all | positive | negative
   const [addModal, setAddModal] = useState(false);
   const [newText, setNewText] = useState('');
   const [rating, setRating] = useState(0); // 1-5
@@ -81,20 +81,12 @@ export default function CommentsSection({
     }
   }, [userId]);
 
-  const averageRating = 3.6;
-  // const averageRating = useMemo(() => {
-  //   if (comments.length === 0) return 0;
-  //   const totalRating = comments.reduce((acc, c) => acc + c.rating, 0);
-  //   const avg = totalRating / comments.length;
-  //   // Округляем до 1 знака после запятой
-  //   return Math.round(avg * 10) / 10;
-  // }, [comments]);
-
-  const filtered = comments.filter((c) => {
-    if (activeTab === 'positive') return c.rating >= 4; // e.g., 4 or 5 stars
-    if (activeTab === 'negative') return c.rating <= 2; // e.g., 1 or 2 stars
-    return true;
-  });
+  const averageRating = useMemo(() => {
+    if (comments.length === 0) return 0;
+    const totalRating = comments.reduce((acc, c) => acc + c.rating, 0);
+    const avg = totalRating / comments.length;
+    return Math.round(avg * 10) / 10;
+  }, [comments]);
 
   const handleAdd = async () => {
     if (!newText.trim() || rating === 0) return;
@@ -109,6 +101,7 @@ export default function CommentsSection({
       setNewText('');
       setRating(0);
       setAddModal(false);
+      onRated?.();
     }
   };
 
@@ -210,48 +203,14 @@ export default function CommentsSection({
             </View>
           </View>
 
-          {/* Вкладки */}
-          <View
-            style={[
-              styles.tabsRow,
-              { borderBottomColor: themeController.current?.breakLineColor },
-            ]}
-          >
-            {['all', 'positive', 'negative'].map((tab) => (
-              <TouchableOpacity
-                key={tab}
-                onPress={() => setActiveTab(tab)}
-                style={[styles.tabBtn]}
-              >
-                <Text
-                  style={{
-                    fontSize: sizes.small,
-                    color:
-                      activeTab === tab
-                        ? themeController.current?.textColor
-                        : themeController.current?.formInputPlaceholderColor,
-                  }}
-                >
-                  {t(`comments.${tab}`)}{' '}
-                  {tab !== 'all' &&
-                    `(${comments.filter((c) => {
-                      if (tab === 'positive') return c.rating >= 4;
-                      if (tab === 'negative') return c.rating <= 2;
-                      return true;
-                    }).length})`}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
 
-          {/* Список */}
           <ScrollView
             style={{ maxHeight: sizes.scrollHeight }}
             contentContainerStyle={{
               paddingVertical: sizes.commentsPaddingVertical,
             }}
           >
-            {filtered.map((c, i) => (
+            {comments.map((c, i) => (
               <View
                 key={i}
                 style={[
@@ -437,12 +396,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   ratioRow: { flexDirection: 'row', alignItems: 'center' },
-  tabsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    borderBottomWidth: 2,
-  },
-  tabBtn: {},
   commentCard: {},
   commentHeader: {
     flexDirection: 'row',

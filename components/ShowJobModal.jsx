@@ -35,6 +35,8 @@ import {
   payForJob,
   updateJobComment,
   respondToJobAgreement,
+  confirmProviderSelection,
+  rejectProviderSelection,
 } from '../src/api/jobs';
 import { useWebView } from '../context/webViewContext';
 import { useWebSocket } from '../context/webSocketContext';
@@ -111,8 +113,8 @@ const MOCK_JOB = {
   createdAt: '2026-01-18T10:57:30.787203+00:00',
   status: 'waiting',
   creator: '4f04025a-eeaa-451d-a25c-586f6bdcf8f9',
-  creator_account_type: 'client',
-  providerStatus: 'choosed',
+  created_by_account_type: 'client',
+  provider_status: 'choosed',
   providers: [
     {
       id: 'p1',
@@ -120,11 +122,9 @@ const MOCK_JOB = {
       rating: 4.8,
       avatar: null,
       professions: ['cleaner'],
-      executor_expectations: {
-        salary: '50',
-        startDateTime: '2026-01-14T10:57:00+00:00',
-        endDateTime: '2026-01-30T10:57:00+00:00',
-      },
+      proposed_price: '50',
+      proposed_time_from: '2026-01-14T10:57:00+00:00',
+      proposed_time_to: '2026-01-30T10:57:00+00:00',
     },
     {
       id: 'p2',
@@ -132,11 +132,9 @@ const MOCK_JOB = {
       rating: 3.5,
       avatar: null,
       professions: ['cleaner'],
-      executor_expectations: {
-        salary: '45',
-        startDateTime: '2026-01-15T12:00:00+00:00',
-        endDateTime: '2026-01-25T18:00:00+00:00',
-      },
+      proposed_price: '45',
+      proposed_time_from: '2026-01-15T12:00:00+00:00',
+      proposed_time_to: '2026-01-25T18:00:00+00:00',
     },
   ],
 };
@@ -616,68 +614,87 @@ export default function ShowJobModal({
   const [currentJobInfo, setCurrentJobInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showChosenUserModal, setShowChosenUserModal] = useState(false);
+  const [chargeEvent, setChargeEvent] = useState(null);
   const [alertModalVisible, setAlertModalVisible] = useState(false);
   const [alertModalTitle, setAlertModalTitle] = useState('');
 
+  // Drive ChosenUserModal state via WS charge events for this job
   useEffect(() => {
-    if (currentJobInfo?.providerStatus === 'choosed' && status.startsWith('jobs')) {
+    if (!lastMessage || !currentJobId) return;
+    const chargeTypes = ['JOB_CHARGING_STARTED', 'JOB_CHARGE_COMPLETED', 'JOB_CHARGE_FAILED_RETRYING', 'JOB_CHARGE_FINAL_FAILED'];
+    if (chargeTypes.includes(lastMessage.type) && lastMessage.payload?.jobId === currentJobId) {
+      setChargeEvent(lastMessage);
+    }
+  }, [lastMessage, currentJobId]);
+
+  useEffect(() => {
+    console.log('Current job info updated:', currentJobInfo);
+    const needsConfirmation =
+      currentJobInfo?.provider_status === 'choosed' ||
+      currentJobInfo?.provider_status === 'pending_supplier_approval';
+    if (needsConfirmation && status.startsWith('jobs')) {
       setShowChosenUserModal(true);
-      console.log('Showing chosen user modal for job:', currentJobInfo);
     }
     if (currentJobInfo?.status === 'expired') {
       setAlertModalTitle(t('showJobModal.job_expired', { defaultValue: 'Job has expired' }));
       setAlertModalVisible(true);
     }
-    if (currentJobInfo?.providerStatus === 'obsolete') {
+    if (currentJobInfo?.provider_status === 'obsolete') {
       setAlertModalTitle(t('showJobModal.provider_obsolete', { defaultValue: 'The application is obsolete' }));
       setAlertModalVisible(true);
     }
-  }, [currentJobInfo?.providerStatus, currentJobInfo?.status, status]);
+  }, [currentJobInfo?.provider_status, currentJobInfo?.status, status]);
 
   const location = currentJobInfo?.location;
 
-  // Подгружаем job при редактировании
+  // Подгружаем job из уже загруженных списков (list-эндпоинты возвращают полные данные)
   useEffect(() => {
     if (!currentJobId) return;
     let cancelled = false;
 
+    if (!currentJobInfo) setLoading(true);
+
+    const allLists = [
+      ...jobsController.creator.pending,
+      ...jobsController.creator.waiting,
+      ...jobsController.creator.inProgress,
+      ...jobsController.creator.done,
+      ...jobsController.executor.new,
+      ...jobsController.executor.waiting,
+      ...jobsController.executor.inProgress,
+      ...jobsController.executor.done,
+    ];
+    const job = allLists.find(j => j.id === currentJobId);
+
+    if (!job) {
+      setLoading(false);
+      return;
+    }
+
+    setCurrentJobInfo(job);
+    if (job?.job_comment) {
+      setEditableCommentValue(job?.job_comment?.comment);
+    }
+
+    // Auto-show agreement modal if provider hasn't agreed to current job version
+    if (status.startsWith('jobs') && user.current?.id) {
+      const myEntry = job?.providers?.find((p) => (p?.id || p) === user.current.id);
+      if (myEntry && myEntry.job_agreement != null && myEntry.job_agreement !== 'agreed') {
+        const diff = computeAgreementDiff(
+          job?.changes_history,
+          myEntry.agreement_change_date
+        );
+        setAgreementChanges(diff);
+        setAgreementModalVisible(true);
+      }
+    }
+
     (async () => {
       try {
-        // Показываем лоадер только при первой загрузке; фоновые обновления — тихие
-        if (!currentJobInfo) setLoading(true);
-
-        let job;
-        if (currentJobId === 'mock-job-id') {
-          job = MOCK_JOB;
-        } else {
-          job = await jobsController.actions.getJobById(currentJobId, session);
-        }
-
-        if (cancelled) return;
-        setCurrentJobInfo(job);
-        if (job?.job_comment) {
-          setEditableCommentValue(job?.job_comment?.comment);
-        }
-
-        // Auto-show agreement modal if provider hasn't agreed to current job version
-        if (status.startsWith('jobs') && user.current?.id) {
-          const myEntry = job?.providers?.find((p) => (p?.id || p) === user.current.id);
-          if (myEntry && myEntry.job_agreement != null && myEntry.job_agreement !== 'agreed') {
-            const diff = computeAgreementDiff(
-              job?.changes_history,
-              myEntry.agreement_change_date
-            );
-            setAgreementChanges(diff);
-            setAgreementModalVisible(true);
-          }
-        }
-
-        const isProvider = await jobsController.actions.checkIsProviderInJob(
-          currentJobId
-        );
-        setInterestedRequest(isProvider);
+        const isProvider = await jobsController.actions.checkIsProviderInJob(currentJobId);
+        if (!cancelled) setInterestedRequest(isProvider);
       } catch (e) {
-        logInfo('Failed to load job:', e);
+        logInfo('Failed to check provider status:', e);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -709,22 +726,32 @@ export default function ShowJobModal({
       setAppLoading(true);
       const result = await addSelfToJobProviders(currentJobId, session, paymentOptions);
 
-      if (result.success == true) {
-        if (result.payment?.paymentMetadata?.approval?.href) {
-          openWebView(result.payment.paymentMetadata.approval.href);
-        } else {
+      if (result.success === true) {
+        couponsManagerController?.refreshBalance();
+        jobsController.reloadAll();
+        setInterestedRequest(true);
+      } else if (result.directAuth === true) {
+        jobsController.reloadAll();
+        setInterestedRequest(true);
+      } else if (result.paymentUrl) {
+        openWebView(result.paymentUrl, () => {
           jobsController.reloadAll();
-        }
+          setInterestedRequest(true);
+        });
+      } else {
+        jobsController.reloadAll();
       }
 
-      setAppLoading(false);
+      return result;
     } catch (e) {
-      setAppLoading(false);
-      if (e.response && e.response.status === 400 && e.response.data.code == 'NO_COUPONS_AVAILABLE') {
+      if (e.response?.status === 400 && e.response.data?.code === 'NO_COUPONS_AVAILABLE') {
         showWarning(t('errors.no_coupons', {
           defaultValue: 'You have no coupons available',
         }));
       }
+      throw e;
+    } finally {
+      setAppLoading(false);
     }
   };
 
@@ -733,16 +760,17 @@ export default function ShowJobModal({
     const finalPayload = {
       ...payload,
       ...(interestFormData && {
-        provider_price: interestFormData.price,
-        provider_start_date: interestFormData.startDate,
-        provider_end_date: interestFormData.endDate,
+        proposed_price: interestFormData.price,
+        proposed_time_from: interestFormData.startDate,
+        proposed_time_to: interestFormData.endDate,
       }),
     };
     const result = await addSelfToJobProviders(currentJobId, session, finalPayload);
-    if (result.payment?.paymentMetadata?.approval?.href) {
-      openWebView(result.payment.paymentMetadata.approval.href);
-    } else if (result.success) {
+    if (result.paymentUrl) {
+      openWebView(result.paymentUrl, () => { jobsController.reloadAll(); setInterestedRequest(true); });
+    } else if (result.directAuth || result.success) {
       jobsController.reloadAll();
+      setInterestedRequest(true);
     }
     return result;
   };
@@ -752,9 +780,9 @@ export default function ShowJobModal({
     const payload = {
       useCoupon: true,
       ...(interestFormData && {
-        provider_price: interestFormData.price,
-        provider_start_date: interestFormData.startDate,
-        provider_end_date: interestFormData.endDate,
+        proposed_price: interestFormData.price,
+        proposed_time_from: interestFormData.startDate,
+        proposed_time_to: interestFormData.endDate,
       }),
     };
     setConfirmInterestModal(false);
@@ -765,6 +793,7 @@ export default function ShowJobModal({
         if (result.success) {
           couponsManagerController?.refreshBalance();
           jobsController.reloadAll();
+          setInterestedRequest(true);
         }
       })
       .catch((e) => {
@@ -777,13 +806,12 @@ export default function ShowJobModal({
 
   const handleInterestRequest = async () => {
     // We don't reset formData here to allow persistence across payment flows
-    const isBusinessJob = currentJobInfo?.creator?.account_type === 'provider';
+    const isBusinessJob = currentJobInfo?.created_by_account_type === 'business';
     const hasSubscription = subscription.current != null;
 
     if (isBusinessJob) {
       if (hasSubscription) {
         handleAddingSelfToJobProviders({});
-        setInterestedRequest(true);
       } else {
         setConfirmInterestModal(true);
       }
@@ -797,25 +825,20 @@ export default function ShowJobModal({
   const handleConfirmInterestRequest = async (formData, paymentOptions = {}) => {
     try {
       setInterestFormData(formData);
-      setAppLoading(true);
-      // Combine form data (price, date) with payment options if any
       const finalOptions = {
         ...paymentOptions,
-        provider_price: formData.price,
-        provider_start_date: formData.startDate,
-        provider_end_date: formData.endDate,
+        ...(formData.price && { proposed_price: formData.price }),
+        ...(formData.startDate && { proposed_time_from: formData.startDate }),
+        ...(formData.endDate && { proposed_time_to: formData.endDate }),
       };
 
-      await handleAddingSelfToJobProviders(finalOptions);
-      setInterestedRequest(true);
+      const result = await handleAddingSelfToJobProviders(finalOptions);
       setShowInterestRequestModal(false);
       setConfirmInterestModal(false);
-      return { success: true };
+      return result || { success: true };
     } catch (error) {
       logError('Error adding self to job providers:', error.message);
       throw error;
-    } finally {
-      setAppLoading(false);
     }
   };
 
@@ -990,6 +1013,7 @@ export default function ShowJobModal({
             userId={currentJobInfo?.executor}
             allowAdd={currentJobInfo?.comments?.length == 0}
             allowAddOnly={true}
+            onRated={() => jobsController.reloadAll()}
           />,
         ];
       case 'jobs-new':
@@ -1696,6 +1720,7 @@ export default function ShowJobModal({
             userId={currentJobInfo?.creator}
             allowAdd={currentJobInfo?.comments?.length == 0}
             allowAddOnly={true}
+            onRated={() => jobsController.reloadAll()}
           />
         ];
       default:
@@ -1708,7 +1733,10 @@ export default function ShowJobModal({
     try {
       setAppLoading(true);
       const data = await payForJob(currentJobInfo.id, session, paymentOptions);
-      if (data.paymentUrl) {
+      if (data.success || data.directAuth) {
+        // Coupon / subscription bypass or direct auth — already pending_moderation
+        jobsController.reloadCreator();
+      } else if (data.paymentUrl) {
         openWebView(data.paymentUrl, () => { });
       } else {
         jobsController.reloadCreator();
@@ -1733,7 +1761,9 @@ export default function ShowJobModal({
   // PurchaseModal: onPurchase handler for the publish paywall
   const handlePurchasePublish = async (payload) => {
     const data = await payForJob(currentJobInfo.id, session, payload);
-    if (data.paymentUrl) {
+    if (data.success || data.directAuth) {
+      jobsController.reloadCreator();
+    } else if (data.paymentUrl) {
       openWebView(data.paymentUrl, () => { });
     } else {
       jobsController.reloadCreator();
@@ -1896,7 +1926,7 @@ export default function ShowJobModal({
         readOnly
       />
     </View>,
-    <View
+    currentJobInfo?.created_by_account_type === 'business' ? <View
       style={[
         styles.inputBlock,
         dynamicStyles.inputBlock,
@@ -1923,7 +1953,7 @@ export default function ShowJobModal({
         keyboardType='numeric'
         readOnly
       />
-    </View>,
+    </View> : null,
     <View
       style={[styles.imageInputBlock, dynamicStyles.imageInputBlock]}
       key='images'
@@ -2035,7 +2065,7 @@ export default function ShowJobModal({
         />
       </View>
     ) : null,
-    <View
+    currentJobInfo?.created_by_account_type === 'business' ? <View
       style={[
         styles.row,
         {
@@ -2074,7 +2104,7 @@ export default function ShowJobModal({
           readOnly={true}
         />
       )}
-    </View>,
+    </View> : null,
     ...extraUiByStatus(status),
   ].filter(Boolean);
 
@@ -2440,7 +2470,7 @@ export default function ShowJobModal({
                   </View>
 
                   {/* Price */}
-                  <View
+                  {currentJobInfo?.created_by_account_type === 'business' && <View
                     style={{
                       gridArea: isRTL ? '3 / 1 / 4 / 2' : '3 / 2 / 4 / 3',
                     }}
@@ -2489,7 +2519,7 @@ export default function ShowJobModal({
                         readOnly
                       />
                     </View>
-                  </View>
+                  </View>}
 
                   {/* Photos (full width) */}
                   <View style={{ gridArea: '4 / 1 / 6 / 3' }}>
@@ -2635,7 +2665,7 @@ export default function ShowJobModal({
                   )}
 
                   {/* Start date */}
-                  <View
+                  {currentJobInfo?.created_by_account_type === 'business' && <View
                     style={{
                       gridArea: isRTL
                         ? currentJobInfo?.experience
@@ -2668,10 +2698,10 @@ export default function ShowJobModal({
                         />
                       )}
                     </View>
-                  </View>
+                  </View>}
 
                   {/* End date */}
-                  <View
+                  {currentJobInfo?.created_by_account_type === 'business' && <View
                     style={{
                       gridArea: isRTL
                         ? currentJobInfo?.experience
@@ -2704,7 +2734,7 @@ export default function ShowJobModal({
                         />
                       )}
                     </View>
-                  </View>
+                  </View>}
                 </View>
 
                 {/* Остальные элементы ВНЕ сетки, обычной колонкой */}
@@ -2963,7 +2993,7 @@ export default function ShowJobModal({
       <InterestRequestModal
         visible={showInterestRequestModal}
         onClose={() => setShowInterestRequestModal(false)}
-        isBusinessJob={currentJobInfo?.creator?.account_type === 'provider'}
+        isBusinessJob={currentJobInfo?.created_by_account_type === 'business'}
         hasSubscription={subscription.current != null}
         price={formatCurrency(
           jobsController.providerProduct?.price,
@@ -2999,7 +3029,9 @@ export default function ShowJobModal({
         visible={showChosenUserModal}
         onClose={() => setShowChosenUserModal(false)}
         job={currentJobInfo}
-        onConfirmPayment={() => new Promise((resolve) => setTimeout(() => resolve(Math.random() > 0.5), 50000))}
+        chargeEvent={chargeEvent}
+        onConfirm={(jobId) => confirmProviderSelection(jobId, session)}
+        onDecline={(jobId) => rejectProviderSelection(jobId, session)}
       />
       {/* <Modal visible={showHistoryModal} animationType='fade'>
         <View

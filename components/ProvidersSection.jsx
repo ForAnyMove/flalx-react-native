@@ -58,6 +58,8 @@ function showTitleByStatus(status, t) {
 function UserSummaryBlockWrapper({
   userId,
   jobAgreement,
+  providerStatus,
+  hasPendingProvider,
   status,
   currentJobId,
   closeAllModal,
@@ -65,6 +67,7 @@ function UserSummaryBlockWrapper({
   isFullScreen = false,
   preloadedUser = null,
   isClientCreator = false,
+  jobExpectations = null,
 }) {
   const [user, setUser] = useState(null);
 
@@ -93,6 +96,9 @@ function UserSummaryBlockWrapper({
       isFullScreen={isFullScreen}
       jobAgreement={jobAgreement}
       isClientCreator={isClientCreator}
+      providerStatus={providerStatus}
+      hasPendingProvider={hasPendingProvider}
+      jobExpectations={jobExpectations}
     />
   );
 }
@@ -168,6 +174,10 @@ export default function ProvidersSection({
       gridGap: staticScale(8, height),
       sortGap: staticScale(16, height),
       sortPanelGap: staticScale(24, height),
+      markerVP: staticScale(4, height),
+      markerHP: staticScale(10, height),
+      markerFontSize: staticScale(12, height),
+      markerRadius: staticScale(6, height),
     };
   }, [isWebLandscape, height, width, isShortProviderBlock]);
 
@@ -216,11 +226,11 @@ export default function ProvidersSection({
         valA = a.rating || 0;
         valB = b.rating || 0;
       } else if (sortField === 'price') {
-        valA = parseFloat(a.executor_expectations?.salary || 0);
-        valB = parseFloat(b.executor_expectations?.salary || 0);
+        valA = parseFloat(a.proposed_price || 0);
+        valB = parseFloat(b.proposed_price || 0);
       } else if (sortField === 'time') {
-        valA = new Date(a.executor_expectations?.startDateTime || 0).getTime();
-        valB = new Date(b.executor_expectations?.startDateTime || 0).getTime();
+        valA = new Date(a.proposed_time_from || 0).getTime();
+        valB = new Date(b.proposed_time_from || 0).getTime();
       }
 
       if (sortOrder === 'asc') {
@@ -283,6 +293,12 @@ export default function ProvidersSection({
     console.log('[ProvidersSection] providers:', JSON.stringify(providerList.map(p => ({ id: p?.id || p, job_agreement: p?.job_agreement }))));
   }
 
+  const hasPendingProvider = status === 'store-waiting' && providerList?.some(p => p?.status === 'pending_supplier_approval');
+
+  const selectedProvider = status === 'store-waiting'
+    ? providerList?.find(p => p?.status === 'pending_supplier_approval' || p?.status === 'confirmed')
+    : null;
+
   const renderProviderList = (isFull = false) => (
     <>
       {Platform.OS === 'web' ? (
@@ -301,12 +317,15 @@ export default function ProvidersSection({
                 status={status}
                 userId={item?.id || item}
                 jobAgreement={item?.job_agreement}
+                providerStatus={item?.status}
+                hasPendingProvider={hasPendingProvider}
                 currentJobId={currentJobInfo?.id}
                 closeAllModal={closeAllModal}
                 providersController={providersController}
                 preloadedUser={item}
-                isClientCreator={currentJobInfo?.creator_account_type === 'client'}
+                isClientCreator={currentJobInfo?.created_by_account_type === 'client'}
                 isFullScreen={isFull}
+                jobExpectations={(status === 'store-in-progress' || status === 'store-done') ? { proposed_price: currentJobInfo?.proposed_price, proposed_time_from: currentJobInfo?.proposed_time_from, proposed_time_to: currentJobInfo?.proposed_time_to } : null}
               />
             </View>
           )}
@@ -329,12 +348,15 @@ export default function ProvidersSection({
                 status={status}
                 userId={item?.id || item}
                 jobAgreement={item?.job_agreement}
+                providerStatus={item?.status}
+                hasPendingProvider={hasPendingProvider}
                 currentJobId={currentJobInfo?.id}
                 closeAllModal={closeAllModal}
                 providersController={providersController}
                 preloadedUser={item}
-                isClientCreator={currentJobInfo?.creator_account_type === 'client'}
+                isClientCreator={currentJobInfo?.created_by_account_type === 'client'}
                 isFullScreen={isFull}
+                jobExpectations={(status === 'store-in-progress' || status === 'store-done') ? { proposed_price: currentJobInfo?.proposed_price, proposed_time_from: currentJobInfo?.proposed_time_from, proposed_time_to: currentJobInfo?.proposed_time_to } : null}
               />
             </View>
           )}
@@ -363,54 +385,19 @@ export default function ProvidersSection({
         ]}
         key='providers'
       >
-        <View>
-          <View
-            style={[
-              styleRow.header,
-              isRTL && { flexDirection: 'row-reverse' },
-              {
-                paddingHorizontal: sizes.containerPaddingHorizontal,
-                marginBottom: sizes.headerMarginBottom
-              },
-            ]}
-          >
+        {selectedProvider ? (
+          /* ── Assigned provider view ── */
+          <View>
             <View
               style={[
+                styleRow.header,
+                isRTL && { flexDirection: 'row-reverse' },
                 {
-                  flexDirection: isRTL ? 'row' : 'row-reverse',
-                  alignItems: 'center',
-                  gap: sizes.headerGap,
-                  height: sizes.headerInnerHeight,
+                  paddingHorizontal: sizes.containerPaddingHorizontal,
+                  marginBottom: sizes.headerMarginBottom,
                 },
               ]}
             >
-              {status === 'store-waiting' && providerList?.length > 0 && (
-                <View
-                  style={[
-                    styles.badge,
-                    {
-                      backgroundColor:
-                        themeController.current?.secondaryBadgeBackground,
-                      alignSelf: 'flex-start',
-                      height: sizes.badgeSize,
-                      minWidth: sizes.badgeSize,
-                      borderRadius: sizes.badgeBorderRadius,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.badgeText,
-                      {
-                        color: themeController.current?.badgeTextColor,
-                        fontSize: sizes.badgeFontSize,
-                      },
-                    ]}
-                  >
-                    {providerList.length}
-                  </Text>
-                </View>
-              )}
               <Text
                 style={[
                   styles.label,
@@ -419,34 +406,148 @@ export default function ProvidersSection({
                     fontSize: sizes.font,
                     color: themeController.current?.textColor,
                     textAlign: isRTL ? 'right' : 'left',
-                    alignSelf: 'flex-end',
                   },
                 ]}
               >
-                {showTitleByStatus(status, t)}
+                {t('providersSection.assignedProvider', { defaultValue: 'Assigned provider' })}
               </Text>
             </View>
-
-            {status === 'store-waiting' && (
-              <Pressable
-                onPress={() => setIsModalVisible(true)}
-                style={[styleRow.iconButton, { padding: sizes.padding / 2 }]}
+            <View style={{ paddingHorizontal: sizes.containerPaddingHorizontal }}>
+              <View
+                style={{
+                  position: 'relative',
+                  overflow: 'hidden',
+                  borderWidth: 2,
+                  borderColor: themeController.current?.verifiedMarkerColor,
+                  borderRadius: sizes.borderRadius,
+                }}
               >
-                <Image
-                  source={icons.fullScreen}
-                  style={{
-                    width: sizes.icon,
-                    height: sizes.icon,
-                    tintColor: themeController.current?.textColor || 'black',
-                    opacity: 0.4,
-                  }}
+                <UserSummaryBlockWrapper
+                  status={status}
+                  userId={selectedProvider?.id || selectedProvider}
+                  jobAgreement={selectedProvider?.job_agreement}
+                  providerStatus={selectedProvider?.status}
+                  hasPendingProvider={true}
+                  currentJobId={currentJobInfo?.id}
+                  closeAllModal={closeAllModal}
+                  providersController={providersController}
+                  preloadedUser={selectedProvider}
+                  isClientCreator={currentJobInfo?.created_by_account_type === 'client'}
+                  isFullScreen={false}
                 />
-              </Pressable>
-            )}
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    [isRTL ? 'left' : 'right']: 0,
+                    backgroundColor: themeController.current?.verifiedMarkerColor,
+                    paddingHorizontal: sizes.markerHP,
+                    paddingVertical: sizes.markerVP,
+                    [isRTL ? 'borderBottomRightRadius' : 'borderBottomLeftRadius']: sizes.markerRadius,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: '#fff',
+                      fontSize: sizes.markerFontSize,
+                      fontFamily: 'Rubik-Medium',
+                    }}
+                  >
+                    {t('providersSection.selected', { defaultValue: 'Selected' })}
+                  </Text>
+                </View>
+              </View>
+            </View>
           </View>
-        </View>
+        ) : (
+          /* ── Interested providers list ── */
+          <>
+            <View>
+              <View
+                style={[
+                  styleRow.header,
+                  isRTL && { flexDirection: 'row-reverse' },
+                  {
+                    paddingHorizontal: sizes.containerPaddingHorizontal,
+                    marginBottom: sizes.headerMarginBottom
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    {
+                      flexDirection: isRTL ? 'row' : 'row-reverse',
+                      alignItems: 'center',
+                      gap: sizes.headerGap,
+                      height: sizes.headerInnerHeight,
+                    },
+                  ]}
+                >
+                  {status === 'store-waiting' && providerList?.length > 0 && (
+                    <View
+                      style={[
+                        styles.badge,
+                        {
+                          backgroundColor:
+                            themeController.current?.secondaryBadgeBackground,
+                          alignSelf: 'flex-start',
+                          height: sizes.badgeSize,
+                          minWidth: sizes.badgeSize,
+                          borderRadius: sizes.badgeBorderRadius,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.badgeText,
+                          {
+                            color: themeController.current?.badgeTextColor,
+                            fontSize: sizes.badgeFontSize,
+                          },
+                        ]}
+                      >
+                        {providerList.length}
+                      </Text>
+                    </View>
+                  )}
+                  <Text
+                    style={[
+                      styles.label,
+                      {
+                        marginBottom: 0,
+                        fontSize: sizes.font,
+                        color: themeController.current?.textColor,
+                        textAlign: isRTL ? 'right' : 'left',
+                        alignSelf: 'flex-end',
+                      },
+                    ]}
+                  >
+                    {showTitleByStatus(status, t)}
+                  </Text>
+                </View>
 
-        {renderProviderList(false)}
+                {status === 'store-waiting' && (
+                  <Pressable
+                    onPress={() => setIsModalVisible(true)}
+                    style={[styleRow.iconButton, { padding: sizes.padding / 2 }]}
+                  >
+                    <Image
+                      source={icons.fullScreen}
+                      style={{
+                        width: sizes.icon,
+                        height: sizes.icon,
+                        tintColor: themeController.current?.textColor || 'black',
+                        opacity: 0.4,
+                      }}
+                    />
+                  </Pressable>
+                )}
+              </View>
+            </View>
+
+            {renderProviderList(false)}
+          </>
+        )}
       </View>
       <Modal
         visible={isModalVisible}
@@ -499,7 +600,7 @@ export default function ProvidersSection({
                   </Text>
                   <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', gap: sizes.sortGap }}>
                     {renderSortBadge('rating', t('common.rating', { defaultValue: 'Rating' }))}
-                    {currentJobInfo?.creator_account_type === 'client' && (
+                    {currentJobInfo?.created_by_account_type === 'client' && (
                       <>
                         {renderSortBadge('price', t('common.price', { defaultValue: 'Price' }))}
                         {renderSortBadge('time', t('common.time', { defaultValue: 'Time' }))}

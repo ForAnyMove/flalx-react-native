@@ -10,6 +10,7 @@ import {
 import { useComponentContext } from '../../../context/globalAppContext';
 import JobTypeSelector from '../../../components/JobTypeSelector';
 import { FontAwesome6 } from '@expo/vector-icons';
+import JobExpectationsBadge from '../../../components/ui/JobExpectationsBadge';
 import SearchPanel from '../../../components/SearchPanel';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
@@ -204,6 +205,10 @@ export default function InProgressScreen({
                         {job.description}
                       </Text>
                     ) : null}
+                    <JobExpectationsBadge
+                      expectations={job}
+                      isRTL={isRTL}
+                    />
                   </View>
                 </View>
               </TouchableOpacity>

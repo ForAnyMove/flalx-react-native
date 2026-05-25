@@ -46,16 +46,16 @@ const PaginationDots = ({ activeStep, sizes, theme, t }) => (
 
 const SuccessHeader = ({ subtitle, text, sizes, theme }) => (
   <View style={[styles.successHeaderContainer, { marginBottom: sizes.successHeaderMarginBottom }]}>
-    <Image 
-      source={icons.checkDefault} 
+    <Image
+      source={icons.checkDefault}
       style={[
-        styles.successCircle, 
-        { 
-          width: sizes.successCircleSize, 
-          height: sizes.successCircleSize, 
-          marginBottom: sizes.successCircleMarginBottom 
+        styles.successCircle,
+        {
+          width: sizes.successCircleSize,
+          height: sizes.successCircleSize,
+          marginBottom: sizes.successCircleMarginBottom
         }
-      ]} 
+      ]}
     />
     {subtitle && (
       <View style={[styles.subtitleBox, { borderBottomColor: theme.defaultBlocksMockBackground, paddingBottom: sizes.subtitleBoxPaddingBottom }]}>
@@ -101,55 +101,67 @@ const FormInput = ({ label, value, placeholder, onChangeText, hint, keyboardType
   </View>
 );
 
-const DateInput = ({ label, value, onPress, mode, sizes, theme, handleWebDateChange, isRTL, t, error }) => (
-  <View style={{ flex: 1 }}>
-    <TouchableOpacity 
-      activeOpacity={0.7}
-      onPress={onPress} 
-      disabled={Platform.OS === 'web'}
-      style={[
-        styles.inputContainer,
-        {
-          backgroundColor: theme.formInputBackground,
-          height: sizes.buttonHeight,
-          borderRadius: sizes.borderRadius,
-          paddingHorizontal: sizes.inputPaddingHorizontal,
-          borderWidth: (error && mode === 'start') ? 1 : 0,
-          borderColor: theme.errorTextColor,
-          justifyContent: 'center',
-          position: 'relative',
-        }
-      ]}
-    >
-      <Text style={[styles.inputLabelInside, { color: theme.formInputLabelColor, fontSize: sizes.hintSize, left: sizes.inputPaddingHorizontal, top: sizes.inputLabelInsideTop }]}>{label}</Text>
-      <View style={[styles.dateRow, isRTL && { flexDirection: 'row-reverse' }, { marginTop: sizes.dateRowMarginTop }]}>
-        <Text style={[styles.dateText, { color: value ? theme.textColor : theme.formInputPlaceholderColor, fontSize: sizes.inputTextSize }]}>
-          {value ? new Date(value).toLocaleDateString() : t('interestRequest.pick_date', { defaultValue: 'Pick date' })}
-        </Text>
-        <Image source={icons.calendar || icons.calendarDefault} style={{ width: sizes.crossIconSize, height: sizes.crossIconSize, tintColor: theme.formInputLabelColor }} />
-      </View>
-      {Platform.OS === 'web' && (
-        <input
-          type="date"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            width: '100%',
-            height: '100%',
-            opacity: 0,
-            cursor: 'pointer',
-            zIndex: 10,
-          }}
-          value={value ? new Date(value).toISOString().split('T')[0] : ''}
-          onChange={(e) => handleWebDateChange(mode, e)}
-        />
-      )}
-    </TouchableOpacity>
-  </View>
-);
+const DateInput = ({ label, value, onPress, mode, sizes, theme, handleWebDateChange, isRTL, t, error }) => {
+  const webInputRef = React.useRef(null);
+
+  const handlePress = () => {
+    if (Platform.OS === 'web') {
+      if (webInputRef.current) {
+        webInputRef.current.showPicker?.();
+        webInputRef.current.click?.();
+      }
+    } else {
+      onPress?.();
+    }
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={handlePress}
+        style={[
+          styles.inputContainer,
+          {
+            backgroundColor: theme.formInputBackground,
+            height: sizes.buttonHeight,
+            borderRadius: sizes.borderRadius,
+            paddingHorizontal: sizes.inputPaddingHorizontal,
+            borderWidth: (error && mode === 'start') ? 1 : 0,
+            borderColor: theme.errorTextColor,
+            justifyContent: 'center',
+            position: 'relative',
+          }
+        ]}
+      >
+        <Text style={[styles.inputLabelInside, { color: theme.formInputLabelColor, fontSize: sizes.hintSize, left: sizes.inputPaddingHorizontal, top: sizes.inputLabelInsideTop }]}>{label}</Text>
+        <View style={[styles.dateRow, isRTL && { flexDirection: 'row-reverse' }, { marginTop: sizes.dateRowMarginTop }]}>
+          <Text style={[styles.dateText, { color: value ? theme.textColor : theme.formInputPlaceholderColor, fontSize: sizes.inputTextSize }]}>
+            {value ? new Date(value).toLocaleDateString() : t('interestRequest.pick_date', { defaultValue: 'Pick date' })}
+          </Text>
+          <Image source={icons.calendar || icons.calendarDefault} style={{ width: sizes.crossIconSize, height: sizes.crossIconSize, tintColor: theme.formInputLabelColor }} />
+        </View>
+        {Platform.OS === 'web' && (
+          <input
+            ref={webInputRef}
+            type="date"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              opacity: 0,
+              pointerEvents: 'none',
+            }}
+            value={value ? new Date(value).toISOString().split('T')[0] : ''}
+            onChange={(e) => handleWebDateChange(mode, e)}
+          />
+        )}
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 const InterestRequestModal = ({
   visible,
@@ -257,7 +269,7 @@ const InterestRequestModal = ({
       hintSize: scale(12),
       inputTextSize: scale(18),
       totalPriceSize: scale(24),
-      
+
       // New restored sizes
       dotsRowMarginBottom: scale(8),
       dotMarginHorizontal: scale(4),

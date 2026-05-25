@@ -7,14 +7,12 @@ async function createJob(jobData, session) {
         const response = await fetchWithSession({
             session,
             endpoint: '/api/jobs/create',
-            data: { job: jobData, paymentMethod: 'paypal' },
+            data: { job: jobData },
             method: 'POST'
         });
-        const returnData = {
-            paymentUrl: response.data?.payment?.paymentMetadata?.approval?.href,
+        return {
             job: response.data?.job
         };
-        return returnData;
     } catch (error) {
         logError('Error creating new job:', error);
         throw error;
@@ -40,8 +38,18 @@ async function payForJob(jobDataId, session, paymentOptions = {}) {
             data,
             method: 'POST'
         });
+        // Coupon / subscription bypass — job already moved to pending_moderation
+        if (response.data?.success === true) {
+            return {
+                success: true,
+                remainingCoupons: response.data?.remainingCoupons ?? null,
+                job: response.data?.job ?? null,
+            };
+        }
+
         return {
-            paymentUrl: response.data?.payment?.paymentMetadata?.approval?.href,
+            paymentUrl: response.data?.redirectUrl ?? response.data?.payment?.paymentMetadata?.approval?.href,
+            directAuth: response.data?.directAuth === true,
             payment: response.data?.payment,
             job: response.data?.job,
             paymentMethodsSnapshot: response.data?.paymentMethodsSnapshot ?? null,
@@ -90,13 +98,20 @@ async function getJobProducts(session) {
     }
 }
 
-async function addSelfToJobProviders(jobId, session, paymentOptions = {}) {
+async function addSelfToJobProviders(jobId, session, options = {}) {
     try {
-        const { useCoupon = false, paymentMethod = 'paypal', currency = 'USD', savePaymentMethod, savedPaymentMethodId } = paymentOptions;
-        console.log(useCoupon, paymentMethod);
+        const {
+            useCoupon = false,
+            paymentMethod = 'paypal',
+            currency = 'USD',
+            savePaymentMethod,
+            savedPaymentMethodId,
+            proposed_price,
+            proposed_time_from,
+            proposed_time_to,
+        } = options;
 
         const data = {
-            currency,
             ...(useCoupon
                 ? { use_coupon: true, paymentMethod: 'none' }
                 : savedPaymentMethodId
@@ -104,6 +119,9 @@ async function addSelfToJobProviders(jobId, session, paymentOptions = {}) {
                     : { paymentMethod }
             ),
             ...(!useCoupon && !savedPaymentMethodId && savePaymentMethod !== undefined && { savePaymentMethod }),
+            ...(proposed_price !== undefined && proposed_price !== '' && { proposed_price: parseFloat(proposed_price) }),
+            ...(proposed_time_from && { proposed_time_from }),
+            ...(proposed_time_to && { proposed_time_to }),
         };
         const response = await fetchWithSession({
             session,
@@ -111,7 +129,17 @@ async function addSelfToJobProviders(jobId, session, paymentOptions = {}) {
             data,
             method: 'POST'
         });
-        return response.data;
+
+        if (response.data?.couponUsed === true) {
+            return { success: true, remainingCoupons: response.data?.remainingCoupons ?? null };
+        }
+        if (response.data?.directAuth === true) {
+            return { directAuth: true, payment: response.data?.payment };
+        }
+        return {
+            paymentUrl: response.data?.redirectUrl,
+            payment: response.data?.payment,
+        };
     } catch (error) {
         logError('Error adding self to job providers:', error);
         throw error;
@@ -234,6 +262,77 @@ async function assignExecutor(jobId, session, executorId) {
     }
 }
 
+async function selectProvider(jobId, session, providerId) {
+    try {
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/api/jobs/${jobId}/providers/select`,
+            data: { providerId },
+            method: 'POST'
+        });
+        return response.data;
+    } catch (error) {
+        logError('Error selecting provider:', error);
+        throw error;
+    }
+}
+
+async function confirmProviderSelection(jobId, session) {
+    try {
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/api/jobs/${jobId}/providers/confirm`,
+            method: 'POST',
+        });
+        return response.data; // 202: { status: 'charging', dealId }
+    } catch (error) {
+        logError('Error confirming provider selection:', error);
+        throw error;
+    }
+}
+
+async function rejectProviderSelection(jobId, session) {
+    try {
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/api/jobs/${jobId}/providers/reject`,
+            method: 'POST',
+        });
+        return response.data;
+    } catch (error) {
+        logError('Error rejecting provider selection:', error);
+        throw error;
+    }
+}
+
+async function getArchivedRefs(session) {
+    try {
+        const response = await fetchWithSession({
+            session,
+            endpoint: '/api/jobs/archived-refs',
+            method: 'GET',
+        });
+        return response.data?.data ?? [];
+    } catch (error) {
+        logError('Error fetching archived refs:', error);
+        throw error;
+    }
+}
+
+async function markArchivedRefSeen(jobId, session) {
+    try {
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/api/jobs/archived-refs/${jobId}/seen`,
+            method: 'PATCH',
+        });
+        return response.data;
+    } catch (error) {
+        logError('Error marking archived ref as seen:', error);
+        throw error;
+    }
+}
+
 export {
     createJob,
     checkHasPendingJob,
@@ -247,5 +346,10 @@ export {
     payForJob,
     noticeJobRejection,
     respondToJobAgreement,
-    assignExecutor
+    assignExecutor,
+    selectProvider,
+    confirmProviderSelection,
+    rejectProviderSelection,
+    getArchivedRefs,
+    markArchivedRefSeen,
 };

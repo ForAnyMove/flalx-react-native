@@ -9,7 +9,6 @@ import {
   View,
   Platform,
 } from 'react-native';
-import JobTypeSelector from '../../../components/JobTypeSelector';
 import SearchPanel from '../../../components/SearchPanel';
 import ShowJobModal from '../../../components/ShowJobModal';
 import { useComponentContext } from '../../../context/globalAppContext';
@@ -33,7 +32,6 @@ export default function WaitingScreen({
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 
-  const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');
   // const [showJobModalVisible, setShowJobModalVisible] = useState(false);
   // const [currentJobId, setCurrentJobId] = useState(null);
@@ -83,12 +81,6 @@ export default function WaitingScreen({
 
   const pendingJobsList = jobsController.creator.pending
     .filter((job) =>
-      filteredJobs.length > 0
-        ? filteredJobs.includes(job.type.key) ||
-        filteredJobs.includes(job.subType.key)
-        : true
-    )
-    .filter((job) =>
       [tField(job.type, 'name'), job.description].some((field) =>
         field.toLowerCase().includes(searchValue.toLowerCase())
       )
@@ -122,7 +114,7 @@ export default function WaitingScreen({
     createdAt: '2026-01-18T10:57:30.787203+00:00',
     status: 'waiting',
     creator: '4f04025a-eeaa-451d-a25c-586f6bdcf8f9',
-    creator_account_type: 'client',
+    created_by_account_type: 'client',
     providerStatus: 'choosed',
     providers: [
       {
@@ -131,11 +123,9 @@ export default function WaitingScreen({
         rating: 4.8,
         avatar: null,
         professions: ['cleaner'],
-        executor_expectations: {
-          salary: '50',
-          startDateTime: '2026-01-14T10:57:00+00:00',
-          endDateTime: '2026-01-30T10:57:00+00:00',
-        },
+        proposed_price: '50',
+        proposed_time_from: '2026-01-14T10:57:00+00:00',
+        proposed_time_to: '2026-01-30T10:57:00+00:00',
       },
       {
         id: 'p2',
@@ -143,24 +133,15 @@ export default function WaitingScreen({
         rating: 3.5,
         avatar: null,
         professions: ['cleaner'],
-        executor_expectations: {
-          salary: '45',
-          startDateTime: '2026-01-15T12:00:00+00:00',
-          endDateTime: '2026-01-25T18:00:00+00:00',
-        },
+        proposed_price: '45',
+        proposed_time_from: '2026-01-15T12:00:00+00:00',
+        proposed_time_to: '2026-01-25T18:00:00+00:00',
       },
     ],
   };
 
   const filteredJobsList = [
-    mockJob,
     ...jobsController.creator.waiting
-      .filter((job) =>
-        filteredJobs.length > 0
-          ? filteredJobs.includes(job.type.key) ||
-            filteredJobs.includes(job.subType.key)
-          : true
-      )
       .filter((job) =>
         [tField(job.type, 'name'), job.description].some((field) =>
           field.toLowerCase().includes(searchValue.toLowerCase())
@@ -365,12 +346,6 @@ export default function WaitingScreen({
         />
       </View>
 
-      <View style={{ width: isWebLandscape ? '70%' : '100%' }}>
-        <JobTypeSelector
-          selectedTypes={filteredJobs}
-          setSelectedTypes={setFilteredJobs}
-        />
-      </View>
       {true && (
         <JobNotificationsComponent
           notifications={rejectedJobsNotifications}

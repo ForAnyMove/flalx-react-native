@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { addSelfToJobProviders, getJobProducts, isProviderInJob, noticeJobRejection, removeSelfFromJobProviders, wasProviderInJob } from "../src/api/jobs";
+import { addSelfToJobProviders, getJobProducts, isProviderInJob, noticeJobRejection, removeSelfFromJobProviders, wasProviderInJob, selectProvider as selectProviderApi } from "../src/api/jobs";
 import { useGeolocation } from "./useGeolocation";
 import { logError } from "../utils/log_util";
 
@@ -230,6 +230,11 @@ export default function jobsManager({ session, user, geolocation }) {
     await reloadAll();
   }
 
+  async function selectProvider(jobId, providerId) {
+    await selectProviderApi(jobId, session, providerId);
+    await reloadAll();
+  }
+
   async function removeExecutor(jobId) {
     await safeFetch(`${serverURL}/jobs/${jobId}/unassign-executor`, {
       method: "POST",
@@ -260,17 +265,6 @@ export default function jobsManager({ session, user, geolocation }) {
     //   headers: authHeaders,
     // });
     // await reloadAll();
-  }
-
-  async function getJobById(jobId) {
-    const res = await fetch(`${serverURL}/jobs/${jobId}`, {
-      headers: authHeaders,
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Failed to fetch job');
-    }
-    return res.json();
   }
 
   async function checkIsProviderInJob(jobId) {
@@ -339,10 +333,10 @@ export default function jobsManager({ session, user, geolocation }) {
       confirmJob,
       markJobDone,
       approveProvider,
+      selectProvider,
       removeExecutor,
       addProvider,
       removeProvider,
-      getJobById,
       checkIsProviderInJob,
       checkWasProviderInJob,
       noticeJobRejectionAsCreator

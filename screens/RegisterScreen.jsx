@@ -220,8 +220,8 @@ export default function RegisterScreen() {
 
       await user.update({ ...updatedUser, is_password_exist: true });
 
-      // Submit professions only when user registered as provider
-      if (selectedRole === 'provider' && registrationProfessions.length > 0) {
+      // Submit professions only when user registered as business/provider
+      if (selectedRole === 'business' && registrationProfessions.length > 0) {
         await Promise.allSettled(
           registrationProfessions.map((p) =>
             jobTypesController.userToUserRequest
@@ -1018,7 +1018,7 @@ export default function RegisterScreen() {
                 />
 
                 {/* ── Professions block — only for provider ── */}
-                {selectedRole === 'provider' && (
+                {selectedRole === 'business' && (
                   <View style={{ marginTop: sizes.roleSectionMarginBottom }}>
                     <Text
                       style={{
@@ -1166,7 +1166,7 @@ export default function RegisterScreen() {
                     )
                   }
                   onPress={handleSubmit}
-                  disabled={loading || (selectedRole === 'provider' && registrationProfessions.length === 0)}
+                  disabled={loading || (selectedRole === 'business' && registrationProfessions.length === 0)}
                   customStyle={{ btn: { flex: 1 } }}
                 />
               </View>

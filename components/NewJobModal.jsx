@@ -64,36 +64,27 @@ async function editJobById(jobId, updates, session) {
 
 async function createNewJob(jobData, session, openWebView, updateJobsList, paymentOptions = {}) {
   try {
+    // Step 1 — create job record
     const data = await createJob(jobData, session);
-    if (data.job) {
-      if (
-        paymentOptions.useCoupon ||
-        paymentOptions.paymentMethod ||
-        paymentOptions.savedPaymentMethodId
-      ) {
-        try {
-          const payResult = await payForJob(data.job.id, session, paymentOptions);
-          if (payResult.paymentUrl) {
-            openWebView(payResult.paymentUrl, () => {});
-          } else {
-            updateJobsList?.();
-          }
-        } catch (payErr) {
-          logError('Ошибка оплаты job:', payErr.message);
-          updateJobsList?.();
-        }
-      } else {
-        if (data.paymentUrl) {
-          openWebView(data.paymentUrl, () => {});
-        } else {
-          updateJobsList?.();
-        }
-      }
-    } else if (data.paymentUrl) {
-      openWebView(data.paymentUrl, () => {});
+    if (!data.job) throw new Error('Job creation failed: no job returned');
+
+    // Step 2 — authorize payment immediately after creation
+    const payResult = await payForJob(data.job.id, session, paymentOptions);
+
+    if (payResult.success) {
+      // Coupon / subscription bypass — job already pending_moderation
+      updateJobsList?.();
+    } else if (payResult.directAuth) {
+      // Saved payment method — direct auth, no redirect needed
+      updateJobsList?.();
+    } else if (payResult.paymentUrl) {
+      // Standard PayPal redirect
+      openWebView(payResult.paymentUrl, () => { });
+    } else {
+      updateJobsList?.();
     }
   } catch (error) {
-    logInfo('Ошибка создания job:', error.message);
+    logError('Ошибка создания job:', error.message);
     throw error;
   }
 
@@ -349,7 +340,7 @@ export default function NewJobModal({
     }
     setIsExperienceRequired(requiresExperience);
   }, [type, subType, jobTypesController.jobTypesWithSubtypes]);
-  
+
 
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [publishStep, setPublishStep] = useState(1);
@@ -1381,8 +1372,8 @@ export default function NewJobModal({
                                 ? '7 / 2 / 8 / 3'
                                 : '7 / 1 / 8 / 2'
                               : isRTL
-                              ? '6 / 2 / 7 / 3'
-                              : '6 / 1 / 7 / 2',
+                                ? '6 / 2 / 7 / 3'
+                                : '6 / 1 / 7 / 2',
                           },
                           { flexDirection: isRTL ? 'row-reverse' : 'row' },
                         ]}
@@ -1417,8 +1408,8 @@ export default function NewJobModal({
                                 ? '7 / 1 / 8 / 2'
                                 : '7 / 2 / 8 / 3'
                               : isRTL
-                              ? '6 / 1 / 7 / 2'
-                              : '6 / 2 / 7 / 3',
+                                ? '6 / 1 / 7 / 2'
+                                : '6 / 2 / 7 / 3',
                           },
                           { flexDirection: isRTL ? 'row-reverse' : 'row' },
                         ]}
@@ -1458,8 +1449,8 @@ export default function NewJobModal({
                             ? '8 / 1 / 9 / 3'
                             : '8 / 1 / 9 / 3'
                           : isRTL
-                          ? '7 / 1 / 8 / 3'
-                          : '7 / 1 / 8 / 3',
+                            ? '7 / 1 / 8 / 3'
+                            : '7 / 1 / 8 / 3',
                       },
                     ]}
                   >

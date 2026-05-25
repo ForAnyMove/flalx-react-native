@@ -31,6 +31,9 @@ const UserSummaryBlock = ({
   closeAllModal,
   jobAgreement,
   isClientCreator = false,
+  providerStatus,
+  hasPendingProvider = false,
+  jobExpectations = null,
 }) => {
   const {
     themeController,
@@ -129,6 +132,7 @@ const UserSummaryBlock = ({
 
   const userId = user.id || user?._j?.id;
 
+  const _userData = user.id ? user : user._j;
   const {
     avatar,
     name,
@@ -141,8 +145,10 @@ const UserSummaryBlock = ({
     email,
     phoneNumber,
     is_deleted,
-    executor_expectations,
-  } = user.id ? user : user._j;
+  } = _userData;
+  const proposed_price = _userData.proposed_price ?? jobExpectations?.proposed_price;
+  const proposed_time_from = _userData.proposed_time_from ?? jobExpectations?.proposed_time_from;
+  const proposed_time_to = _userData.proposed_time_to ?? jobExpectations?.proposed_time_to;
 
   const handleUserRevealTry = async (payload = {}) => {
     try {
@@ -271,119 +277,125 @@ const UserSummaryBlock = ({
         <View
           style={{
             flex: 1,
-            flexDirection: isRTL ? 'row-reverse' : 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            flexDirection: 'column',
           }}
         >
           <View
-            style={[
-              styles.avatarNameContainer,
-              {
-                flexDirection: isRTL ? 'row-reverse' : 'row',
-                gap: sizes.providerInfoGap * 1.5,
-                flex: 1,
-              },
-            ]}
+            style={{
+              flexDirection: isRTL ? 'row-reverse' : 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
           >
-            {is_deleted ? (
-              <View
-                style={[
-                  styles.avatarPlaceholder,
-                  {
-                    width: sizes.avatar * 1.5,
-                    height: sizes.avatar * 1.5,
-                    borderRadius: (sizes.avatar * 1.5) / 2,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    backgroundColor: themeController.current?.backgroundColor,
-                  },
-                ]}
-              >
+            <View
+              style={[
+                styles.avatarNameContainer,
+                {
+                  flexDirection: isRTL ? 'row-reverse' : 'row',
+                  gap: sizes.providerInfoGap * 1.5,
+                  flex: 1,
+                },
+              ]}
+            >
+              {is_deleted ? (
+                <View
+                  style={[
+                    styles.avatarPlaceholder,
+                    {
+                      width: sizes.avatar * 1.5,
+                      height: sizes.avatar * 1.5,
+                      borderRadius: (sizes.avatar * 1.5) / 2,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: themeController.current?.backgroundColor,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={{
+                      fontSize: sizes.smallFont,
+                      color: themeController.current?.unactiveTextColor,
+                      fontFamily: 'Rubik-SemiBold',
+                    }}
+                  >
+                    {t('common.deleted')}
+                  </Text>
+                </View>
+              ) : avatar ? (
+                <Image
+                  source={{ uri: avatar }}
+                  style={[
+                    styles.avatar,
+                    {
+                      width: sizes.avatar * 1.5,
+                      height: sizes.avatar * 1.5,
+                      borderRadius: (sizes.avatar * 1.5) / 2,
+                    },
+                  ]}
+                />
+              ) : (
+                <View
+                  style={[
+                    styles.avatarPlaceholder,
+                    {
+                      width: sizes.avatar * 1.5,
+                      height: sizes.avatar * 1.5,
+                      borderRadius: (sizes.avatar * 1.5) / 2,
+                    },
+                  ]}
+                >
+                  <Image
+                    source={
+                      themeController.current.isTheme
+                        ? icons.monotoneAvatar
+                        : icons.defaultAvatar
+                    }
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                </View>
+              )}
+              <View style={{ flex: 1 }}>
                 <Text
                   style={{
-                    fontSize: sizes.smallFont,
-                    color: themeController.current?.unactiveTextColor,
+                    fontSize: sizes.font,
+                    color: themeController.current?.textColor,
                     fontFamily: 'Rubik-SemiBold',
                   }}
                 >
-                  {t('common.deleted')}
+                  {is_deleted
+                    ? t('profile.deleted_user')
+                    : usersReveal.contains(userId)
+                      ? `${name} ${surname}`
+                      : `${name} ${surname?.[0] ? surname?.[0] + '.' : ''}`}
                 </Text>
+                {!is_deleted && (
+                  <Text
+                    style={{
+                      fontSize: sizes.smallFont,
+                      color: themeController.current?.unactiveTextColor,
+                      marginBottom: 0,
+                    }}
+                  >
+                    {LICENSES[professions?.[0]] || (typeof professions?.[0] === 'string' ? professions?.[0] : '') || ''}
+                  </Text>
+                )}
               </View>
-            ) : avatar ? (
-              <Image
-                source={{ uri: avatar }}
-                style={[
-                  styles.avatar,
-                  {
-                    width: sizes.avatar * 1.5,
-                    height: sizes.avatar * 1.5,
-                    borderRadius: (sizes.avatar * 1.5) / 2,
-                  },
-                ]}
-              />
-            ) : (
-              <View
-                style={[
-                  styles.avatarPlaceholder,
-                  {
-                    width: sizes.avatar * 1.5,
-                    height: sizes.avatar * 1.5,
-                    borderRadius: (sizes.avatar * 1.5) / 2,
-                  },
-                ]}
-              >
-                <Image
-                  source={
-                    themeController.current.isTheme
-                      ? icons.monotoneAvatar
-                      : icons.defaultAvatar
-                  }
-                  style={{ width: '100%', height: '100%' }}
-                />
-              </View>
-            )}
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  fontSize: sizes.font,
-                  color: themeController.current?.textColor,
-                  fontFamily: 'Rubik-SemiBold',
-                }}
-              >
-                {is_deleted
-                  ? t('profile.deleted_user')
-                  : usersReveal.contains(userId)
-                    ? `${name} ${surname}`
-                    : `${name} ${surname?.[0] ? surname?.[0] + '.' : ''}`}
-              </Text>
-              {!is_deleted && (
-                <Text
-                  style={{
-                    fontSize: sizes.smallFont,
-                    color: themeController.current?.unactiveTextColor,
-                    marginBottom: executor_expectations ? 4 : 0,
-                  }}
-                >
-                  {LICENSES[professions?.[0]] || professions?.[0] || ''}
-                </Text>
-              )}
-              {isClientCreator && executor_expectations && (
-                <JobExpectationsBadge
-                  expectations={executor_expectations}
-                  isRTL={isRTL}
-                  containerStyle={{ marginTop: 4, justifyContent: 'flex-start' }}
-                  badgeStyle={{ paddingVertical: 2, paddingHorizontal: 6 }}
-                  textStyle={{ fontSize: sizes.smallFont - 2 }}
-                />
-              )}
+            </View>
+
+            {/* Right side: Rating */}
+            <View style={{ alignItems: isRTL ? 'flex-start' : 'flex-end' }}>
+              {user?.rating && renderStars(user.rating)}
             </View>
           </View>
-
-          {/* Right side: Rating */}
-          <View style={{ alignItems: isRTL ? 'flex-start' : 'flex-end' }}>
-            {user?.rating && renderStars(user.rating)}
-          </View>
+          {(proposed_price || proposed_time_from) && (
+            <JobExpectationsBadge
+              expectations={{ proposed_price, proposed_time_from, proposed_time_to }}
+              isRTL={isRTL}
+              containerStyle={{ marginTop: 6, justifyContent: 'flex-start' }}
+              badgeStyle={{ paddingVertical: 2, paddingHorizontal: 6 }}
+              textStyle={{ fontSize: sizes.smallFont - 2 }}
+            />
+          )}
         </View>
       </TouchableOpacity>
 
@@ -888,7 +900,48 @@ const UserSummaryBlock = ({
 
                 {status === 'store-waiting' && (
                   <View>
-                    {(jobAgreement != null && jobAgreement !== 'agreed') ? (
+                    {providerStatus === 'pending_supplier_approval' ? (
+                      <View
+                        style={[
+                          styles.primaryBtn,
+                          {
+                            flexDirection: isRTL ? 'row-reverse' : 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: sizes.badgeGap,
+                            backgroundColor: themeController.current?.buttonColorTertiaryDisabled,
+                            borderRadius: sizes.borderRadius,
+                            height: sizes.createRequestBtnHeight,
+                          },
+                          isWebLandscape && {
+                            width: '30%',
+                            alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                            marginBottom: sizes.infoSectionMarginBottom,
+                          },
+                        ]}
+                      >
+                        <Image
+                          source={icons.pending}
+                          style={{
+                            width: sizes.icon,
+                            height: sizes.icon,
+                            tintColor: themeController.current?.buttonTextColorTertiary,
+                          }}
+                        />
+                        <Text
+                          style={{
+                            fontSize: sizes.font,
+                            color: themeController.current?.buttonTextColorTertiary,
+                            fontFamily: 'Rubik-SemiBold',
+                            textAlign: 'center',
+                          }}
+                        >
+                          {t('userSummary.awaitingConfirmation', {
+                            defaultValue: 'Awaiting provider confirmation',
+                          })}
+                        </Text>
+                      </View>
+                    ) : (jobAgreement != null && jobAgreement !== 'agreed') ? (
                       <Text
                         style={[
                           {
@@ -907,56 +960,46 @@ const UserSummaryBlock = ({
                             'Provider has not yet agreed to the updated job terms',
                         })}
                       </Text>
-                    ) : (
-                      <>
-                        <TouchableOpacity
-                          style={[
-                            styles.primaryBtn,
-                            {
-                              backgroundColor: usersReveal.contains(user.id)
-                                ? themeController.current?.buttonColorPrimaryDefault
-                                : themeController.current
-                                  ?.buttonColorPrimaryDisabled,
-                              borderRadius: sizes.borderRadius,
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              padding: 0,
-                              height: sizes.createRequestBtnHeight,
-                            },
-                            isWebLandscape && {
-                              width: '30%',
-                              alignSelf: isRTL ? 'flex-end' : 'flex-start',
-                              marginBottom: sizes.infoSectionMarginBottom,
-                            },
-                          ]}
-                          onPress={() => {
-                            if (usersReveal.contains(user.id)) {
-                              setAppLoading(true);
-                              jobsController.actions
-                                .approveProvider(currentJobId, userId)
-                                .then(() => {
-                                  setModalVisible(false);
-                                  setShowContactInfo(false);
-                                  closeAllModal();
-                                  setAppLoading(false);
-                                });
-                            }
-                          }}
+                    ) : providerStatus === 'submitted' && !hasPendingProvider ? (
+                      <TouchableOpacity
+                        style={[
+                          styles.primaryBtn,
+                          {
+                            backgroundColor: themeController.current?.buttonColorPrimaryDefault,
+                            borderRadius: sizes.borderRadius,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: 0,
+                            height: sizes.createRequestBtnHeight,
+                          },
+                          isWebLandscape && {
+                            width: '30%',
+                            alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                            marginBottom: sizes.infoSectionMarginBottom,
+                          },
+                        ]}
+                        onPress={() => {
+                          setAppLoading(true);
+                          jobsController.actions
+                            .selectProvider(currentJobId, userId)
+                            .then(() => {
+                              setModalVisible(false);
+                              setShowContactInfo(false);
+                              setAppLoading(false);
+                            })
+                            .catch(() => setAppLoading(false));
+                        }}
+                      >
+                        <Text
+                          style={[{
+                            fontSize: sizes.professionSize,
+                            color: themeController.current?.buttonTextColorPrimary,
+                          }]}
                         >
-                          <Text
-                            style={[
-                              {
-                                fontSize: sizes.professionSize,
-                                color:
-                                  themeController.current?.buttonTextColorPrimary,
-                              },
-                            ]}
-                          >
-                            {t('userSummary.approve', { defaultValue: 'Approve' })}
-                          </Text>
-                        </TouchableOpacity>
-                      </>
-                    )}
+                          {t('userSummary.select', { defaultValue: 'Select' })}
+                        </Text>
+                      </TouchableOpacity>
+                    ) : null}
                   </View>
                 )}
 
@@ -1017,7 +1060,7 @@ const UserSummaryBlock = ({
         type='regular'
         onPurchase={handleUserRevealTry}
         onPayWithCoupons={handlePayCouponsReveal}
-        price={`${usersReveal.product.price} ${usersReveal.product.currency}`}
+        price={usersReveal?.product ? `${usersReveal.product.price} ${usersReveal.product.currency}` : ''}
       />
     </>
   );
