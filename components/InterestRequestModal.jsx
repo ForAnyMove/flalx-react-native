@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
+import { useWindowInfo } from '../context/windowContext';
 import { icons } from '../constants/icons';
 import { scale, scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import BaseActionModal from './BaseActionModal';
@@ -213,7 +214,7 @@ const InterestRequestModal = ({
       modalWidth: isWebLandscape ? scale(450) : '90%',
       borderRadius: scale(8),
       containerPaddingVertical: scale(32),
-      modalPaddingHorizontal: scale(75),
+      containerPaddingHorizontal: scale(75),
       inputPaddingHorizontal: scale(16),
       // Text
       titleSize: scale(24),
@@ -350,6 +351,87 @@ const InterestRequestModal = ({
       }
       setFieldErrors(prev => ({ ...prev, date: false }));
     }
+  };
+  // ─── Render Content ──────────────────────────────────────────────────────────
+  const renderForm = () => {
+    const showHeader = hasSubscription;
+    return (
+      <View style={styles.content}>
+        {showHeader ? (
+          <SuccessHeader
+            subtitle={t('interestRequest.sub_active_no_fee', { defaultValue: 'Subscription active - no fee' })}
+            sizes={sizes}
+            theme={theme}
+          />
+        ) : (
+          <PaginationDots activeStep={1} sizes={sizes} theme={theme} t={t} />
+        )}
+
+        <Text style={[styles.modalTitle, { color: theme.textColor, fontSize: sizes.titleSize, marginBottom: sizes.titleBottomMargin }]}>
+          {t('interestRequest.your_application', { defaultValue: 'Your application' })}
+        </Text>
+
+        <FormInput
+          label={t('interestRequest.price_header', { defaultValue: 'Price' })}
+          value={formData.price}
+          onChangeText={(v) => {
+            setFormData(p => ({ ...p, price: v }));
+            setFieldErrors(p => ({ ...p, price: false }));
+          }}
+          placeholder="$0"
+          hint={t('interestRequest.price_hint', { defaultValue: 'Enter the amount you are willing to work for' })}
+          sizes={sizes}
+          theme={theme}
+          isRTL={isRTL}
+          error={fieldErrors.price}
+          t={t}
+        />
+
+        <View style={[styles.timeSection, { marginBottom: sizes.sectionMarginBottom }]}>
+          <Text style={[styles.inputLabelOutside, { color: theme.textColor, fontSize: sizes.sectionHeaderFontSize, marginBottom: sizes.sectionHeaderMarginBottom, textAlign: isRTL ? 'right' : 'left' }]}>
+            {t('interestRequest.time_label', { defaultValue: 'Available time' })}
+          </Text>
+          <View style={[styles.row, { gap: sizes.itemMarginBottom, marginBottom: 8 }]}>
+            <DateInput
+              label={t('common.from', { defaultValue: 'From' })}
+              value={formData.startDate}
+              onPress={() => Platform.OS !== 'web' && setPickerMode('start')}
+              mode="start"
+              sizes={sizes}
+              theme={theme}
+              handleWebDateChange={handleWebDateChange}
+              isRTL={isRTL}
+              t={t}
+              error={fieldErrors.date}
+            />
+            <DateInput
+              label={t('common.to', { defaultValue: 'To' })}
+              value={formData.endDate}
+              onPress={() => Platform.OS !== 'web' && setPickerMode('end')}
+              mode="end"
+              sizes={sizes}
+              theme={theme}
+              handleWebDateChange={handleWebDateChange}
+              isRTL={isRTL}
+              t={t}
+              error={fieldErrors.date}
+            />
+          </View>
+          <Text style={[styles.hintText, { color: theme.unactiveTextColor, fontSize: sizes.hintSize, textAlign: isRTL ? 'right' : 'left' }]}>
+            {t('interestRequest.time_hint', { defaultValue: 'If exact — pick same date for both' })}
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.primaryButton, { backgroundColor: theme.primaryColor, height: sizes.buttonHeight, borderRadius: sizes.borderRadius }]}
+          onPress={handleContinue}
+        >
+          <Text style={[styles.buttonText, { color: theme.buttonTextColorPrimary, fontSize: sizes.buttonTextSize }]}>
+            {hasSubscription ? t('interestRequest.submit_application', { defaultValue: 'Submit application' }) : t('interestRequest.continue_to_payment', { defaultValue: 'Continue to payment' })}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
   };
 
   const renderPayment = () => {
