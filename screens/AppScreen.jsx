@@ -40,6 +40,9 @@ export default function AppScreen() {
     if (screenName === 'app' && isClient) {
       return tabController.list.filter(tab => tab === 'client');
     }
+    if (screenName === 'profile' && isClient) {
+      return tabController.list.filter(tab => tab !== 'professions');
+    }
     return tabController.list;
   }, [tabController.list, screenName, isClient]);
 
@@ -52,6 +55,12 @@ export default function AppScreen() {
       setSidebarOverride(null);
     }
   }, [shouldHideNav, setSidebarOverride]);
+
+  React.useEffect(() => {
+    if (screenName === 'profile' && isClient && profileTabController.active === 'professions') {
+      profileTabController.goTo('profile');
+    }
+  }, [screenName, isClient, profileTabController.active]);
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -101,9 +110,9 @@ export default function AppScreen() {
             gap: sizes.tabTitleGap,
           },
           isSub &&
-            (isRTL
-              ? { paddingRight: sizes.subTabPadding }
-              : { paddingLeft: sizes.subTabPadding }),
+          (isRTL
+            ? { paddingRight: sizes.subTabPadding }
+            : { paddingLeft: sizes.subTabPadding }),
           isSubActive && {
             backgroundColor: theme.buttonColorPrimaryDefault + '22',
             borderRadius: sizes.borderRadius,
@@ -116,10 +125,10 @@ export default function AppScreen() {
           style={
             isSideMenu
               ? {
-                  width: sizes.iconSize,
-                  height: sizes.iconSize,
-                  resizeMode: 'contain',
-                }
+                width: sizes.iconSize,
+                height: sizes.iconSize,
+                resizeMode: 'contain',
+              }
               : [styles.icon, { width: sizes.iconSize, height: sizes.iconSize }]
           }
         />
@@ -127,19 +136,19 @@ export default function AppScreen() {
           style={
             isSideMenu
               ? {
-                  fontSize: sizes.fontSize,
-                  color: theme.tabBarTextColorActive,
-                  flexShrink: 1,
-                  textAlign: isRTL ? 'right' : 'left',
-                }
+                fontSize: sizes.fontSize,
+                color: theme.tabBarTextColorActive,
+                flexShrink: 1,
+                textAlign: isRTL ? 'right' : 'left',
+              }
               : [
-                  styles.tabTextBottom,
-                  {
-                    color: theme.tabBarTextColorActive,
-                    fontSize: sizes.fontSize,
-                    marginTop: sizes.textMarginTop,
-                  },
-                ]
+                styles.tabTextBottom,
+                {
+                  color: theme.tabBarTextColorActive,
+                  fontSize: sizes.fontSize,
+                  marginTop: sizes.textMarginTop,
+                },
+              ]
           }
           numberOfLines={1}
           ellipsizeMode='tail'

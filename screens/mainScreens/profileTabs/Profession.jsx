@@ -318,7 +318,7 @@ export default function Profession() {
                     source={icons[`${title}-dark`]}
                     style={{ width: sizes.iconSize, height: sizes.iconSize }}
                     resizeMode='contain'
-                    tintColor={title === 'system_professions' ? themeController?.current.systemProfessionsTabColor : themeController?.current.textColor }
+                    tintColor={title === 'system_professions' ? themeController?.current.systemProfessionsTabColor : themeController?.current.textColor}
                   />
                 </Animated.View>
               </View>
