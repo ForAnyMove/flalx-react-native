@@ -23,6 +23,7 @@ import { useLocalization } from '../src/services/useLocalization';
 import { logError } from '../utils/log_util';
 import { useNotification } from '../src/render';
 import JobExpectationsBadge from './ui/JobExpectationsBadge';
+import ConfirmSelectProviderModal from './ConfirmSelectProviderModal';
 
 const UserSummaryBlock = ({
   user,
@@ -51,6 +52,7 @@ const UserSummaryBlock = ({
   const [modalVisible, setModalVisible] = useState(false);
   const [showContactInfo, setShowContactInfo] = useState(false);
   const [purchaseModalVisible, setPurchaseModalVisible] = useState(false);
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
 
   const { width, height, isLandscape, effectiveSidebarWidth } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -111,6 +113,7 @@ const UserSummaryBlock = ({
         ? 0
         : scaleByHeightMobile(15, height),
       infoSectionMarginBottom: isWebLandscape ? web(23) : mobile(16),
+      selectButtonMarginBottom: isWebLandscape ? web(8) : mobile(16),
       modalHeaderPaddingTop: isWebLandscape
         ? scaleByHeight(32, height)
         : scaleByHeightMobile(16, height),
@@ -127,6 +130,10 @@ const UserSummaryBlock = ({
       placeholderSmallWidth: scale(150),
       placeholderLargeWidth: scale(220),
       lockIconSize: scale(60),
+      bottomContainerPaddingTop: scale(16),
+      shadowOffsetHeight: scale(-3),
+      shadowRadius: scale(4),
+      elevation: scale(8),
     };
   }, [isWebLandscape, width, height]);
 
@@ -278,6 +285,7 @@ const UserSummaryBlock = ({
           style={{
             flex: 1,
             flexDirection: 'column',
+            alignSelf: 'flex-start',
           }}
         >
           <View
@@ -899,7 +907,23 @@ const UserSummaryBlock = ({
                 </ScrollView>
 
                 {status === 'store-waiting' && (
-                  <View>
+                  <View
+                    style={{
+                      marginHorizontal: -sizes.pagePaddingHorizontal,
+                      marginBottom: -sizes.padding,
+                      paddingHorizontal: sizes.pagePaddingHorizontal,
+                      paddingTop: sizes.bottomContainerPaddingTop,
+                      paddingBottom: sizes.padding,
+                      backgroundColor: themeController.current?.backgroundColor,
+                      borderTopWidth: 1,
+                      borderTopColor: themeController.current?.profileDefaultBackground,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: sizes.shadowOffsetHeight },
+                      shadowOpacity: 0.1,
+                      shadowRadius: sizes.shadowRadius,
+                      elevation: sizes.elevation,
+                    }}
+                  >
                     {providerStatus === 'pending_supplier_approval' ? (
                       <View
                         style={[
@@ -944,62 +968,81 @@ const UserSummaryBlock = ({
                     ) : (jobAgreement != null && jobAgreement !== 'agreed') ? (
                       <Text
                         style={[
+                          styles.primaryBtn,
                           {
-                            color: themeController.current?.unactiveTextColor,
-                            textAlign: 'center',
-                            fontSize: sizes.small,
-                            marginBottom: sizes.showContactInfoMarginBottom,
+                            backgroundColor:
+                              themeController.current?.buttonColorPrimaryDisabled,
+                            borderRadius: sizes.borderRadius,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: 0,
+                            height: sizes.createRequestBtnHeight,
+                            marginBottom: sizes.selectButtonMarginBottom,
+                            flexDirection: isRTL ? 'row-reverse' : 'row',
+                            gap: sizes.padding,
                           },
                           isWebLandscape && {
-                            textAlign: isRTL ? 'right' : 'left',
+                            width: '30%',
+                            alignSelf: isRTL ? 'flex-end' : 'flex-start',
                           },
                         ]}
+                        disabled={true}
                       >
                         {t('userSummary.providerNotAgreed', {
                           defaultValue:
                             'Provider has not yet agreed to the updated job terms',
                         })}
                       </Text>
-                    ) : providerStatus === 'submitted' && !hasPendingProvider ? (
-                      <TouchableOpacity
-                        style={[
-                          styles.primaryBtn,
-                          {
-                            backgroundColor: themeController.current?.buttonColorPrimaryDefault,
-                            borderRadius: sizes.borderRadius,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: 0,
-                            height: sizes.createRequestBtnHeight,
-                          },
-                          isWebLandscape && {
-                            width: '30%',
-                            alignSelf: isRTL ? 'flex-end' : 'flex-start',
-                            marginBottom: sizes.infoSectionMarginBottom,
-                          },
-                        ]}
-                        onPress={() => {
-                          setAppLoading(true);
-                          jobsController.actions
-                            .selectProvider(currentJobId, userId)
-                            .then(() => {
-                              setModalVisible(false);
-                              setShowContactInfo(false);
-                              setAppLoading(false);
-                            })
-                            .catch(() => setAppLoading(false));
-                        }}
-                      >
-                        <Text
-                          style={[{
-                            fontSize: sizes.professionSize,
-                            color: themeController.current?.buttonTextColorPrimary,
-                          }]}
+                    ) : (
+                      <>
+                        <TouchableOpacity
+                          style={[
+                            styles.primaryBtn,
+                            {
+                              backgroundColor: usersReveal.contains(user.id)
+                                ? themeController.current?.buttonColorPrimaryDefault
+                                : themeController.current
+                                  ?.buttonColorPrimaryDisabled,
+                              borderRadius: sizes.borderRadius,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: 0,
+                              height: sizes.createRequestBtnHeight,
+                            },
+                            isWebLandscape && {
+                              width: '30%',
+                              alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                              marginBottom: sizes.infoSectionMarginBottom,
+                            },
+                          ]}
+                          onPress={() => {
+                            if (usersReveal.contains(user.id)) {
+                              setAppLoading(true);
+                              jobsController.actions
+                                .selectProvider(currentJobId, userId)
+                                .then(() => {
+                                  setModalVisible(false);
+                                  setShowContactInfo(false);
+                                  closeAllModal();
+                                  setAppLoading(false);
+                                });
+                            }
+                          }}
                         >
-                          {t('userSummary.select', { defaultValue: 'Select' })}
-                        </Text>
-                      </TouchableOpacity>
-                    ) : null}
+                          <Text
+                            style={[
+                              {
+                                fontSize: sizes.professionSize,
+                                color:
+                                  themeController.current?.buttonTextColorPrimary,
+                              },
+                            ]}
+                          >
+                            {t('userSummary.approve', { defaultValue: 'Approve' })}
+                          </Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
                   </View>
                 )}
 
@@ -1061,6 +1104,33 @@ const UserSummaryBlock = ({
         onPurchase={handleUserRevealTry}
         onPayWithCoupons={handlePayCouponsReveal}
         price={usersReveal?.product ? `${usersReveal.product.price} ${usersReveal.product.currency}` : ''}
+      />
+
+      <ConfirmSelectProviderModal
+        visible={confirmModalVisible}
+        onClose={() => setConfirmModalVisible(false)}
+        onConfirm={async () => {
+          try {
+            await jobsController.actions.approveProvider(currentJobId, userId);
+            return true;
+          } catch (error) {
+            logError('Error approving provider:', error);
+            return false;
+          }
+        }}
+        providerName={
+          is_deleted
+            ? t('profile.deleted_user')
+            : usersReveal.contains(userId)
+              ? `${name} ${surname}`
+              : `${name} ${surname?.[0] ? surname?.[0] + '.' : ''}`
+        }
+        onSuccessClose={() => {
+          setConfirmModalVisible(false);
+          setModalVisible(false);
+          setShowContactInfo(false);
+          closeAllModal();
+        }}
       />
     </>
   );

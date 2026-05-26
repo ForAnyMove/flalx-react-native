@@ -16,6 +16,8 @@ import { useTranslation } from 'react-i18next';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { formatCurrency } from '../utils/currency_formatter';
+import BaseActionModal from './BaseActionModal';
+import PaymentFlowStep from './PaymentFlowStep';
 
 const PublishStatusModal = ({
   visible,
@@ -52,6 +54,8 @@ const PublishStatusModal = ({
   const [selectedSource, setSelectedSource] = useState('available'); // 'saved' | 'available'
   const [saveForFuture, setSaveForFuture] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showAddMethod, setShowAddMethod] = useState(false);
+  const [newMethodId, setNewMethodId] = useState(null);
 
   // ─── Data Extraction ─────────────────────────────────────────────────────────
   // const isClient = user.current?.account_type === 'client';
@@ -91,6 +95,8 @@ const PublishStatusModal = ({
     couponsManagerController?.refreshBalance?.();
     setIsLoading(false);
     setSaveForFuture(false);
+    setShowAddMethod(false);
+    setNewMethodId(availableMethods.length > 0 ? availableMethods[0] : null);
 
     if (savedMethods.length > 0 && defaultSavedMethod) {
       setSelectedMethodId(defaultSavedMethod.id);
@@ -164,6 +170,14 @@ const PublishStatusModal = ({
       sectionHeaderMarginTop: scale(12),
       methodIconWidth: scale(80),
       methodIconHeight: scale(34),
+      paypalMethodHeight: scale(38),
+      paypalMethodWidth: scale(150),
+      hypMethodHeight: scale(34),
+      hypMethodWidth: scale(80),
+      apple_payMethodHeight: scale(38),
+      apple_payMethodWidth: scale(140),
+      google_payMethodHeight: scale(38),
+      google_payMethodWidth: scale(140),
       addMethodLinkMarginTop: scale(16),
       checkboxRowMarginTop: scale(8),
       checkboxRowMarginBottom: scale(12),
@@ -217,6 +231,17 @@ const PublishStatusModal = ({
   const handleSubscriptionPublish = () => {
     setIsLoading(true);
     onSubmit({ subscriptionActive: true });
+  };
+
+  const handleAddMethodPay = () => {
+    setIsLoading(true);
+    const isCombined = isClient && selectedOption.type !== 'normal';
+    const payload = {
+      useCoupon: isCombined,
+      paymentMethod: newMethodId,
+      ...(saveForFuture && { savePaymentMethod: true }),
+    };
+    onSubmit(payload);
   };
 
   // ─── Layout Styles ───────────────────────────────────────────────────────────
@@ -958,8 +983,8 @@ const PublishStatusModal = ({
   const renderStep2 = () => {
     const isCombined = isClient && selectedOption.type !== 'normal';
 
-    return (
-      <View style={styles.contentContainer}>
+    const step2Header = (
+      <>
         {/* Payment Title and Total centered, mirroring InterestRequestModal */}
         <View style={{ alignItems: 'center', marginBottom: sizes.step2TitleMarginBottom }}>
           <Text style={[styles.title, { fontSize: sizes.titleSize }]}>
@@ -1027,198 +1052,111 @@ const PublishStatusModal = ({
             </View>
           </View>
         )}
+      </>
+    );
 
-        {/* Section: Saved Methods */}
-        <View style={{ width: '100%', marginBottom: sizes.sectionContainerMarginBottom }}>
-          <Text style={styles.sectionHeader}>
-            {t('payment_modal.saved_methods', { defaultValue: 'Saved methods' })}
-          </Text>
-          <ScrollView
-            style={[
-              styles.methodsScroll,
-              { maxHeight: sizes.methodScrollMaxHeight },
-            ]}
-            showsVerticalScrollIndicator={false}
-          >
-            {savedMethods.map((method, index) => {
-              const isSelected = selectedMethodId === method.id;
-              return (
-                <TouchableOpacity
-                  key={method.id}
-                  style={[
-                    styles.methodItem,
-                    {
-                      flexDirection: isRTL ? 'row-reverse' : 'row',
-                      borderColor: isSelected
-                        ? theme.primaryColor
-                        : 'transparent',
-                      borderWidth: sizes.borderWidthOne,
-                      backgroundColor: isSelected
-                        ? theme.primaryColor + '10'
-                        : theme.defaultBlocksMockBackground + '33',
-                      marginBottom: index === savedMethods.length - 1 ? 0 : sizes.itemMarginBottom,
-                    },
-                  ]}
-                  onPress={() => {
-                    setSelectedMethodId(method.id);
-                    setSelectedSource('saved');
-                  }}
-                >
-                  <Image
-                    source={isSelected ? icons.radioOn : icons.radioOff}
-                    style={[
-                      styles.itemCircle,
-                      { tintColor: isSelected ? theme.primaryColor : theme.formInputLabelColor },
-                    ]}
-                  />
-                  <Text
-                    style={[
-                      styles.methodLabel,
-                      {
-                        marginLeft: isRTL
-                          ? 0
-                          : sizes.itemContentMarginHorizontal,
-                        marginRight: isRTL
-                          ? sizes.itemContentMarginHorizontal
-                          : 0,
-                        textAlign: isRTL ? 'right' : 'left',
-                      },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {getSavedMethodLabel(method)}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-
-          {/* +Add new payment method link centered and underlined */}
-          <TouchableOpacity style={styles.addMethodLink}>
-            <Text style={styles.addMethodText}>
-              {t('payment_modal.add_new_method', { defaultValue: '+Add new payment method' })}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Save for future purchases Checkbox */}
+    const step2Footer = (
+      <View style={{ width: '100%' }}>
+        {/* Confirm Payment Action Button (Outline style) */}
         <TouchableOpacity
-          style={styles.checkboxRow}
-          onPress={() => setSaveForFuture((v) => !v)}
+          style={[styles.button, styles.outlinePrimaryButton, !selectedMethodId && { opacity: 0.4 }]}
+          onPress={handleConfirmPayment}
+          disabled={!selectedMethodId}
         >
-          <View
-            style={[
-              styles.checkbox,
-              {
-                width: sizes.checkboxSize,
-                height: sizes.checkboxSize,
-                borderRadius: sizes.checkboxRadius,
-                backgroundColor: saveForFuture
-                  ? theme.primaryColor
-                  : 'transparent',
-                marginRight: isRTL ? 0 : sizes.checkboxMarginRight,
-                marginLeft: isRTL ? sizes.checkboxMarginRight : 0,
-              },
-            ]}
-          >
-            {saveForFuture && (
+          {isCombined ? (
+            <View
+              style={{
+                flexDirection: isRTL ? 'row-reverse' : 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: sizes.compoundButtonGap,
+              }}
+            >
+              <Text style={[styles.buttonText, styles.outlinePrimaryButtonText, { marginHorizontal: sizes.compoundTextMarginHorizontal }]}>
+                {getPayButtonConfirmBaseLabel()}
+              </Text>
+              <Text style={{ color: theme.formInputPlaceholderColor, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>+</Text>
+              <Text style={{ color: theme.buttonColorSecondaryDefault, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>1</Text>
+              <Text style={{ color: theme.buttonColorSecondaryDefault, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>
+                {t('payment_modal.coupon', { defaultValue: 'coupon' })}
+              </Text>
               <Image
-                source={icons.checkDefault}
-                style={styles.checkboxInner}
+                source={icons.coupon}
+                style={{
+                  width: sizes.couponIconSize,
+                  height: sizes.couponIconSize,
+                  tintColor: theme.buttonColorSecondaryDefault,
+                }}
               />
-            )}
-          </View>
-          <Text style={[styles.checkboxText, { textAlign: isRTL ? 'right' : 'left' }]}>
-            {t('payment_modal.save_for_future')}
-          </Text>
+            </View>
+          ) : (
+            <Text style={[styles.buttonText, styles.outlinePrimaryButtonText]}>
+              {t('interestRequest.pay_and_submit', {
+                price: formattedMoneyPrice,
+                defaultValue: `Pay ${formattedMoneyPrice} & Submit`,
+              })}
+            </Text>
+          )}
         </TouchableOpacity>
 
-        {/* Stacked confirmation buttons at the bottom */}
-        <View style={{ width: '100%' }}>
-          {/* Confirm Payment Action Button (Outline style) */}
-          <TouchableOpacity
-            style={[styles.button, styles.outlinePrimaryButton]}
-            onPress={handleConfirmPayment}
-          >
-            {isCombined ? (
-              <View
-                style={{
-                  flexDirection: isRTL ? 'row-reverse' : 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: sizes.compoundButtonGap,
-                }}
-              >
-                <Text style={[styles.buttonText, styles.outlinePrimaryButtonText, { marginHorizontal: sizes.compoundTextMarginHorizontal }]}>
-                  {getPayButtonConfirmBaseLabel()}
-                </Text>
-                <Text style={{ color: theme.formInputPlaceholderColor, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>+</Text>
-                <Text style={{ color: theme.buttonColorSecondaryDefault, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>1</Text>
-                <Text style={{ color: theme.buttonColorSecondaryDefault, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>
-                  {t('payment_modal.coupon', { defaultValue: 'coupon' })}
-                </Text>
-                <Image
-                  source={icons.coupon}
-                  style={{
-                    width: sizes.couponIconSize,
-                    height: sizes.couponIconSize,
-                    tintColor: theme.buttonColorSecondaryDefault,
-                  }}
-                />
-              </View>
-            ) : (
-              <Text style={[styles.buttonText, styles.outlinePrimaryButtonText]}>
-                {t('interestRequest.pay_and_submit', {
-                  price: formattedMoneyPrice,
-                  defaultValue: `Pay ${formattedMoneyPrice} & Submit`,
-                })}
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Subscriptions plans button (Filled style) */}
-          <TouchableOpacity
-            style={[styles.button, styles.primaryButton, { marginTop: sizes.step2SubscriptionButtonMarginTop }]}
-            onPress={() => {
-              onSubmit({ viewPlans: true });
-            }}
-          >
-            <Text style={[styles.buttonText, styles.primaryButtonText]}>
-              {t('payment_modal.get_subscription', { defaultValue: 'Get a subscription' })}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {/* Subscriptions plans button (Filled style) */}
+        <TouchableOpacity
+          style={[styles.button, styles.primaryButton, { marginTop: sizes.step2SubscriptionButtonMarginTop }]}
+          onPress={() => {
+            onSubmit({ viewPlans: true });
+          }}
+        >
+          <Text style={[styles.buttonText, styles.primaryButtonText]}>
+            {t('payment_modal.get_subscription', { defaultValue: 'Get a subscription' })}
+          </Text>
+        </TouchableOpacity>
       </View>
+    );
+
+    return (
+      <PaymentFlowStep
+        showAddMethod={showAddMethod}
+        setShowAddMethod={setShowAddMethod}
+        availableMethods={availableMethods}
+        savedMethods={savedMethods}
+        selectedMethodId={selectedMethodId}
+        setSelectedMethodId={(id) => {
+          setSelectedMethodId(id);
+          setSelectedSource('saved');
+        }}
+        newMethodId={newMethodId}
+        setNewMethodId={setNewMethodId}
+        saveForFuture={saveForFuture}
+        setSaveForFuture={setSaveForFuture}
+        sizes={sizes}
+        theme={theme}
+        t={t}
+        isRTL={isRTL}
+        step2Header={step2Header}
+        step2Footer={step2Footer}
+        onAddMethodPay={handleAddMethodPay}
+        addMethodPayLabel={`${t('payment_modal.pay')} ${formattedMoneyPrice}`}
+      />
     );
   };
 
   // ─── Render Main ─────────────────────────────────────────────────────────────
   return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          {isLoading && (
-            <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color={theme.primaryColor} />
-            </View>
-          )}
-
-          {/* Close Icon Button (Always icons.cross and always onClose) */}
-          <TouchableOpacity
-            onPress={onClose}
-            style={styles.crossButton}
-          >
-            <Image
-              source={icons.cross}
-              style={styles.crossIcon}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-
-          {activeStep === 1 ? renderStep1() : renderStep2()}
-        </View>
-      </View>
-    </Modal>
+    <BaseActionModal
+      visible={visible}
+      onClose={() => {
+        if (showAddMethod) {
+          setShowAddMethod(false);
+        } else {
+          onClose();
+        }
+      }}
+      isLoading={isLoading}
+      sizes={sizes}
+      theme={theme}
+    >
+      {activeStep === 1 ? renderStep1() : renderStep2()}
+    </BaseActionModal>
   );
 };
 

@@ -221,15 +221,6 @@ export default function jobsManager({ session, user, geolocation }) {
     await reloadAll();
   }
 
-  async function approveProvider(jobId, executorId) {
-    await safeFetch(`${serverURL}/jobs/${jobId}/assign-executor`, {
-      method: "POST",
-      headers: { ...authHeaders, "Content-Type": "application/json" },
-      body: JSON.stringify({ executorId }),
-    });
-    await reloadAll();
-  }
-
   async function selectProvider(jobId, providerId) {
     await selectProviderApi(jobId, session, providerId);
     await reloadAll();
@@ -332,7 +323,6 @@ export default function jobsManager({ session, user, geolocation }) {
       deleteJob,
       confirmJob,
       markJobDone,
-      approveProvider,
       selectProvider,
       removeExecutor,
       addProvider,

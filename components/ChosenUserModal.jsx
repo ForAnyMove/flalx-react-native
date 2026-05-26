@@ -24,7 +24,7 @@ const ChosenUserModal = ({
   onDecline,
   chargeEvent,
 }) => {
-  const { themeController, languageController } = useComponentContext();
+  const { themeController, languageController, setAppLoading } = useComponentContext();
   const theme = themeController.current;
   const { height, width, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -66,9 +66,11 @@ const ChosenUserModal = ({
   };
 
   const handleDecline = async () => {
+    setAppLoading(true);
     try {
       await onDecline?.(job?.id);
     } finally {
+      setAppLoading(false);
       onClose();
     }
   };
