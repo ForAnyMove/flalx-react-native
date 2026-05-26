@@ -540,16 +540,20 @@ const PurchaseModal = ({
         {/* Coupon + Subscription buttons — regular type only */}
         {!isSubscription && (
           <>
-            <TouchableOpacity
-              style={[styles.button, styles.outlineSecondaryButton]}
-              onPress={onPayWithCoupons}
-            >
-              <Text
-                style={[styles.buttonText, styles.outlineSecondaryButtonText]}
-              >
-                {t('payment_modal.pay_coupons', { count: couponsCount })}
-              </Text>
-            </TouchableOpacity>
+            {
+              onPayWithCoupons && (
+                <TouchableOpacity
+                  style={[styles.button, styles.outlineSecondaryButton]}
+                  onPress={onPayWithCoupons}
+                >
+                  <Text
+                    style={[styles.buttonText, styles.outlineSecondaryButtonText]}
+                  >
+                    {t('payment_modal.pay_coupons', { count: couponsCount })}
+                  </Text>
+                </TouchableOpacity>
+              )
+            }
 
             <TouchableOpacity
               style={[styles.button, styles.primaryButton]}

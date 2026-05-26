@@ -2883,7 +2883,7 @@ export default function ShowJobModal({
           jobsController.products?.find((p) => p.type === currentJobInfo.jobType)?.currency,
         )}
         onPurchase={handlePurchasePublish}
-        onPayWithCoupons={handlePayCouponsPublish}
+        onPayWithCoupons={user.current?.account_type === 'client' ? handlePayCouponsPublish : undefined}
         onOpenSubscriptions={() => {
           setPlansModalVisible(true);
           setPublishModalVisible(false);
@@ -3019,7 +3019,6 @@ export default function ShowJobModal({
           jobsController.providerProduct?.currency,
         )}
         onPurchase={handlePurchaseInterest}
-        onPayWithCoupons={handlePayCouponsInterest}
         onOpenSubscriptions={() => {
           setPlansModalReturnTarget('purchase');
           setPlansModalVisible(true);

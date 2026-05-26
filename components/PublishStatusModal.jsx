@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -44,12 +44,12 @@ const PublishStatusModal = ({
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 
-  // ─── Step State Management (Fallback to local if no parent prop) ──────────────
+  // â”€â”€â”€ Step State Management (Fallback to local if no parent prop) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [localStep, setLocalStep] = useState(1);
   const activeStep = setStep ? step : localStep;
   const activeSetStep = setStep ? setStep : setLocalStep;
 
-  // ─── Local State ─────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Local State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [selectedMethodId, setSelectedMethodId] = useState(null);
   const [selectedSource, setSelectedSource] = useState('available'); // 'saved' | 'available'
   const [saveForFuture, setSaveForFuture] = useState(false);
@@ -57,9 +57,8 @@ const PublishStatusModal = ({
   const [showAddMethod, setShowAddMethod] = useState(false);
   const [newMethodId, setNewMethodId] = useState(null);
 
-  // ─── Data Extraction ─────────────────────────────────────────────────────────
-  // const isClient = user.current?.account_type === 'client';
-  const isClient = true;
+  // â”€â”€â”€ Data Extraction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const isClient = user.current?.account_type === 'client';
   const hasSubscription = subscription.current != null;
   const savedMethods = paymentsManagerController?.savedMethods ?? [];
   const availableMethods = paymentsManagerController?.availableMethods ?? [];
@@ -89,7 +88,7 @@ const PublishStatusModal = ({
     return savedMethods.find((m) => m.default) ?? savedMethods[0];
   }, [savedMethods]);
 
-  // ─── Reset on Modal Open ─────────────────────────────────────────────────────
+  // â”€â”€â”€ Reset on Modal Open â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!visible) return;
     couponsManagerController?.refreshBalance?.();
@@ -107,7 +106,7 @@ const PublishStatusModal = ({
     }
   }, [visible, defaultSavedMethod, availableMethods]);
 
-  // ─── Sizes Metric (Dynamic & Scaled) ─────────────────────────────────────────
+  // â”€â”€â”€ Sizes Metric (Dynamic & Scaled) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
     const mobile = (size) => scaleByHeightMobile(size, height);
@@ -161,7 +160,7 @@ const PublishStatusModal = ({
       chipGap: scale(8),
       chipMarginBottom: scale(24),
       changeMethodLinkMarginTop: scale(16),
-      // ─── Extra Dynamic Properties to Eliminate Hardcoded Values ───
+      // â”€â”€â”€ Extra Dynamic Properties to Eliminate Hardcoded Values â”€â”€â”€
       priceRowMarginBottom: scale(8),
       priceRowGap: scale(6),
       infoTextMarginBottom: scale(20),
@@ -197,15 +196,15 @@ const PublishStatusModal = ({
     };
   }, [height, isWebLandscape]);
 
-  // ─── Label Helpers ───────────────────────────────────────────────────────────
+  // â”€â”€â”€ Label Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const getSavedMethodLabel = (method) => {
     if (method.type === 'paypal') {
       return `PayPal (${method.details?.title || 'user@email'})`;
     }
-    return `${t('payment_modal.credit_card', { defaultValue: 'Credit card' })} •••• •••• •••• ${method.details?.last4 || '4352'}`;
+    return `${t('payment_modal.credit_card', { defaultValue: 'Credit card' })} â€¢â€¢â€¢â€¢ â€¢â€¢â€¢â€¢ â€¢â€¢â€¢â€¢ ${method.details?.last4 || '4352'}`;
   };
 
-  // ─── Actions ─────────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleConfirmPayment = () => {
     setIsLoading(true);
     const chosenMethod =
@@ -214,7 +213,7 @@ const PublishStatusModal = ({
         : selectedMethodId;
 
     const payload = {
-      useCoupon: isClient && selectedOption.type !== 'normal', // Always deduct coupon for TOP/Quickly combined payments for clients
+      useCoupon: selectedOption.type !== 'normal', // Always deduct coupon for TOP/Quickly combined payments
       paymentMethod: chosenMethod,
       ...(selectedSource === 'saved' && { savedPaymentMethodId: selectedMethodId }),
       ...(selectedSource === 'available' && saveForFuture && { savePaymentMethod: true }),
@@ -235,7 +234,7 @@ const PublishStatusModal = ({
 
   const handleAddMethodPay = () => {
     setIsLoading(true);
-    const isCombined = isClient && selectedOption.type !== 'normal';
+    const isCombined = selectedOption.type !== 'normal';
     const payload = {
       useCoupon: isCombined,
       paymentMethod: newMethodId,
@@ -244,7 +243,7 @@ const PublishStatusModal = ({
     onSubmit(payload);
   };
 
-  // ─── Layout Styles ───────────────────────────────────────────────────────────
+  // â”€â”€â”€ Layout Styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const styles = StyleSheet.create({
     modalOverlay: {
       flex: 1,
@@ -513,7 +512,7 @@ const PublishStatusModal = ({
   };
 
   const getPayButtonLabel = () => {
-    const isCombined = isClient && selectedOption.type !== 'normal';
+    const isCombined = selectedOption.type !== 'normal';
     let baseLabel = '';
     if (savedMethods.length > 0 && defaultSavedMethod) {
       const methodName = t(`payment_modal.method_${defaultSavedMethod.type === 'hyp' ? 'card' : defaultSavedMethod.type}`);
@@ -524,12 +523,12 @@ const PublishStatusModal = ({
     }
 
     if (isCombined) {
-      return `${baseLabel} + 1 🎫`;
+      return `${baseLabel} + 1 ðŸŽ«`;
     }
     return baseLabel;
   };
 
-  // ─── Render Screen: Selection & Prices (Step 1) ─────────────────────────────
+  // â”€â”€â”€ Render Screen: Selection & Prices (Step 1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const renderStep1 = () => {
     // CASE A: Active Subscription (Any Role)
     if (hasSubscription) {
@@ -634,9 +633,8 @@ const PublishStatusModal = ({
       );
     }
 
-    // CASE B / C: No Subscription - Client role
-    if (isClient) {
-      if (selectedOption.type === 'normal') {
+    // CASE B: No Subscription - Normal type (coupon button only for client)
+    if (selectedOption.type === 'normal') {
         // CASE B: Client default (Choose payment style)
         return (
           <View style={styles.contentContainer}>
@@ -714,7 +712,7 @@ const PublishStatusModal = ({
               </Text>
             </TouchableOpacity>
 
-            {/* Change method link — only when saved methods exist */}
+            {/* Change method link â€” only when saved methods exist */}
             {savedMethods.length > 0 && (
               <TouchableOpacity
                 style={styles.changeMethodLink}
@@ -726,7 +724,8 @@ const PublishStatusModal = ({
               </TouchableOpacity>
             )}
 
-            {/* Button 2: Pay with Coupon */}
+            {/* Button 2: Pay with Coupon (clients only) */}
+            {isClient && (
             <TouchableOpacity
               style={[styles.button, styles.outlineSecondaryButton]}
               onPress={handleCouponOnlyPayment}
@@ -753,6 +752,7 @@ const PublishStatusModal = ({
                 />
               </View>
             </TouchableOpacity>
+            )}
 
             {/* Button 3: Subscription plans */}
             <TouchableOpacity
@@ -768,7 +768,7 @@ const PublishStatusModal = ({
           </View>
         );
       } else {
-        // CASE C: Client TOP / Quickly combined payments
+        // CASE C: No Subscription - TOP / Quickly (combined payment for all roles)
         return (
           <View style={styles.contentContainer}>
             <Text style={styles.title}>
@@ -884,7 +884,7 @@ const PublishStatusModal = ({
               </View>
             </TouchableOpacity>
 
-            {/* Change method link — only when saved methods exist */}
+            {/* Change method link â€” only when saved methods exist */}
             {savedMethods.length > 0 && (
               <TouchableOpacity
                 style={styles.changeMethodLink}
@@ -910,108 +910,11 @@ const PublishStatusModal = ({
           </View>
         );
       }
-    }
-
-    // CASE D / E: No Subscription - Business/Provider role (NO coupons)
-    return (
-      <View style={styles.contentContainer}>
-        <Text style={styles.title}>
-          {t('payment_modal.publish_status_title')}
-        </Text>
-
-        {/* Chips */}
-        <View style={styles.chipContainer}>
-          {displayProducts.map((opt) => {
-            const active = jobType === opt.type;
-            return (
-              <TouchableOpacity
-                key={opt.type}
-                onPress={() => setJobType(opt.type)}
-                style={[
-                  styles.chip,
-                  {
-                    borderColor: active
-                      ? theme.primaryColor
-                      : theme.formInputPlaceholderColor,
-                    backgroundColor: active
-                      ? theme.primaryColor
-                      : 'transparent',
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.chipText,
-                    { color: active ? '#fff' : theme.formInputLabelColor },
-                  ]}
-                >
-                  {opt.type === 'normal'
-                    ? t('payment_modal.option_default', { defaultValue: 'Default' })
-                    : opt.type === 'quick'
-                      ? t('payment_modal.option_quickly', { defaultValue: 'Quickly' })
-                      : t('payment_modal.option_top', { defaultValue: 'TOP' })}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {/* Business Price Header */}
-        <View style={styles.priceRow}>
-          <Text style={styles.priceLabel}>{t('payment_modal.price_label')}</Text>
-          <Text style={styles.priceValue}>{formattedMoneyPrice}</Text>
-        </View>
-
-        <Text style={styles.infoText}>
-          {t('payment_modal.business_only_card')}
-        </Text>
-
-        {/* Card Button */}
-        <TouchableOpacity
-          style={[styles.button, styles.outlinePrimaryButton]}
-          onPress={() => {
-            if (savedMethods.length > 0 && defaultSavedMethod) {
-              handleConfirmPayment();
-            } else {
-              activeSetStep(2);
-            }
-          }}
-        >
-          <Text style={[styles.buttonText, styles.outlinePrimaryButtonText]} numberOfLines={1}>
-            {getPayButtonLabel()}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Change method link — only when saved methods exist */}
-        {savedMethods.length > 0 && (
-          <TouchableOpacity
-            style={styles.changeMethodLink}
-            onPress={() => activeSetStep(2)}
-          >
-            <Text style={styles.changeMethodLinkText}>
-              {t('payment_modal.change_method', { defaultValue: 'Change payment method' })}
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Subscription plans */}
-        <TouchableOpacity
-          style={[styles.button, styles.primaryButton]}
-          onPress={() => {
-            onSubmit({ viewPlans: true });
-          }}
-        >
-          <Text style={[styles.buttonText, styles.primaryButtonText]}>
-            {t('payment_modal.get_subscription', { defaultValue: 'Get a subscription' })}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
   };
 
-  // ─── Render Screen: Select Payment Method (Step 2) ─────────────────────────
+  // â”€â”€â”€ Render Screen: Select Payment Method (Step 2) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const renderStep2 = () => {
-    const isCombined = isClient && selectedOption.type !== 'normal';
+    const isCombined = selectedOption.type !== 'normal';
 
     const step2Header = (
       <>
@@ -1170,7 +1073,7 @@ const PublishStatusModal = ({
     );
   };
 
-  // ─── Render Main ─────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Render Main â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   return (
     <BaseActionModal
       visible={visible}
