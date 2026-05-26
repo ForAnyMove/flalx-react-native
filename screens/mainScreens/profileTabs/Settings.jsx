@@ -9,7 +9,6 @@ import {
   View,
   Platform,
   TextInput,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
 import CustomPicker from '../../../components/ui/CustomPicker';
@@ -21,16 +20,18 @@ import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import { sendFeedback, sendMessage } from '../../../src/api/support';
 import { useNotification } from '../../../src/render';
+import { logError, logInfo } from '../../../utils/log_util';
+import CustomSwitch from '../../../components/ui/CustomSwitch';
+import CustomTextInput from '../../../components/ui/CustomTextInput';
 
 // getResponsiveSize helper was unused and removed
 
 export default function Settings() {
   const { themeController, languageController, geolocationController } = useComponentContext();
   const { showError, showInfo } = useNotification();
-  const { height } = useWindowDimensions();
+  const { height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
-  const { isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   // Toggles
@@ -39,8 +40,6 @@ export default function Settings() {
   // Modals
   const [aboutVisible, setAboutVisible] = useState(false);
   const [regulationsVisible, setRegulationsVisible] = useState(false);
-  const [contactUsVisible, setContactUsVisible] = useState(false);
-  const [feedbackVisible, setFeedbackVisible] = useState(false);
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -116,6 +115,10 @@ export default function Settings() {
       checkboxTextMargin: isWebLandscape ? web(10) : mobile(10),
       checkboxIconBorderWidth: isWebLandscape ? web(2) : mobile(2),
       checkboxIconBorderRadius: isWebLandscape ? web(3) : mobile(3),
+      switchWidth: isWebLandscape ? web(50) : mobile(50),
+      switchHeight: isWebLandscape ? web(30) : mobile(30),
+      switchCircleSize: isWebLandscape ? web(20) : mobile(20),
+      switchPadding: isWebLandscape ? web(5) : mobile(5),
     };
   }, [height, isWebLandscape, isRTL]);
 
@@ -242,20 +245,17 @@ export default function Settings() {
             >
               {t('settings.location')}
             </Text>
-            <Switch
+            <CustomSwitch
               value={geolocationController.enabled}
               onValueChange={geolocationController.toggleGeolocation}
-              trackColor={{
-                false: themeController.current?.switchTrackColor,
-                true: themeController.current?.switchTrackColor,
-              }}
-              thumbColor={
-                true ? themeController.current?.switchThumbColor : '#000'
-              }
+              width={sizes.switchWidth}
+              height={sizes.switchHeight}
+              circleSize={sizes.switchCircleSize}
+              padding={sizes.switchPadding}
             />
           </View>
 
-          <View
+          {/* <View
             style={[
               styles.switchRow,
               {
@@ -286,7 +286,7 @@ export default function Settings() {
                 true ? themeController.current?.switchThumbColor : '#000'
               }
             />
-          </View>
+          </View> */}
         </View>
 
         {/* Break Line */}
@@ -379,6 +379,7 @@ export default function Settings() {
             marginTop: sizes.rowGap,
           },
           isWebLandscape && { justifyContent: 'flex-start' },
+          isWebLandscape && { alignSelf: isRTL ? 'flex-end' : 'flex-start' },
         ]}
       >
         <View
@@ -434,45 +435,7 @@ export default function Settings() {
               gap: sizes.connectBtnsGap,
             },
           ]}
-        >
-          <TouchableOpacity
-            style={{
-              height: sizes.iconCircleSize,
-              width: sizes.iconCircleSize,
-              borderRadius: sizes.iconCircleSize / 2,
-              backgroundColor: themeController.current?.primaryColor,
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-            onPress={() => setContactUsVisible(true)}
-          >
-            <Image
-              source={icons.emailClear}
-              style={{
-                width: sizes.iconSize,
-                height: sizes.iconSize,
-              }}
-              resizeMode='contain'
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={{
-              height: sizes.iconCircleSize,
-              width: sizes.iconCircleSize,
-              borderRadius: sizes.iconCircleSize / 2,
-              backgroundColor: themeController.current?.primaryColor,
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-            onPress={() => setFeedbackVisible(true)}
-          >
-            <Image
-              source={icons.phoneClear}
-              style={{ width: sizes.iconSize, height: sizes.iconSize }}
-              resizeMode='contain'
-            />
-          </TouchableOpacity>
-        </View>
+        ></View>
       </View>
 
       {/* About Modal */}
@@ -509,42 +472,6 @@ export default function Settings() {
           height={height}
         />
       </Modal>
-
-      {/* Contact Us Modal */}
-      <Modal
-        visible={contactUsVisible}
-        animationType='slide'
-        transparent={isWebLandscape}
-      >
-        <ModalContent
-          title={t('settings.contact_us')}
-          onClose={() => setContactUsVisible(false)}
-          isWebLandscape={isWebLandscape}
-          sizes={sizes}
-          content={''}
-          contactForm={true}
-          isRTL={isRTL}
-          height={height}
-        />
-      </Modal>
-
-      {/* Feedback Modal */}
-      <Modal
-        visible={feedbackVisible}
-        animationType='slide'
-        transparent={isWebLandscape}
-      >
-        <ModalContent
-          title={t('settings.feedback')}
-          onClose={() => setFeedbackVisible(false)}
-          isWebLandscape={isWebLandscape}
-          sizes={sizes}
-          content={''}
-          feedback={true}
-          isRTL={isRTL}
-          height={height}
-        />
-      </Modal>
     </View>
   );
 }
@@ -563,8 +490,9 @@ function ModalContent({
   isRTL,
 }) {
   const { themeController, setAppLoading, session } = useComponentContext();
+  const { showError } = useNotification();
   const { t } = useTranslation();
-  const { height } = useWindowDimensions();
+  const { height } = useWindowInfo();
 
   const [accepted, setAccepted] = useState(false);
   const [contactUsForm, setContactUsForm] = useState({
@@ -625,7 +553,14 @@ function ModalContent({
         }, 2000);
       }
     } catch (error) {
-      console.error('Error in confirmContactUs:', error);
+      logError('Error in confirmContactUs:', error);
+
+      // Check if rate limit exceeded
+      if (error?.response?.data?.type === 'RATE_LIMIT_EXCEEDED') {
+        showError(t('errors.rate_limit_exceeded'));
+      } else {
+        showError(error?.response?.data?.message || t('errors.unexpected_error'));
+      }
     } finally {
       setAppLoading(false);
     }
@@ -646,7 +581,14 @@ function ModalContent({
       setAppLoading(false);
       onClose();
     } catch (error) {
-      console.error('Error in confirmFeedback:', error);
+      logInfo('Error in confirmFeedback:', error);
+
+      // Check if rate limit exceeded
+      if (error?.response?.data?.type === 'RATE_LIMIT_EXCEEDED') {
+        showError(t('errors.rate_limit_exceeded'));
+      } else {
+        showError(error?.response?.data?.message || t('errors.unexpected_error'));
+      }
     } finally {
       setAppLoading(false);
     }
@@ -678,12 +620,12 @@ function ModalContent({
             justifyContent: 'center',
             boxSizing: 'border-box',
             height: '100%',
+            backgroundColor: themeController.current?.backgroundColor,
           },
           isWebLandscape && {
             width: sizes.regulationsModalWidth,
             height: heightByType(),
             borderRadius: sizes.borderRadius,
-            backgroundColor: themeController.current?.backgroundColor,
           },
         ]}
       >
@@ -806,8 +748,9 @@ function ModalContent({
                           paddingHorizontal:
                             sizes.inputContainerPaddingHorizontal,
                           borderRadius: sizes.borderRadius,
-                          marginBottom: 0,
+                          // marginBottom: 0,
                           height: sizes.inputHeight,
+                          marginBottom: sizes.modalInputMarginBottom / 2,
                         },
                       ]}
                     >
@@ -824,7 +767,7 @@ function ModalContent({
                           defaultValue: 'Topic',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={contactUsForm.topic}
                         onChangeText={(v) =>
                           setContactUsForm((p) => ({ ...p, topic: v }))
@@ -890,7 +833,7 @@ function ModalContent({
                           defaultValue: 'Message',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={contactUsForm.message}
                         onChangeText={(v) =>
                           setContactUsForm((p) => ({ ...p, message: v }))
@@ -944,7 +887,7 @@ function ModalContent({
                           defaultValue: 'Email',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={contactUsForm.email}
                         onChangeText={(v) =>
                           setContactUsForm((p) => ({ ...p, email: v }))
@@ -996,7 +939,7 @@ function ModalContent({
                           defaultValue: 'Your name',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={contactUsForm.name}
                         onChangeText={(v) =>
                           setContactUsForm((p) => ({ ...p, name: v }))
@@ -1088,8 +1031,7 @@ function ModalContent({
                           },
                         ]}
                         textContainerStyle={{
-                          [isRTL ? 'marginRight' : 'marginLeft']:
-                            sizes.checkboxTextMargin,
+                          marginLeft: isRTL ? 0 : sizes.checkboxTextMargin,
                         }}
                         fillColor={themeController.current?.primaryColor}
                         innerIconStyle={{
@@ -1106,6 +1048,7 @@ function ModalContent({
                           {
                             color: themeController.current?.unactiveTextColor,
                             fontSize: sizes.checkboxTextSize,
+                            marginRight: isRTL ? sizes.checkboxTextMargin : 0,
                           },
                         ]}
                       >
@@ -1186,7 +1129,7 @@ function ModalContent({
                           defaultValue: 'Your phone number',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={contactUsForm.phoneNumber}
                         onChangeText={(v) =>
                           setContactUsForm((p) => ({ ...p, phoneNumber: v }))
@@ -1227,7 +1170,7 @@ function ModalContent({
                   ]}
                   onPress={() => {
                     // TODO: implement submit behavior
-                    console.log('submit form', {
+                    logInfo('submit form', {
                       contactForm,
                       feedback,
                       contactUsForm,

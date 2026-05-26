@@ -2,6 +2,7 @@ import * as FileSystem from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
 import { Platform } from 'react-native';
 import { supabase } from './supabase';
+import { logError, logInfo } from '../log_util';
 
 const MAX_FILE_MB = 5; // лимит (например, 5 MB)
 
@@ -96,10 +97,10 @@ export async function uploadImageToSupabase(uri, userId, options) {
     const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
     const publicUrl = data.publicUrl;
 
-    console.log('✅ Файл загружен:', publicUrl);
+    logInfo('✅ Файл загружен:', publicUrl);
     return { publicUrl, filePath };
   } catch (e) {
-    console.error('❌ Ошибка загрузки в Supabase:', e);
+    logError('❌ Ошибка загрузки в Supabase:', e);
     return null;
   }
 }

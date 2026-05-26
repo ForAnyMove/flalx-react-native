@@ -7,6 +7,9 @@ import React, {
 } from 'react';
 import { connectWebSocket } from '../src/services/webSocketService';
 import { useComponentContext } from './globalAppContext';
+import { useNotification } from '../src/render';
+import { useArchivedRefs } from '../src/services/useArchivedRefs';
+import { useTranslation } from 'react-i18next';
 
 const WebSocketContext = createContext();
 
@@ -20,11 +23,45 @@ export const WebSocketProvider = ({ children }) => {
     providersController,
     subscription,
     jobsController,
+    couponsManagerController,
+    paymentsManagerController,
+    languageController,
   } = useComponentContext();
 
   const wsRef = useRef(null);
   const [lastMessage, setLastMessage] = useState(null);
   const [connected, setConnected] = useState(false);
+
+  const { showInfo } = useNotification();
+  const { refs, fetchRefs, markSeen } = useArchivedRefs(session);
+  const { t } = useTranslation();
+  const showingRefId = useRef(null);
+
+  // Show archived-ref banners one at a time (each on close → markSeen → next appears)
+  useEffect(() => {
+    if (refs.length === 0) return;
+
+    const ref = refs[0];
+    // Already showing this banner — don't interrupt (e.g. refs re-fetched mid-display)
+    if (showingRefId.current === ref.job_id) return;
+
+    const lang = languageController?.current ?? 'en';
+    const key = `${ref.reason}_${ref.role}`;
+    const baseText = t(`archivedRefs.${key}`, { defaultValue: '' });
+    if (!baseText) {
+      // Unknown reason+role — silently mark as seen and move on
+      markSeen(ref.job_id);
+      return;
+    }
+    const jobSummary = ref.job_snapshot?.markdown_summary_i18n?.[lang] ?? ref.job_snapshot?.markdown_summary_i18n?.en;
+    const text = jobSummary ? `${baseText}\n\n${jobSummary}` : baseText;
+
+    showingRefId.current = ref.job_id;
+    showInfo(text, [], () => {
+      showingRefId.current = null;
+      markSeen(ref.job_id);
+    });
+  }, [refs]);
 
   useEffect(() => {
     if (!session || !user.current?.id || !session.serverURL) return;
@@ -66,9 +103,11 @@ export const WebSocketProvider = ({ children }) => {
         jobsController.reloadAll();
         break;
       }
-      case 'SUBSCRIPTION_ACTIVATED':
-      case 'SUBSCRIPTION_CANCELLED':
+      case 'SUBSCRIPTION_CREATED':
+      case 'SUBSCRIPTION_RENEWED':
+      case 'SUBSCRIPTION_RENEWAL_FAILED':
       case 'SUBSCRIPTION_EXPIRED':
+      case 'PAYMENT_METHOD_UPDATE_REQUIRED':
       case 'SUBSCRIPTION_DOWNGRADE_SCHEDULED':
       case 'SUBSCRIPTION_UPGRADE_INITIATED':
       case 'PLAN_CHANGE_APPROVED':
@@ -77,8 +116,21 @@ export const WebSocketProvider = ({ children }) => {
       case 'SUBSCRIPTION_PAYMENT_SUCCESS':
       case 'SUBSCRIPTION_PLAN_CHANGES_CANCELLED':
       case 'PLAN_UPGRADE_COMPLETED':
+      case 'SUBSCRIPTION_CANCELLED':
+      case 'SUBSCRIPTION_REACTIVATED':
       case 'SUBSCRIPTION_PENDING_APPROVAL': {
         subscription.refresh();
+        break;
+      }
+      case 'SUBSCRIPTION_PAYMENT_METHOD_CHANGED': {
+        subscription.refresh();
+        paymentsManagerController?.refreshSavedMethods?.();
+        break;
+      }
+      case 'PAYMENT_METHOD_ADDED':
+      case 'PAYMENT_METHOD_SET_AS_DEFAULT':
+      case 'PAYMENT_METHOD_DELETED': {
+        paymentsManagerController?.refreshSavedMethods?.();
         break;
       }
       case 'JOB_CREATED': { // notify all users
@@ -373,19 +425,68 @@ export const WebSocketProvider = ({ children }) => {
         // notify user about approaching rate limit (development mode)
         break;
       }
+      case 'JOB_CONFIRMATION_EXPIRED': {
+        fetchRefs();
+        jobsController.reloadAll();
+        break;
+      }
+      case 'JOB_PROVIDER_SELECTED': {
+        jobsController.reloadAll();
+        break;
+      }
+      case 'JOB_PROVIDER_CONFIRMED': {
+        jobsController.reloadAll();
+        break;
+      }
+      case 'JOB_PROVIDER_REJECTED': {
+        fetchRefs();
+        jobsController.reloadAll();
+        break;
+      }
+      case 'JOB_CHARGING_STARTED': {
+        jobsController.reloadAll();
+        break;
+      }
+      case 'JOB_CHARGE_COMPLETED': {
+        jobsController.reloadAll();
+        break;
+      }
+      case 'JOB_CHARGE_FAILED_RETRYING': {
+        // ChosenUserModal handles this via lastMessage — no global action needed
+        break;
+      }
+      case 'JOB_CHARGE_FINAL_FAILED': {
+        fetchRefs();
+        jobsController.reloadAll();
+        break;
+      }
       case 'JOB_CREATED_BY_YOU':
       case 'JOB_APPROVED':
+      case 'JOB_UPDATE_REJECTED':
       case 'JOB_REJECTED': {
         jobsController.reloadCreator();
         break;
       }
+      case 'JOB_UPDATED_REQUIRES_AGREEMENT': {
+        jobsController.reloadExecutor();
+        break;
+      }
+      case 'JOB_PROVIDER_AGREED':
+      case 'JOB_PROVIDER_DECLINED': {
+        jobsController.reloadCreator();
+        break;
+      }
+      case 'COUPON_EARNED':
+      case 'COUPON_USED':
+        couponsManagerController.refreshBalance();
+        break;
       default:
         break;
     }
   };
 
   return (
-    <WebSocketContext.Provider value={{ lastMessage, connected }}>
+    <WebSocketContext.Provider value={{ lastMessage, connected, fetchArchivedRefs: fetchRefs }}>
       {children}
     </WebSocketContext.Provider>
   );

@@ -2,7 +2,7 @@ import { Dimensions, PixelRatio } from 'react-native';
 
 // utils/resizeFuncs.js
 
-const BASE_DESIGN_HEIGHT = 1024;
+export const BASE_DESIGN_HEIGHT = 1024;
 export const MOBILE_DESIGN_HEIGHT = 892;
 
 /**
@@ -19,20 +19,43 @@ export function scaleByHeight(
   designValue,
   currentHeight = Dimensions.get('window').height,
   baseHeight = BASE_DESIGN_HEIGHT,
-  { round = true } = {}
+  { round = true } = {},
+  isRevertResize = false,
 ) {
   if (typeof designValue !== 'number' || !isFinite(designValue)) return 0;
   if (typeof currentHeight !== 'number' || currentHeight <= 0) {
     currentHeight = Dimensions.get('window').height;
   }
-  if (typeof baseHeight !== 'number' || baseHeight <= 0) baseHeight = BASE_DESIGN_HEIGHT;
+  if (typeof baseHeight !== 'number' || baseHeight <= 0)
+    baseHeight = BASE_DESIGN_HEIGHT;
 
   const scale = currentHeight / baseHeight;
-  const result = designValue * scale;
+
+  let resizeKef = 1;
+  if (baseHeight === MOBILE_DESIGN_HEIGHT) {
+    resizeKef = 1;
+  } else {
+    if (currentHeight < BASE_DESIGN_HEIGHT) {
+      // Линейная интерполяция для коэффициента масштабирования от 1.0 при 1024 до 2.3 при 320
+      if (isRevertResize) {
+        resizeKef = 2.3 - (2.3 - 1.3 * (currentHeight / BASE_DESIGN_HEIGHT));
+      } else {
+        resizeKef = 2.3 - 1.3 * (currentHeight / BASE_DESIGN_HEIGHT);
+      }
+    }
+  }
+
+  const result = designValue * scale * resizeKef;
 
   return round ? PixelRatio.roundToNearestPixel(result) : result;
 }
 
-export function scaleByHeightMobile(designValue, currentHeight = Dimensions.get('window').height, { round = true } = {}) {
-  return scaleByHeight(designValue, currentHeight, MOBILE_DESIGN_HEIGHT, { round });
+export function scaleByHeightMobile(
+  designValue,
+  currentHeight = Dimensions.get('window').height,
+  { round = true } = {},
+) {
+  return scaleByHeight(designValue, currentHeight, MOBILE_DESIGN_HEIGHT, {
+    round,
+  });
 }

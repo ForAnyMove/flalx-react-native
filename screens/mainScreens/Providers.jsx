@@ -5,7 +5,6 @@ import {
   View,
   Platform,
   Modal,
-  useWindowDimensions,
   StyleSheet,
 } from 'react-native';
 import JobTypeSelector from '../../components/JobTypeSelector';
@@ -16,6 +15,7 @@ import JobModalWrapper from '../../components/JobModalWrapper';
 import NewJobModal from '../../components/NewJobModal';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
+import { useWindowInfo } from '../../context/windowContext';
 
 export default function Providers() {
   const { themeController, providersController, languageController } =
@@ -23,8 +23,7 @@ export default function Providers() {
   const { t } = useTranslation();
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const isRTL = languageController.isRTL;
   const [newJobModalVisible, setNewJobModalVisible] = useState(false);
   const [chosenUserId, setChosenUserId] = useState(null);

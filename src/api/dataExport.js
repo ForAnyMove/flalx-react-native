@@ -1,39 +1,26 @@
-import axios from 'axios';
+import { fetchWithSession } from './apiBase';
+import { logError } from '../../utils/log_util';
+import { Platform } from 'react-native';
 
-const ENDPOINTS = {
-    export: (base) => `${base}/users/export`,
-}
-
-export async function getUserExportData(session) {
+export async function getUserExportData(session, language) {
     try {
-        const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
-
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        };
-
-        const response = await axios.get(ENDPOINTS.export(url), { headers });
-
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/users/export`,
+            method: 'GET',
+            // Web receives a Blob (PDF binary from server).
+            // Mobile receives HTML text which expo-print converts to PDF.
+            responseType: Platform.OS === 'web' ? 'blob' : 'text',
+            data: { lang: language }
+        });
         const status = response.status;
         let returnData = null;
-
         if (status == 200) {
             returnData = response.data;
         }
-
         return returnData;
     } catch (error) {
-        console.error('Error fetching system types with subtypes:', error);
+        logError('Error fetching system types with subtypes:', error);
         throw error;
     }
 }

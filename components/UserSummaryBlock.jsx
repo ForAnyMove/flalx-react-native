@@ -9,25 +9,32 @@ import {
   View,
   TouchableWithoutFeedback,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
-import { JOB_SUB_TYPES } from '../constants/jobSubTypes';
-import { JOB_TYPES } from '../constants/jobTypes';
 import { LICENSES } from '../constants/licenses';
 import { useComponentContext } from '../context/globalAppContext';
 import { useTranslation } from 'react-i18next';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import CommentsSection from './CommentsSection';
+import PurchaseModal from './PurchaseModal';
 import { useWebView } from '../context/webViewContext';
 import { useWindowInfo } from '../context/windowContext';
 import { useLocalization } from '../src/services/useLocalization';
+import { logError } from '../utils/log_util';
+import { useNotification } from '../src/render';
+import JobExpectationsBadge from './ui/JobExpectationsBadge';
+import ConfirmSelectProviderModal from './ConfirmSelectProviderModal';
 
 const UserSummaryBlock = ({
   user,
   status = 'store-waiting',
   currentJobId,
   closeAllModal,
+  jobAgreement,
+  isClientCreator = false,
+  providerStatus,
+  hasPendingProvider = false,
+  jobExpectations = null,
 }) => {
   const {
     themeController,
@@ -35,17 +42,20 @@ const UserSummaryBlock = ({
     languageController,
     usersReveal,
     setAppLoading,
+    couponsManagerController,
   } = useComponentContext();
   const { t } = useTranslation();
   const { openWebView } = useWebView();
+  const { showWarning } = useNotification();
   const { tField } = useLocalization(languageController.current);
   const isRTL = languageController?.isRTL;
   const [modalVisible, setModalVisible] = useState(false);
   const [showContactInfo, setShowContactInfo] = useState(false);
+  const [purchaseModalVisible, setPurchaseModalVisible] = useState(false);
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
 
-  const { width, height } = useWindowDimensions();
-  const { sidebarWidth } = useWindowInfo();
-  const isWebLandscape = Platform.OS === 'web' && width > height;
+  const { width, height, isLandscape, effectiveSidebarWidth } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   // компактные размеры для веб-альбомной (меньше, чем на мобильном)
   const sizes = useMemo(() => {
@@ -58,8 +68,10 @@ const UserSummaryBlock = ({
       smallFont: scale(14),
       sectionTitleSize: scale(18),
       small: scale(14),
+      starSize: scale(24),
+      ratingSize: scale(18),
       inputFont: isWebLandscape ? height * 0.013 : mobile(10),
-      padding: isWebLandscape ? height * 0.009 : mobile(8),
+      padding: isWebLandscape ? web(16) : mobile(8),
       paddingHorizontal: scale(17),
       margin: isWebLandscape ? height * 0.01 : mobile(10),
       borderRadius: scale(8),
@@ -73,15 +85,18 @@ const UserSummaryBlock = ({
       cardWidth: '100%',
       logoFont: scale(24),
       containerHeight: scale(80),
-      pagePaddingHorizontal: scale(24),
+      pagePaddingHorizontal: isWebLandscape
+        ? scale(24)
+        : scaleByHeightMobile(15, height),
       nameSize: scale(28),
       professionSize: scale(20),
       btnRadius: scale(8),
       unlockContactBtnHeight: scale(38),
       unlockContactBtnPaddingHorizontal: scale(24),
+      unlockContactBtnFontSize: scale(20),
       iconMargin: scale(7),
       showContactInfoMarginBottom: scale(10),
-      modalAvatar: isWebLandscape ? web(112) : mobile(70),
+      modalAvatar: isWebLandscape ? web(112) : mobile(112),
       avatarMarginTop: scale(24),
       avatarMarginBottom: scale(8),
       contactInfoHeight: scale(50),
@@ -91,12 +106,40 @@ const UserSummaryBlock = ({
       providerInfoGap: scale(8),
       titleMarginBottom: scale(4),
       professionMarginBottom: scale(32),
-      infoSectionMarginBottom: isWebLandscape ? web(23) : mobile(15),
+      infoSectionsContainerMarginBottom: isWebLandscape
+        ? 0
+        : scaleByHeightMobile(15, height),
+      infoSectionsContainerGap: isWebLandscape
+        ? 0
+        : scaleByHeightMobile(15, height),
+      infoSectionMarginBottom: isWebLandscape ? web(23) : mobile(16),
+      selectButtonMarginBottom: isWebLandscape ? web(8) : mobile(16),
+      modalHeaderPaddingTop: isWebLandscape
+        ? scaleByHeight(32, height)
+        : scaleByHeightMobile(16, height),
+      createRequestBtnHeight: isWebLandscape
+        ? scaleByHeight(62, height)
+        : scaleByHeightMobile(62, height),
+      aboutMaxHeight: isWebLandscape ? web(100) : mobile(100), headerMarginBottom: scale(20),
+      modalHeaderPadding: scale(20),
+      expBadgePaddingHorizontal: scale(10),
+      expBadgePaddingVertical: scale(2),
+      expBadgeRadius: scale(4),
+      placeholderHeight: scale(24),
+      placeholderMarginVertical: scale(8),
+      placeholderSmallWidth: scale(150),
+      placeholderLargeWidth: scale(220),
+      lockIconSize: scale(60),
+      bottomContainerPaddingTop: scale(16),
+      shadowOffsetHeight: scale(-3),
+      shadowRadius: scale(4),
+      elevation: scale(8),
     };
   }, [isWebLandscape, width, height]);
 
   const userId = user.id || user?._j?.id;
 
+  const _userData = user.id ? user : user._j;
   const {
     avatar,
     name,
@@ -108,33 +151,130 @@ const UserSummaryBlock = ({
     about,
     email,
     phoneNumber,
-  } = user.id ? user : user._j;
+    is_deleted,
+  } = _userData;
+  const proposed_price = _userData.proposed_price ?? jobExpectations?.proposed_price;
+  const proposed_time_from = _userData.proposed_time_from ?? jobExpectations?.proposed_time_from;
+  const proposed_time_to = _userData.proposed_time_to ?? jobExpectations?.proposed_time_to;
 
-  const handleUserRevealTry = async () => {
+  console.log(proposed_price, proposed_time_from, proposed_time_to);
+
+  const handleUserRevealTry = async (payload = {}) => {
     try {
       setAppLoading(true);
 
-      const result = await usersReveal.tryReveal(user.id);
-      if (result.paymentUrl) {
+      const result = await usersReveal.tryReveal(user.id, payload);
+      if (result?.paymentUrl) {
         openWebView(result.paymentUrl);
       }
 
       setAppLoading(false);
+      return result;
     } catch (error) {
-      console.error('Error revealing user:', error);
+      logError('Error revealing user:', error);
+      setAppLoading(false);
+      throw error;
     }
   };
-  console.log('User data:', { user });
+
+  const handlePayCouponsReveal = () => {
+    setPurchaseModalVisible(false);
+    setAppLoading(true);
+    usersReveal
+      .tryReveal(user.id, { useCoupon: true })
+      .then(() => {
+        couponsManagerController?.refreshBalance?.();
+      })
+      .catch((e) => {
+        if (
+          e?.response?.status === 400 &&
+          e?.response?.data?.code === 'NO_COUPONS_AVAILABLE'
+        ) {
+          showWarning(
+            t('errors.no_coupons', {
+              defaultValue: 'You have no coupons available',
+            }),
+          );
+        }
+      })
+      .finally(() => setAppLoading(false));
+  };
+
+  const formatExperience = (exp) => {
+    if (!exp) return null;
+    const years = exp.years || 0;
+    const months = exp.months || 0;
+    if (!years && !months) return null;
+    const parts = [];
+    if (years) parts.push(`${years} year${years !== 1 ? 's' : ''}`);
+    if (months) parts.push(`${months} month${months !== 1 ? 's' : ''}`);
+    return parts.join(' ');
+  };
+
+  const renderStars = (rating) => {
+    const stars = [];
+    const fullStars = Math.floor(rating || 0);
+    const hasHalfStar = (rating || 0) - fullStars >= 0.5;
+
+    for (let i = 1; i <= 5; i++) {
+      let iconSource = icons.star;
+
+      if (i > fullStars) {
+        if (i === fullStars + 1 && hasHalfStar) {
+          iconSource = icons.halfStar;
+        } else {
+          iconSource = icons.emptyStar;
+        }
+      }
+
+      stars.push(
+        <Image
+          key={i}
+          source={iconSource}
+          style={{
+            width: sizes.starSize,
+            height: sizes.starSize,
+          }}
+        />
+      );
+    }
+    return (
+      <View
+        style={{
+          flexDirection: isRTL ? 'row-reverse' : 'row',
+          alignItems: 'center',
+          gap: 2,
+        }}
+      >
+        {stars}
+        <Text
+          style={{
+            fontSize: sizes.ratingSize,
+            color: themeController.current?.textColor,
+            marginLeft: isRTL ? 0 : 4,
+            marginRight: isRTL ? 4 : 0,
+            fontFamily: 'Rubik-Bold',
+          }}
+        >
+          {rating ? rating.toFixed(1).replace('.', ',') : '0,0'}
+        </Text>
+      </View>
+    );
+  };
 
   return (
     <>
       {/* Summary Block */}
-      <View
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => setModalVisible(true)}
         style={[
           styles.summaryContainer,
           // isRTL && { flexDirection: 'row-reverse' },
           {
-            height: sizes.containerHeight,
+            height: 'auto',
+            minHeight: sizes.containerHeight,
+            paddingVertical: sizes.padding,
             width: sizes.cardWidth,
             flexDirection: isRTL ? 'row-reverse' : 'row',
             backgroundColor: themeController.current?.formInputBackground,
@@ -144,88 +284,130 @@ const UserSummaryBlock = ({
         ]}
       >
         <View
-          style={[
-            styles.avatarNameContainer,
-            {
-              flexDirection: isRTL ? 'row-reverse' : 'row',
-              gap: sizes.providerInfoGap,
-            },
-          ]}
+          style={{
+            flex: 1,
+            flexDirection: 'column',
+            alignSelf: 'flex-start',
+          }}
         >
-          {avatar ? (
-            <Image
-              source={{ uri: avatar }}
-              style={[
-                styles.avatar,
-                {
-                  width: sizes.avatar,
-                  height: sizes.avatar,
-                  borderRadius: sizes.avatar / 2,
-                },
-              ]}
-            />
-          ) : (
+          <View
+            style={{
+              flexDirection: isRTL ? 'row-reverse' : 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
             <View
               style={[
-                styles.avatarPlaceholder,
+                styles.avatarNameContainer,
                 {
-                  width: sizes.avatar,
-                  height: sizes.avatar,
-                  borderRadius: sizes.avatar / 2,
+                  flexDirection: isRTL ? 'row-reverse' : 'row',
+                  gap: sizes.providerInfoGap * 1.5,
+                  flex: 1,
                 },
               ]}
             >
-              <Image
-                source={
-                  themeController.current.isTheme
-                    ? icons.defaultAvatar
-                    : icons.monotoneAvatar
-                }
-                style={{ width: '100%', height: '100%' }}
-              />
+              {is_deleted ? (
+                <View
+                  style={[
+                    styles.avatarPlaceholder,
+                    {
+                      width: sizes.avatar * 1.5,
+                      height: sizes.avatar * 1.5,
+                      borderRadius: (sizes.avatar * 1.5) / 2,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: themeController.current?.backgroundColor,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={{
+                      fontSize: sizes.smallFont,
+                      color: themeController.current?.unactiveTextColor,
+                      fontFamily: 'Rubik-SemiBold',
+                    }}
+                  >
+                    {t('common.deleted')}
+                  </Text>
+                </View>
+              ) : avatar ? (
+                <Image
+                  source={{ uri: avatar }}
+                  style={[
+                    styles.avatar,
+                    {
+                      width: sizes.avatar * 1.5,
+                      height: sizes.avatar * 1.5,
+                      borderRadius: (sizes.avatar * 1.5) / 2,
+                    },
+                  ]}
+                />
+              ) : (
+                <View
+                  style={[
+                    styles.avatarPlaceholder,
+                    {
+                      width: sizes.avatar * 1.5,
+                      height: sizes.avatar * 1.5,
+                      borderRadius: (sizes.avatar * 1.5) / 2,
+                    },
+                  ]}
+                >
+                  <Image
+                    source={
+                      themeController.current.isTheme
+                        ? icons.monotoneAvatar
+                        : icons.defaultAvatar
+                    }
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                </View>
+              )}
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: sizes.font,
+                    color: themeController.current?.textColor,
+                    fontFamily: 'Rubik-SemiBold',
+                  }}
+                >
+                  {is_deleted
+                    ? t('profile.deleted_user')
+                    : usersReveal.contains(userId)
+                      ? `${name} ${surname}`
+                      : `${name} ${surname?.[0] ? surname?.[0] + '.' : ''}`}
+                </Text>
+                {!is_deleted && (
+                  <Text
+                    style={{
+                      fontSize: sizes.smallFont,
+                      color: themeController.current?.unactiveTextColor,
+                      marginBottom: 0,
+                    }}
+                  >
+                    {LICENSES[professions?.[0]] || (typeof professions?.[0] === 'string' ? professions?.[0] : '') || ''}
+                  </Text>
+                )}
+              </View>
             </View>
-          )}
-          <View>
-            <Text
-              style={{
-                fontSize: sizes.font,
-                color: themeController.current?.textColor,
-                fontFamily: 'Rubik-SemiBold',
-              }}
-            >
-              {name} {surname}
-            </Text>
-            <Text
-              style={{
-                fontSize: sizes.smallFont,
-                color: themeController.current?.unactiveTextColor,
-              }}
-            >
-              {LICENSES[professions?.[0]]}
-            </Text>
+
+            {/* Right side: Rating */}
+            <View style={{ alignItems: isRTL ? 'flex-start' : 'flex-end' }}>
+              {user?.rating && renderStars(user.rating)}
+            </View>
           </View>
+          {(proposed_price || proposed_time_from) && (
+            <JobExpectationsBadge
+              expectations={{ proposed_price, proposed_time_from, proposed_time_to }}
+              isRTL={isRTL}
+              containerStyle={{ marginTop: 6, justifyContent: 'flex-start' }}
+              badgeStyle={{ paddingVertical: 2, paddingHorizontal: 6 }}
+              textStyle={{ fontSize: sizes.smallFont - 2 }}
+            />
+          )}
         </View>
-        <TouchableOpacity
-          onPress={() => setModalVisible(true)}
-          style={[
-            {
-              // borderRadius: sizes.borderRadius,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.visitButtonText,
-              {
-                color: themeController.current?.primaryColor,
-                fontSize: sizes.font,
-              },
-            ]}
-          >
-            {t('userSummary.visit', { defaultValue: 'Visit' })}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
 
       {/* Fullscreen Modal (прозрачная, клик по пустой зоне закрывает) */}
       <Modal visible={modalVisible} animationType='slide' transparent>
@@ -238,7 +420,7 @@ const UserSummaryBlock = ({
         >
           <View style={[styles.backdrop]}>
             {/* Контентная панель; клики внутри не закрывают */}
-            <TouchableWithoutFeedback>
+            <TouchableWithoutFeedback onPress={() => { }}>
               <View
                 style={[
                   styles.panel,
@@ -249,7 +431,7 @@ const UserSummaryBlock = ({
                     paddingBottom: sizes.padding,
                     paddingHorizontal: sizes.pagePaddingHorizontal,
                     // Веб-альбомная: узкая панель справа, с пустой кликабельной зоной слева
-                    width: isWebLandscape ? width - sidebarWidth : '100%',
+                    width: isWebLandscape ? width - effectiveSidebarWidth : '100%',
                     alignSelf: isRTL ? 'flex-start' : 'flex-end',
                     height: '100%',
                   },
@@ -301,43 +483,88 @@ const UserSummaryBlock = ({
                 </View>
 
                 <ScrollView contentContainerStyle={{}}>
-                  <Image
-                    source={
-                      avatar
-                        ? { uri: avatar }
-                        : themeController.current.isTheme
-                        ? icons.defaultAvatar
-                        : icons.monotoneAvatar
-                    }
-                    style={[
-                      styles.modalAvatar,
-                      {
-                        width: sizes.modalAvatar,
-                        height: sizes.modalAvatar,
-                        borderRadius: sizes.modalAvatar / 2,
-                        alignSelf: 'center',
-                        marginTop: sizes.avatarMarginTop,
-                        marginBottom: sizes.avatarMarginBottom,
-                      },
-                    ]}
-                  />
-                  <Text
-                    style={[
-                      styles.modalName,
-                      {
-                        fontSize: sizes.nameSize,
-                        fontFamily: 'Rubik-Bold',
-                        textAlign: 'center',
-                        color: themeController.current?.textColor,
-                        marginBottom: professions?.[0]
+                  {is_deleted ? (
+                    <View
+                      style={[
+                        styles.modalAvatarPlaceholder,
+                        {
+                          width: sizes.modalAvatar,
+                          height: sizes.modalAvatar,
+                          borderRadius: sizes.modalAvatar / 2,
+                          alignSelf: 'center',
+                          marginTop: sizes.avatarMarginTop,
+                          marginBottom: sizes.avatarMarginBottom,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          backgroundColor: themeController.current?.formInputBackground,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={{
+                          fontSize: sizes.professionSize,
+                          color: themeController.current?.unactiveTextColor,
+                          fontFamily: 'Rubik-SemiBold',
+                        }}
+                      >
+                        {t('common.deleted')}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Image
+                      source={
+                        avatar
+                          ? { uri: avatar }
+                          : themeController.current.isTheme
+                            ? icons.defaultAvatar
+                            : icons.monotoneAvatar
+                      }
+                      style={[
+                        styles.modalAvatar,
+                        {
+                          width: sizes.modalAvatar,
+                          height: sizes.modalAvatar,
+                          borderRadius: sizes.modalAvatar / 2,
+                          alignSelf: 'center',
+                          marginTop: sizes.avatarMarginTop,
+                          marginBottom: sizes.avatarMarginBottom,
+                        },
+                      ]}
+                    />
+                  )}
+                  <View
+                    style={{
+                      flexDirection: isRTL ? 'row-reverse' : 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: sizes.badgeGap / 2,
+                      marginBottom:
+                        professions?.[0] && !is_deleted
                           ? sizes.titleMarginBottom
                           : sizes.professionMarginBottom,
-                      },
-                    ]}
+                    }}
                   >
-                    {name} {surname}
-                  </Text>
-                  {professions?.[0] && (
+                    <Text
+                      style={[
+                        styles.modalName,
+                        {
+                          fontSize: sizes.nameSize,
+                          fontFamily: 'Rubik-Bold',
+                          textAlign: 'center',
+                          color: themeController.current?.textColor,
+                          marginBottom: 0,
+                        },
+                      ]}
+                    >
+                      {is_deleted
+                        ? t('profile.user_deleted')
+                        : usersReveal.contains(userId)
+                          ? `${name} ${surname}`
+                          : `${name?.[0] ? name?.[0] + '.' : ''} ${surname?.[0] ? surname?.[0] + '.' : ''
+                          }`}
+                    </Text>
+                  </View>
+                  {professions?.[0] && !is_deleted && (
                     <Text
                       style={{
                         fontSize: sizes.professionSize,
@@ -353,6 +580,10 @@ const UserSummaryBlock = ({
                   {/* Контейнер для сетки 2x2 */}
                   <View
                     style={[
+                      {
+                        marginBottom: sizes.infoSectionsContainerMarginBottom,
+                        gap: sizes.infoSectionsContainerGap,
+                      },
                       isWebLandscape && {
                         flexDirection: isRTL ? 'row-reverse' : 'row',
                         flexWrap: 'wrap',
@@ -362,76 +593,12 @@ const UserSummaryBlock = ({
                       isWebLandscape && { width: '66%' },
                     ]}
                   >
-                    {/* Job Types */}
-                    {professions && professions?.length > 0 && (
-                      <View
-                        style={[
-                          isWebLandscape && {
-                            width: '48%',
-                            marginBottom: sizes.infoSectionMarginBottom,
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.sectionTitle,
-                            {
-                              fontSize: sizes.sectionTitleSize,
-                              color: themeController.current?.textColor,
-                              marginBottom: sizes.infoSectionMarginBottom / 4,
-                            },
-                          ]}
-                        >
-                          {t('profile.job_types')}
-                        </Text>
-                        <View
-                          style={[
-                            styles.wrapRow,
-                            ,
-                            { gap: sizes.badgeGap },
-                            isRTL && { justifyContent: 'flex-end' },
-                          ]}
-                        >
-                          {professions?.map((p, i) => (
-                            <View
-                              key={i}
-                              style={[
-                                styles.typeBadge,
-                                {
-                                  borderRadius: sizes.borderRadius / 2,
-                                  borderColor:
-                                    themeController.current
-                                      ?.formInputLabelColor,
-                                  paddingHorizontal:
-                                    sizes.badgePaddingHorizontal,
-                                  height: sizes.badgeHeight,
-                                },
-                              ]}
-                            >
-                              <Text
-                                style={[
-                                  styles.typeText,
-                                  {
-                                    fontSize: sizes.small,
-                                    color:
-                                      themeController.current
-                                        ?.formInputLabelColor,
-                                  },
-                                ]}
-                              >
-                                {tField(p.job_type, 'name')}
-                              </Text>
-                            </View>
-                          ))}
-                        </View>
-                      </View>
-                    )}
                     {/* Professions */}
-                    {professions && professions?.length > 0 && (
+                    {professions && professions?.length > 0 && !is_deleted && (
                       <View
                         style={[
-                          isWebLandscape && {
-                            width: '48%',
+                          {
+                            width: '100%',
                             marginBottom: sizes.infoSectionMarginBottom,
                           },
                         ]}
@@ -442,49 +609,60 @@ const UserSummaryBlock = ({
                             {
                               fontSize: sizes.sectionTitleSize,
                               color: themeController.current?.textColor,
-                              marginBottom: sizes.infoSectionMarginBottom / 4,
+                              marginBottom: sizes.infoSectionMarginBottom / 2,
                             },
                           ]}
                         >
-                          {t('profile.job_subtypes')}
+                          {t('profile.professions', { defaultValue: 'Professions' })}
                         </Text>
-                        <View
-                          style={[
-                            styles.centerRow,
-                            { gap: sizes.badgeGap },
-                            isRTL && { justifyContent: 'flex-end' },
-                          ]}
-                        >
-                          {professions?.map((p, i) => (
-                            <View
-                              key={i}
-                              style={[
-                                styles.professionBadge,
-                                {
-                                  borderRadius: sizes.borderRadius / 2,
-                                  borderColor:
-                                    themeController.current
-                                      ?.formInputLabelColor,
-                                  paddingHorizontal:
-                                    sizes.badgePaddingHorizontal,
-                                  height: sizes.badgeHeight,
-                                },
-                              ]}
-                            >
-                              <Text
-                                style={[
-                                  {
-                                    fontSize: sizes.small,
-                                    color:
-                                      themeController.current
-                                        ?.formInputLabelColor,
-                                  },
-                                ]}
+                        <View style={{ gap: sizes.badgeGap }}>
+                          {professions?.map((p, i) => {
+                            const typeLabel = tField(p.job_type, 'name');
+                            const subtypeLabel = tField(p.job_subtype, 'name');
+                            const expLabel = formatExperience(p.experience);
+                            return (
+                              <View
+                                key={i}
+                                style={{
+                                  flexDirection: isRTL ? 'row-reverse' : 'row',
+                                  alignItems: 'center',
+                                  backgroundColor: themeController.current?.formInputBackground,
+                                  padding: sizes.padding,
+                                  borderRadius: sizes.borderRadius,
+                                }}
                               >
-                                {tField(p.job_subtype, 'name')}
-                              </Text>
-                            </View>
-                          ))}
+                                <Text style={{ fontSize: sizes.font, color: themeController.current?.textColor, fontFamily: 'Rubik-Medium' }}>
+                                  {typeLabel}
+                                </Text>
+                                <Image
+                                  source={icons.forward}
+                                  style={{
+                                    width: sizes.iconSmall,
+                                    height: sizes.iconSmall,
+                                    tintColor: themeController.current?.unactiveTextColor,
+                                    marginHorizontal: sizes.badgeGap,
+                                    transform: [{ rotate: isRTL ? '180deg' : '0deg' }],
+                                  }}
+                                />
+                                <Text style={{ fontSize: sizes.font, color: themeController.current?.textColor }}>
+                                  {subtypeLabel}
+                                </Text>
+                                <View style={{ flex: 1 }} />
+                                <View
+                                  style={{
+                                    backgroundColor: `${themeController.current?.primaryColor}1A`,
+                                    paddingHorizontal: sizes.expBadgePaddingHorizontal,
+                                    paddingVertical: sizes.expBadgePaddingVertical,
+                                    borderRadius: sizes.expBadgeRadius,
+                                  }}
+                                >
+                                  <Text style={{ fontSize: sizes.smallFont, color: themeController.current?.primaryColor, fontFamily: 'Rubik-Medium' }}>
+                                    {expLabel}
+                                  </Text>
+                                </View>
+                              </View>
+                            );
+                          })}
                         </View>
                       </View>
                     )}
@@ -546,8 +724,8 @@ const UserSummaryBlock = ({
                     {/* About */}
                     <View
                       style={[
-                        isWebLandscape && {
-                          width: '48%',
+                        {
+                          width: '100%',
                           marginBottom: sizes.infoSectionMarginBottom,
                         },
                       ]}
@@ -558,7 +736,7 @@ const UserSummaryBlock = ({
                           {
                             fontSize: sizes.sectionTitleSize,
                             color: themeController.current?.textColor,
-                            marginBottom: sizes.infoSectionMarginBottom / 4,
+                            marginBottom: sizes.infoSectionMarginBottom / 2,
                           },
                         ]}
                       >
@@ -569,6 +747,8 @@ const UserSummaryBlock = ({
                           {
                             fontSize: sizes.small,
                             color: themeController.current?.unactiveTextColor,
+                            maxHeight: sizes.aboutMaxHeight,
+                            overflow: 'auto',
                           },
                         ]}
                       >
@@ -576,11 +756,10 @@ const UserSummaryBlock = ({
                       </Text>
                     </View>
 
-                    {/* Contact Info */}
                     <View
                       style={[
-                        isWebLandscape && {
-                          width: '48%',
+                        {
+                          width: '100%',
                           marginBottom: sizes.infoSectionMarginBottom,
                         },
                       ]}
@@ -591,55 +770,79 @@ const UserSummaryBlock = ({
                           {
                             fontSize: sizes.sectionTitleSize,
                             color: themeController.current?.textColor,
-                            marginBottom: sizes.infoSectionMarginBottom / 4,
+                            marginBottom: sizes.infoSectionMarginBottom / 2,
                           },
                         ]}
                       >
-                        {t('userSummary.contactTitle', {
+                        {t('profile.contact_info', {
                           defaultValue: 'Contact information',
                         })}
                       </Text>
-                      {!usersReveal.contains(user.id) ? (
-                        <TouchableOpacity
-                          style={[
-                            styles.primaryBtn,
-                            {
-                              backgroundColor:
-                                themeController.current
-                                  ?.buttonColorPrimaryDefault,
-                              height: sizes.unlockContactBtnHeight,
-                              justifyContent: 'center',
-                              borderRadius: sizes.btnRadius,
-                              width: 'max-content',
-                              alignSelf: isRTL ? 'flex-end' : 'flex-start',
-                              paddingHorizontal:
-                                sizes.unlockContactBtnPaddingHorizontal,
-                            },
-                          ]}
-                          onPress={handleUserRevealTry}
+                      {!(status === 'store-in-progress' || status === 'store-done' || status === 'jobs-in-progress' || status === 'jobs-done') ? (
+                        <View
+                          style={{
+                            backgroundColor: themeController.current?.formInputBackground,
+                            padding: sizes.padding,
+                            borderRadius: sizes.borderRadius,
+                            flexDirection: isRTL ? 'row-reverse' : 'row',
+                            alignItems: 'center',
+                          }}
                         >
-                          <Text
-                            style={[
-                              {
-                                fontSize: sizes.professionSize,
-                                color:
-                                  themeController.current
-                                    ?.buttonTextColorPrimary,
-                              },
-                            ]}
+                          <View
+                            style={{
+                              [isRTL ? 'marginLeft' : 'marginRight']: sizes.padding,
+                            }}
                           >
-                            {t('common.purchase')}
-                          </Text>
-                        </TouchableOpacity>
+                            <Image
+                              source={icons.lock}
+                              style={{ width: sizes.lockIconSize, height: sizes.lockIconSize }}
+                            />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text
+                              style={{
+                                fontSize: sizes.font,
+                                color: themeController.current?.textColor,
+                                fontFamily: 'Rubik-Medium',
+                                textAlign: isRTL ? 'right' : 'left',
+                              }}
+                            >
+                              {status === 'store-waiting' || status === 'store-new'
+                                ? t('profile.available_after_selection')
+                                : t('profile.available_if_creator_chooses')}
+                            </Text>
+                            <View
+                              style={{
+                                flexDirection: isRTL ? 'row-reverse' : 'row',
+                                gap: sizes.badgeGap * 2,
+                                marginVertical: sizes.placeholderMarginVertical,
+                                justifyContent: isRTL ? 'flex-end' : 'flex-start',
+                              }}
+                            >
+                              <View style={{ width: sizes.placeholderSmallWidth, height: sizes.placeholderHeight, backgroundColor: `${themeController.current?.primaryColor}1A`, borderRadius: sizes.expBadgeRadius }} />
+                              <View style={{ width: sizes.placeholderLargeWidth, height: sizes.placeholderHeight, backgroundColor: `${themeController.current?.primaryColor}1A`, borderRadius: sizes.expBadgeRadius }} />
+                            </View>
+                            <Text
+                              style={{
+                                fontSize: sizes.smallFont,
+                                color: themeController.current?.formInputLabelColor,
+                                textAlign: isRTL ? 'right' : 'left',
+                              }}
+                            >
+                              {status === 'store-waiting' || status === 'store-new'
+                                ? t('profile.contact_reveal_provider_confirms')
+                                : t('profile.contact_reveal_choosen')}
+                            </Text>
+                          </View>
+                        </View>
                       ) : (
                         <View
-                          style={
-                            isWebLandscape && {
-                              flexDirection: isRTL ? 'row-reverse' : 'row',
-                              alignItems: 'center',
-                              height: sizes.contactInfoHeight,
-                            }
-                          }
+                          style={{
+                            flexDirection: isRTL ? 'row-reverse' : 'row',
+                            alignItems: 'center',
+                            height: sizes.contactInfoHeight,
+                            gap: sizes.padding,
+                          }}
                         >
                           {phoneNumber && (
                             <View
@@ -651,10 +854,10 @@ const UserSummaryBlock = ({
                               <Image
                                 source={icons.mobile}
                                 style={{
-                                  width: sizes.icon,
-                                  height: sizes.icon,
-                                  [isRTL ? 'marginLeft' : 'marginRight']:
-                                    sizes.iconMargin,
+                                  width: sizes.iconSmall,
+                                  height: sizes.iconSmall,
+                                  [isRTL ? 'marginLeft' : 'marginRight']: sizes.iconMargin,
+                                  tintColor: themeController.current?.primaryColor,
                                 }}
                               />
                               <Text
@@ -662,9 +865,7 @@ const UserSummaryBlock = ({
                                   styles.contactInfo,
                                   {
                                     fontSize: sizes.small,
-                                    color:
-                                      themeController.current
-                                        ?.unactiveTextColor,
+                                    color: themeController.current?.textColor,
                                   },
                                 ]}
                               >
@@ -682,19 +883,17 @@ const UserSummaryBlock = ({
                               <Image
                                 source={icons.emailContact}
                                 style={{
-                                  width: sizes.icon,
-                                  height: sizes.icon,
-                                  [isRTL ? 'marginLeft' : 'marginRight']:
-                                    sizes.iconMargin,
+                                  width: sizes.iconSmall,
+                                  height: sizes.iconSmall,
+                                  [isRTL ? 'marginLeft' : 'marginRight']: sizes.iconMargin,
+                                  tintColor: themeController.current?.primaryColor,
                                 }}
                               />
                               <Text
                                 style={[
                                   {
                                     fontSize: sizes.small,
-                                    color:
-                                      themeController.current
-                                        ?.unactiveTextColor,
+                                    color: themeController.current?.textColor,
                                   },
                                 ]}
                               >
@@ -710,77 +909,146 @@ const UserSummaryBlock = ({
                 </ScrollView>
 
                 {status === 'store-waiting' && (
-                  <View>
-                    {!usersReveal.contains(user.id) && (
-                      <Text
+                  <View
+                    style={{
+                      marginHorizontal: -sizes.pagePaddingHorizontal,
+                      marginBottom: -sizes.padding,
+                      paddingHorizontal: sizes.pagePaddingHorizontal,
+                      paddingTop: sizes.bottomContainerPaddingTop,
+                      paddingBottom: sizes.padding,
+                      backgroundColor: themeController.current?.backgroundColor,
+                      borderTopWidth: 1,
+                      borderTopColor: themeController.current?.profileDefaultBackground,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: sizes.shadowOffsetHeight },
+                      shadowOpacity: 0.1,
+                      shadowRadius: sizes.shadowRadius,
+                      elevation: sizes.elevation,
+                    }}
+                  >
+                    {providerStatus === 'pending_supplier_approval' ? (
+                      <View
                         style={[
+                          styles.primaryBtn,
                           {
-                            color: '#f33',
-                            textAlign: 'center',
-                            fontSize: sizes.small,
-                            marginBottom: sizes.showContactInfoMarginBottom,
+                            flexDirection: isRTL ? 'row-reverse' : 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: sizes.badgeGap,
+                            backgroundColor: themeController.current?.buttonColorTertiaryDisabled,
+                            borderRadius: sizes.borderRadius,
+                            height: sizes.createRequestBtnHeight,
                           },
                           isWebLandscape && {
-                            textAlign: isRTL ? 'right' : 'left',
+                            width: '30%',
+                            alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                            marginBottom: sizes.infoSectionMarginBottom,
                           },
                         ]}
                       >
-                        {t('userSummary.openContactHint', {
-                          defaultValue:
-                            'Open contact information to be able to approve provider',
-                        })}
-                      </Text>
-                    )}
-                    <TouchableOpacity
-                      style={[
-                        styles.primaryBtn,
-                        {
-                          backgroundColor: usersReveal.contains(user.id)
-                            ? themeController.current?.buttonColorPrimaryDefault
-                            : themeController.current
-                                ?.buttonColorPrimaryDisabled,
-                          borderRadius: sizes.borderRadius,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: 0,
-                        },
-                        isWebLandscape && {
-                          width: '30%',
-                          height: scaleByHeight(62, height),
-                          alignSelf: isRTL ? 'flex-end' : 'flex-start',
-                          marginBottom: sizes.infoSectionMarginBottom,
-                        },
-                      ]}
-                      onPress={() => {
-                        if (usersReveal.contains(user.id)) {
-                          setAppLoading(true);
-                          jobsController.actions
-                            .approveProvider(currentJobId, userId)
-                            .then(() => {
-                              setModalVisible(false);
-                              setShowContactInfo(false);
-                              closeAllModal();
-                              setAppLoading(false);
-                            });
-                        }
-                      }}
-                    >
+                        <Image
+                          source={icons.pending}
+                          style={{
+                            width: sizes.icon,
+                            height: sizes.icon,
+                            tintColor: themeController.current?.buttonTextColorTertiary,
+                          }}
+                        />
+                        <Text
+                          style={{
+                            fontSize: sizes.font,
+                            color: themeController.current?.buttonTextColorTertiary,
+                            fontFamily: 'Rubik-SemiBold',
+                            textAlign: 'center',
+                          }}
+                        >
+                          {t('userSummary.awaitingConfirmation', {
+                            defaultValue: 'Awaiting provider confirmation',
+                          })}
+                        </Text>
+                      </View>
+                    ) : (jobAgreement != null && jobAgreement !== 'agreed') ? (
                       <Text
                         style={[
+                          styles.primaryBtn,
                           {
-                            fontSize: sizes.professionSize,
-                            color:
-                              themeController.current?.buttonTextColorPrimary,
+                            backgroundColor:
+                              themeController.current?.buttonColorPrimaryDisabled,
+                            borderRadius: sizes.borderRadius,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: 0,
+                            height: sizes.createRequestBtnHeight,
+                            marginBottom: sizes.selectButtonMarginBottom,
+                            flexDirection: isRTL ? 'row-reverse' : 'row',
+                            gap: sizes.padding,
+                          },
+                          isWebLandscape && {
+                            width: '30%',
+                            alignSelf: isRTL ? 'flex-end' : 'flex-start',
                           },
                         ]}
+                        disabled={true}
                       >
-                        {t('userSummary.approve', { defaultValue: 'Approve' })}
+                        {t('userSummary.providerNotAgreed', {
+                          defaultValue:
+                            'Provider has not yet agreed to the updated job terms',
+                        })}
                       </Text>
-                    </TouchableOpacity>
+                    ) : (
+                      <>
+                        <TouchableOpacity
+                          style={[
+                            styles.primaryBtn,
+                            {
+                              backgroundColor: usersReveal.contains(user.id)
+                                ? themeController.current?.buttonColorPrimaryDefault
+                                : themeController.current
+                                  ?.buttonColorPrimaryDisabled,
+                              borderRadius: sizes.borderRadius,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: 0,
+                              height: sizes.createRequestBtnHeight,
+                            },
+                            isWebLandscape && {
+                              width: '30%',
+                              alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                              marginBottom: sizes.infoSectionMarginBottom,
+                            },
+                          ]}
+                          onPress={() => {
+                            if (usersReveal.contains(user.id)) {
+                              setAppLoading(true);
+                              jobsController.actions
+                                .selectProvider(currentJobId, userId)
+                                .then(() => {
+                                  setModalVisible(false);
+                                  setShowContactInfo(false);
+                                  closeAllModal();
+                                  setAppLoading(false);
+                                });
+                            }
+                          }}
+                        >
+                          <Text
+                            style={[
+                              {
+                                fontSize: sizes.professionSize,
+                                color:
+                                  themeController.current?.buttonTextColorPrimary,
+                              },
+                            ]}
+                          >
+                            {t('userSummary.approve', { defaultValue: 'Approve' })}
+                          </Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
                   </View>
                 )}
 
-                {status === 'store-in-progress' && (
+                {/* {status === 'store-in-progress' && (
                   <View>
                     <TouchableOpacity
                       style={[
@@ -792,10 +1060,10 @@ const UserSummaryBlock = ({
                           alignItems: 'center',
                           justifyContent: 'center',
                           padding: 0,
+                          height: sizes.createRequestBtnHeight,
                         },
                         isWebLandscape && {
                           width: '30%',
-                          height: scaleByHeight(62, height),
                           alignSelf: isRTL ? 'flex-end' : 'flex-start',
                           marginBottom: sizes.infoSectionMarginBottom,
                         },
@@ -824,12 +1092,48 @@ const UserSummaryBlock = ({
                       </Text>
                     </TouchableOpacity>
                   </View>
-                )}
+                )} */}
               </View>
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      <PurchaseModal
+        visible={purchaseModalVisible}
+        onClose={() => setPurchaseModalVisible(false)}
+        type='regular'
+        onPurchase={handleUserRevealTry}
+        onPayWithCoupons={handlePayCouponsReveal}
+        price={usersReveal?.product ? `${usersReveal.product.price} ${usersReveal.product.currency}` : ''}
+      />
+
+      <ConfirmSelectProviderModal
+        visible={confirmModalVisible}
+        onClose={() => setConfirmModalVisible(false)}
+        onConfirm={async () => {
+          try {
+            await jobsController.actions.approveProvider(currentJobId, userId);
+            return true;
+          } catch (error) {
+            logError('Error approving provider:', error);
+            return false;
+          }
+        }}
+        providerName={
+          is_deleted
+            ? t('profile.deleted_user')
+            : usersReveal.contains(userId)
+              ? `${name} ${surname}`
+              : `${name} ${surname?.[0] ? surname?.[0] + '.' : ''}`
+        }
+        onSuccessClose={() => {
+          setConfirmModalVisible(false);
+          setModalVisible(false);
+          setShowContactInfo(false);
+          closeAllModal();
+        }}
+      />
     </>
   );
 };
@@ -838,8 +1142,16 @@ export default UserSummaryBlock;
 
 const styles = StyleSheet.create({
   summaryContainer: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    // borderWidth: 1,
+    // borderColor: 'rgba(0,0,0,0.05)',
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.05,
+    // shadowRadius: 4,
+    // elevation: 2,
   },
   avatarNameContainer: {
     alignItems: 'center',

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getSystemTypesWithSubtypes } from "../src/api/jobTypes";
 import { fetchUserTypeCreationRequests, sendUserTypeCreationRequest } from "../src/api/jobTypesRegistration";
 import { fetchUserProfessions, fetchUserTypeRequests, sendUserTypeRequest } from "../src/api/jobTypesRequests";
+import { logError, logInfo } from "../utils/log_util";
 
 function professionRequests({ session }) {
     const [professionsRequestedToSystem, setProfessionsRequestedToSystem] = useState([]);
@@ -33,7 +34,7 @@ function professionRequests({ session }) {
             setProfessionsRequestedBySystem(userRequested);
         }
         catch (err) {
-            console.error('Error loading profession requests:', err);
+            logError('Error loading profession requests:', err);
         }
     }
 
@@ -52,7 +53,7 @@ function professionRequests({ session }) {
             return data;
         }
         catch (err) {
-            console.error('Error sending profession request:', err);
+            logInfo('Error sending profession request:', err);
             throw err;
         }
     }
@@ -73,7 +74,7 @@ function professionRequests({ session }) {
             return data;
         }
         catch (err) {
-            console.error('Error sending profession request to user:', err);
+            logError('Error sending profession request to user:', err);
             throw err;
         }
     }
@@ -102,14 +103,33 @@ export default function jobTypeManager({ session }) {
 
     const token = session?.token?.access_token;
 
+    const approvedProfessions = useMemo(() => {
+        const approved = new Set();
+        
+        userProfessionRequests.professionsRequestedBySystem.forEach(req => {
+            if (req.status === 'approved') {
+                if(req.job_type_id) approved.add(`type_${req.job_type_id}`);
+                if(req.job_subtype_id) approved.add(`subtype_${req.job_subtype_id}`);
+            }
+        });
+
+        userProfessionRequests.professionsRequestedToSystem.forEach(req => {
+            if (req.status === 'approved') {
+                if(req.final_type_id) approved.add(`type_${req.final_type_id}`);
+                if(req.final_subtype_id) approved.add(`subtype_${req.final_subtype_id}`);
+            }
+        });
+        
+        return Array.from(approved);
+    }, [userProfessionRequests.professionsRequestedBySystem, userProfessionRequests.professionsRequestedToSystem]);
+
     async function loadJobTypesWithSubtypes() {
         setLoadingJobTypes(true);
         setError(null);
 
         try {
             const data = await getSystemTypesWithSubtypes(session);
-            console.log(data);
-            
+
             if (data.typesWithSubtypes)
                 setJobTypesWithSubtypes(data.typesWithSubtypes);
         }
@@ -153,7 +173,7 @@ export default function jobTypeManager({ session }) {
 
             return type.requires_verification === true || subtype.requires_verification === true;
         } catch (err) {
-            console.error('Error in checkIfVerificationNeeded:', err);
+            logInfo('Error in checkIfVerificationNeeded:', err);
             return false;
         }
     }
@@ -166,6 +186,7 @@ export default function jobTypeManager({ session }) {
         jobTypesWithSubtypes,
         checkIfVerificationNeeded,
         reloadJobTypes: loadJobTypesWithSubtypes,
+        approvedProfessions,
         userToSystemRequest: {
             list: userProfessionRequests.professionsRequestedToSystem,
             makeRequest: userProfessionRequests.requestProfessionToSystem

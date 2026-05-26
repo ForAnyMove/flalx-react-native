@@ -1,111 +1,93 @@
-import axios from 'axios';
+import { fetchWithSession } from './apiBase';
+import { logError, logInfo } from '../../utils/log_util';
 
 async function getRevealedUsers(session) {
     try {
-        const token = session?.token?.access_token || session?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
-
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        };
-
-        const response = await axios.get(`${url}/api/user-info/purchased`, { headers });
-
+        const response = await fetchWithSession({
+            session,
+            endpoint: '/api/user-info/purchased',
+            method: 'GET'
+        });
         if (response.status === 200) {
             return response.data.purchasedUsers;
         } else {
             throw new Error('Failed to fetch revealed users');
         }
     } catch (error) {
-        console.error('Error fetching revealed users:', error);
+        logInfo('Error fetching revealed users:', error);
         throw error;
     }
 }
 
-async function revealUser(userId, session) {
+async function revealUser(userId, session, paymentOptions = {}) {
     try {
-        const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
-
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
+        const { useCoupon = false, paymentMethod = 'paypal', currency = 'USD', savePaymentMethod, savedPaymentMethodId } = paymentOptions;
+        const data = {
+            currency,
+            ...(useCoupon
+                ? { use_coupon: true, paymentMethod: 'none' }
+                : savedPaymentMethodId
+                    ? { paymentMethod, savedPaymentMethodId }
+                    : { paymentMethod }
+            ),
+            ...(!useCoupon && !savedPaymentMethodId && savePaymentMethod !== undefined && { savePaymentMethod }),
         };
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/api/user-info/reveal/${userId}`,
+            method: 'POST',
+            data,
+        });
 
-        const response = await axios.get(`${url}/api/user-info/reveal/${userId}`, { headers });
+        logInfo('Reveal user response:', response);
 
-        if (response.status === 200) {
-            const returnData = {};
+        const returnData = {};
 
-            if (response.data.isAlreadyRevealed) {
-                returnData.user = response.data.data;
-            } else if (response.data.paymentRequired == true) {
-                returnData.paymentUrl = response.data.paymentUrl;
-            }
-
-            return returnData;
-        } else {
-            throw new Error('Failed to reveal user contacts');
+        if (response.data?.isAlreadyRevealed) {
+            returnData.user = response.data;
+        } else if (response.data?.payment?.paymentMetadata?.directCharge) {
+            returnData.payment = response.data.payment;
+            returnData.paymentMethodsSnapshot = response.data.paymentMethodsSnapshot ?? null;
+            returnData.user = response.data.user ?? null;
+        } else if (response.data?.paymentRequired == true) {
+            returnData.paymentUrl = response.data.paymentUrl;
         }
 
+        return returnData;
     } catch (error) {
-        console.error('Error revealing user contacts:', error);
+        logInfo('Error revealing user:', error);
+        throw error;
+    }
+}
+
+async function getRevealProduct(session) {
+    try {
+        const response = await fetchWithSession({ session, endpoint: '/api/user-info/products' });
+
+        return response.data.reveal;
+    } catch (error) {
+        logError('Error fetching reveal product:', error);
         throw error;
     }
 }
 
 async function addCommentToUserByJob(userId, jobId, comment, rating, session) {
     try {
-        const token = session?.token?.access_token;
-        const url = session?.serverURL || 'http://localhost:3000';
-
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        };
-
-        const body = {
-            jobId,
-            text: comment,
-            rating
-        };
-
-        const response = await axios.post(`${url}/users/${userId}/comments`, body, { headers });
-
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/users/${userId}/comments`,
+            data: { jobId, text: comment, rating },
+            method: 'POST'
+        });
         if (response.status === 200) {
             return response.data.comment;
         } else {
             throw new Error('Failed to add comment to user');
         }
     } catch (error) {
-        console.error('Error adding comment to user:', error);
+        logInfo('Error adding comment to user:', error);
         throw error;
     }
 }
 
-export { getRevealedUsers, revealUser, addCommentToUserByJob };
+export { getRevealedUsers, revealUser, addCommentToUserByJob, getRevealProduct };

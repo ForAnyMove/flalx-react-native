@@ -27,6 +27,8 @@ import { useMemo, useState } from 'react';
 import ImagePickerModal from './ui/ImagePickerModal';
 import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
 import { scaleByHeightMobile } from '../utils/resizeFuncs';
+import { logError } from '../utils/log_util';
+import CustomTextInput from './ui/CustomTextInput';
 
 function CompleteJobModalContent({ closeModal, completeFunc }) {
   const {
@@ -36,7 +38,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
     // subscriptionPlans,
     // subscription,
   } = useComponentContext();
-  const { width, height, isLandscape, sidebarWidth } = useWindowInfo();
+  const { width, height, isLandscape, effectiveSidebarWidth } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -279,7 +281,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
 
       setImages((prev) => [...prev, ...uploadedUrls.filter(Boolean)]);
     } catch (e) {
-      console.error('Ошибка загрузки изображений:', e);
+      logError('Ошибка загрузки изображений:', e);
     }
   };
 
@@ -304,7 +306,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
         activeOpacity={1}
         style={{
           height: height,
-          width: width - (isLandscape ? sidebarWidth : 0),
+          width: width - (isLandscape ? effectiveSidebarWidth : 0),
           backgroundColor: themeController.current?.backgroundColor,
           alignSelf: isRTL ? 'flex-start' : 'flex-end',
           paddingHorizontal: sizes.containerPaddingHorizontal,
@@ -420,7 +422,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
                   defaultValue: 'Description',
                 })}
               </Text>
-              <TextInput
+              <CustomTextInput
                 value={description}
                 onChangeText={setDescription}
                 placeholder={t('newJob.typePlaceholder', {
@@ -441,7 +443,6 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
                   description: description,
                   images: images,
                 });
-                console.log('completed');
               }}
             >
               <Text style={dynamicStyles.completeButtonText}>

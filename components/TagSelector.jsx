@@ -5,11 +5,11 @@ import {
   TouchableOpacity,
   View,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useWindowInfo } from '../context/windowContext';
 
 export default function TagSelector({
   title,
@@ -20,12 +20,11 @@ export default function TagSelector({
   containerStyle,
   numberOfRows = 1,
 }) {
-  const { width, height } = useWindowDimensions();
+  const { width, height, isLandscape } = useWindowInfo();
   const { themeController } = useComponentContext();
 
   const scrollRef = useRef(null);
-  const isWebLandscape = Platform.OS === 'web' && width > height;
-
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const [containerWidth, setContainerWidth] = useState(null);
 
   const sizes = useMemo(() => {

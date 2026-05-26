@@ -10,10 +10,14 @@ import { getSubscriptionPlans } from '../src/api/subscriptions';
 import authTabsManager from '../managers/authTabsManager';
 import jobTypeManager from '../managers/jobTypeManager';
 import { useGeolocation } from '../managers/useGeolocation';
+import couponsManager from '../managers/couponsManager';
+import { logError } from '../utils/log_util';
+import paymentsManager from '../managers/paymentsManager';
 
 const ComponentContext = createContext();
 
-const appTabsList = ['client', 'providers', 'business'];
+const appTabsList = ['client', 'business'];
+// const appTabsList = ['client', 'providers', 'business'];
 const profileTabsList = ['profile', 'professions', 'settings'];
 
 export const ComponentProvider = ({ children }) => {
@@ -23,6 +27,8 @@ export const ComponentProvider = ({ children }) => {
   const appTabController = tabsManager({ name: 'app', defaultTab: appTabsList[0], list: appTabsList });
   const profileTabController = tabsManager({ name: 'profile', defaultTab: profileTabsList[0], list: profileTabsList });
   const geolocationController = useGeolocation();
+  const couponsManagerController = couponsManager({ session });
+  const paymentsManagerController = paymentsManager({ session });
 
   const { registerControl, authControl, forgotPassControl } = authTabsManager();
 
@@ -40,11 +46,10 @@ export const ComponentProvider = ({ children }) => {
     const fetchPlans = async () => {
       try {
         const { plans } = await getSubscriptionPlans(session);
-        console.log(plans);
         setSubscriptionPlans(plans);
 
       } catch (error) {
-        console.error('Error fetching subscription plans:', error);
+        logError('Error fetching subscription plans:', error);
       }
     }
     fetchPlans();
@@ -78,7 +83,9 @@ export const ComponentProvider = ({ children }) => {
         registerControl,
         authControl,
         forgotPassControl,
-        geolocationController
+        geolocationController,
+        couponsManagerController,
+        paymentsManagerController,
       }}
     >
       {children}

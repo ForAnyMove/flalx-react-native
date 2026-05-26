@@ -12,12 +12,15 @@ import {
   Animated,
   ActivityIndicator,
   Image,
-  useWindowDimensions,
+  Linking,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
+import { logError } from '../utils/log_util';
+import { useWindowInfo } from '../context/windowContext';
+import CustomTextInput from '../components/ui/CustomTextInput';
 
 const OTP_LENGTH = 6;
 
@@ -33,8 +36,7 @@ export default function AuthScreenWithPass() {
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
 
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const [sending, setSending] = useState(false);
@@ -61,6 +63,14 @@ export default function AuthScreenWithPass() {
 
     return re.test(String(value).trim().toLowerCase());
   };
+
+  const tryGetReferralCode = async () => {
+    const url = await Linking.getInitialURL();
+    if (url) {
+      const match = url.match(/[?&]ref=([^&]+)/);
+      if (match) return match[1];
+    }
+  }
 
   const validatePassword = (pwd) => pwd && pwd.trim().length >= 6;
   const passwordsMatch = () =>
@@ -105,7 +115,8 @@ export default function AuthScreenWithPass() {
     try {
       setLoading(true);
 
-      const res = await session.createUser(email.trim(), password);
+      const referralCode = await tryGetReferralCode();
+      const res = await session.createUser(email.trim(), password, {}, referralCode);
 
       if (res.isUserExists) {
         setEmailError(t('register.email_busy'));
@@ -130,7 +141,7 @@ export default function AuthScreenWithPass() {
       // registerControl.leaveRegisterScreen();
     } catch (e) {
       const err = String(e.message || e).toLowerCase();
-      console.error('❌ Ошибка при обновлении:', e);
+      logError('❌ Ошибка при обновлении:', e);
       if (err.includes('already') || err.includes('exists')) {
         setEmailError(t('register.email_busy'));
       } else {
@@ -514,14 +525,14 @@ export default function AuthScreenWithPass() {
                   },
                   isWebLandscape
                     ? {
-                        marginBottom: sizes.webLandscapeLabelMarginBottom,
-                      }
+                      marginBottom: sizes.webLandscapeLabelMarginBottom,
+                    }
                     : null,
                 ]}
               >
                 {t('auth.email_label')}
               </Text>
-              <TextInput
+              <CustomTextInput
                 ref={emailInputRef}
                 style={[
                   styles.input,
@@ -540,12 +551,12 @@ export default function AuthScreenWithPass() {
                   },
                   Platform.OS === 'web' && isLandscape
                     ? {
-                        // убираем чёрную обводку (RN Web)
-                        outlineStyle: 'none',
-                        outlineWidth: 0,
-                        outlineColor: 'transparent',
-                        boxShadow: 'none',
-                      }
+                      // убираем чёрную обводку (RN Web)
+                      outlineStyle: 'none',
+                      outlineWidth: 0,
+                      outlineColor: 'transparent',
+                      boxShadow: 'none',
+                    }
                     : null,
                 ]}
                 placeholder='name@example.com'
@@ -599,20 +610,20 @@ export default function AuthScreenWithPass() {
                   },
                   isWebLandscape
                     ? {
-                        paddingLeft: isRTL
-                          ? 0
-                          : sizes.webLandscapeLabelPaddingLeft,
-                        paddingRight: isRTL
-                          ? sizes.webLandscapeLabelPaddingRight
-                          : 0,
-                        marginBottom: sizes.webLandscapeLabelMarginBottom,
-                      }
+                      paddingLeft: isRTL
+                        ? 0
+                        : sizes.webLandscapeLabelPaddingLeft,
+                      paddingRight: isRTL
+                        ? sizes.webLandscapeLabelPaddingRight
+                        : 0,
+                      marginBottom: sizes.webLandscapeLabelMarginBottom,
+                    }
                     : null,
                 ]}
               >
                 {t('register.password')}
               </Text>
-              <TextInput
+              <CustomTextInput
                 style={[
                   styles.input,
                   dynamicStyles.input,
@@ -630,12 +641,12 @@ export default function AuthScreenWithPass() {
                   },
                   Platform.OS === 'web' && isLandscape
                     ? {
-                        // убираем чёрную обводку (RN Web)
-                        outlineStyle: 'none',
-                        outlineWidth: 0,
-                        outlineColor: 'transparent',
-                        boxShadow: 'none',
-                      }
+                      // убираем чёрную обводку (RN Web)
+                      outlineStyle: 'none',
+                      outlineWidth: 0,
+                      outlineColor: 'transparent',
+                      boxShadow: 'none',
+                    }
                     : null,
                 ]}
                 placeholder='******'
@@ -713,20 +724,20 @@ export default function AuthScreenWithPass() {
                   },
                   isWebLandscape
                     ? {
-                        paddingLeft: isRTL
-                          ? 0
-                          : sizes.webLandscapeLabelPaddingLeft,
-                        paddingRight: isRTL
-                          ? sizes.webLandscapeLabelPaddingRight
-                          : 0,
-                        marginBottom: sizes.webLandscapeLabelMarginBottom,
-                      }
+                      paddingLeft: isRTL
+                        ? 0
+                        : sizes.webLandscapeLabelPaddingLeft,
+                      paddingRight: isRTL
+                        ? sizes.webLandscapeLabelPaddingRight
+                        : 0,
+                      marginBottom: sizes.webLandscapeLabelMarginBottom,
+                    }
                     : null,
                 ]}
               >
                 {t('register.repeat_password')}
               </Text>
-              <TextInput
+              <CustomTextInput
                 style={[
                   styles.input,
                   dynamicStyles.input,
@@ -744,12 +755,12 @@ export default function AuthScreenWithPass() {
                   },
                   Platform.OS === 'web' && isLandscape
                     ? {
-                        // убираем чёрную обводку (RN Web)
-                        outlineStyle: 'none',
-                        outlineWidth: 0,
-                        outlineColor: 'transparent',
-                        boxShadow: 'none',
-                      }
+                      // убираем чёрную обводку (RN Web)
+                      outlineStyle: 'none',
+                      outlineWidth: 0,
+                      outlineColor: 'transparent',
+                      boxShadow: 'none',
+                    }
                     : null,
                 ]}
                 placeholder='******'
@@ -864,7 +875,7 @@ function PrimaryOutlineButton({
   height,
   containerStyle = {},
 }) {
-  const { width } = useWindowDimensions();
+  const { width } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const buttonSizes = useMemo(
@@ -913,10 +924,10 @@ function PrimaryOutlineButton({
         buttonDynamicStyles.outlineBtn,
         { borderColor: theme.primaryColor, opacity: disabled ? 0.6 : 1 },
         isLandscape &&
-          Platform.OS === 'web' && {
-            width: scaleByHeight(330, height),
-            height: scaleByHeight(62, height),
-          },
+        Platform.OS === 'web' && {
+          width: scaleByHeight(330, height),
+          height: scaleByHeight(62, height),
+        },
         containerStyle,
       ]}
     >

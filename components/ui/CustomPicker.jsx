@@ -8,12 +8,12 @@ import {
   Image,
   FlatList,
   Platform,
-  useWindowDimensions,
   Animated,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { icons } from '../../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
+import { useWindowInfo } from '../../context/windowContext';
 
 const CustomPicker = ({
   label,
@@ -26,10 +26,11 @@ const CustomPicker = ({
   placeholder = null,
   placeholderColor = null,
   bottomDropdown = true,
+  headerStyle = false,
 }) => {
   const { themeController } = useComponentContext();
-  const { width, height } = useWindowDimensions();
-  const isWebLandscape = Platform.OS === 'web' && width > height;
+  const { width, height, isLandscape } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -39,10 +40,15 @@ const CustomPicker = ({
     return {
       baseFont: scale(16),
       font: scale(12),
+      headerFont: scale(16),
       iconSize: scale(24),
+      langIconSize: scale(20),
       pickerHeight: scale(64),
+      headerPickerHeight: scale(40),
       borderRadius: scale(8),
       inputContainerPaddingHorizontal: scale(16),
+      headerInputContainerPaddingLeft: scale(24),
+      headerInputContainerPaddingRight: scale(20),
       labelGap: scale(3),
     };
   }, [isWebLandscape, height]);
@@ -58,7 +64,9 @@ const CustomPicker = ({
     options.find((option) => option.value === selectedValue)?.label ||
     (placeholder ? null : options[0]?.label);
 
-  const itemHeight = sizes.pickerHeight * 0.9;
+  const itemHeight = headerStyle
+    ? sizes.headerPickerHeight * 0.9
+    : sizes.pickerHeight * 0.9;
   const dropdownHeight = itemHeight * (options.length > 4 ? 4 : options.length);
 
   const handlePress = () => {
@@ -145,12 +153,15 @@ const CustomPicker = ({
         <Text
           style={[
             {
-              color:
-                isSelected || isHovered
-                  ? themeController.current?.textColor
-                  : themeController.current?.formInputPlaceholderColor,
+              color: headerStyle
+                ? isSelected || isHovered
+                  ? themeController.current?.primaryColor
+                  : themeController.current?.textColor
+                : isSelected || isHovered
+                ? themeController.current?.textColor
+                : themeController.current?.formInputPlaceholderColor,
               fontSize: sizes.baseFont,
-              textAlign: isRTL ? 'right' : 'left',
+              textAlign: headerStyle ? 'center' : isRTL ? 'right' : 'left',
               paddingHorizontal: sizes.inputContainerPaddingHorizontal,
             },
           ]}
@@ -218,7 +229,17 @@ const CustomPicker = ({
                 left: pickerLayout.left,
                 width: pickerLayout.width,
                 height: dropdownHeight,
-                backgroundColor: themeController.current?.formInputBackground,
+                backgroundColor: headerStyle
+                  ? themeController.current?.backgroundColor
+                  : themeController.current?.formInputBackground,
+                ...(headerStyle && {
+                  borderLeftWidth: 1,
+                  borderRightWidth: 1,
+                  borderBottomWidth: 1,
+                  borderTopWidth: 0,
+                  borderColor:
+                    themeController.current?.headerPickerDropdownBorder,
+                }),
                 ...(bottomDropdown
                   ? {
                       borderBottomLeftRadius: sizes.borderRadius,
@@ -247,6 +268,81 @@ const CustomPicker = ({
     </Modal>
   );
 
+  if (headerStyle) {
+    return (
+      <>
+        <TouchableOpacity
+          ref={pickerRef}
+          style={[
+            styles.headerPickerContainer,
+            {
+              borderColor: themeController.current?.primaryColor,
+              height: sizes.headerPickerHeight,
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexDirection: isRTL ? 'row-reverse' : 'row',
+            },
+            modalVisible
+              ? {
+                  borderTopLeftRadius: sizes.borderRadius,
+                  borderTopRightRadius: sizes.borderRadius,
+                  borderBottomWidth: 0,
+                }
+              : {
+                  borderRadius: sizes.borderRadius,
+                },
+            isRTL
+              ? {
+                  paddingRight: sizes.headerInputContainerPaddingLeft,
+                  paddingLeft: sizes.headerInputContainerPaddingRight,
+                }
+              : {
+                  paddingRight: sizes.headerInputContainerPaddingRight,
+                  paddingLeft: sizes.headerInputContainerPaddingLeft,
+                },
+            containerStyle,
+          ]}
+          onPress={handlePress}
+        >
+          <Image
+            source={icons.language}
+            style={{
+              width: sizes.langIconSize,
+              height: sizes.langIconSize,
+              tintColor: themeController.current?.primaryColor,
+              // marginHorizontal: sizes.headerInputContainerPaddingHorizontal / 2,
+            }}
+          />
+          <Text
+            style={{
+              color: themeController.current?.primaryColor,
+              fontSize: sizes.headerFont,
+            }}
+          >
+            {selectedLabel}
+          </Text>
+          <Image
+            source={icons.arrowDown}
+            style={[
+              styles.arrowIcon,
+              {
+                width: sizes.iconSize,
+                height: sizes.iconSize,
+                tintColor: themeController.current?.primaryColor,
+                transform: modalVisible
+                  ? [{ rotate: '180deg' }]
+                  : [{ rotate: '0deg' }],
+                // marginHorizontal: sizes.inputContainerPaddingHorizontal / 2,
+              },
+            ]}
+          />
+        </TouchableOpacity>
+
+        {fullScreen ? renderFullScreenModal() : renderDropdownModal()}
+      </>
+    );
+  }
+
   return (
     <>
       <TouchableOpacity
@@ -257,9 +353,16 @@ const CustomPicker = ({
             backgroundColor: themeController.current?.formInputBackground,
             height: sizes.pickerHeight,
             paddingHorizontal: sizes.inputContainerPaddingHorizontal,
-            borderRadius: sizes.borderRadius,
             flexDirection: isRTL ? 'row-reverse' : 'row',
           },
+          modalVisible
+            ? {
+                borderTopLeftRadius: sizes.borderRadius,
+                borderTopRightRadius: sizes.borderRadius,
+              }
+            : {
+                borderRadius: sizes.borderRadius,
+              },
           containerStyle,
         ]}
         onPress={handlePress}
@@ -283,7 +386,9 @@ const CustomPicker = ({
             style={[
               // styles.value,
               {
-                color: selectedLabel ? themeController.current?.textColor : placeholderColor,
+                color: selectedLabel
+                  ? themeController.current?.textColor
+                  : placeholderColor,
                 fontSize: sizes.baseFont,
                 textAlign: isRTL ? 'right' : 'left',
               },
@@ -316,6 +421,11 @@ const CustomPicker = ({
 };
 
 const styles = StyleSheet.create({
+  headerPickerContainer: {
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
   pickerContainer: {
     alignItems: 'center',
     justifyContent: 'space-between',

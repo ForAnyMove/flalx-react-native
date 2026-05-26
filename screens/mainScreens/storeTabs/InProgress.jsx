@@ -6,10 +6,8 @@ import {
   Text,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
-import JobTypeSelector from '../../../components/JobTypeSelector';
 import { FontAwesome6 } from '@expo/vector-icons';
 import SearchPanel from '../../../components/SearchPanel';
 import { useWindowInfo } from '../../../context/windowContext';
@@ -26,10 +24,8 @@ export default function InProgressScreen({
     useComponentContext();
   const { tField } = useLocalization(languageController.current);
   const { t } = useTranslation();
-  const { height } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { height, isLandscape } = useWindowInfo();
   const isRTL = languageController.isRTL;
-  const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -59,9 +55,6 @@ export default function InProgressScreen({
 
   const filteredJobsList = jobsController.creator.inProgress
     .filter((job) =>
-      filteredJobs.length > 0 ? filteredJobs.includes(job.type.key) || filteredJobs.includes(job.subType.key) : true
-    )
-    .filter((job) =>
       [tField(job.type, 'name'), job.description].some((field) =>
         field.toLowerCase().includes(searchValue.toLowerCase())
       )
@@ -83,12 +76,6 @@ export default function InProgressScreen({
         <SearchPanel
           searchValue={searchValue}
           setSearchValue={setSearchValue}
-        />
-      </View>
-      <View>
-        <JobTypeSelector
-          selectedTypes={filteredJobs}
-          setSelectedTypes={setFilteredJobs}
         />
       </View>
       {jobsController.loading.any ? (

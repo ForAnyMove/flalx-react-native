@@ -7,7 +7,6 @@ import {
   View,
   Image,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -42,8 +41,7 @@ export default function Jobs() {
   } = useComponentContext();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
-  const { width, height } = useWindowDimensions();
-  const { sidebarWidth, isLandscape } = useWindowInfo();
+  const { width, height, isLandscape, effectiveSidebarWidth } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
 
   const orderedTabs = isRTL ? TAB_TITLES_RTL : TAB_TITLES;
@@ -51,7 +49,7 @@ export default function Jobs() {
     ? [DoneScreen, InProgressScreen, WaitingScreen, NewScreen]
     : [NewScreen, WaitingScreen, InProgressScreen, DoneScreen];
 
-  const SCREEN_WIDTH = isWebLandscape ? width - sidebarWidth : width;
+  const SCREEN_WIDTH = isWebLandscape ? width - effectiveSidebarWidth : width;
 
   const screenWidthRef = useRef(SCREEN_WIDTH);
   const [screenWidth, setScreenWidth] = useState(SCREEN_WIDTH);
@@ -248,6 +246,7 @@ export default function Jobs() {
       fontSize: isWebLandscape ? web(12) : mobile(12),
       badgeSize,
       underlineHeight: isWebLandscape ? web(2) : mobile(2),
+      globalUnderlineSpace: isWebLandscape ? web(10) : mobile(10),
       tabPaddingBottom: panelHeight * 0.1,
       badgeTop: -badgeSize * 0.3,
       badgeRight: -badgeSize * 0.8,
@@ -358,6 +357,17 @@ export default function Jobs() {
             backgroundColor: themeController.current?.primaryColor,
             borderRadius: sizes.underlineBorderRadius,
             zIndex: 2,
+          }}
+        />
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: sizes.globalUnderlineSpace,
+            right: sizes.globalUnderlineSpace,
+            height: sizes.underlineHeight,
+            backgroundColor: themeController.current?.profileDefaultBackground,
+            zIndex: 1,
           }}
         />
       </View>

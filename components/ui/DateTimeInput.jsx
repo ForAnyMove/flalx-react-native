@@ -1,11 +1,11 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useMemo, useRef, useState } from 'react';
+import { useWindowInfo } from '../../context/windowContext';
 import {
   Platform,
   Text,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
@@ -33,13 +33,14 @@ export default function DateTimeInput({
   value,
   onChange,
   readOnly = false,
+  error = false,
 }) {
   const { themeController, languageController } = useComponentContext();
   const [showPicker, setShowPicker] = useState(false);
 
-  const { width, height } = useWindowDimensions();
+  const { width, height, isLandscape } = useWindowInfo();
   const isRTL = languageController.isRTL;
-  const isWebLandscape = Platform.OS === 'web' && width > height;
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const { t } = useTranslation();
   const [inputActive, setInputActive] = useState(false);
@@ -83,6 +84,7 @@ export default function DateTimeInput({
             borderRadius: sizes.borderRadius,
             height: sizes.inputHeight,
           },
+          error && { borderWidth: 1, borderColor: 'red' },
         ]}
         onClick={() => {
           if (!readOnly && inputRef.current) {
@@ -95,7 +97,7 @@ export default function DateTimeInput({
           style={[
             styles.label,
             {
-              color: themeController.current?.unactiveTextColor,
+              color: error ? 'red' : themeController.current?.unactiveTextColor,
               fontSize: sizes.font,
             },
           ]}
@@ -120,9 +122,6 @@ export default function DateTimeInput({
                 }
               }}
               onFocus={() => setInputActive(true)}
-              placeholderColor={
-                themeController.current?.formInputPlaceholderColor
-              }
               style={{
                 opacity: 0,
                 fontSize: sizes.inputFont,
@@ -148,13 +147,11 @@ export default function DateTimeInput({
               }}
               textStyle={{
                 fontSize: sizes.inputFont,
-                fontWeight: '500',
+                // fontWeight: '500',
                 textAlign: isRTL ? 'right' : 'left',
                 color: themeController.current?.textColor,
+                width: '100%',
               }}
-              placeholderColor={
-                themeController.current?.formInputPlaceholderColor
-              }
               placeholder={t('common.none')}
             />
           </>
@@ -191,13 +188,14 @@ export default function DateTimeInput({
           paddingHorizontal: sizes.inputContainerPaddingHorizontal,
           height: sizes.inputHeight,
         },
+        error && { borderWidth: 1, borderColor: 'red' },
       ]}
     >
       <Text
         style={[
           styles.label,
           {
-            color: themeController.current?.formInputLabelColor,
+            color: error ? 'red' : themeController.current?.formInputLabelColor,
             fontSize: sizes.font,
           },
         ]}
@@ -206,6 +204,7 @@ export default function DateTimeInput({
       </Text>
       <TouchableOpacity onPress={() => !readOnly && setShowPicker(true)}>
         <Text
+          rtl={isRTL}
           style={[
             value ? styles.dateTimeText : styles.dateTimePlaceholder,
             { color: themeController.current?.textColor },

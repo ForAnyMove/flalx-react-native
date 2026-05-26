@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 import GooglePlacesTextInput from 'react-native-google-places-textinput';
 import { useComponentContext } from '../../context/globalAppContext';
@@ -12,6 +11,8 @@ import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import themeManager from '../../managers/themeManager';
 import { API_BASE_URL } from '../../utils/config';
 import { useNotification } from '../../src/render';
+import { logError } from '../../utils/log_util';
+import { useWindowInfo } from '../../context/windowContext';
 
 const AddressPicker = ({
   label,
@@ -23,9 +24,9 @@ const AddressPicker = ({
   containerStyle = {},
 }) => {
   const { themeController } = useComponentContext();
-  const { width, height } = useWindowDimensions();
+  const { width, height, isLandscape } = useWindowInfo();
   const { showError } = useNotification();
-  const isWebLandscape = Platform.OS === 'web' && width > height;
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   // --- Размеры и стили ---
   const sizes = useMemo(() => {
@@ -50,7 +51,6 @@ const AddressPicker = ({
   }, [isWebLandscape, height]);
 
   const handleSelect = (place) => {
-    console.log('Place: ', place);
 
     if (place?.details) {
       const location = {
@@ -64,7 +64,7 @@ const AddressPicker = ({
   };
 
   const handleError = (error) => {
-    console.error('Places API Error:', error);
+    logError('Places API Error:', error);
 
     let errorMessage = 'There is a problem connecting to the server';
 
@@ -175,6 +175,7 @@ const AddressPicker = ({
           {label}
         </Text>
         <GooglePlacesTextInput
+          value={initialAddress}
           proxyUrl={`${PROXY_CONFIG.baseUrl}${PROXY_CONFIG.endpoints.autocomplete}`}
           detailsProxyUrl={`${PROXY_CONFIG.baseUrl}${PROXY_CONFIG.endpoints.details}`}
           onPlaceSelect={handleSelect}
@@ -186,16 +187,6 @@ const AddressPicker = ({
           detailsFields={['location']}
           onError={(error) => {
             handleError(error);
-          }}
-          onSuggestionsReceived={(suggestions) => {
-            console.log('🔍 Suggestions received:', suggestions);
-            console.log('🔢 Count:', suggestions?.length);
-          }}
-          onSearching={(searching) => {
-            console.log('🔄 Searching state:', searching);
-          }}
-          onTextChange={(text) => {
-            console.log('📝 Text changed:', text);
           }}
 
           debounceDelay={300}

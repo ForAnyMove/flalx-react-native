@@ -4,10 +4,9 @@ import { useComponentContext } from '../context/globalAppContext';
 import { useWindowInfo } from '../context/windowContext';
 
 export default function JobModalWrapper({ visible, children, main=true}) {
-  const { height, width } = useWindowDimensions();
   const { themeController, languageController } = useComponentContext();
   const isRTL = languageController.isRTL;
-  const { sidebarWidth } = useWindowInfo();
+  const { effectiveSidebarWidth, width, height } = useWindowInfo();
 
   const isWebLandscape = Platform.OS === 'web' && width > height;
 
@@ -74,7 +73,7 @@ export default function JobModalWrapper({ visible, children, main=true}) {
         left: 0,
         right: 0,
         backgroundColor: 'rgba(0,0,0,0.4)',
-        width:isWebLandscape ? width - sidebarWidth : width,
+        width:isWebLandscape ? width - effectiveSidebarWidth : width,
         zIndex: 999,
       }}
     >

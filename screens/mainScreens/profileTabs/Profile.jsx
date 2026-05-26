@@ -9,30 +9,39 @@ import {
   View,
   Platform,
   Modal,
-  useWindowDimensions,
-  PermissionsAndroid,
-  Alert,
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { icons } from '../../../constants/icons';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import ImagePickerModal from '../../../components/ui/ImagePickerModal';
-import { uploadImageToSupabase } from '../../../utils/supabase/uploadImageToSupabase';
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import SubscriptionsModal from '../../../components/SubscriptionsModal';
 import { getUserExportData } from '../../../src/api/dataExport';
 import CouponsModal from '../../../components/CouponsModal';
+import { logError, logInfo } from '../../../utils/log_util';
+import CustomTextInput from '../../../components/ui/CustomTextInput';
+import { ModalContent } from './ModalContent';
+import { Linking } from 'react-native';
+import PaymentMethodsModal from '../../../components/PaymentMethodsModal';
+import UpdateUserDataModal from '../../../components/modals/UpdateUserDataModal';
+import UpdateEmailModal from '../../../components/modals/UpdateEmailModal';
+import UpdatePhoneModal from '../../../components/modals/UpdatePhoneModal';
+import { useNotification } from '../../../src/render';
+import { uploadAvatarForModeration } from '../../../src/api/images';
+import { convertImageToBase64 } from '../../../utils/imageToBase64';
+import { exportHtmlToPdf } from '../../../utils/htmlToPdf';
 
 export default function Profile() {
-  const { user, themeController, languageController, session } =
+  const { user, themeController, languageController, session, setAppLoading } =
     useComponentContext();
+  const { showError, showInfo } = useNotification();
   const [userState, setUserState] = useState(user.current || {});
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
-    () => () => {}
+    () => () => {},
   );
   const [changePasswordModal, showPasswordModal] = useState(false);
 
@@ -44,15 +53,33 @@ export default function Profile() {
   const [showNewPassword, setShowNewPassword] = useState(false);
 
   const [pickerVisible, setPickerVisible] = useState(false);
-  const { height } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 
   const [subscriptionsModal, setSubscriptionsModal] = useState(false);
   const [couponsModalVisible, setCouponsModalVisible] = useState(false);
+  const [paymentMethodsModalVisible, setPaymentMethodsModalVisible] =
+    useState(false);
+  const [contactUsVisible, setContactUsVisible] = useState(false);
+  const [feedbackVisible, setFeedbackVisible] = useState(false);
+  const [updateUserDataModalVisible, setUpdateUserDataModalVisible] =
+    useState(false);
+  const [updateEmailModalVisible, setUpdateEmailModalVisible] = useState(false);
+  const [updatePhoneModalVisible, setUpdatePhoneModalVisible] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const [baseInfoEditMode, setBaseInfoEditMode] = useState(false);
+  const [editingFields, setEditingFields] = useState({});
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  // Синхронизация userState с user.current (включая pending_avatar)
+  useEffect(() => {
+    if (user.current) {
+      setUserState(user.current);
+    }
+  }, [user.current]);
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -91,7 +118,7 @@ export default function Profile() {
       modalIconSize: isWebLandscape ? web(22) : mobile(22),
       modalFieldMargin: isWebLandscape ? web(18) : mobile(18),
       profileBackHeight: isWebLandscape ? web(250) : mobile(250),
-      profileBackMarginBottom: isWebLandscape ? web(15) : mobile(15),
+      profileBackMarginBottom: isWebLandscape ? web(10) : mobile(15),
       profileBackBorderRadius: isWebLandscape ? web(10) : mobile(10),
       infoFieldsGap: isWebLandscape ? web(6) : mobile(6),
       breakLineMarginVertical: isWebLandscape ? web(15) : mobile(15),
@@ -104,75 +131,235 @@ export default function Profile() {
     };
   }, [height, isWebLandscape]);
 
-  // Функция загрузки и обновления аватара
+  const handleUpdateUserData = async (data) => {
+    setIsUpdating(true);
+    try {
+      const updatedUser = await user.update(data);
+      if (updatedUser) {
+        setUserState(updatedUser);
+      }
+      setUpdateUserDataModalVisible(false);
+    } catch (error) {
+      console.error('Failed to update user data:', error);
+      // Optionally, show an error message to the user
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleUpdateEmail = (newEmail) => {
+    // The logic is now inside the modal.
+    // We can potentially update the user state here if needed,
+    // but Supabase handles the email change after verification.
+    // For now, we just close the modal, and the user will see the pending change.
+    // setUpdateEmailModalVisible(false);
+    console.log(`Email change process initiated for ${newEmail}.`);
+  };
+
+  const handleUpdatePhone = async (newPhone) => {
+    setIsUpdating(true);
+    try {
+      // The actual update happens inside the modal flow now.
+      // We just need to update the local state and close the modal.
+      const updatedUser = await user.update({ phoneNumber: newPhone });
+      if (updatedUser) {
+        setUserState(updatedUser);
+      }
+      setUpdatePhoneModalVisible(false);
+      // Maybe show a success message
+    } catch (error) {
+      console.error('Failed to update user phone:', error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Функция загрузки и обновления аватара через сервер
   async function uploadAvatar(uri) {
     try {
-      const res = await uploadImageToSupabase(uri, user?.current?.id, {
-        bucket: 'avatars',
-        isAvatar: true,
-      });
-      if (res.publicUrl) {
-        const updated = await user.update({ avatar: res.publicUrl });
-        setUserState(updated); // Обновляем локальное состояние
-      }
+      setAppLoading(true);
+
+      // 1. Конвертировать файл в base64
+      const { base64, fileType } = await convertImageToBase64(uri);
+
+      // 2. Отправить на сервер
+      const { pending_avatar } = await uploadAvatarForModeration(
+        base64,
+        fileType,
+        session,
+      );
+
+      // 3. Обновить локальный стейт
+      user.setPendingAvatar(pending_avatar);
+      setUserState((prev) => ({ ...prev, pending_avatar }));
+
+      showInfo(t('my_profile.avatar_uploaded_for_moderation'));
     } catch (err) {
-      console.error('Ошибка загрузки аватара:', err.message);
+      logError('Ошибка загрузки аватара:', err.message);
+      showError(err.message || t('errors.unexpected_error'));
+    } finally {
+      setAppLoading(false);
     }
   }
 
   async function downloadExportData() {
     try {
-      const res = await getUserExportData(session);
-      if (res && typeof res === 'object') {
-        const json = JSON.stringify(res, null, 2);
+      setAppLoading(true);
+      const res = await getUserExportData(session, languageController.current);
+      if (res) {
+        await exportHtmlToPdf(res, 'user-data-export.pdf');
         if (Platform.OS === 'web') {
-          const blob = new Blob([json], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'export.json';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        } else {
-          let hasPermission = true;
-          if (Platform.OS === 'android') {
-            const granted = await PermissionsAndroid.request(
-              PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-              {
-                title: 'Storage Permission',
-                message:
-                  'App needs access to your storage to save export data.',
-                buttonNeutral: 'Ask Me Later',
-                buttonNegative: 'Cancel',
-                buttonPositive: 'OK',
-              }
-            );
-            hasPermission = granted === PermissionsAndroid.RESULTS.GRANTED;
-          }
-
-          if (hasPermission) {
-            const RNFS = require('react-native-fs');
-            const path = `${RNFS.DownloadDirectoryPath}/export.json`;
-            await RNFS.writeFile(path, json, 'utf8');
-            Alert.alert('Success', t('my_profile.export_success', { path }));
-          } else {
-            Alert.alert(
-              'Permission denied',
-              t('my_profile.export_permission_denied')
-            );
-          }
+          showInfo(t('my_profile.export_success'));
         }
       }
     } catch (err) {
+      console.error('Error exporting data:', err);
       showError(t('errors.unexpected_error'));
+    } finally {
+      setAppLoading(false);
     }
   }
 
-  const firstBtnsRow = isWebLandscape
-    ? ['coupons', 'subscription', 'payment']
-    : ['coupons', 'subscription'];
+  // const firstBtnsRow = isWebLandscape
+  //   ? ['coupons', 'subscription', 'payment']
+  //   : ['coupons', 'subscription'];
+  // const secondBtnsRow = isWebLandscape
+  //   ? ['contact', 'feedback', 'whatsapp']
+  //   : ['contact', 'feedback', 'whatsapp'];
+  const firstBtnsRow = ['coupons', 'subscription', 'payment'];
+  const secondBtnsRow = ['contact', 'feedback', 'whatsapp'];
+
+  const openWhatsApp = async () => {
+    const number = await session.getWhatsAppNumber();
+    if (!number) {
+      console.log('Could not get WhatsApp number');
+      // Optionally, show an alert to the user
+      return;
+    }
+    const url = `whatsapp://send?phone=${number}`;
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        console.log('WhatsApp is not installed');
+        // Optionally, show an alert to the user
+      }
+    } catch (err) {
+      console.error('An error occurred', err);
+    }
+  };
+
+  const buttonsConfig = {
+    coupons: {
+      text: t('my_profile.coupons'),
+      action: () => setCouponsModalVisible(true),
+      style: 'primary',
+    },
+    subscription: {
+      text: t('my_profile.subscription'),
+      action: () => setSubscriptionsModal(true),
+      style: 'primary',
+    },
+    payment: {
+      text: t('my_profile.payment'),
+      action: () => setPaymentMethodsModalVisible(true),
+      style: 'primary',
+      // hidden: isWebLandscape,
+    },
+    contact: {
+      text: t('my_profile.contact_us'),
+      action: () => setContactUsVisible(true),
+      style: 'secondary',
+    },
+    feedback: {
+      text: t('my_profile.feedback'),
+      action: () => setFeedbackVisible(true),
+      style: 'secondary',
+    },
+    whatsapp: {
+      text: 'WhatsApp',
+      action: openWhatsApp,
+      style: 'secondary',
+    },
+    delete: {
+      text: t('my_profile.delete'),
+      action: () => {
+        setAcceptModalVisible(true);
+        setAcceptModalVisibleTitle(t('my_profile.confirm_delete'));
+        setAcceptModalVisibleFunc(() => async () => {
+          try {
+            await user.delete();
+          } catch (err) {
+            logInfo('Ошибка удаления:', err.message);
+          }
+          setAcceptModalVisible(false);
+        });
+      },
+      style: 'secondary',
+    },
+  };
+
+  const renderButtons = (row) => (
+    <>
+      {row.map((key) => {
+        const btnConfig = buttonsConfig[key];
+        if (!btnConfig || btnConfig.hidden)
+          return (
+            <View
+              key={key}
+              style={{
+                height: sizes.btnHeight,
+                marginBottom: sizes.btnMargin,
+                width: sizes.btnWidth,
+              }}
+            />
+          );
+
+        const isPrimary = btnConfig.style === 'primary';
+
+        return (
+          <TouchableOpacity
+            key={key}
+            style={[
+              isPrimary ? styles.primaryBtn : styles.secondaryBtn,
+              {
+                backgroundColor: isPrimary
+                  ? themeController.current?.buttonColorPrimaryDefault
+                  : themeController.current?.buttonColorSecondaryDefault,
+                height: sizes.btnHeight,
+                marginBottom: sizes.btnMargin,
+                width: sizes.btnWidth,
+                borderRadius: sizes.infoFieldBorderRadius,
+              },
+              key === 'whatsapp' && {
+                backgroundColor: themeController.current?.whatsappBtnColor,
+              },
+              key === 'delete' && {
+                backgroundColor: themeController.current?.errorTextColor,
+              },
+            ]}
+            onPress={btnConfig.action}
+          >
+            <Text
+              style={[
+                isPrimary ? styles.primaryText : styles.secondaryText,
+                {
+                  fontSize: sizes.btnFont,
+                  color: isPrimary
+                    ? themeController.current?.buttonTextColorPrimary
+                    : themeController.current?.buttonTextColorSecondary,
+                },
+              ]}
+            >
+              {btnConfig.text}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </>
+  );
+
   return (
     <ScrollView
       style={[
@@ -207,36 +394,93 @@ export default function Profile() {
             },
           ]}
         >
-          <View style={{ position: 'relative' }}>
-            <Image
-              source={
-                userState.avatar
-                  ? { uri: userState.avatar }
-                  : icons.defaultAvatarInverse
-              }
-              style={{
-                width: sizes.avatarSize,
-                height: sizes.avatarSize,
-                borderRadius: sizes.avatarSize / 2,
-                backgroundColor: '#ccc',
-              }}
-            />
-            {/* Кнопка редактирования аватара */}
-            <TouchableOpacity
-              style={[
-                styles.cameraButton,
-                {
-                  width: sizes.avatarSize * 0.3,
-                  height: sizes.avatarSize * 0.3,
-                },
-              ]}
-              onPress={() => setPickerVisible(true)}
-            >
-              <Image source={icons.camera} style={styles.cameraIcon} />
-            </TouchableOpacity>
+          <View style={{ alignItems: 'center' }}>
+            {/* Контейнер для аватара и кнопки */}
+            <View style={{ position: 'relative' }}>
+              <Image
+                source={
+                  // Приоритет: pending_avatar > avatar > default
+                  userState.pending_avatar
+                    ? { uri: userState.pending_avatar }
+                    : userState.avatar
+                      ? { uri: userState.avatar }
+                      : icons.defaultAvatarInverse
+                }
+                style={{
+                  width: sizes.avatarSize,
+                  height: sizes.avatarSize,
+                  borderRadius: sizes.avatarSize / 2,
+                  backgroundColor: '#ccc',
+                }}
+              />
+              {/* Кнопка редактирования аватара */}
+              <TouchableOpacity
+                style={[
+                  styles.cameraButton,
+                  {
+                    width: sizes.avatarSize * 0.3,
+                    height: sizes.avatarSize * 0.3,
+                  },
+                ]}
+                onPress={() => setPickerVisible(true)}
+              >
+                <Image source={icons.camera} style={styles.cameraIcon} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Текст о модерации аватарки */}
+            {userState.pending_avatar && (
+              <View
+                style={{ marginTop: sizes.infoFieldsGap, alignItems: 'center' }}
+              >
+                <Text
+                  style={{
+                    fontSize: sizes.labelFont,
+                    color:
+                      themeController.current?.textColorSecondary || '#666',
+                    fontFamily: 'Rubik-Medium',
+                  }}
+                >
+                  {t('my_profile.avatar_pending_moderation')}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: sizes.labelFont * 0.85,
+                    color:
+                      themeController.current?.textColorSecondary || '#999',
+                    fontFamily: 'Rubik-Regular',
+                  }}
+                >
+                  {t('my_profile.avatar_pending_subtitle')}
+                </Text>
+              </View>
+            )}
           </View>
         </ImageBackground>
 
+        <View
+          style={{
+            width: '100%',
+            alignItems: isRTL ? 'flex-start' : 'flex-end',
+            marginBottom: sizes.labelMarginBottom * 2,
+          }}
+        >
+          <TouchableOpacity
+            // onPress={() => setUpdateUserDataModalVisible(true)}
+            onPress={() => setBaseInfoEditMode(true)}
+            style={{ visibility: baseInfoEditMode ? 'hidden' : 'visible' }}
+          >
+            <Image
+              source={icons.edit}
+              style={{
+                width: sizes.iconSize,
+                height: sizes.iconSize,
+                resizeMode: 'contain',
+                tintColor: themeController.current?.unactiveTextColor,
+              }}
+            />
+          </TouchableOpacity>
+        </View>
         {/* Инфо-поля */}
         <View
           style={{
@@ -253,37 +497,23 @@ export default function Profile() {
         >
           <View
             style={{
-              flexDirection: isWebLandscape ? 'row' : 'column',
-              flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
+              // flexDirection: isWebLandscape ? 'row' : 'column',
+              // flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
               justifyContent: isWebLandscape ? 'space-between' : 'center',
               gap: sizes.infoFieldsGap,
               direction: isRTL ? 'rtl' : 'ltr',
-              width: isWebLandscape ? '66.5%' : '100%',
+              width: isWebLandscape ? '48.5%' : '100%',
             }}
           >
             {[
               { key: 'first_name', value: userState?.name, field: 'name' },
               { key: 'surname', value: userState?.surname, field: 'surname' },
-              { key: 'email', value: userState?.email, field: 'email' },
-              {
-                key: 'phone',
-                value: userState?.phoneNumber,
-                field: 'phoneNumber',
-              },
             ].map((f) => (
               <InfoField
                 key={f.key}
                 label={t(`my_profile.${f.key}`)}
                 value={f.value}
-                changeInfo={async (v) => {
-                  setUserState((p) => ({ ...p, [f.field]: v }));
-                  try {
-                    const updated = await user.update({ [f.field]: v });
-                    setUserState(updated);
-                  } catch (err) {
-                    console.error('Ошибка сохранения:', err.message);
-                  }
-                }}
+                onEditPress={() => setUpdateUserDataModalVisible(true)}
                 baseFont={sizes.fieldFont}
                 fieldPadding={sizes.fieldPadding}
                 btnHeight={sizes.btnHeight}
@@ -293,6 +523,10 @@ export default function Profile() {
                 multiline={f.multiline}
                 height={height}
                 sizes={sizes}
+                isRTL={isRTL}
+                field={f.field}
+                editMode={baseInfoEditMode}
+                setEditingFields={setEditingFields}
               />
             ))}
           </View>
@@ -300,15 +534,7 @@ export default function Profile() {
             key='about'
             label={t(`my_profile.about`)}
             value={userState?.about}
-            changeInfo={async (v) => {
-              setUserState((p) => ({ ...p, ['about']: v }));
-              try {
-                const updated = await user.update({ ['about']: v });
-                setUserState(updated);
-              } catch (err) {
-                console.error('Ошибка сохранения:', err.message);
-              }
-            }}
+            onEditPress={() => setUpdateUserDataModalVisible(true)}
             baseFont={sizes.fieldFont}
             fieldPadding={sizes.fieldPadding}
             btnHeight={sizes.btnHeight * 2 + sizes.infoFieldsGap}
@@ -318,9 +544,134 @@ export default function Profile() {
             multiline={true}
             height={height}
             sizes={sizes}
+            isRTL={isRTL}
+            field='about'
+            editMode={baseInfoEditMode}
+            setEditingFields={setEditingFields}
           />
         </View>
+        {baseInfoEditMode && (
+          <View
+            style={{
+              width: '100%',
+              alignItems: isRTL ? 'flex-start' : 'flex-end',
+            }}
+          >
+            <View
+              style={{
+                width: '48.5%',
+                flexDirection: 'row',
+                justifyContent: 'flex-end',
+                gap: '5%',
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => {
+                  handleUpdateUserData({});
+                  setBaseInfoEditMode(false);
+                }}
+                style={[
+                  styles.secondaryReverseBtn,
+                  {
+                    flex: 1,
+                    backgroundColor: themeController.current?.backgroundColor,
+                    borderColor:
+                      themeController.current?.buttonColorSecondaryDefault,
+                    height: sizes.btnHeight,
+                    borderRadius: sizes.infoFieldBorderRadius,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    color: themeController.current?.buttonColorSecondaryDefault,
+                    fontSize: sizes.btnFont,
+                  }}
+                >
+                  {t('common.cancel')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  handleUpdateUserData(editingFields);
+                  setBaseInfoEditMode(false);
+                }}
+                style={[
+                  styles.primaryBtn,
+                  {
+                    flex: 1,
+                    backgroundColor:
+                      themeController.current?.buttonColorPrimaryDefault,
+                    height: sizes.btnHeight,
+                    borderRadius: sizes.infoFieldBorderRadius,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    color: themeController.current?.buttonTextColorPrimary,
+                    fontSize: sizes.btnFont,
+                  }}
+                >
+                  {t('common.save')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
+        <View
+          style={[
+            styles.breakLine,
+            {
+              backgroundColor: themeController.current?.breakLineColor,
+              marginVertical: sizes.breakLineMarginVertical,
+            },
+          ]}
+        />
+        <View
+          style={{
+            flexDirection: isWebLandscape ? 'row' : 'column',
+            flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
+            justifyContent: isWebLandscape ? 'space-between' : 'center',
+            gap: sizes.infoFieldsGap,
+            direction: isRTL ? 'rtl' : 'ltr',
+            width: '100%',
+          }}
+        >
+          {[
+            { key: 'email', value: userState?.email, field: 'email' },
+            {
+              key: 'phone',
+              value: userState?.phoneNumber,
+              field: 'phoneNumber',
+            },
+          ].map((f) => (
+            <InfoField
+              key={f.key}
+              label={t(`my_profile.${f.key}`)}
+              value={f.value}
+              onEditPress={() => {
+                if (f.key === 'email') {
+                  setUpdateEmailModalVisible(true);
+                } else if (f.key === 'phone') {
+                  setUpdatePhoneModalVisible(true);
+                }
+              }}
+              baseFont={sizes.fieldFont}
+              fieldPadding={sizes.fieldPadding}
+              btnHeight={sizes.btnHeight}
+              fieldMargin={sizes.fieldMargin}
+              iconSize={sizes.iconSize}
+              isLandscape={isLandscape}
+              multiline={f.multiline}
+              height={height}
+              sizes={sizes}
+              isRTL={isRTL}
+              field={f.field}
+            />
+          ))}
+        </View>
         <View
           style={[
             styles.breakLine,
@@ -334,52 +685,20 @@ export default function Profile() {
         {/* Первые 3 кнопки */}
         <View
           style={{
-            flexDirection: isWebLandscape ? 'row' : 'column',
+            flexDirection: isWebLandscape
+              ? isRTL
+                ? 'row-reverse'
+                : 'row'
+              : 'column',
+            width: '100%',
             flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
             justifyContent: isWebLandscape ? 'space-between' : 'center',
             gap: sizes.infoFieldsGap,
             direction: isRTL ? 'rtl' : 'ltr',
+            // marginBottom: isWebLandscape ? sizes.buttonsMarginBottom : sizes.infoFieldsGap,
           }}
         >
-          {firstBtnsRow.map((key) => (
-            <TouchableOpacity
-              key={key}
-              style={[
-                styles.primaryBtn,
-                {
-                  backgroundColor:
-                    themeController.current?.buttonColorPrimaryDefault,
-                  height: sizes.btnHeight,
-                  marginBottom: sizes.btnMargin,
-                  width: sizes.btnWidth,
-                  borderRadius: sizes.infoFieldBorderRadius,
-                },
-                key === 'payment' && isWebLandscape && { visibility: 'hidden' },
-              ]}
-              onPress={() => {
-                /* Навигация по кнопкам */
-                if (key === 'subscription') {
-                  // Открыть модалку подписок
-                  setSubscriptionsModal(true);
-                }
-                if (key === 'coupons') {
-                  setCouponsModalVisible(true);
-                }
-              }}
-            >
-              <Text
-                style={[
-                  styles.primaryText,
-                  {
-                    fontSize: sizes.btnFont,
-                    color: themeController.current?.buttonTextColorPrimary,
-                  },
-                ]}
-              >
-                {t(`my_profile.${key}`)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {renderButtons(firstBtnsRow)}
         </View>
 
         <View
@@ -400,7 +719,7 @@ export default function Profile() {
             justifyContent: isWebLandscape ? 'space-between' : 'center',
             gap: sizes.infoFieldsGap,
             direction: isRTL ? 'rtl' : 'ltr',
-            marginBottom: sizes.buttonsMarginBottom,
+            // marginBottom: isWebLandscape ? sizes.buttonsMarginBottom : sizes.infoFieldsGap,
           }}
         >
           {[
@@ -434,7 +753,7 @@ export default function Profile() {
                   try {
                     await session.signOut();
                   } catch (err) {
-                    console.error('Ошибка выхода из системы:', err.message);
+                    logInfo('Ошибка выхода из системы:', err.message);
                   }
                   setAcceptModalVisible(false);
                 });
@@ -477,7 +796,47 @@ export default function Profile() {
           ))}
         </View>
 
-        {/* Кнопка Delete */}
+        <View
+          style={[
+            styles.breakLine,
+            {
+              backgroundColor: themeController.current?.breakLineColor,
+              marginVertical: sizes.breakLineMarginVertical,
+            },
+          ]}
+        />
+
+        <View
+          style={{
+            flexDirection: isWebLandscape
+              ? isRTL
+                ? 'row-reverse'
+                : 'row'
+              : 'column',
+            gap: sizes.btnMargin,
+            width: '100%',
+            flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
+            justifyContent: isWebLandscape ? 'space-between' : 'center',
+            gap: sizes.infoFieldsGap,
+            direction: isRTL ? 'rtl' : 'ltr',
+            // marginBottom: isWebLandscape
+            //   ? sizes.buttonsMarginBottom
+            //   : sizes.infoFieldsGap,
+          }}
+        >
+          {renderButtons(secondBtnsRow)}
+        </View>
+
+        <View
+          style={[
+            styles.breakLine,
+            {
+              backgroundColor: themeController.current?.breakLineColor,
+              marginVertical: sizes.breakLineMarginVertical,
+            },
+          ]}
+        />
+
         <View
           style={{
             flexDirection: isWebLandscape ? 'row' : 'column',
@@ -487,45 +846,7 @@ export default function Profile() {
             direction: isRTL ? 'rtl' : 'ltr',
           }}
         >
-          <TouchableOpacity
-            style={[
-              styles.secondaryBtn,
-              {
-                backgroundColor:
-                  themeController.current?.buttonColorSecondaryDefault,
-                borderColor:
-                  themeController.current?.buttonColorSecondaryDefault,
-                height: sizes.btnHeight,
-                marginBottom: sizes.btnMargin,
-                width: sizes.btnWidth,
-                borderRadius: sizes.infoFieldBorderRadius,
-              },
-            ]}
-            onPress={() => {
-              setAcceptModalVisible(true);
-              setAcceptModalVisibleTitle(t('my_profile.confirm_delete'));
-              setAcceptModalVisibleFunc(() => async () => {
-                try {
-                  await user.delete();
-                } catch (err) {
-                  console.error('Ошибка удаления:', err.message);
-                }
-                setAcceptModalVisible(false);
-              });
-            }}
-          >
-            <Text
-              style={[
-                styles.secondaryText,
-                {
-                  fontSize: sizes.btnFont,
-                  color: themeController.current?.buttonTextColorSecondary,
-                },
-              ]}
-            >
-              {t('my_profile.delete')}
-            </Text>
-          </TouchableOpacity>
+          {renderButtons(['delete'])}
         </View>
       </View>
 
@@ -719,7 +1040,7 @@ export default function Profile() {
                       {t('my_profile.old_password')}
                     </Text>
 
-                    <TextInput
+                    <CustomTextInput
                       secureTextEntry={!showOldPassword}
                       value={oldPassword}
                       onChangeText={setOldPassword}
@@ -784,7 +1105,7 @@ export default function Profile() {
                     {t('my_profile.new_password')}
                   </Text>
 
-                  <TextInput
+                  <CustomTextInput
                     secureTextEntry={!showNewPassword}
                     value={newPassword}
                     onChangeText={setNewPassword}
@@ -847,7 +1168,7 @@ export default function Profile() {
                     {t('my_profile.repeat_new_password')}
                   </Text>
 
-                  <TextInput
+                  <CustomTextInput
                     secureTextEntry={true}
                     value={repeatPassword}
                     onChangeText={setRepeatPassword}
@@ -917,16 +1238,16 @@ export default function Profile() {
                   if (user.current?.is_password_exist) {
                     const res = await session.changePassword(
                       oldPassword,
-                      newPassword
+                      newPassword,
                     );
                     if (!res.success) {
-                      alert(res.error);
+                      alert(t(`errors.${res.error}`));
                       return;
                     }
                   } else {
                     const res = await session.createPassword(newPassword);
                     if (!res.success) {
-                      alert(res.error);
+                      alert(t(`errors.${res.error}`));
                       return;
                     }
                   }
@@ -970,10 +1291,63 @@ export default function Profile() {
           setSubscriptionsModal(false);
         }}
       />
-
+      <PaymentMethodsModal
+        visible={paymentMethodsModalVisible}
+        onClose={() => setPaymentMethodsModalVisible(false)}
+      />
       <CouponsModal
         visible={couponsModalVisible}
         onClose={() => setCouponsModalVisible(false)}
+      />
+      <Modal
+        visible={contactUsVisible}
+        animationType='slide'
+        transparent={isWebLandscape}
+      >
+        <ModalContent
+          title={t('settings.contact_us')}
+          onClose={() => setContactUsVisible(false)}
+          content={''}
+          contactForm={true}
+        />
+      </Modal>
+
+      <Modal
+        visible={feedbackVisible}
+        animationType='slide'
+        transparent={isWebLandscape}
+      >
+        <ModalContent
+          title={t('settings.feedback')}
+          onClose={() => setFeedbackVisible(false)}
+          content={''}
+          feedback={true}
+        />
+      </Modal>
+      <UpdateUserDataModal
+        visible={updateUserDataModalVisible}
+        onClose={() => setUpdateUserDataModalVisible(false)}
+        userData={{
+          name: userState?.name,
+          surname: userState?.surname,
+          about: userState?.about,
+        }}
+        onSave={handleUpdateUserData}
+        isLoading={isUpdating}
+      />
+      <UpdateEmailModal
+        visible={updateEmailModalVisible}
+        onClose={() => setUpdateEmailModalVisible(false)}
+        currentEmail={userState?.email}
+        onSave={handleUpdateEmail}
+        isLoading={isUpdating}
+      />
+      <UpdatePhoneModal
+        visible={updatePhoneModalVisible}
+        onClose={() => setUpdatePhoneModalVisible(false)}
+        currentPhone={userState?.phoneNumber}
+        onSave={handleUpdatePhone}
+        isLoading={isUpdating}
       />
     </ScrollView>
   );
@@ -983,6 +1357,7 @@ function InfoField({
   label,
   value,
   changeInfo,
+  onEditPress,
   multiline = false,
   baseFont,
   fieldPadding,
@@ -992,10 +1367,23 @@ function InfoField({
   btnHeight,
   height,
   sizes,
+  isRTL,
+  field,
+  editMode = false,
+  setEditingFields,
 }) {
   const { themeController } = useComponentContext();
-  const [editMode, setEditMode] = useState(false);
-  const [textValue, setTextValue] = useState(value);
+  const [currentValue, setCurrentValue] = useState(value);
+
+  // const handleSave = () => {
+  //   changeInfo(currentValue);
+  //   setEditMode(false);
+  // };
+
+  // const handleCancel = () => {
+  //   setCurrentValue(value);
+  //   setEditMode(false);
+  // };
 
   return (
     <View
@@ -1004,9 +1392,9 @@ function InfoField({
         {
           width:
             Platform.OS === 'web' && isLandscape
-              ? multiline
-                ? '32%'
-                : '49%'
+              ? multiline || field === 'email' || field === 'phoneNumber'
+                ? '48.5%'
+                : '100%'
               : '100%',
           height: btnHeight,
           marginBottom: fieldMargin,
@@ -1017,6 +1405,12 @@ function InfoField({
           paddingHorizontal: sizes.infoFieldPaddingH,
         },
         multiline && { alignItems: 'flex-start' },
+        // multiline &&
+        //   Platform.OS === 'web' &&
+        //   isLandscape && {
+        //     [isRTL ? 'marginLeft' : 'marginRight']: sizes.infoFieldsGap * 4,
+        //   },
+        multiline && isRTL && { flexDirection: 'row-reverse' },
       ]}
     >
       <View
@@ -1039,12 +1433,13 @@ function InfoField({
               color: themeController.current?.formInputLabelColor,
               marginBottom: sizes.labelMarginBottom,
             },
+            multiline && isRTL && { alignSelf: 'flex-end' },
           ]}
         >
           {label}
         </Text>
         {editMode ? (
-          <TextInput
+          <CustomTextInput
             style={[
               styles.profileInfoText,
               {
@@ -1054,9 +1449,13 @@ function InfoField({
               },
               multiline && { flex: 1 },
             ]}
-            value={textValue}
-            onChangeText={setTextValue}
+            value={currentValue}
+            onChangeText={(text) => {
+              setEditingFields((prev) => ({ ...prev, [field]: text }));
+              setCurrentValue(text);
+            }}
             multiline={multiline}
+            autoFocus={true}
           />
         ) : (
           <Text
@@ -1072,54 +1471,56 @@ function InfoField({
                 : { overflow: 'hidden', maxHeight: sizes.oneLineInputHeight },
             ]}
           >
-            {textValue}
+            {value}
           </Text>
         )}
       </View>
-      {editMode ? (
-        <View
-          style={[
-            styles.editPanel,
-            { gap: sizes.editPanelGap },
-            multiline && { marginTop: sizes.fieldPaddingVertical },
-          ]}
-        >
-          <TouchableOpacity
-            onPress={() => {
-              setEditMode(false);
-              setTextValue(value);
-            }}
-          >
-            <Image
-              source={icons.cancel}
-              style={{
-                width: iconSize,
-                height: iconSize,
-                resizeMode: 'contain',
-                tintColor: themeController.current?.unactiveTextColor,
-              }}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={async () => {
-              setEditMode(false);
-              await changeInfo(textValue);
-            }}
-          >
-            <Image
-              source={icons.checkCircle}
-              style={{
-                width: iconSize,
-                height: iconSize,
-                resizeMode: 'contain',
-                tintColor: themeController.current?.unactiveTextColor,
-              }}
-            />
-          </TouchableOpacity>
-        </View>
-      ) : (
+
+      {!editMode && (field === 'email' || field === 'phoneNumber') && (
+        // ? (
+        //   <View
+        //     style={[
+        //       styles.editPanel,
+        //       { gap: sizes.editPanelGap },
+        //       multiline && { marginTop: sizes.fieldPaddingVertical },
+        //     ]}
+        //   >
+        //     <TouchableOpacity
+        //       onPress={() => {
+        //         setEditMode(false);
+        //         setTextValue(value);
+        //       }}
+        //     >
+        //       <Image
+        //         source={icons.cancel}
+        //         style={{
+        //           width: iconSize,
+        //           height: iconSize,
+        //           resizeMode: 'contain',
+        //           tintColor: themeController.current?.unactiveTextColor,
+        //         }}
+        //       />
+        //     </TouchableOpacity>
+        //     <TouchableOpacity
+        //       onPress={async () => {
+        //         setEditMode(false);
+        //         await changeInfo(textValue);
+        //       }}
+        //     >
+        //       <Image
+        //         source={icons.checkCircle}
+        //         style={{
+        //           width: iconSize,
+        //           height: iconSize,
+        //           resizeMode: 'contain',
+        //           tintColor: themeController.current?.unactiveTextColor,
+        //         }}
+        //       />
+        //     </TouchableOpacity>
+        //   </View>
+        // ) :
         <TouchableOpacity
-          onPress={() => setEditMode(true)}
+          onPress={onEditPress}
           style={[multiline && { marginTop: sizes.fieldPaddingVertical }]}
         >
           <Image

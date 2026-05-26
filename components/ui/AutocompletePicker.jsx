@@ -8,12 +8,13 @@ import {
   FlatList,
   Platform,
   Keyboard,
-  useWindowDimensions,
   Image,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
+import { useWindowInfo } from '../../context/windowContext';
+import CustomTextInput from './CustomTextInput';
 
 const AutocompletePicker = ({
   label,
@@ -29,8 +30,8 @@ const AutocompletePicker = ({
   allowCustomText = false, // Новый пропс для разрешения кастомного текста
 }) => {
   const { themeController } = useComponentContext();
-  const { width, height } = useWindowDimensions();
-  const isWebLandscape = Platform.OS === 'web' && width > height;
+  const { width, height, isLandscape } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   // --- Размеры и стили ---
   const sizes = useMemo(() => {
@@ -255,8 +256,13 @@ const AutocompletePicker = ({
         >
           {label}
         </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TextInput
+        <View
+          style={{
+            flexDirection: arrowIcon && isRTL ? 'row-reverse' : 'row',
+            alignItems: 'center',
+          }}
+        >
+          <CustomTextInput
             ref={inputRef}
             value={inputText}
             onChangeText={setInputText}

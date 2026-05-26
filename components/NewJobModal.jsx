@@ -24,13 +24,18 @@ import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { t } from 'i18next';
 import SubscriptionsModal from './SubscriptionsModal';
-import { createJob } from '../src/api/jobs';
+import { createJob, payForJob } from '../src/api/jobs';
+import { useNotification } from '../src/render';
 import { useWebView } from '../context/webViewContext';
 import AutocompletePicker from './ui/AutocompletePicker';
 import AddressPicker from './ui/AddressPicker';
 import { useLocalization } from '../src/services/useLocalization';
 import CustomPicker from './ui/CustomPicker';
 import CustomExperiencePicker from './ui/CustomExperiencePicker';
+import { formatCurrency } from '../utils/currency_formatter';
+import { logError } from '../utils/log_util';
+import CustomTextInput from './ui/CustomTextInput';
+import PublishStatusModal from './PublishStatusModal';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -53,21 +58,34 @@ async function editJobById(jobId, updates, session) {
     const updatedJob = await response.json();
     return updatedJob;
   } catch (error) {
-    console.error('Ошибка обновления job:', error.message);
+    logError('Ошибка обновления job:', error.message);
     throw error;
   }
 }
 
-async function createNewJob(jobData, session, openWebView, updateJobsList) {
+async function createNewJob(jobData, session, openWebView, updateJobsList, paymentOptions = {}) {
   try {
+    // Step 1 — create job record
     const data = await createJob(jobData, session);
-    if (data.paymentUrl) {
-      openWebView(data.paymentUrl, () => {});
-    } else if (data.job) {
+    if (!data.job) throw new Error('Job creation failed: no job returned');
+
+    // Step 2 — authorize payment immediately after creation
+    const payResult = await payForJob(data.job.id, session, paymentOptions);
+
+    if (payResult.success) {
+      // Coupon / subscription bypass — job already pending_moderation
+      updateJobsList?.();
+    } else if (payResult.directAuth) {
+      // Saved payment method — direct auth, no redirect needed
+      updateJobsList?.();
+    } else if (payResult.paymentUrl) {
+      // Standard PayPal redirect
+      openWebView(payResult.paymentUrl, () => { });
+    } else {
       updateJobsList?.();
     }
   } catch (error) {
-    console.error('Ошибка создания job:', error.message);
+    logError('Ошибка создания job:', error.message);
     throw error;
   }
 
@@ -91,7 +109,7 @@ async function createNewJob(jobData, session, openWebView, updateJobsList) {
   //   const createdJob = await response.json();
   //   return createdJob;
   // } catch (error) {
-  //   console.error('Ошибка создания job:', error.message);
+  //   logInfo('Ошибка создания job:', error.message);
   //   throw error;
   // }
 }
@@ -124,17 +142,24 @@ export default function NewJobModal({
     jobTypesController,
   } = useComponentContext();
   const { tField } = useLocalization(languageController.current);
-  const { width, height, isLandscape, sidebarWidth = 0 } = useWindowInfo();
+  const { width, height, isLandscape, effectiveSidebarWidth = 0 } = useWindowInfo();
   const { t } = useTranslation();
+  const { showError } = useNotification();
   const isRTL = languageController.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const isClient = user.current?.account_type === 'client';
+  const isBusiness = user.current?.account_type === 'business';
 
   // Объявляем состояния сначала, чтобы они были доступны в useMemo
   const [type, setType] = useState(
-    initialJob ? initialJob.type.key || '' : activeKey || ''
+    initialJob
+      ? initialJob.type.key || ''
+      : activeKey?.typeKey || activeKey || ''
   );
 
-  const [subType, setSubType] = useState(initialJob?.subType.key || '');
+  const [subType, setSubType] = useState(
+    initialJob?.subType.key || activeKey?.subTypeKey || ''
+  );
 
   // Преобразуем данные из jobTypesController в нужный формат
   const jobTypesOptions = useMemo(() => {
@@ -201,25 +226,25 @@ export default function NewJobModal({
       thumb: isWebLandscape ? webLandscapeScale(128) : mobileScale(128),
       thumbGap: isWebLandscape ? webLandscapeScale(16) : mobileScale(16),
       headerMargin: isWebLandscape ? webLandscapeScale(30) : mobileScale(5),
-      modalPadding: isWebLandscape ? webLandscapeScale(45) : mobileScale(12),
-      modalRadius: isWebLandscape ? webLandscapeScale(8) : mobileScale(5),
+      modalPadding: isWebLandscape ? webLandscapeScale(45) : mobileScale(35),
+      modalRadius: isWebLandscape ? webLandscapeScale(8) : mobileScale(8),
       modalCrossTopRightPos: isWebLandscape
         ? webLandscapeScale(7)
         : mobileScale(10),
-      modalTitle: isWebLandscape ? webLandscapeScale(24) : mobileScale(16),
+      modalTitle: isWebLandscape ? webLandscapeScale(24) : mobileScale(22),
       modalTitleMarginBottom: isWebLandscape
         ? webLandscapeScale(22)
-        : mobileScale(10),
-      modalSub: isWebLandscape ? webLandscapeScale(20) : mobileScale(12),
-      chipFont: isWebLandscape ? webLandscapeScale(14) : mobileScale(12),
-      chipHeight: isWebLandscape ? webLandscapeScale(34) : mobileScale(30),
-      chipPadH: isWebLandscape ? webLandscapeScale(11) : mobileScale(12),
+        : mobileScale(22),
+      modalSub: isWebLandscape ? webLandscapeScale(20) : mobileScale(20),
+      chipFont: isWebLandscape ? webLandscapeScale(14) : mobileScale(14),
+      chipHeight: isWebLandscape ? webLandscapeScale(34) : mobileScale(34),
+      chipPadH: isWebLandscape ? webLandscapeScale(11) : mobileScale(11),
       chipGap: isWebLandscape ? webLandscapeScale(8) : mobileScale(8),
       chipMarginBottom: isWebLandscape
         ? webLandscapeScale(40 / 3)
-        : mobileScale(12 / 3),
+        : mobileScale(40 / 3),
       modalCardW: isWebLandscape ? webLandscapeScale(450) : '88%',
-      btnH: isWebLandscape ? webLandscapeScale(62) : mobileScale(42),
+      btnH: isWebLandscape ? webLandscapeScale(62) : mobileScale(62),
       btnW: isWebLandscape ? webLandscapeScale(300) : '100%',
       btnMarginBottom: isWebLandscape ? webLandscapeScale(16) : mobileScale(10),
       headerHeight: isWebLandscape ? webLandscapeScale(50) : height * 0.07,
@@ -237,7 +262,7 @@ export default function NewJobModal({
       saveBtnWidth: isWebLandscape ? webLandscapeScale(380) : '100%',
       saveBtnHeight: isWebLandscape ? webLandscapeScale(62) : mobileScale(62),
       saveBtnFont: isWebLandscape ? webLandscapeScale(20) : mobileScale(20),
-      iconSize: isWebLandscape ? webLandscapeScale(24) : mobileScale(20),
+      iconSize: isWebLandscape ? webLandscapeScale(24) : mobileScale(24),
       removeIconSize: isWebLandscape ? webLandscapeScale(20) : mobileScale(20),
       removeIconPosition: isWebLandscape
         ? webLandscapeScale(3)
@@ -272,7 +297,9 @@ export default function NewJobModal({
 
   // Очищаем подтип при смене типа
   useEffect(() => {
-    if (type !== (initialJob?.type?.key || activeKey || '')) {
+    if (
+      type !== (initialJob?.type?.key || activeKey?.typeKey || activeKey || '')
+    ) {
       setSubType('');
     }
   }, [type]);
@@ -293,9 +320,33 @@ export default function NewJobModal({
     jobsController.products.find((o) => o.type === jobType) ||
     jobsController.products[0];
 
-  const [experience, setExperience] = useState(null);
+  const [isExperienceRequired, setIsExperienceRequired] = useState(false);
+  const [experience, setExperience] = useState(initialJob?.experience || null);
+
+  // Хук для отслеюивания смены type или subType и отображения поля ввода опыта, если она требует опыта
+  useEffect(() => {
+    let requiresExperience = false;
+    if (jobTypesController.jobTypesWithSubtypes) {
+      // Проверяем, требует ли верификации выбранный тип
+      const typeRequiresVerification = jobTypesController.jobTypesWithSubtypes.find(
+        (t) => t.key === type
+      )?.requires_verification;
+
+      // Проверяем, требует ли верификации выбранный "подтип" (который является таким же типом)
+      const subTypeRequiresVerification = jobTypesController.jobTypesWithSubtypes.find(
+        (t) => t.key === subType
+      )?.requires_verification;
+
+      if (typeRequiresVerification || subTypeRequiresVerification) {
+        requiresExperience = true;
+      }
+    }
+    setIsExperienceRequired(requiresExperience);
+  }, [type, subType, jobTypesController.jobTypesWithSubtypes]);
+
 
   const [statusModalVisible, setStatusModalVisible] = useState(false);
+  const [publishStep, setPublishStep] = useState(1);
   const [plansModalVisible, setPlansModalVisible] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -310,8 +361,9 @@ export default function NewJobModal({
   const requiredFields = [
     'type',
     'subType',
-    'price',
-    'location',
+    ...(isClient ? [] : ['price']),
+    ...(isBusiness ? ['startDateTime', 'endDateTime'] : []),
+    // 'location',
     // 'description',
   ];
 
@@ -338,7 +390,7 @@ export default function NewJobModal({
     return null;
   };
 
-  const handleCreate = () => {
+  const handleCreate = (paymentOptions = {}) => {
     const newErrors = {};
     requiredFields.forEach((field) => {
       // Проверяем, заполнено ли поле. Для location нужна особая проверка.
@@ -355,7 +407,6 @@ export default function NewJobModal({
     setFieldErrors(newErrors);
 
     const hasErrors = Object.values(newErrors).some((e) => e);
-    console.log('error fields ', newErrors);
 
     if (hasErrors) return;
 
@@ -389,11 +440,19 @@ export default function NewJobModal({
       ) {
         jobChanges.endDateTime = new Date(endDateTime).toISOString();
       }
+      setAppLoading(true);
+
       if (Object.keys(jobChanges).length > 0) {
-        editJobById(currentJobId, jobChanges, session).then(() =>
-          jobsController.reloadCreator()
-        );
+        editJobById(currentJobId, jobChanges, session)
+          .then(() => {
+            jobsController.reloadCreator();
+            setAppLoading(false);
+          })
+          .then(() => {
+            setAppLoading(false);
+          });
       }
+      closeModal();
     } else {
       const newJob = {
         type: getTypeIdByKey(type),
@@ -418,14 +477,30 @@ export default function NewJobModal({
 
       setAppLoading(true);
 
-      createNewJob(newJob, session, openWebView, () => {
-        jobsController.reloadCreator();
+      createNewJob(
+        newJob,
+        session,
+        openWebView,
+        () => {
+          jobsController.reloadCreator();
+          setAppLoading(false);
+        },
+        paymentOptions
+      ).then(() => {
         setAppLoading(false);
-      }).then(() => {
+        closeModal();
+      }).catch((err) => {
         setAppLoading(false);
+        const code = err?.response?.data?.code;
+        if (code === 'INSUFFICIENT_COUPONS') {
+          showError(t('errors.insufficient_coupons'));
+        } else if (code === 'TIME_REQUIRED') {
+          showError(t('errors.time_required'));
+        } else {
+          showError(t('errors.unexpected_error'));
+        }
       });
     }
-    closeModal();
   };
 
   const handleImageAdd = async (uris) => {
@@ -445,7 +520,7 @@ export default function NewJobModal({
 
       setImages((prev) => [...prev, ...uploadedUrls.filter(Boolean)]);
     } catch (e) {
-      console.error('Ошибка загрузки изображений:', e);
+      logInfo('Ошибка загрузки изображений:', e);
     }
   };
 
@@ -500,13 +575,14 @@ export default function NewJobModal({
       focusStates={focusStates}
       error={fieldErrors.type}
       backgroundColor={themeController.current?.formInputBackground}
-      rtl={isRTL}
+      isRTL={isRTL}
       isWebLandscape={isWebLandscape}
       sizeOverrides={sizes}
     />,
     <AutocompletePicker
       label={t('newJob.subType', { defaultValue: 'Sub type' })}
       selectedValue={subType}
+      value={subType}
       setValue={(text) => {
         setSubType(text);
         if (fieldErrors.subType && text) {
@@ -525,7 +601,7 @@ export default function NewJobModal({
       focusStates={focusStates}
       error={fieldErrors.subType}
       backgroundColor={themeController.current?.formInputBackground}
-      rtl={isRTL}
+      isRTL={isRTL}
       isWebLandscape={isWebLandscape}
       sizeOverrides={sizes}
     />,
@@ -570,7 +646,7 @@ export default function NewJobModal({
       >
         {t('newJob.description', { defaultValue: 'Description' })}
       </Text>
-      <TextInput
+      <CustomTextInput
         value={description}
         onChangeText={setDescription}
         placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
@@ -594,55 +670,57 @@ export default function NewJobModal({
         multiline
       />
     </View>,
-    <View
-      style={[
-        styles.inputBlock,
-        {
-          padding: 0,
-          paddingHorizontal: sizes.inputContainerPaddingHorizontal,
-          paddingVertical: sizes.inputContainerPaddingVertical,
-          borderRadius: sizes.borderRadius,
-          height: sizes.inputHeight,
-          backgroundColor: themeController.current?.formInputBackground,
-        },
-        fieldErrors.price && styles.errorBorder,
-      ]}
-      key='price'
-    >
-      <Text
+    !isClient && (
+      <View
         style={[
-          styles.label,
+          styles.inputBlock,
           {
-            color: fieldErrors.price
-              ? 'red'
-              : themeController.current?.unactiveTextColor,
-            fontSize: sizes.font,
+            padding: 0,
+            paddingHorizontal: sizes.inputContainerPaddingHorizontal,
+            paddingVertical: sizes.inputContainerPaddingVertical,
+            borderRadius: sizes.borderRadius,
+            height: sizes.inputHeight,
+            backgroundColor: themeController.current?.formInputBackground,
           },
-          isRTL && { textAlign: 'right' },
-          isWebLandscape && { fontSize: sizes.font },
+          fieldErrors.price && styles.errorBorder,
         ]}
+        key='price'
       >
-        {t('newJob.price', { defaultValue: 'Price' })}
-      </Text>
-      <TextInput
-        value={price}
-        onChangeText={setPrice}
-        placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
-        placeholderTextColor={
-          themeController.current?.formInputPlaceholderColor
-        }
-        style={[
-          styles.input,
-          {
-            color: themeController.current?.textColor,
-            fontSize: sizes.inputFont,
-            fontFamily: 'Rubik-Regular',
-          },
-          isRTL && { textAlign: 'right' },
-        ]}
-        keyboardType='numeric'
-      />
-    </View>,
+        <Text
+          style={[
+            styles.label,
+            {
+              color: fieldErrors.price
+                ? 'red'
+                : themeController.current?.unactiveTextColor,
+              fontSize: sizes.font,
+            },
+            isRTL && { textAlign: 'right' },
+            isWebLandscape && { fontSize: sizes.font },
+          ]}
+        >
+          {t('newJob.price', { defaultValue: 'Price' })}
+        </Text>
+        <CustomTextInput
+          value={price}
+          onChangeText={(text) => setPrice(text.replace(/[^0-9]/g, ''))}
+          placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
+          placeholderTextColor={
+            themeController.current?.formInputPlaceholderColor
+          }
+          style={[
+            styles.input,
+            {
+              color: themeController.current?.textColor,
+              fontSize: sizes.inputFont,
+              fontFamily: 'Rubik-Regular',
+            },
+            isRTL && { textAlign: 'right' },
+          ]}
+          keyboardType='numeric'
+        />
+      </View>
+    ),
     <View style={styles.imageInputBlock} key='images'>
       <Text
         style={[
@@ -651,6 +729,7 @@ export default function NewJobModal({
           {
             fontSize: sizes.photosLabelSize,
             marginBottom: sizes.photosLabelMarginBottom,
+            color: themeController.current?.textColor,
           },
         ]}
       >
@@ -748,111 +827,73 @@ export default function NewJobModal({
         onAdd={handleImageAdd}
       />
     </View>,
-    // <View
-    //   style={[
-    //     styles.inputBlock,
-    //     {
-    //       backgroundColor: themeController.current?.formInputBackground,
-    //       padding: 0,
-    //       paddingHorizontal: sizes.inputContainerPaddingHorizontal,
-    //       paddingVertical: sizes.inputContainerPaddingVertical,
-    //       borderRadius: sizes.borderRadius,
-    //       height: sizes.inputHeight,
-    //     },
-    //   ]}
-    //   key='location'
-    // >
-    //   <Text
-    //     style={[
-    //       styles.label,
-    //       {
-    //         color: themeController.current?.unactiveTextColor,
-    //         fontSize: sizes.font,
-    //       },
-    //       isRTL && { textAlign: 'right' },
-    //       isWebLandscape && { fontSize: sizes.font },
-    //     ]}
-    //   >
-    //     {t('newJob.location', { defaultValue: 'Location' })}
-    //   </Text>
-    //   <TextInput
-    //     value={location}
-    //     onChangeText={setLocation}
-    //     placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
-    //     placeholderTextColor={
-    //       themeController.current?.formInputPlaceholderColor
-    //     }
-    //     style={[
-    //       styles.input,
-    //       {
-    //         color: themeController.current?.textColor,
-    //         fontSize: sizes.inputFont,
-    //         borderRadius: sizes.borderRadius,
-    //         fontFamily: 'Rubik-Regular',
-    //       },
-    //       isRTL && { textAlign: 'right' },
-    //     ]}
-    //   />
-    // </View>,
-    <CustomExperiencePicker
-      label={t('register.experience_label')}
-      selectedValue={experience}
-      onValueChange={setExperience}
-      isRTL={isRTL}
-      containerStyle={{
-        marginBottom: sizes.typeTagsSelectorMarginBottom,
-      }}
-      bottomDropdown={false}
-    />,
-    <View
-      style={[
-        styles.row,
-        {
-          gap: sizes.dateTimeGapMobile,
-          paddingBottom: sizes.mobileBottomPaddingExtraSpace, // чтобы не закрывались кнопками
-        },
-        isRTL && { flexDirection: 'row-reverse' },
-      ]}
-      key='dateTimeRange'
-    >
-      {Platform.OS !== 'android' ? (
-        <DateTimeInput
-          key='startDateTime'
-          label={t('newJob.startDateTime', {
-            defaultValue: 'Start date and time',
-          })}
-          value={startDateTime}
-          onChange={setStartDateTime}
-        />
-      ) : (
-        <DateTimeInputDouble
-          label={t('newJob.startDateTime', {
-            defaultValue: 'Start date and time',
-          })}
-          value={startDateTime}
-          onChange={setStartDateTime}
-        />
-      )}
-      {Platform.OS !== 'android' ? (
-        <DateTimeInput
-          key='endDateTime'
-          label={t('newJob.endDateTime', {
-            defaultValue: 'End date and time',
-          })}
-          value={endDateTime}
-          onChange={setEndDateTime}
-        />
-      ) : (
-        <DateTimeInputDouble
-          label={t('newJob.endDateTime', {
-            defaultValue: 'End date and time',
-          })}
-          value={endDateTime}
-          onChange={setEndDateTime}
-        />
-      )}
-    </View>,
-  ];
+    isExperienceRequired ? (
+      <CustomExperiencePicker
+        label={t('register.experience_label')}
+        selectedValue={experience}
+        onValueChange={setExperience}
+        isRTL={isRTL}
+        containerStyle={{
+          marginBottom: sizes.typeTagsSelectorMarginBottom,
+        }}
+        bottomDropdown={false}
+      />
+    ) : null,
+    !isClient && (
+      <View
+        style={[
+          styles.row,
+          {
+            gap: sizes.dateTimeGapMobile,
+            paddingBottom: sizes.mobileBottomPaddingExtraSpace, // чтобы не закрывались кнопками
+          },
+          isRTL && { flexDirection: 'row-reverse' },
+        ]}
+        key='dateTimeRange'
+      >
+        {Platform.OS !== 'android' ? (
+          <DateTimeInput
+            key='startDateTime'
+            label={t('newJob.startDateTime', {
+              defaultValue: 'Start date and time',
+            })}
+            value={startDateTime}
+            onChange={setStartDateTime}
+            error={fieldErrors.startDateTime}
+          />
+        ) : (
+          <DateTimeInputDouble
+            label={t('newJob.startDateTime', {
+              defaultValue: 'Start date and time',
+            })}
+            value={startDateTime}
+            onChange={setStartDateTime}
+            error={fieldErrors.startDateTime}
+          />
+        )}
+        {Platform.OS !== 'android' ? (
+          <DateTimeInput
+            key='endDateTime'
+            label={t('newJob.endDateTime', {
+              defaultValue: 'End date and time',
+            })}
+            value={endDateTime}
+            onChange={setEndDateTime}
+            error={fieldErrors.endDateTime}
+          />
+        ) : (
+          <DateTimeInputDouble
+            label={t('newJob.endDateTime', {
+              defaultValue: 'End date and time',
+            })}
+            value={endDateTime}
+            onChange={setEndDateTime}
+            error={fieldErrors.endDateTime}
+          />
+        )}
+      </View>
+    ),
+  ].filter(Boolean); // Фильтруем null значения
 
   const bg = themeController.current?.formInputBackground;
 
@@ -983,7 +1024,7 @@ export default function NewJobModal({
                       focusStates={focusStates}
                       error={fieldErrors.type}
                       backgroundColor={bg}
-                      rtl={isRTL}
+                      isRTL={isRTL}
                       isWebLandscape={isWebLandscape}
                       sizeOverrides={sizes}
                     />
@@ -1031,7 +1072,7 @@ export default function NewJobModal({
                           defaultValue: 'Description',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={description}
                         onChangeText={setDescription}
                         placeholder={t('newJob.typePlaceholder', {
@@ -1089,7 +1130,7 @@ export default function NewJobModal({
                       focusStates={focusStates}
                       error={fieldErrors.subType}
                       backgroundColor={bg}
-                      rtl={isRTL}
+                      isRTL={isRTL}
                       isWebLandscape={isWebLandscape}
                       sizeOverrides={sizes}
                     />
@@ -1120,72 +1161,76 @@ export default function NewJobModal({
                     />
                   </View>
 
-                  <View
-                    key='price'
-                    style={[
-                      styles.gridHalf,
-                      {
-                        // marginBottom: sizes.margin,
-                        zIndex: 6,
-                        gridArea: isRTL ? '3 / 1 / 4 / 2' : '3 / 2 / 4 / 3',
-                      },
-                    ]}
-                  >
+                  {!isClient && (
                     <View
+                      key='price'
                       style={[
-                        styles.inputBlock,
-                        { backgroundColor: bg },
+                        styles.gridHalf,
                         {
-                          padding: 0,
-                          paddingHorizontal:
-                            sizes.inputContainerPaddingHorizontal,
-                          paddingVertical: sizes.inputContainerPaddingVertical,
-                          borderRadius: sizes.borderRadius,
-                          marginBottom: 0,
-                          height: sizes.inputHeight,
+                          // marginBottom: sizes.margin,
+                          zIndex: 6,
+                          gridArea: isRTL ? '3 / 1 / 4 / 2' : '3 / 2 / 4 / 3',
                         },
-                        fieldErrors.price && styles.errorBorder,
                       ]}
                     >
-                      <Text
+                      <View
                         style={[
-                          styles.label,
-                          isRTL && { textAlign: 'right' },
+                          styles.inputBlock,
+                          { backgroundColor: bg },
                           {
-                            fontSize: sizes.font,
-                            color: fieldErrors.price
-                              ? 'red'
-                              : themeController.current?.unactiveTextColor,
+                            padding: 0,
+                            paddingHorizontal:
+                              sizes.inputContainerPaddingHorizontal,
+                            paddingVertical: sizes.inputContainerPaddingVertical,
+                            borderRadius: sizes.borderRadius,
+                            marginBottom: 0,
+                            height: sizes.inputHeight,
                           },
+                          fieldErrors.price && styles.errorBorder,
                         ]}
                       >
-                        {t('newJob.price', { defaultValue: 'Price' })}
-                      </Text>
-                      <TextInput
-                        key='priceInput'
-                        value={price}
-                        onChangeText={setPrice}
-                        placeholder={t('newJob.typePlaceholder', {
-                          defaultValue: 'Type...',
-                        })}
-                        placeholderTextColor={
-                          themeController.current?.formInputPlaceholderColor
-                        }
-                        style={{
-                          padding: 0,
-                          paddingVertical: sizes.padding,
-                          color: fieldErrors.price
-                            ? 'red'
-                            : themeController.current?.textColor,
-                          fontSize: sizes.inputFont,
-                          borderRadius: sizes.borderRadius,
-                          backgroundColor: 'transparent',
-                          textAlign: isRTL ? 'right' : 'left',
-                        }}
-                        keyboardType='numeric'
-                      />
+                        <Text
+                          style={[
+                            styles.label,
+                            isRTL && { textAlign: 'right' },
+                            {
+                              fontSize: sizes.font,
+                              color: fieldErrors.price
+                                ? 'red'
+                                : themeController.current?.unactiveTextColor,
+                            },
+                          ]}
+                        >
+                          {t('newJob.price', { defaultValue: 'Price' })}
+                        </Text>
+                        <CustomTextInput
+                          key='priceInput'
+                          value={price}
+                          onChangeText={(text) =>
+                            setPrice(text.replace(/[^0-9]/g, ''))
+                          }
+                          placeholder={t('newJob.typePlaceholder', {
+                            defaultValue: 'Type...',
+                          })}
+                          placeholderTextColor={
+                            themeController.current?.formInputPlaceholderColor
+                          }
+                          style={{
+                            padding: 0,
+                            paddingVertical: sizes.padding,
+                            color: fieldErrors.price
+                              ? 'red'
+                              : themeController.current?.textColor,
+                            fontSize: sizes.inputFont,
+                            borderRadius: sizes.borderRadius,
+                            backgroundColor: 'transparent',
+                            textAlign: isRTL ? 'right' : 'left',
+                          }}
+                          keyboardType='numeric'
+                        />
+                      </View>
                     </View>
-                  </View>
+                  )}
 
                   {/* Row 4: Uploading photos (full) */}
                   <View
@@ -1310,99 +1355,125 @@ export default function NewJobModal({
                     onAdd={handleImageAdd}
                   />
 
-                  <View
-                    style={[
-                      styles.gridHalf,
-                      {
-                        // marginBottom: sizes.margin,
-                        zIndex: 4,
-                        gridArea: isRTL ? '6 / 2 / 7 / 3' : '6 / 1 / 7 / 2',
-                      },
-                    ]}
-                  >
-                    <CustomExperiencePicker
-                      label={t('register.experience_label')}
-                      selectedValue={experience}
-                      onValueChange={setExperience}
-                      isRTL={isRTL}
-                      containerStyle={{
-                        marginBottom: sizes.typeTagsSelectorMarginBottom,
-                      }}
-                    />
-                  </View>
+                  {isExperienceRequired && (
+                    <View
+                      style={[
+                        styles.gridHalf,
+                        {
+                          // marginBottom: sizes.margin,
+                          zIndex: 4,
+                          gridArea: isRTL ? '6 / 2 / 7 / 3' : '6 / 1 / 7 / 2',
+                        },
+                      ]}
+                    >
+                      <CustomExperiencePicker
+                        label={t('register.experience_label')}
+                        selectedValue={experience}
+                        onValueChange={setExperience}
+                        isRTL={isRTL}
+                        containerStyle={{
+                          marginBottom: sizes.typeTagsSelectorMarginBottom,
+                        }}
+                      />
+                    </View>
+                  )}
 
-                  {/* Row 5: Start/End date (1/2 + 1/2) */}
-                  <View
-                    style={[
-                      styles.gridHalf,
-                      {
-                        // marginBottom: sizes.margin,
-                        zIndex: 3,
-                        gridArea: isRTL ? '7 / 2 / 8 / 3' : '7 / 1 / 8 / 2',
-                      },
-                      { flexDirection: isRTL ? 'row-reverse' : 'row' },
-                    ]}
-                  >
-                    {Platform.OS !== 'android' ? (
-                      <DateTimeInput
-                        key='startDateTime'
-                        label={t('newJob.startDateTime', {
-                          defaultValue: 'Start date and time',
-                        })}
-                        value={startDateTime}
-                        onChange={setStartDateTime}
-                      />
-                    ) : (
-                      <DateTimeInputDouble
-                        label={t('newJob.startDateTime', {
-                          defaultValue: 'Start date and time',
-                        })}
-                        value={startDateTime}
-                        onChange={setStartDateTime}
-                      />
-                    )}
-                  </View>
+                  {/* Дата и время начала */}
+                  {!isClient && (
+                    <>
+                      <View
+                        style={[
+                          styles.gridHalf,
+                          {
+                            /* zIndex: 3, */
+                            gridArea: isExperienceRequired
+                              ? isRTL
+                                ? '7 / 2 / 8 / 3'
+                                : '7 / 1 / 8 / 2'
+                              : isRTL
+                                ? '6 / 2 / 7 / 3'
+                                : '6 / 1 / 7 / 2',
+                          },
+                          { flexDirection: isRTL ? 'row-reverse' : 'row' },
+                        ]}
+                      >
+                        {Platform.OS !== 'android' ? (
+                          <DateTimeInput
+                            key='startDateTime'
+                            label={t('newJob.startDateTime', {
+                              defaultValue: 'Start date and time',
+                            })}
+                            value={startDateTime}
+                            onChange={setStartDateTime}
+                            error={fieldErrors.startDateTime}
+                          />
+                        ) : (
+                          <DateTimeInputDouble
+                            label={t('newJob.startDateTime', {
+                              defaultValue: 'Start date and time',
+                            })}
+                            value={startDateTime}
+                            onChange={setStartDateTime}
+                            error={fieldErrors.startDateTime}
+                          />
+                        )}
+                      </View>
 
+                      <View
+                        style={[
+                          styles.gridHalf,
+                          {
+                            /* zIndex: 2, */
+                            gridArea: isExperienceRequired
+                              ? isRTL
+                                ? '7 / 1 / 8 / 2'
+                                : '7 / 2 / 8 / 3'
+                              : isRTL
+                                ? '6 / 1 / 7 / 2'
+                                : '6 / 2 / 7 / 3',
+                          },
+                          { flexDirection: isRTL ? 'row-reverse' : 'row' },
+                        ]}
+                      >
+                        {Platform.OS !== 'android' ? (
+                          <DateTimeInput
+                            key='endDateTime'
+                            label={t('newJob.endDateTime', {
+                              defaultValue: 'End date and time',
+                            })}
+                            value={endDateTime}
+                            onChange={setEndDateTime}
+                            error={fieldErrors.endDateTime}
+                          />
+                        ) : (
+                          <DateTimeInputDouble
+                            label={t('newJob.endDateTime', {
+                              defaultValue: 'End date and time',
+                            })}
+                            value={endDateTime}
+                            onChange={setEndDateTime}
+                            error={fieldErrors.endDateTime}
+                          />
+                        )}
+                      </View>
+                    </>
+                  )}
+                  {/* Кнопка отправки */}
                   <View
                     style={[
-                      styles.gridHalf,
-                      {
-                        // marginBottom: sizes.margin,
-                        zIndex: 2,
-                        gridArea: isRTL ? '7 / 1 / 8 / 2' : '7 / 2 / 8 / 3',
-                      },
-                      { flexDirection: isRTL ? 'row-reverse' : 'row' },
-                    ]}
-                  >
-                    {Platform.OS !== 'android' ? (
-                      <DateTimeInput
-                        key='endDateTime'
-                        label={t('newJob.endDateTime', {
-                          defaultValue: 'End date and time',
-                        })}
-                        value={endDateTime}
-                        onChange={setEndDateTime}
-                      />
-                    ) : (
-                      <DateTimeInputDouble
-                        label={t('newJob.endDateTime', {
-                          defaultValue: 'End date and time',
-                        })}
-                        value={endDateTime}
-                        onChange={setEndDateTime}
-                      />
-                    )}
-                  </View>
-                  {/* Bottom button (слева, зеркалим для RTL) */}
-                  <View
-                    style={[
-                      // styles.bottomButtonWrapper,
+                      /* styles.gridFull, */
                       {
                         alignItems: isRTL ? 'flex-end' : 'flex-start',
                         backgroundColor:
                           themeController.current?.backgroundColor,
                         zIndex: 1,
-                        gridArea: isRTL ? '8 / 1 / 9 / 3' : '8 / 1 / 9 / 3',
+                        gridArea: isExperienceRequired
+                          ? isRTL
+                            ? '8 / 1 / 9 / 3'
+                            : '8 / 1 / 9 / 3'
+                          : isRTL
+                            ? '7 / 1 / 8 / 3'
+                            : '7 / 1 / 8 / 3',
                       },
                     ]}
                   >
@@ -1540,344 +1611,28 @@ export default function NewJobModal({
         </View>
       </Modal> */}
       {/* jobType PICKER MODAL */}
-      <Modal visible={statusModalVisible} animationType='fade' transparent>
-        {/* кликабельная подложка с отступом под сайдбар на web-landscape */}
-        <View
-          style={[
-            styles.backdrop,
-            { flexDirection: isRTL ? 'row-reverse' : 'row' },
-          ]}
-        >
-          {/* пустая зона над сайдбаром — клик закрывает */}
-          {/* {isWebLandscape ? (
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={() => setStatusModalVisible(false)}
-              style={{ width: sidebarWidth, height: '100%' }}
-            />
-          ) : null} */}
+      <PublishStatusModal
+        visible={statusModalVisible}
+        onClose={() => {
+          setStatusModalVisible(false);
+          setPublishStep(1);
+        }}
+        jobType={jobType}
+        setJobType={setJobType}
+        step={publishStep}
+        setStep={setPublishStep}
+        onSubmit={(paymentOptions) => {
+          if (paymentOptions?.viewPlans) {
+            setStatusModalVisible(false);
+            setPlansModalVisible(true);
+          } else {
+            setStatusModalVisible(false);
+            setPublishStep(1);
+            handleCreate(paymentOptions);
+          }
+        }}
+      />
 
-          {/* рабочая область — центрируем карточку */}
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={() => setStatusModalVisible(false)}
-            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}
-          >
-            <View
-              style={[
-                styles.centerArea,
-                // { width: isWebLandscape ? width - sidebarWidth : '100%' },
-                { width: '100%' },
-              ]}
-            >
-              {/* сама карточка; клики внутри НЕ закрывают */}
-              <TouchableOpacity
-                activeOpacity={1}
-                onPress={(e) => e.stopPropagation()}
-                style={[
-                  styles.modalCard,
-                  {
-                    backgroundColor: themeController.current?.backgroundColor,
-                    borderRadius: sizes.modalRadius,
-                    padding: sizes.modalPadding,
-                    width: sizes.modalCardW,
-                    position: 'relative',
-                    alignItems: 'center',
-                  },
-                ]}
-              >
-                <TouchableOpacity
-                  onPress={() => setStatusModalVisible(false)}
-                  style={{
-                    position: 'absolute',
-                    top: sizes.modalCrossTopRightPos,
-                    right: sizes.modalCrossTopRightPos,
-                  }}
-                >
-                  <Image
-                    source={icons.cross}
-                    style={{
-                      width: sizes.iconSize,
-                      height: sizes.iconSize,
-                      tintColor: themeController.current?.textColor,
-                    }}
-                    resizeMode='contain'
-                  />
-                </TouchableOpacity>
-                {/* заголовок */}
-                <Text
-                  style={{
-                    fontSize: sizes.modalTitle,
-                    fontFamily: 'Rubik-Bold',
-                    color: themeController.current?.textColor,
-                    textAlign: 'center',
-                    marginBottom: sizes.modalTitleMarginBottom,
-                  }}
-                >
-                  {t('newJob.statusModal.title', {
-                    defaultValue: 'Choose the post type to publish',
-                  })}
-                </Text>
-
-                {/* подзаголовок (второй ряд) */}
-                {/* <Text
-                  style={{
-                    fontSize: sizes.modalSub,
-                    color: themeController.current?.formInputLabelColor,
-                    textAlign: 'center',
-                    marginBottom: sizes.modalPadding,
-                  }}
-                >
-                  {t('newJob.statusModal.subtitle', {
-                    defaultValue: 'Select how your request will be shown',
-                  })}
-                </Text> */}
-
-                {/* плашки статусов */}
-                <View
-                  style={{
-                    flexDirection: isRTL ? 'row-reverse' : 'row',
-                    flexWrap: 'wrap',
-                    gap: sizes.chipGap,
-                    marginBottom: sizes.chipMarginBottom,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {jobsController.products.map((opt) => {
-                    const productType = opt.type;
-                    const productName = tField(opt, 'name');
-                    const active = jobType === productType;
-
-                    return (
-                      <TouchableOpacity
-                        key={productType}
-                        onPress={() => setJobType(productType)}
-                        style={[
-                          styles.chip,
-                          {
-                            height: sizes.chipHeight,
-                            paddingHorizontal: sizes.chipPadH,
-                            borderRadius: sizes.modalRadius / 2,
-                            borderWidth: 1,
-                            borderColor: active
-                              ? themeController.current
-                                  ?.buttonColorPrimaryDefault
-                              : themeController.current
-                                  ?.formInputPlaceholderColor,
-                            backgroundColor: active
-                              ? themeController.current
-                                  ?.buttonColorPrimaryDefault
-                              : 'transparent',
-                            flexDirection: isRTL ? 'row-reverse' : 'row',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={{
-                            fontSize: sizes.chipFont,
-                            color: active
-                              ? themeController.current?.buttonTextColorPrimary
-                              : themeController.current
-                                  ?.formInputPlaceholderColor,
-                          }}
-                        >
-                          {productName}
-                        </Text>
-
-                        {/* маленький PRO-бейдж для некоторых опций */}
-                        {/* {opt.pro && (
-                    <View
-                      style={{
-                        marginHorizontal: isRTL ? 0 : RFValue(6),
-                        marginLeft: isRTL ? RFValue(6) : 0,
-                        backgroundColor: themeController.current?.formInputBackground,
-                        paddingHorizontal: sizes.chipPadH * 0.5,
-                        paddingVertical: sizes.chipPadV * 0.5,
-                        borderRadius: sizes.modalRadius * 0.7,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: isWebLandscape ? height * 0.012 : RFValue(10),
-                          color: themeController.current?.formInputLabelColor,
-                          fontWeight: '600',
-                        }}
-                      >
-                        {t('newJob.statusModal.proBadge', {
-                          defaultValue: 'For PRO users',
-                        })}
-                      </Text>
-                    </View>
-                  )} */}
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
-                <Text
-                  style={{
-                    fontSize: sizes.modalSub,
-                    color: themeController.current?.buttonColorPrimaryDefault,
-                    marginBottom: sizes.chipMarginBottom,
-                  }}
-                >
-                  {t('', {
-                    defaultValue: '{{price}}',
-                    price:
-                      subscription.current != null &&
-                      selectedOption.type == 'normal'
-                        ? t('newJob.statusModal.free', {
-                            defaultValue: 'Free',
-                          })
-                        : `$${selectedOption?.price.toFixed(2)}`,
-                  })}
-                </Text>
-
-                {(subscription.current == null ||
-                  selectedOption.type != 'normal') && (
-                  <Text
-                    style={{
-                      fontSize: sizes.chipFont,
-                      color: themeController.current?.formInputLabelColor,
-                      marginBottom: sizes.chipMarginBottom,
-                      textAlign: 'center',
-                    }}
-                  >
-                    You must pay for publishing this type of ad after
-                    moderation.
-                  </Text>
-                )}
-
-                {/* кнопка подтверждения с ценой */}
-                <TouchableOpacity
-                  onPress={() => {
-                    handleCreate();
-                    setStatusModalVisible(false);
-                  }}
-                  style={{
-                    height: sizes.btnH,
-                    width: sizes.btnW,
-                    borderRadius: sizes.modalRadius,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderWidth: 1,
-                    borderColor:
-                      themeController.current?.buttonColorPrimaryDefault,
-                    marginBottom: sizes.borderRadius * 2,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: sizes.modalSub,
-                      color: themeController.current?.buttonColorPrimaryDefault,
-                    }}
-                  >
-                    {t('newJob.statusModal.buttons.sendToModeration', {
-                      defaultValue: 'Send to moderation',
-                    })}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* кнопка подтверждения с купонами */}
-                {subscription.current == null &&
-                  selectedOption?.type == 'normal' && (
-                    <TouchableOpacity
-                      onPress={() => {
-                        // handleCreate();
-                        setStatusModalVisible(false);
-                      }}
-                      style={{
-                        height: sizes.btnH,
-                        width: sizes.btnW,
-                        borderRadius: sizes.modalRadius,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderWidth: 1,
-                        borderColor:
-                          themeController.current?.buttonColorSecondaryDefault,
-                        marginBottom: sizes.borderRadius * 2,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        flexDirection: isRTL ? 'row-reverse' : 'row',
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: sizes.modalSub,
-                          color:
-                            themeController.current
-                              ?.buttonColorSecondaryDefault,
-                        }}
-                      >
-                        {t('newJob.statusModal.buttons.publishForCoupons', {
-                          defaultValue: 'Publish for {{count}} ',
-                          count: selectedOption?.couponsRequired || 0,
-                        })}
-                      </Text>
-                      <Image
-                        source={icons.coupon}
-                        style={{
-                          width: sizes.iconSize,
-                          height: sizes.iconSize,
-                          tintColor:
-                            themeController.current
-                              ?.buttonColorSecondaryDefault,
-                        }}
-                      />
-                      <Text
-                        style={[
-                          {
-                            color:
-                              themeController.current
-                                ?.buttonColorSecondaryDefault,
-                            fontSize: sizes.modalSub,
-                          },
-                        ]}
-                      >
-                        {` (${user.current?.coupons || 0})`}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-
-                {/* кнопка тарифов */}
-                {subscription.current == null &&
-                  selectedOption?.type == 'normal' && (
-                    <TouchableOpacity
-                      onPress={() => {
-                        setPlansModalVisible(true);
-                        setStatusModalVisible(false);
-                      }}
-                      style={{
-                        height: sizes.btnH,
-                        width: sizes.btnW,
-                        borderRadius: sizes.modalRadius,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor:
-                          themeController.current?.buttonColorPrimaryDefault,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: sizes.modalSub,
-                          color:
-                            themeController.current?.buttonTextColorPrimary,
-                        }}
-                      >
-                        {t('newJob.statusModal.buttons.viewPlans', {
-                          defaultValue: 'See pricing plans',
-                        })}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </View>
-      </Modal>
 
       {/* PLANS MODAL (простая заглушка, такой же фон/центрирование) */}
       <SubscriptionsModal

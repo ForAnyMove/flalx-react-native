@@ -7,18 +7,20 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { normalizeImageUri } from '../../utils/supabase/uriHelpers';
 import { useComponentContext } from '../../context/globalAppContext';
+import { logError } from '../../utils/log_util';
+import { useWindowInfo } from '../../context/windowContext';
+import CustomTextInput from './CustomTextInput';
 
 export default function ImagePickerModal({ visible, onClose, onAdd }) {
   const [url, setUrl] = useState('');
   const { themeController } = useComponentContext();
   const theme = themeController.current;
-  const { width, height } = useWindowDimensions();
-  const isWebLandscape = width > height && Platform.OS === 'web';
+  const { width, height, isLandscape } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const sizes = useMemo(() => {
     const scale = isWebLandscape ? scaleByHeight : scaleByHeightMobile;
@@ -60,7 +62,7 @@ export default function ImagePickerModal({ visible, onClose, onAdd }) {
         onClose();
       }
     } catch (error) {
-      console.error('Error picking image:', error);
+      logError('Error picking image:', error);
     }
   };
 
@@ -91,7 +93,7 @@ export default function ImagePickerModal({ visible, onClose, onAdd }) {
         onClose();
       }
     } catch (error) {
-      console.error('Error opening camera:', error);
+      logInfo('Error opening camera:', error);
     }
   };
 
@@ -155,7 +157,7 @@ export default function ImagePickerModal({ visible, onClose, onAdd }) {
             </TouchableOpacity>
           )}
 
-          <TextInput
+          <CustomTextInput
             placeholder='Or enter image URL...'
             placeholderTextColor={theme.formInputPlaceholderColor}
             value={url}
@@ -187,7 +189,7 @@ export default function ImagePickerModal({ visible, onClose, onAdd }) {
             >
               <Text style={{ color: theme.buttonTextColorPrimary, fontSize: sizes.buttonFontSize }}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={handleAddUrl}
               style={{
                 backgroundColor: theme.backgroundColor,

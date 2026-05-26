@@ -7,7 +7,6 @@ import {
   View,
   Image,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -50,8 +49,7 @@ export default function Store() {
 
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
-  const { width, height } = useWindowDimensions();
-  const { sidebarWidth, isLandscape } = useWindowInfo();
+  const { width, height, effectiveSidebarWidth, isLandscape } = useWindowInfo();
   const isWebLandscape = isLandscape && Platform.OS === 'web';
 
   const orderedTabs = isRTL ? TAB_TITLES_RTL : TAB_TITLES;
@@ -59,7 +57,7 @@ export default function Store() {
     ? [DoneScreen, InProgressScreen, WaitingScreen, NewScreen]
     : [NewScreen, WaitingScreen, InProgressScreen, DoneScreen];
 
-  const SCREEN_WIDTH = isWebLandscape ? width - sidebarWidth : width;
+  const SCREEN_WIDTH = isWebLandscape ? width - effectiveSidebarWidth : width;
 
   const screenWidthRef = useRef(SCREEN_WIDTH);
   const [screenWidth, setScreenWidth] = useState(SCREEN_WIDTH);
@@ -260,6 +258,7 @@ export default function Store() {
       fontSize: isWebLandscape ? web(12) : mobile(12),
       badgeSize,
       underlineHeight: isWebLandscape ? web(2) : mobile(2),
+      globalUnderlineSpace: isWebLandscape ? web(10) : mobile(10),
       tabPaddingBottom: panelHeight * 0.1,
       badgeTop: -badgeSize * 0.3,
       badgeRight: -badgeSize * 0.8,
@@ -387,6 +386,17 @@ export default function Store() {
             zIndex: 2,
           }}
         />
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: sizes.globalUnderlineSpace,
+            right: sizes.globalUnderlineSpace,
+            height: sizes.underlineHeight,
+            backgroundColor: themeController.current?.profileDefaultBackground,
+            zIndex: 1,
+          }}
+        />
       </View>
 
       {/* Контент */}
@@ -424,13 +434,14 @@ export default function Store() {
       <View
         style={{
           position: 'absolute',
-          ...(isRTL
-            ? {
-              left: sizes.plusButtonLeft,
-            }
-            : {
-              right: sizes.plusButtonRight,
-            }),
+          // ...(isRTL
+          //   ? {
+          //     left: sizes.plusButtonLeft,
+          //   }
+          //   : {
+          //     right: sizes.plusButtonRight,
+          //   }),
+          right: sizes.plusButtonRight,
           bottom: sizes.plusButtonBottom,
           alignItems: 'center',
         }}
@@ -458,7 +469,7 @@ export default function Store() {
             //   setNewJobModalVisible(true);
             // } else {
             //   const url =
-            //     pendingJobRequest.payment?.paymentMetadata?.paypalApproval
+            //     pendingJobRequest.payment?.paymentMetadata?.approval
             //       ?.href;
             //   const message = [
             //     t('subscriptions.messages.pendingJob'),

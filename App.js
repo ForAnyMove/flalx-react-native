@@ -1,6 +1,12 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, ActivityIndicator, View, Text } from 'react-native';
-import { useState } from 'react';
+import React, { useState, useEffect, use } from 'react';
+import {
+  StyleSheet,
+  ActivityIndicator,
+  View,
+  Text,
+  TextInput,
+} from 'react-native';
 import {
   ComponentProvider,
   useComponentContext,
@@ -8,15 +14,15 @@ import {
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Platform } from 'react-native';
-import { useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import CustomTextInput from './components/ui/CustomTextInput';
 
 // Экраны
 import AuthScreen from './screens/AuthScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import AppScreen from './screens/AppScreen';
-import { WindowProvider } from './context/windowContext';
+import { useWindowInfo, WindowProvider } from './context/windowContext';
 import { useFonts } from 'expo-font';
 import { WebViewProvider } from './context/webViewContext';
 import { GlobalWebScreen } from './screens/GlobalWebScreen';
@@ -29,6 +35,19 @@ import ForgottenPasswordScreen from './screens/ForgottenPasswordScreen';
 import ResetPasswordScreen from './screens/ResetPasswordScreen';
 import ForgottenPasswordScreenSms from './screens/ForgottenPasswordScreenSms';
 import RegisterScreenWithPassSms from './screens/RegisterScreenWithPassSms';
+import MultiStepLoginScreen from './screens/login/MultiStepLoginScreen';
+import MultiStepRegisterScreen from './screens/register/MultiStepRegisterScreen';
+import { logError } from './utils/log_util';
+import usePushNotifications from './managers/pushNotificationsManager';
+
+// // --- Безопасная глобальная подмена TextInput ---
+// const originalCreateElement = React.createElement;
+// React.createElement = (type, props, ...children) => {
+//   if (type === TextInput) {
+//     return originalCreateElement(CustomTextInput, props, ...children);
+//   }
+//   return originalCreateElement(type, props, ...children);
+// };
 
 // --- Глобальное применение шрифта ---
 const originalTextRender = Text.render;
@@ -68,8 +87,12 @@ function App() {
     authControl,
     forgotPassControl,
   } = useComponentContext();
+
+  usePushNotifications({ session });
   const [isOnboardingShowed, setOnboardingShowed] = useState(false);
   const [onboardingStatusChecked, setOnboardingStatusChecked] = useState(false);
+  const { width, height, isLandscape, isKeyboardVisible, focusedInputs } =
+    useWindowInfo();
 
   useEffect(() => {
     const checkOnboardingStatus = async () => {
@@ -84,7 +107,7 @@ function App() {
           setOnboardingShowed(true);
         }
       } catch (e) {
-        console.error('Failed to load onboarding status', e);
+        logError('Failed to load onboarding status', e);
       } finally {
         setOnboardingStatusChecked(true);
       }
@@ -152,7 +175,7 @@ function App() {
       }
       setOnboardingShowed(true);
     } catch (e) {
-      console.error('Failed to save onboarding status', e);
+      logError('Failed to save onboarding status', e);
       // Fallback for current session
       setOnboardingShowed(true);
     }
@@ -160,19 +183,43 @@ function App() {
 
   let content;
 
+  // const theme = themeController.current;
+
+  // if (!session.status || (session.token && !session.mfaVerified)) {
+  //   if (forgotPassControl.isGoToReset) {
+  //     return <ResetPasswordScreen />;
+  //   }
+  //   if (authControl.isGoToRegister) {
+  //     return <RegisterScreen />;
+  //   }
+  //   return <AuthScreen />;
+  // }
+
+  // if (!onboardingStatusChecked) {
+  //   return <LoadingStub />;
+  // }
+
   // 1. Онбординг
   if (!isOnboardingShowed) {
     content = <OnboardingScreen onFinish={handleOnboardingFinish} />;
   }
   // 2. Авторизация
-  else if (!session.status) {
-  // Авторизация с OTP
+  else if (!(session.status && session.mfaVerified)) {
+    // Авторизация с OTP
     if (authControl.state) {
       content = <AuthScreen />;
     } else {
-      content = <AuthScreenWithPass />;
+      content = (
+        <MultiStepLoginScreen
+          skipMFA={true}
+          onGoToRegister={() => registerControl.goToRegisterScreen()}
+          onGoToForgottenPassword={() => forgotPassControl.switch()}
+        />
+      );
+      // content = <AuthScreenWithPass />;
     }
   }
+
   // 3. Регистрация первого входа
   else if (user?.current?.firstauth) {
     content = <RegisterScreen />;
@@ -185,14 +232,15 @@ function App() {
       </WebSocketProvider>
     );
   }
-
   // Регистрация перед входом
-  // if (registerControl.state) {
-  //   content = <RegisterScreenWithPass />;
-  // }
   if (registerControl.state) {
-    content = <RegisterScreenWithPassSms />;
+    // content = <RegisterScreenWithPass />;
+    content = <MultiStepRegisterScreen skipMFA={true} />;
+    // content = <MultiStepRegisterScreen />;
   }
+  // if (registerControl.state) {
+  //   content = <RegisterScreenWithPassSms />;
+  // }
   // Регистрация перед входом
   // if (forgotPassControl.state) {
   //   content = <ForgottenPasswordScreenSms />;
@@ -203,12 +251,25 @@ function App() {
   if (session.resetPassword) {
     content = <ResetPasswordScreen />;
   }
-  
+
+  // content = <RegisterScreen />;
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={[styles.container, { backgroundColor: themeController.current.backgroundColor }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          { backgroundColor: themeController.current.backgroundColor },
+        ]}
+      >
         <WebViewProvider>
           {isLoader ? <LoadingStub /> : content}
+          {/* <View style={{ position: 'absolute', top: '15%', right: 0, zIndex: 999999999 }}>
+            <Text>Width: {width}</Text>
+            <Text>Height: {height}</Text>
+            <Text>Landscape: {isLandscape ? 'Yes' : 'No'}</Text>
+            <Text>Is Keyboard Visible: {isKeyboardVisible ? 'Yes' : 'No'}</Text>
+            <Text>Focused Inputs: {focusedInputs.length}</Text>
+          </View> */}
           <GlobalWebScreen />
           <StatusBar style='auto' />
         </WebViewProvider>

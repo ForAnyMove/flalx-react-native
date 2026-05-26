@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DARK_THEME, LIGHT_THEME } from "../constants/themes";
+import { logError } from "../utils/log_util";
 
 export default function themeManager() {
   const [activeTheme, setActiveTheme] = useState(LIGHT_THEME);
@@ -29,7 +30,7 @@ export default function themeManager() {
         setActiveTheme(LIGHT_THEME);
       }
     } catch (e) {
-      console.error("Ошибка загрузки темы:", e);
+      logError("Ошибка загрузки темы:", e);
     }
   }
 
@@ -41,7 +42,7 @@ export default function themeManager() {
         await AsyncStorage.setItem("app_theme", themeName);
       }
     } catch (e) {
-      console.error("Ошибка сохранения темы:", e);
+      logInfo("Ошибка сохранения темы:", e);
     }
   }
 

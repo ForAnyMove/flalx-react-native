@@ -6,11 +6,11 @@ import {
   Text,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
 import JobTypeSelector from '../../../components/JobTypeSelector';
 import { FontAwesome6 } from '@expo/vector-icons';
+import JobExpectationsBadge from '../../../components/ui/JobExpectationsBadge';
 import SearchPanel from '../../../components/SearchPanel';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
@@ -25,8 +25,7 @@ export default function DoneScreen({
   const { themeController, jobsController, languageController } =
     useComponentContext();
   const { tField } = useLocalization(languageController.current);
-  const { width, height } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { width, height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
   const [filteredJobs, setFilteredJobs] = useState([]);
@@ -51,6 +50,10 @@ export default function DoneScreen({
       cardMarginBottom: isWebLandscape ? web(8) : mobile(8),
       imageMargin: isWebLandscape ? web(10) : mobile(10),
       descriptionMarginTop: isWebLandscape ? web(2) : mobile(2),
+      personalMarkerVP: isWebLandscape ? web(3) : mobile(3),
+      personalMarkerHP: isWebLandscape ? web(12) : mobile(12),
+      personalMarkerBottomAngleRadius: isWebLandscape ? web(8) : mobile(8),
+      personalMarkerFontSize: isWebLandscape ? web(15) : mobile(15),
     };
   }, [height, isWebLandscape]);
 
@@ -108,6 +111,20 @@ export default function DoneScreen({
         >
           {filteredJobsList.map((job, index) => {
             const hasImage = job.images && job.images.length > 0;
+
+            let extraMarkerStyle = {};
+            let isMarkerExist = false;
+            let extraMarkerColor;
+            let extraMarkerText;
+            if (job?.comments?.length == 0) {
+              isMarkerExist = true;
+              extraMarkerColor = themeController.current?.personalMarkerColor;
+              extraMarkerText = t('extra_markers.rate_me');
+              extraMarkerStyle = {
+                borderWidth: sizes.personalMarkerBorderWidth,
+                borderColor: themeController.current?.personalMarkerColor,
+              };
+            }
             return (
               <TouchableOpacity
                 key={index}
@@ -203,7 +220,50 @@ export default function DoneScreen({
                         {job.description}
                       </Text>
                     ) : null}
+                    <JobExpectationsBadge
+                      expectations={job}
+                      isRTL={isRTL}
+                    />
                   </View>
+                  {job?.comments?.length == 0 && (
+                    <View
+                      style={[
+                        styles.specialMarkerContainer,
+                        {
+                          backgroundColor: extraMarkerColor,
+                          paddingVertical: sizes.personalMarkerVP,
+                          paddingHorizontal: sizes.personalMarkerHP,
+                        },
+                        isRTL
+                          ? {
+                            left: 0,
+                            borderBottomRightRadius: isWebLandscape
+                              ? sizes.personalMarkerBottomAngleRadius
+                              : 0,
+                            borderBottomLeftRadius: isWebLandscape
+                              ? 0
+                              : sizes.personalMarkerBottomAngleRadius,
+                          }
+                          : {
+                            right: 0,
+                            borderBottomLeftRadius:
+                              sizes.personalMarkerBottomAngleRadius,
+                          },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          {
+                            color: '#fff',
+                            // fontWeight: 'bold',
+                            fontSize: sizes.personalMarkerFontSize,
+                          },
+                        ]}
+                      >
+                        {extraMarkerText}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </TouchableOpacity>
             );
@@ -252,4 +312,17 @@ const styles = {
     // fontWeight: '600',
   },
   description: {},
+  badge: {
+    position: 'absolute',
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    // fontWeight: 'bold',
+  },
+  specialMarkerContainer: {
+    position: 'absolute',
+    top: 0,
+  },
 };

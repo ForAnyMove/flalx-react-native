@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Platform, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from 'react-native-geolocation-service';
+import { logError } from '../utils/log_util';
 
 const GEOLOCATION_ENABLED_KEY = '@geolocation_enabled';
 const IP_GEOLOCATION_ENABLED_KEY = '@ip_geolocation_enabled';
@@ -63,7 +64,7 @@ export const useGeolocation = () => {
             const hasPermission = await Geolocation.requestAuthorization('whenInUse');
             return hasPermission === 'granted';
         } catch (err) {
-            console.error('Permission error:', err);
+            logError('Permission error:', err);
             return false;
         }
     }, []);
@@ -108,7 +109,7 @@ export const useGeolocation = () => {
                 setIpGeolocationEnabled(null); // Сбрасываем при каждом запуске
             }
         } catch (error) {
-            console.error('Error loading geolocation settings:', error);
+            logInfo('Error loading geolocation settings:', error);
             setEnabled(false);
             setIpGeolocationEnabled(null);
         } finally {
@@ -121,7 +122,7 @@ export const useGeolocation = () => {
         try {
             await AsyncStorage.setItem(GEOLOCATION_ENABLED_KEY, JSON.stringify(isEnabled));
         } catch (error) {
-            console.error('Error saving geolocation settings:', error);
+            logInfo('Error saving geolocation settings:', error);
         }
     }, []);
 
@@ -134,7 +135,7 @@ export const useGeolocation = () => {
             }
             setIpGeolocationEnabled(isEnabled);
         } catch (error) {
-            console.error('Error saving IP geolocation settings:', error);
+            logInfo('Error saving IP geolocation settings:', error);
         }
     }, []);
 

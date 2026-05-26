@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { addSelfToJobProviders, getJobProducts, isProviderInJob, removeSelfFromJobProviders } from "../src/api/jobs";
+import { addSelfToJobProviders, getJobProducts, isProviderInJob, noticeJobRejection, removeSelfFromJobProviders, wasProviderInJob, selectProvider as selectProviderApi } from "../src/api/jobs";
 import { useGeolocation } from "./useGeolocation";
+import { logError } from "../utils/log_util";
 
 /**
  * jobsManager — агрегирует все списки заявок для вкладок:
@@ -17,7 +18,8 @@ export default function jobsManager({ session, user, geolocation }) {
   const [creatorWaiting, setCreatorWaiting] = useState([]);
   const [creatorInProgress, setCreatorInProgress] = useState([]);
   const [creatorDone, setCreatorDone] = useState([]);
-  const [products, setProducts] = useState([]);
+  const [jobProducts, setJobProducts] = useState([]);
+  const [providerProducts, setProviderProducts] = useState([]);
 
   const [execNew, setExecNew] = useState([]);
   const [execWaiting, setExecWaiting] = useState([]);
@@ -136,7 +138,8 @@ export default function jobsManager({ session, user, geolocation }) {
       setCreatorWaiting(waiting);
       setCreatorInProgress(inProgress);
       setCreatorDone(done);
-      setProducts(products);
+      setJobProducts(products.jobProducts);
+      setProviderProducts(products.providerProducts);
 
     } catch (e) {
       if (!alive.current) return;
@@ -218,12 +221,8 @@ export default function jobsManager({ session, user, geolocation }) {
     await reloadAll();
   }
 
-  async function approveProvider(jobId, executorId) {
-    await safeFetch(`${serverURL}/jobs/${jobId}/assign-executor`, {
-      method: "POST",
-      headers: { ...authHeaders, "Content-Type": "application/json" },
-      body: JSON.stringify({ executorId }),
-    });
+  async function selectProvider(jobId, providerId) {
+    await selectProviderApi(jobId, session, providerId);
     await reloadAll();
   }
 
@@ -239,7 +238,7 @@ export default function jobsManager({ session, user, geolocation }) {
     // try {
     //   const { success, payment } = await addSelfToJobProviders(jobId, session);
     // } catch (e) {
-    //   console.error('Error adding self to job providers:', e);
+    //   logInfo('Error adding self to job providers:', e);
     //   throw e;
     // }
   }
@@ -249,7 +248,7 @@ export default function jobsManager({ session, user, geolocation }) {
       const result = await removeSelfFromJobProviders(jobId, session);
       await reloadAll();
     } catch (e) {
-      console.error('Error removing self from job providers:', e);
+      logError('Error removing self from job providers:', e);
       throw e;
     }
     // await safeFetch(`${serverURL}/jobs/${jobId}/providers`, {
@@ -259,25 +258,33 @@ export default function jobsManager({ session, user, geolocation }) {
     // await reloadAll();
   }
 
-  async function getJobById(jobId) {
-    const res = await fetch(`${serverURL}/jobs/${jobId}`, {
-      headers: authHeaders,
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Failed to fetch job');
-    }
-    return res.json();
-  }
-
   async function checkIsProviderInJob(jobId) {
     try {
       const success = await isProviderInJob(jobId, session);
       return success;
     }
     catch (e) {
-      console.error('Error checking provider in job:', e);
+      logInfo('Error checking provider in job:', e);
       return false;
+    }
+  }
+  async function checkWasProviderInJob(jobId) {
+    try {
+      const success = await wasProviderInJob(jobId, session);
+      return success;
+    }
+    catch (e) {
+      logInfo('Error checking provider in job:', e);
+      return false;
+    }
+  }
+
+  async function noticeJobRejectionAsCreator(jobId) {
+    try {
+      await noticeJobRejection(jobId, session);
+      setCreatorWaiting((prev) => prev.filter((job) => job.status !== 'rejected'));
+    } catch (e) {
+      logInfo('Error noticing job rejection as creator:', e);
     }
   }
 
@@ -316,13 +323,15 @@ export default function jobsManager({ session, user, geolocation }) {
       deleteJob,
       confirmJob,
       markJobDone,
-      approveProvider,
+      selectProvider,
       removeExecutor,
       addProvider,
       removeProvider,
-      getJobById,
-      checkIsProviderInJob
+      checkIsProviderInJob,
+      checkWasProviderInJob,
+      noticeJobRejectionAsCreator
     },
-    products
+    products: jobProducts,
+    providerProduct: providerProducts.length > 0 ? providerProducts[0] : null,
   };
 }

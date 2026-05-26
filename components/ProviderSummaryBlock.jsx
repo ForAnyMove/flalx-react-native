@@ -9,7 +9,6 @@ import {
   View,
   Platform,
   TouchableWithoutFeedback,
-  useWindowDimensions,
 } from 'react-native';
 // import { RFValue } from 'react-native-responsive-fontsize';
 import { useComponentContext } from '../context/globalAppContext';
@@ -23,6 +22,9 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useWebView } from '../context/webViewContext';
 import { useLocalization } from '../src/services/useLocalization';
 import SubscriptionsModal from './SubscriptionsModal';
+import { useNotification } from '../src/render';
+import PurchaseModal from './PurchaseModal';
+import { formatCurrency } from '../utils/currency_formatter';
 
 const ProviderSummaryBlock = ({ user, chooseUser }) => {
   const { t } = useTranslation();
@@ -31,12 +33,14 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
     languageController,
     usersReveal,
     setAppLoading,
-    subscription,
+    providersManager,
     user: currentUser,
+    couponsManagerController,
   } = useComponentContext();
   const { tField } = useLocalization(languageController.current);
   const { openWebView } = useWebView();
-  const { height, isLandscape, width, sidebarWidth } = useWindowInfo();
+  const { showWarning } = useNotification();
+  const { width, height, isLandscape, effectiveSidebarWidth } = useWindowInfo();
   const isRTL = languageController.isRTL;
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -56,43 +60,43 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
         : scaleByHeightMobile(12, height),
       sectionTitleSize: isWebLandscape
         ? scaleByHeight(18, height)
-        : scaleByHeightMobile(14, height),
+        : scaleByHeightMobile(18, height),
       small: isWebLandscape
         ? scaleByHeight(14, height)
-        : scaleByHeightMobile(10, height),
+        : scaleByHeightMobile(14, height),
       avatar: isWebLandscape
         ? scaleByHeight(48, height)
-        : scaleByHeightMobile(33, height),
+        : scaleByHeightMobile(48, height),
       modalAvatar: isWebLandscape
         ? scaleByHeight(112, height)
-        : scaleByHeightMobile(75, height),
+        : scaleByHeightMobile(112, height),
       icon: isWebLandscape
         ? scaleByHeight(24, height)
-        : scaleByHeightMobile(28, height),
+        : scaleByHeightMobile(24, height),
       padding: isWebLandscape ? height * 0.01 : scaleByHeightMobile(10, height),
       paddingHorizontal: isWebLandscape
         ? scaleByHeight(17, height)
-        : scaleByHeightMobile(12, height),
+        : scaleByHeightMobile(17, height),
       cardWidth: isWebLandscape ? '32%' : '100%', // 👈 3 в ряд для web-landscape
       borderRadius: isWebLandscape
         ? scaleByHeight(8, height)
-        : scaleByHeightMobile(5, height),
+        : scaleByHeightMobile(8, height),
       containerHeight: isWebLandscape
         ? scaleByHeight(80, height)
-        : scaleByHeightMobile(70, height),
+        : scaleByHeightMobile(80, height),
       containerWidth: isWebLandscape ? '32%' : '100%',
       logoFont: isWebLandscape
         ? scaleByHeight(24, height)
-        : scaleByHeightMobile(18, height),
+        : scaleByHeightMobile(24, height),
       pagePaddingHorizontal: isWebLandscape
         ? scaleByHeight(24, height)
         : scaleByHeightMobile(15, height),
       modalHeaderPadding: isWebLandscape
         ? scaleByHeight(7, height)
-        : scaleByHeightMobile(10, height),
+        : scaleByHeightMobile(7, height),
       modalHeaderPaddingTop: isWebLandscape
         ? scaleByHeight(32, height)
-        : scaleByHeightMobile(5, height),
+        : scaleByHeightMobile(16, height),
       avatarMarginTop: isWebLandscape
         ? scaleByHeight(24, height)
         : scaleByHeightMobile(8, height),
@@ -101,7 +105,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
         : scaleByHeightMobile(8, height),
       nameSize: isWebLandscape
         ? scaleByHeight(28, height)
-        : scaleByHeightMobile(14, height),
+        : scaleByHeightMobile(28, height),
       professionSize: isWebLandscape
         ? scaleByHeight(20, height)
         : scaleByHeightMobile(12, height),
@@ -113,10 +117,13 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
         : scaleByHeightMobile(6, height),
       infoSectionMarginBottom: isWebLandscape
         ? scaleByHeight(23, height)
-        : scaleByHeightMobile(15, height),
+        : scaleByHeightMobile(16, height),
       unlockContactBtnPaddingHorizontal: isWebLandscape
         ? scaleByHeight(24, height)
         : scaleByHeightMobile(15, height),
+      unlockContactBtnFontSize: isWebLandscape
+        ? scaleByHeight(20, height)
+        : scaleByHeightMobile(20, height),
       iconMargin: isWebLandscape
         ? scaleByHeight(7, height)
         : scaleByHeightMobile(3, height),
@@ -129,7 +136,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
         : scaleByHeightMobile(30, height),
       badgeHeight: isWebLandscape
         ? scaleByHeight(34, height)
-        : scaleByHeightMobile(20, height),
+        : scaleByHeightMobile(34, height),
       badgeGap: isWebLandscape
         ? scaleByHeight(8, height)
         : scaleByHeightMobile(6, height),
@@ -153,20 +160,20 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
         : scaleByHeightMobile(15, height),
       createRequestBtnHeight: isWebLandscape
         ? scaleByHeight(62, height)
-        : scaleByHeightMobile(45, height),
+        : scaleByHeightMobile(62, height),
       createRequestBtnFontSize: isWebLandscape
         ? scaleByHeight(20, height)
-        : scaleByHeightMobile(16, height),
+        : scaleByHeightMobile(20, height),
       mobileBottomContainerPaddingVertical: scaleByHeightMobile(16, height),
       containerPaddingHorizontal: isWebLandscape
         ? scaleByHeight(20, height)
         : scaleByHeightMobile(14, height),
       modalRadius: isWebLandscape
         ? scaleByHeight(8, height)
-        : scaleByHeightMobile(5, height),
+        : scaleByHeightMobile(8, height),
       modalPadding: isWebLandscape
         ? scaleByHeight(45, height)
-        : scaleByHeightMobile(12, height),
+        : scaleByHeightMobile(20, height),
       modalCardW: isWebLandscape ? scaleByHeight(450, height) : '88%',
       modalCrossTopRightPos: isWebLandscape
         ? scaleByHeight(7, height)
@@ -191,11 +198,14 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
         : scaleByHeightMobile(12, height),
       btnH: isWebLandscape
         ? scaleByHeight(62, height)
-        : scaleByHeightMobile(42, height),
+        : scaleByHeightMobile(62, height),
       btnW: isWebLandscape ? scaleByHeight(300, height) : '100%',
       btnMB: isWebLandscape
         ? scaleByHeight(16, height)
         : scaleByHeightMobile(16, height),
+      aboutMaxHeight: isWebLandscape
+        ? scaleByHeight(100, height)
+        : scaleByHeightMobile(100, height),
     }),
     [isWebLandscape, height]
   );
@@ -267,7 +277,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
           fontSize: sizes.logoFont,
         },
         sectionTitle: {
-          marginBottom: sizes.infoSectionMarginBottom / 4,
+          marginBottom: sizes.infoSectionMarginBottom / 2,
           fontSize: sizes.sectionTitleSize,
           color: themeController.current?.textColor,
         },
@@ -308,19 +318,30 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
     phoneNumber,
   } = user;
 
-  const handleUserRevealTry = async () => {
-    try {
-      setAppLoading(true);
-
-      const result = await usersReveal.tryReveal(user.id);
-      if (result.paymentUrl) {
-        openWebView(result.paymentUrl);
-      }
-
-      setAppLoading(false);
-    } catch (error) {
-      console.error('Error revealing user:', error);
+  const handlePurchaseReveal = async (payload) => {
+    const data = await usersReveal.tryReveal(user.id, payload);
+    if (data?.user) {
+      providersManager.appendUserData(user.id, data.user.email, data.user.phoneNumber);
     }
+    return data;
+  };
+
+  const handlePayCouponsReveal = () => {
+    setPurchaseModalVisible(false);
+    setAppLoading(true);
+    usersReveal.tryReveal(user.id, { useCoupon: true })
+      .then((data) => {
+        if (data?.user) {
+          providersManager.appendUserData(user.id, data.user.email, data.user.phoneNumber);
+        }
+        couponsManagerController?.refreshBalance?.();
+      })
+      .catch((e) => {
+        if (e?.response?.status === 400 && e?.response?.data?.code === 'NO_COUPONS_AVAILABLE') {
+          showWarning(t('errors.no_coupons', { defaultValue: 'You have no coupons available' }));
+        }
+      })
+      .finally(() => setAppLoading(false));
   };
 
   return (
@@ -356,7 +377,9 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
             )}
             <View>
               <Text style={dynamicStyles.nameText}>
-                {name} {surname}
+                {usersReveal.contains(userId)
+                  ? `${name} ${surname}`
+                  : `${name?.[0] || ''}. ${surname?.[0] || ''}.`}
               </Text>
               <Text style={dynamicStyles.professionText}>
                 {LICENSES[professions?.[0]]}
@@ -393,7 +416,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                   paddingBottom: sizes.padding,
                   paddingHorizontal: sizes.pagePaddingHorizontal,
                   // Веб-альбомная: узкая панель справа, с пустой кликабельной зоной слева
-                  width: isWebLandscape ? width - sidebarWidth : '100%',
+                  // width: isWebLandscape ? width - effectiveSidebarWidth : '100%',
                   alignSelf: isRTL ? 'flex-start' : 'flex-end',
                   height: '100%',
                 }}
@@ -465,7 +488,9 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         : sizes.professionMarginBottom,
                     }}
                   >
-                    {name} {surname}
+                    {usersReveal.contains(userId)
+                      ? `${name} ${surname}`
+                      : `${name?.[0] || ''}. ${surname?.[0] || ''}.`}
                   </Text>
                   {professions?.[0] && (
                     <Text
@@ -656,6 +681,8 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         style={{
                           fontSize: sizes.small,
                           color: themeController.current?.unactiveTextColor,
+                          maxHeight: sizes.aboutMaxHeight,
+                          overflow: 'auto',
                         }}
                       >
                         {about}
@@ -680,6 +707,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         {t('profile.contact_info')}
                       </Text>
                       {!usersReveal.contains(user.id) ? (
+                        // {true ? (
                         <TouchableOpacity
                           style={[
                             styles.primaryBtn,
@@ -696,7 +724,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         >
                           <Text
                             style={{
-                              fontSize: sizes.professionSize,
+                              fontSize: sizes.unlockContactBtnFontSize,
                               color:
                                 themeController.current?.buttonTextColorPrimary,
                             }}
@@ -859,201 +887,18 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
         </TouchableWithoutFeedback>
 
         {/* OPEN CONTACT PURCHASE MODAL */}
-        <Modal visible={purchaseModalVisible} animationType='fade' transparent>
-          {/* кликабельная подложка с отступом под сайдбар на web-landscape */}
-          <View
-            style={[
-              styles.backdrop,
-              { flexDirection: isRTL ? 'row-reverse' : 'row' },
-            ]}
-          >
-            {/* рабочая область — центрируем карточку */}
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={() => setPurchaseModalVisible(false)}
-              style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}
-            >
-              <View
-                style={[
-                  styles.centerArea,
-                  // { width: isWebLandscape ? width - sidebarWidth : '100%' },
-                  { width: '100%' },
-                ]}
-              >
-                {/* сама карточка; клики внутри НЕ закрывают */}
-                <TouchableOpacity
-                  activeOpacity={1}
-                  onPress={(e) => e.stopPropagation()}
-                  style={[
-                    styles.modalCard,
-                    {
-                      backgroundColor: themeController.current?.backgroundColor,
-                      borderRadius: sizes.modalRadius,
-                      padding: sizes.modalPadding,
-                      width: sizes.modalCardW,
-                      position: 'relative',
-                      alignItems: 'center',
-                    },
-                  ]}
-                >
-                  <TouchableOpacity
-                    onPress={() => setPurchaseModalVisible(false)}
-                    style={{
-                      position: 'absolute',
-                      top: sizes.modalCrossTopRightPos,
-                      right: sizes.modalCrossTopRightPos,
-                    }}
-                  >
-                    <Image
-                      source={icons.cross}
-                      style={{
-                        width: sizes.iconSize,
-                        height: sizes.iconSize,
-                        tintColor: themeController.current?.textColor,
-                      }}
-                      resizeMode='contain'
-                    />
-                  </TouchableOpacity>
-                  {/* заголовок */}
-                  <Text
-                    style={{
-                      fontSize: sizes.modalTitle,
-                      fontFamily: 'Rubik-Bold',
-                      color: themeController.current?.textColor,
-                      textAlign: 'center',
-                      marginBottom: sizes.modalTitleMarginBottom,
-                    }}
-                  >
-                    {t('providerSection.modalContactPopupTitle', {
-                      defaultValue:
-                        'Select a method for receiving information about this contact',
-                    })}
-                  </Text>
-
-                  {/* кнопка подтверждения с ценой */}
-                  <TouchableOpacity
-                    onPress={() => {
-                      handleCreate();
-                      setPurchaseModalVisible(false);
-                    }}
-                    style={{
-                      height: sizes.btnH,
-                      width: sizes.btnW,
-                      borderRadius: sizes.modalRadius,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderWidth: 1,
-                      borderColor:
-                        themeController.current?.buttonColorPrimaryDefault,
-                      marginBottom: sizes.btnMB,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: sizes.modalSub,
-                        color:
-                          themeController.current?.buttonColorPrimaryDefault,
-                      }}
-                    >
-                      {t('showJob.buttons.buyForPrice', {
-                        defaultValue: 'Buy for 1.50$',
-                        price: '1.50',
-                      })}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {/* кнопка подтверждения с купонами */}
-                  <TouchableOpacity
-                    onPress={() => {
-                      setPurchaseModalVisible(false);
-                    }}
-                    style={{
-                      height: sizes.btnH,
-                      width: sizes.btnW,
-                      borderRadius: sizes.modalRadius,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderWidth: 1,
-                      borderColor:
-                        themeController.current?.buttonColorSecondaryDefault,
-                      marginBottom: sizes.btnMB,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      flexDirection: isRTL ? 'row-reverse' : 'row',
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: sizes.modalSub,
-                        color:
-                          themeController.current?.buttonColorSecondaryDefault,
-                      }}
-                    >
-                      {t('showJob.buttons.buyForCoupons', {
-                        defaultValue: 'Buy for 1',
-                        count: 1,
-                      })}
-                    </Text>
-                    <Image
-                      source={icons.coupon}
-                      style={{
-                        width: sizes.iconSize,
-                        height: sizes.iconSize,
-                        tintColor:
-                          themeController.current?.buttonColorSecondaryDefault,
-                      }}
-                    />
-                    <Text
-                      style={[
-                        {
-                          color:
-                            themeController.current
-                              ?.buttonColorSecondaryDefault,
-                          fontSize: sizes.modalSub,
-                        },
-                      ]}
-                    >
-                      {` (${currentUser.current?.coupons || 0})`}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {/* кнопка тарифов */}
-                  {/* {subscription.current == null && */}
-                  {true && (
-                    <TouchableOpacity
-                      onPress={() => {
-                        setPlansModalVisible(true);
-                        setPurchaseModalVisible(false);
-                      }}
-                      style={{
-                        height: sizes.btnH,
-                        width: sizes.btnW,
-                        borderRadius: sizes.modalRadius,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor:
-                          themeController.current?.buttonColorPrimaryDefault,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: sizes.modalSub,
-                          color:
-                            themeController.current?.buttonTextColorPrimary,
-                        }}
-                      >
-                        {t('newJob.statusModal.buttons.viewPlans', {
-                          defaultValue: 'See pricing plans',
-                        })}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </Modal>
-
+        <PurchaseModal
+          visible={purchaseModalVisible}
+          onClose={() => setPurchaseModalVisible(false)}
+          type='regular'
+          price={usersReveal?.product ? `${usersReveal.product.price} ${usersReveal.product.currency}` : ''}
+          onPurchase={handlePurchaseReveal}
+          onPayWithCoupons={handlePayCouponsReveal}
+          onOpenSubscriptions={() => {
+            setPurchaseModalVisible(false);
+            setPlansModalVisible(true);
+          }}
+        />
         {/* PLANS MODAL (простая заглушка, такой же фон/центрирование) */}
         <SubscriptionsModal
           visible={plansModalVisible}

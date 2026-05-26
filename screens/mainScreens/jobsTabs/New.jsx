@@ -7,7 +7,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import JobTypeSelector from '../../../components/JobTypeSelector';
 import SearchPanel from '../../../components/SearchPanel';
@@ -16,6 +15,7 @@ import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import { useLocalization } from '../../../src/services/useLocalization';
+import { logInfo } from '../../../utils/log_util';
 
 export default function NewScreen({
   setShowJobModalVisible,
@@ -25,8 +25,7 @@ export default function NewScreen({
   const { themeController, jobsController, languageController, geolocationController } =
     useComponentContext();
   const { tField } = useLocalization(languageController.current);
-  const { height } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
   const [filteredJobs, setFilteredJobs] = useState([]);
@@ -36,7 +35,7 @@ export default function NewScreen({
 
   useEffect(() => {
     if (jobsController && jobsController.reloadExecutor) {
-      console.log('Reloading executor jobs for New tab');
+      logInfo('Reloading executor jobs for New tab');
 
       jobsController.reloadExecutor();
     }
@@ -70,21 +69,21 @@ export default function NewScreen({
 
   const filteredJobsList =
     jobsController == null ||
-    jobsController.executor == null ||
-    jobsController.executor.new == null
+      jobsController.executor == null ||
+      jobsController.executor.new == null
       ? []
       : jobsController.executor.new
-          .filter((job) =>
-            filteredJobs.length > 0
-              ? filteredJobs.includes(job.type.key) ||
-                filteredJobs.includes(job.subType.key)
-              : true
+        .filter((job) =>
+          filteredJobs.length > 0
+            ? filteredJobs.includes(job.type.key) ||
+            filteredJobs.includes(job.subType.key)
+            : true
+        )
+        .filter((job) =>
+          [tField(job.type, 'name'), job.description].some((field) =>
+            field?.toLowerCase()?.includes(searchValue?.toLowerCase())
           )
-          .filter((job) =>
-            [tField(job.type, 'name'), job.description].some((field) =>
-              field?.toLowerCase()?.includes(searchValue?.toLowerCase())
-            )
-          );
+        );
 
   return (
     <View
@@ -234,22 +233,22 @@ export default function NewScreen({
                               ?.defaultBlocksMockBackground,
                           ...(isRTL
                             ? {
-                                marginLeft: sizes.imageMargin,
-                                marginRight: 0,
-                              }
+                              marginLeft: sizes.imageMargin,
+                              marginRight: 0,
+                            }
                             : {
-                                marginRight: sizes.imageMargin,
-                                marginLeft: 0,
-                              }),
+                              marginRight: sizes.imageMargin,
+                              marginLeft: 0,
+                            }),
                           ...(isRTL && Platform.OS === 'web'
                             ? {
-                                borderTopRightRadius: sizes.cardRadius * 0.6,
-                                borderBottomRightRadius: sizes.cardRadius * 0.6,
-                              }
+                              borderTopRightRadius: sizes.cardRadius * 0.6,
+                              borderBottomRightRadius: sizes.cardRadius * 0.6,
+                            }
                             : {
-                                borderTopLeftRadius: sizes.cardRadius * 0.6,
-                                borderBottomLeftRadius: sizes.cardRadius * 0.6,
-                              }),
+                              borderTopLeftRadius: sizes.cardRadius * 0.6,
+                              borderBottomLeftRadius: sizes.cardRadius * 0.6,
+                            }),
                         },
                       ]}
                     >
@@ -313,19 +312,19 @@ export default function NewScreen({
                           },
                           isRTL
                             ? {
-                                left: 0,
-                                borderBottomRightRadius: isWebLandscape
-                                  ? sizes.personalMarkerBottomAngleRadius
-                                  : 0,
-                                borderBottomLeftRadius: isWebLandscape
-                                  ? 0
-                                  : sizes.personalMarkerBottomAngleRadius,
-                              }
+                              left: 0,
+                              borderBottomRightRadius: isWebLandscape
+                                ? sizes.personalMarkerBottomAngleRadius
+                                : 0,
+                              borderBottomLeftRadius: isWebLandscape
+                                ? 0
+                                : sizes.personalMarkerBottomAngleRadius,
+                            }
                             : {
-                                right: 0,
-                                borderBottomLeftRadius:
-                                  sizes.personalMarkerBottomAngleRadius,
-                              },
+                              right: 0,
+                              borderBottomLeftRadius:
+                                sizes.personalMarkerBottomAngleRadius,
+                            },
                         ]}
                       >
                         <Text

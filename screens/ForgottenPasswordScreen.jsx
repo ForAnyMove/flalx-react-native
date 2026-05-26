@@ -12,12 +12,14 @@ import {
   Animated,
   ActivityIndicator,
   Image,
-  useWindowDimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
+import { logError } from '../utils/log_util';
+import { useWindowInfo } from '../context/windowContext';
+import CustomTextInput from '../components/ui/CustomTextInput';
 
 const OTP_LENGTH = 6;
 
@@ -28,8 +30,7 @@ export default function ForgottenPasswordScreen() {
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
 
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const [step, setStep] = useState('email');
@@ -217,7 +218,7 @@ export default function ForgottenPasswordScreen() {
       setShowResendButton(false); // Начинаем с ссылки "Не получил код"
       animateStepChange('otp');
     } catch (e) {
-      console.error('Ошибка при отправке кода:', e.message);
+      logError('Ошибка при отправке кода:', e.message);
       if (e.message && e.message.includes('after')) {
         handleCooldownError(e);
         animateStepChange('otp'); // Все равно переходим на экран OTP
@@ -243,7 +244,7 @@ export default function ForgottenPasswordScreen() {
       }
       startTimer(60, 'standard'); // Сбрасываем таймер на 60 секунд в стандартном режиме
     } catch (e) {
-      console.error('Ошибка при переотправке кода:', e.message);
+      logInfo('Ошибка при переотправке кода:', e.message);
       if (e.message && e.message.includes('after')) {
         handleCooldownError(e);
       } else {
@@ -292,7 +293,7 @@ export default function ForgottenPasswordScreen() {
       await forgotPassControl?.switch();
     } catch (e) {
       // например: 403 Forbidden / Token has expired or is invalid
-      console.error('Ошибка проверки кода:', e);
+      logInfo('Ошибка проверки кода:', e);
       setOtpError(t('auth.invalid_code'));
       triggerShake();
     } finally {
@@ -403,14 +404,14 @@ export default function ForgottenPasswordScreen() {
                     },
                     isWebLandscape
                       ? {
-                          marginBottom: sizes.webLandscapeLabelMarginBottom,
-                        }
+                        marginBottom: sizes.webLandscapeLabelMarginBottom,
+                      }
                       : null,
                   ]}
                 >
                   {t('auth.email_label')}
                 </Text>
-                <TextInput
+                <CustomTextInput
                   ref={emailInputRef}
                   style={[
                     styles.input,
@@ -427,12 +428,12 @@ export default function ForgottenPasswordScreen() {
                       marginBottom: sizes.webLandscapeInputMarginBottom,
                     },
                     Platform.OS === 'web' &&
-                      isLandscape && {
-                        outlineStyle: 'none',
-                        outlineWidth: 0,
-                        outlineColor: 'transparent',
-                        boxShadow: 'none',
-                      },
+                    isLandscape && {
+                      outlineStyle: 'none',
+                      outlineWidth: 0,
+                      outlineColor: 'transparent',
+                      boxShadow: 'none',
+                    },
                   ]}
                   placeholder='name@example.com'
                   placeholderTextColor={theme.formInputPlaceholderColor}
@@ -573,7 +574,7 @@ export default function ForgottenPasswordScreen() {
                 ]}
               >
                 {Array.from({ length: OTP_LENGTH }).map((_, i) => (
-                  <TextInput
+                  <CustomTextInput
                     key={i}
                     ref={(el) => (inputsRef.current[i] = el)}
                     style={[
@@ -775,7 +776,7 @@ function PrimaryOutlineButton({
         height: isLandscape && Platform.OS === 'web' ? scaleByHeight(62, height) : scaleByHeightMobile(62, height),
         width: isLandscape && Platform.OS === 'web' ? scaleByHeight(330, height) : '100%',
         marginTop: isLandscape && Platform.OS === 'web' ? scaleByHeight(38, height) : scaleByHeightMobile(12, height),
-        borderRadius: isLandscape && Platform.OS === 'web' ? scaleByHeight(8, height) : scaleByHeightMobile(12, height),  
+        borderRadius: isLandscape && Platform.OS === 'web' ? scaleByHeight(8, height) : scaleByHeightMobile(12, height),
       },
       outlineBtnText: {
         fontSize: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
@@ -797,10 +798,10 @@ function PrimaryOutlineButton({
         buttonDynamicStyles.outlineBtn,
         { borderColor: theme.primaryColor, opacity: disabled ? 0.6 : 1 },
         isLandscape &&
-          Platform.OS === 'web' && {
-            width: scaleByHeight(330, height),
-            height: scaleByHeight(62, height),
-          },
+        Platform.OS === 'web' && {
+          width: scaleByHeight(330, height),
+          height: scaleByHeight(62, height),
+        },
         containerStyle,
       ]}
     >

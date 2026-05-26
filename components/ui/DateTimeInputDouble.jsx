@@ -6,22 +6,23 @@ import {
   Text,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
+import { useWindowInfo } from '../../context/windowContext';
 
 export default function DateTimeInputDouble({
   label,
   value,
   onChange,
   readOnly = false,
+  error = false,
 }) {
   const { themeController } = useComponentContext();
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const { width, height } = useWindowDimensions();
-  const isWebLandscape = Platform.OS === 'web' && width > height;
+  const { width, height, isLandscape } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const date = value ? new Date(value) : new Date();
 
@@ -79,13 +80,14 @@ export default function DateTimeInputDouble({
           marginRight: sizes.containerMarginRight,
           height: sizes.containerHeight,
         },
+        error && { borderWidth: 1, borderColor: 'red' },
       ]}
     >
       <Text
         style={{
           fontWeight: 'bold',
           marginBottom: sizes.labelMarginBottom,
-          color: themeController.current?.textColor,
+          color: error ? 'red' : themeController.current?.textColor,
           fontSize: sizes.font,
         }}
       >

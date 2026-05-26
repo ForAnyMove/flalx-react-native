@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  useWindowDimensions,
   Image,
+  ScrollView,
 } from 'react-native';
 import { useWindowInfo } from '../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
@@ -15,17 +15,22 @@ import { useTranslation } from 'react-i18next';
 import AutocompletePicker from './ui/AutocompletePicker';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
+import { useNotification } from '../src/render';
+import CustomTextInput from './ui/CustomTextInput';
+import CustomExperiencePicker from './ui/CustomExperiencePicker';
+import AddProfessionModal from './AddProfessionModal';
 
 const RequestProfessionModal = ({
   visible,
   onClose,
   onRequested,
   onSwitchToSystemProfessions,
+  showTabs,
+  mode, // 'register' — hides switch links, shows info/warning texts
 }) => {
   const { themeController, languageController, jobTypesController } =
     useComponentContext();
-  const { height, width } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
@@ -34,6 +39,8 @@ const RequestProfessionModal = ({
 
   const [type, setType] = useState(null);
   const [subType, setSubType] = useState(null);
+  const [experience, setExperience] = useState(null);
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
 
   const jobTypesOptions = useMemo(() => {
     const options = {};
@@ -59,23 +66,34 @@ const RequestProfessionModal = ({
     return options;
   }, [jobTypesController.jobTypesWithSubtypes, type]);
 
+  const requiresVerification = useMemo(() => {
+    if (!type || !subType) return false;
+    const typeObj = jobTypesController.jobTypesWithSubtypes?.find((t) => t.key === type);
+    const subtypeObj = typeObj?.subtypes?.find((st) => st.key === subType);
+    if (!typeObj || !subtypeObj) return false;
+    return jobTypesController.checkIfVerificationNeeded({
+      typeId: typeObj.id,
+      subTypeId: subtypeObj.id,
+    });
+  }, [type, subType, jobTypesController.jobTypesWithSubtypes]);
+
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
     const mobile = (size) => scaleByHeightMobile(size, height);
     const scale = isWebLandscape ? web : mobile;
 
     return {
-      modalWidth: isWebLandscape ? scale(450) : width,
+      modalWidth: isWebLandscape ? scale(450) : width*0.9,
       modalMaxHeight: isWebLandscape ? height * 0.8 : height,
       borderRadius: scale(8),
       padding: scale(24),
       paddingVertical: scale(40),
       paddingHorizontal: scale(60),
       headerBottomMargin: scale(16),
-      titleSize: scale(24),
+      titleSize: isWebLandscape ? scale(24) : scale(20),
       iconSize: scale(24),
       crossSpace: scale(8),
-      descriptionSize: scale(14),
+      descriptionSize: isWebLandscape ? scale(14) : scale(13),
       successDescriptionSize: scale(18),
       didntFindTextMarginBottom: scale(16),
       inputHeight: scale(64),
@@ -89,26 +107,50 @@ const RequestProfessionModal = ({
       successTitleMarginTop: scale(24),
       successDescriptionMarginTop: scale(8),
       successButtonMarginTop: scale(32),
+      infoTextSize: isWebLandscape ? scale(12) : scale(12),
+      infoTextMarginTop: scale(12),
+      verificationWarningMarginBottom: scale(8),
     };
   }, [height, width, isWebLandscape]);
 
-  const handleSend = async () => {
-    const data = {
-      job_type_id: type
-        ? jobTypesController.jobTypesWithSubtypes.find((t) => t.key === type)
-            ?.id
-        : null,
-      job_subtype_id:
-        type && subType
-          ? jobTypesController.jobTypesWithSubtypes
-              .find((t) => t.key === type)
-              ?.subtypes.find((st) => st.key === subType)?.id
-          : null,
+  const handleSend = () => {
+    if (requiresVerification) {
+      setIsAddModalVisible(true);
+      return;
+    }
+    const typeObj = jobTypesController.jobTypesWithSubtypes?.find((t) => t.key === type);
+    const subtypeObj = typeObj?.subtypes?.find((st) => st.key === subType);
+    onRequested({
+      job_type_id: typeObj?.id ?? null,
+      job_subtype_id: subtypeObj?.id ?? null,
       passport_photo_urls: null,
       certificate_photo_urls: null,
-    };
+      experience,
+    });
+  };
 
-    onRequested(data);
+  const handleDocumentsProvided = (docs) => {
+    const typeObj = jobTypesController.jobTypesWithSubtypes?.find((t) => t.key === type);
+    const subtypeObj = typeObj?.subtypes?.find((st) => st.key === subType);
+    onRequested({
+      job_type_id: typeObj?.id ?? null,
+      job_subtype_id: subtypeObj?.id ?? null,
+      passport_photo_urls: docs.passport_photos,
+      certificate_photo_urls: docs.certificate_photos,
+      experience,
+    });
+  };
+
+  const handleAddModalClose = () => {
+    setIsAddModalVisible(false);
+  };
+
+  const handleSwitch = () => {
+    onSwitchToSystemProfessions();
+    if (showTabs) {
+      const newIndex = orderedTabs.indexOf('system_professions');
+      handleTabPress(newIndex);
+    }
   };
 
   const handleClose = () => {
@@ -118,7 +160,14 @@ const RequestProfessionModal = ({
       setIsSubmitted(false);
       setType(null);
       setSubType(null);
+      setExperience(null);
+      setIsAddModalVisible(false);
     }, 300);
+  };
+
+  const handleSelect = (type, subtype) => {
+    setType(type);
+    setSubType(subtype);
   };
 
   const styles = StyleSheet.create({
@@ -251,7 +300,8 @@ const RequestProfessionModal = ({
   });
 
   return (
-    <Modal visible={visible} transparent={true} animationType='fade'>
+    <>
+    <Modal visible={visible && !isAddModalVisible} transparent={true} animationType='fade'>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           {isSubmitted ? (
@@ -316,6 +366,7 @@ const RequestProfessionModal = ({
                 onValueChange={setType}
                 setValue={setType}
                 selectedValue={type}
+                value={type}
                 isRTL={isRTL}
                 containerStyle={{
                   marginBottom: sizes.inputGap,
@@ -324,23 +375,27 @@ const RequestProfessionModal = ({
                 }}
                 arrowIcon={true}
               />
-              <View
-                style={{
-                  width: sizes.inputWidth,
-                  alignItems: isRTL ? 'flex-end' : 'flex-start',
-                }}
-              >
-                <TouchableOpacity
-                  onPress={() => {
-                    onSwitchToSystemProfessions();
-                    onClose();
+              {!mode && (
+                <View
+                  style={{
+                    width: sizes.inputWidth,
+                    alignItems: isRTL ? 'flex-end' : 'flex-start',
                   }}
                 >
-                  <Text style={styles.didntFindText}>
-                    {t('professions.request_modal.profession_not_found')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+                  <TouchableOpacity onPress={handleSwitch}>
+                    <Text
+                      style={[
+                        styles.didntFindText,
+                        {
+                          textDecorationLine: 'underline',
+                        },
+                      ]}
+                    >
+                      {t('professions.request_modal.profession_not_found')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
               <AutocompletePicker
                 label={t('professions.request_modal.subtype_label')}
                 placeholder={t('professions.request_modal.subtype_placeholder')}
@@ -348,6 +403,7 @@ const RequestProfessionModal = ({
                 onValueChange={setSubType}
                 setValue={setSubType}
                 selectedValue={subType}
+                value={subType}
                 isRTL={isRTL}
                 containerStyle={{
                   marginBottom: sizes.inputGap,
@@ -356,23 +412,67 @@ const RequestProfessionModal = ({
                 }}
                 arrowIcon={true}
               />
-              <View
-                style={{
-                  width: sizes.inputWidth,
-                  alignItems: isRTL ? 'flex-end' : 'flex-start',
-                }}
-              >
-                <TouchableOpacity
-                  onPress={() => {
-                    onSwitchToSystemProfessions();
-                    onClose();
+              {!mode ? (
+                <View
+                  style={{
+                    width: sizes.inputWidth,
+                    alignItems: isRTL ? 'flex-end' : 'flex-start',
                   }}
                 >
-                  <Text style={styles.didntFindText}>
-                    {t('professions.request_modal.subtype_not_found')}
+                  <TouchableOpacity onPress={handleSwitch}>
+                    <Text
+                      style={[
+                        styles.didntFindText,
+                        {
+                          textDecorationLine: 'underline',
+                        },
+                      ]}
+                    >
+                      {t('professions.request_modal.subtype_not_found')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={{ width: sizes.inputWidth, marginTop: sizes.infoTextMarginTop }}>
+                  {requiresVerification && (
+                    <Text
+                      style={{
+                        fontSize: sizes.infoTextSize,
+                        color: themeController.current?.warningTextColor,
+                        textAlign: 'center',
+                        marginBottom: sizes.verificationWarningMarginBottom,
+                        lineHeight: sizes.infoTextSize * 1.4,
+                        fontFamily: 'Rubik-SemiBold',
+                      }}
+                    >
+                      {t('professions.request_modal_verification_warning')}
+                    </Text>
+                  )}
+                  <Text
+                    style={{
+                      fontSize: sizes.infoTextSize,
+                      color: themeController.current?.formInputLabelColor,
+                      textAlign: 'center',
+                      lineHeight: sizes.infoTextSize * 1.4,
+                    }}
+                  >
+                    {t('professions.request_modal_not_found_info')}
                   </Text>
-                </TouchableOpacity>
-              </View>
+                </View>
+              )}
+
+              {requiresVerification && (
+                <CustomExperiencePicker
+                  label={t('register.experience_label')}
+                  selectedValue={experience}
+                  onValueChange={setExperience}
+                  isRTL={isRTL}
+                  containerStyle={{
+                    width: sizes.inputWidth,
+                  }}
+                  bottomDropdown={false}
+                />
+              )}
 
               <TouchableOpacity
                 disabled={!type || !subType || type === '' || subType === ''}
@@ -385,7 +485,7 @@ const RequestProfessionModal = ({
                 onPress={handleSend}
               >
                 <Text style={styles.sendButtonText}>
-                  {t('professions.request_modal.send_button')}
+                  {requiresVerification ? t('common.next') : t('professions.request_modal.send_button')}
                 </Text>
               </TouchableOpacity>
             </>
@@ -393,6 +493,12 @@ const RequestProfessionModal = ({
         </View>
       </View>
     </Modal>
+    <AddProfessionModal
+      visible={visible && isAddModalVisible}
+      onClose={handleAddModalClose}
+      onSubmit={handleDocumentsProvided}
+    />
+    </>
   );
 };
 

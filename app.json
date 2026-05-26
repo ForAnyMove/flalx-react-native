@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "FlalxRN",
+    "name": "Flalx",
     "slug": "flalx",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,6 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.yulab.flalx",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
@@ -30,7 +31,10 @@
       "package": "com.yulab.flalx"
     },
     "web": {
-      "favicon": "./assets/logo/favicon.png"
+      "favicon": "./assets/logo/favicon.png",
+      "name": "Flalx - Professional Services",
+      "shortName": "Flalx",
+      "description": "Flalx is a platform that connects users with professional services easily and efficiently."
     },
     "extra": {
       "eas": {
@@ -40,7 +44,16 @@
     "owner": "yulab",
     "plugins": [
       "expo-router",
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon/notification-icon.png",
+          "color": "#ffffff",
+          "defaultChannel": "default",
+          "sounds": []
+        }
+      ]
     ]
   }
 }

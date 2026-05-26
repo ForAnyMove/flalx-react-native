@@ -14,6 +14,7 @@ import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocalization } from '../src/services/useLocalization';
+import { useWindowInfo } from '../context/windowContext';
 
 export default function JobTypeSelector({
   selectedTypes,
@@ -22,8 +23,7 @@ export default function JobTypeSelector({
   subtypesOnly = false,
 }) {
   const { t } = useTranslation();
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const { themeController, languageController, jobTypesController } = useComponentContext();
   const { tField } = useLocalization(languageController.current);
 
@@ -106,16 +106,23 @@ export default function JobTypeSelector({
   const jobSubTypesOptions = useMemo(() => {
     const options = {};
     if (jobTypesController.jobTypesWithSubtypes) {
-      jobTypesController.jobTypesWithSubtypes.forEach(type => {
-        if (!subtypesOnly) options[type.key] = tField(type, 'name');
+      const approvedTypeIds = new Set(jobTypesController.approvedProfessions.filter(p => p.startsWith('type_')).map(p => p.replace('type_', '')));
+      const approvedSubTypeIds = new Set(jobTypesController.approvedProfessions.filter(p => p.startsWith('subtype_')).map(p => p.replace('subtype_', '')));
 
-        type.subtypes.forEach((subtype) => {
-          options[subtype.key] = tField(subtype, 'name');
-        });
+      jobTypesController.jobTypesWithSubtypes.forEach(type => {
+        if (approvedTypeIds.has(type.id)) {
+          if (!subtypesOnly) options[type.key] = tField(type, 'name');
+
+          type.subtypes.forEach((subtype) => {
+            if (approvedSubTypeIds.has(subtype.id)) {
+              options[subtype.key] = tField(subtype, 'name');
+            }
+          });
+        }
       });
     }
     return options;
-  }, [jobTypesController.jobTypesWithSubtypes, languageController.current]);
+  }, [jobTypesController.jobTypesWithSubtypes, jobTypesController.approvedProfessions, languageController.current, subtypesOnly]);
 
   useEffect(() => {
     const scrollElement = scrollRef.current;
@@ -149,6 +156,7 @@ export default function JobTypeSelector({
       StyleSheet.create({
         container: {
           width: sizes.containerWidth,
+          maxWidth: '100%',
           marginBottom: sizes.containerMarginBottom,
           padding: sizes.containerPadding,
         },

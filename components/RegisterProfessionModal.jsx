@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  useWindowDimensions,
   TextInput,
   Image,
 } from 'react-native';
@@ -17,12 +16,14 @@ import AutocompletePicker from './ui/AutocompletePicker';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
 import { useNotification } from '../src/render';
+import CustomTextInput from './ui/CustomTextInput';
+import CustomExperiencePicker from './ui/CustomExperiencePicker';
+import AddProfessionModal from './AddProfessionModal';
 
-const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
+const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) => {
   const { themeController, languageController, jobTypesController, setAppLoading } = useComponentContext();
   const { showWarning, showError } = useNotification();
-  const { height, width } = useWindowDimensions();
-  const { isLandscape } = useWindowInfo();
+  const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
@@ -30,6 +31,15 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
   const [type, setType] = useState(null);
   const [subtype, setSubtype] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [experience, setExperience] = useState(null);
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+
+  const requiresVerification = useMemo(() => {
+    if (!type) return false;
+    const typeObj = jobTypesController.jobTypesWithSubtypes?.find((t) => t.key === type);
+    if (!typeObj) return false;
+    return typeObj.requires_verification === true;
+  }, [type, jobTypesController.jobTypesWithSubtypes]);
 
   const jobTypesOptions = useMemo(() => {
     const options = {};
@@ -45,17 +55,17 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
     const scale = isWebLandscape ? web : mobile;
 
     return {
-      modalWidth: isWebLandscape ? scale(450) : width,
+      modalWidth: isWebLandscape ? scale(450) : width*0.9,
       modalMaxHeight: isWebLandscape ? height * 0.8 : height,
       borderRadius: scale(8),
       padding: scale(24),
       paddingVertical: scale(40),
       paddingHorizontal: scale(60),
       headerBottomMargin: scale(16),
-      titleSize: scale(24),
+      titleSize: isWebLandscape ? scale(24) : scale(20),
       iconSize: scale(24),
       crossSpace: scale(8),
-      descriptionSize: scale(14),
+      descriptionSize: isWebLandscape ? scale(14) : scale(13),
       successDescriptionSize: scale(18),
       descriptionMarginBottom: scale(32),
       inputHeight: scale(64),
@@ -88,12 +98,18 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
       return;
     }
 
+    if (requiresVerification) {
+      setIsAddModalVisible(true);
+      return;
+    }
+
     setAppLoading(true);
 
     jobTypesController.userToSystemRequest.makeRequest({
       requested_type_name: jobTypesOptions[type] || type,
       requested_subtype_name: subtype.trim(),
       selected_type_id: jobTypesOptions[type] ? jobTypesController.jobTypesWithSubtypes.find(t => t.key === type)?.id : null,
+      experience,
     }).then((data) => {
       setIsSubmitted(true);
       onRequestDone && onRequestDone(data);
@@ -110,13 +126,49 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
     });
   };
 
+  const handleDocumentsProvided = (docs) => {
+    setAppLoading(true);
+    jobTypesController.userToSystemRequest.makeRequest({
+      requested_type_name: jobTypesOptions[type] || type,
+      requested_subtype_name: subtype.trim(),
+      selected_type_id: jobTypesOptions[type] ? jobTypesController.jobTypesWithSubtypes.find(t => t.key === type)?.id : null,
+      passport_photo_urls: docs.passport_photos,
+      certificate_photo_urls: docs.certificate_photos,
+      experience,
+    }).then((data) => {
+      setIsAddModalVisible(false);
+      setIsSubmitted(true);
+      onRequestDone && onRequestDone(data);
+    }).catch((error) => {
+      showError(t('professions.errors.failed_to_send_request', { error }), [
+        {
+          title: 'OK',
+          backgroundColor: '#EF4444',
+          textColor: '#FFFFFF'
+        },
+      ]);
+    }).finally(() => {
+      setAppLoading(false);
+    });
+  };
+
+  const handleAddModalClose = () => {
+    setIsAddModalVisible(false);
+  };
+
   const handleClose = () => {
-    onClose();
+    if (onBack) {
+      onBack();
+    } else {
+      onClose();
+    }
     // Reset state after a short delay to allow closing animation to finish
     setTimeout(() => {
       setIsSubmitted(false);
       setType(null);
       setSubtype('');
+      setExperience(null);
+      setIsAddModalVisible(false);
     }, 300);
   };
 
@@ -258,7 +310,8 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
   });
 
   return (
-    <Modal visible={visible} transparent={true} animationType='fade'>
+    <>
+    <Modal visible={visible && !isAddModalVisible} transparent={true} animationType='fade'>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           {isSubmitted ? (
@@ -327,6 +380,7 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
                 options={jobTypesOptions}
                 onValueChange={applySelectedType}
                 selectedValue={type}
+                value={type}
                 isRTL={isRTL}
                 containerStyle={{
                   marginBottom: sizes.inputGap,
@@ -340,7 +394,7 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
                 <Text style={styles.label}>
                   {t('professions.register_modal.subtype_label')}
                 </Text>
-                <TextInput
+                <CustomTextInput
                   style={styles.textInput}
                   placeholder={t(
                     'professions.register_modal.subtype_placeholder'
@@ -353,9 +407,23 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
                 />
               </View>
 
+              {requiresVerification && (
+                <CustomExperiencePicker
+                  label={t('register.experience_label')}
+                  selectedValue={experience}
+                  onValueChange={setExperience}
+                  isRTL={isRTL}
+                  containerStyle={{
+                    marginBottom: sizes.inputGap,
+                    width: sizes.inputWidth,
+                  }}
+                  bottomDropdown={false}
+                />
+              )}
+
               <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
                 <Text style={styles.sendButtonText}>
-                  {t('professions.register_modal.send_button')}
+                  {requiresVerification ? t('common.next') : t('professions.register_modal.send_button')}
                 </Text>
               </TouchableOpacity>
             </>
@@ -363,6 +431,12 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone }) => {
         </View>
       </View>
     </Modal>
+    <AddProfessionModal
+      visible={visible && isAddModalVisible}
+      onClose={handleAddModalClose}
+      onSubmit={handleDocumentsProvided}
+    />
+    </>
   );
 };
 

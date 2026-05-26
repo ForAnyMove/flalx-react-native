@@ -1,29 +1,30 @@
+import { logError, logInfo } from "../../utils/log_util";
+
 export function connectWebSocket(userId, serverUrl, onMessage) {
     const isSecure = /^https:\/\//.test(serverUrl) || /^wss:\/\//.test(serverUrl);
     serverUrl = serverUrl.replace(/^https?:\/\//, '').replace(/^ws?:\/\//, '');
 
     const wsUrl = `${(isSecure ? 'wss' : 'ws')}://${serverUrl}/?userId=${userId}`;
-    console.log(`Connecting to WebSocket at ${wsUrl}`);
+    logInfo(`Connecting to WebSocket at ${wsUrl}`);
 
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-        console.log('WebSocket connected');
+        logInfo('WebSocket connected');
     };
 
     ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        console.log(`Received WebSocket message: ${event.data}`);
 
         onMessage(data);
     };
 
     ws.onclose = () => {
-        console.log('WebSocket disconnected');
+        logInfo('WebSocket disconnected');
     };
 
     ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        logError('WebSocket error:', error);
     };
 
     return ws;

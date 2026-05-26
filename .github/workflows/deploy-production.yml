@@ -1,0 +1,108 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:  # Возможность ручного запуска
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. Checkout кода
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Настройка Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 3. Логин в Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 4. Создать .env файл из secrets
+      - name: Create .env file
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+          echo "EXPO_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+          echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+          echo "EXPO_PUBLIC_API_BASE_URL=${{ secrets.API_BASE_URL }}" >> .env
+          echo "EXPO_PUBLIC_ENV=production" >> .env
+
+      # 5. Собрать и запушить Docker образ
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            goldenitsir/flalx-website:latest
+            goldenitsir/flalx-website:prod-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 6. Деплой на VPS через SSH
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          passphrase: ${{ secrets.VPS_SSH_PASSPHRASE }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          timeout: 60s
+          command_timeout: 10m
+          script: |
+            set -e
+            cd ${{ secrets.VPS_COMPOSE_PATH }}
+            docker pull goldenitsir/flalx-website:latest
+            docker compose up -d
+            docker image prune -f
+
+
+      # 7. Уведомление в Telegram об успехе
+      - name: Send Telegram notification (Success)
+        if: success()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            🚀 Production успешно задеплоен!
+            
+            📦 Репозиторий: ${{ github.repository }}
+            🌿 Ветка: ${{ github.ref_name }}
+            👤 Автор: ${{ github.actor }}
+            💬 Коммит: ${{ github.event.head_commit.message }}
+            
+            🌐 URL: https://flalx.com
+            🐳 Образ: goldenitsir/flalx-website:latest
+            
+            ⏱️ Время: ${{ github.event.head_commit.timestamp }}
+
+      # 8. Уведомление в Telegram об ошибке
+      - name: Send Telegram notification (Failure)
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            ⚠️ Production деплой ПРОВАЛИЛСЯ!
+            
+            📦 Репозиторий: ${{ github.repository }}
+            🌿 Ветка: ${{ github.ref_name }}
+            👤 Автор: ${{ github.actor }}
+            💬 Коммит: ${{ github.event.head_commit.message }}
+            
+            🔗 Логи: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            
+            ⏱️ Время: ${{ github.event.head_commit.timestamp }}

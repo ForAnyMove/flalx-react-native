@@ -6,13 +6,13 @@ import {
   View,
   Platform,
   TouchableOpacity,
-  useWindowDimensions,
 } from 'react-native';
 import { useComponentContext } from '../context/globalAppContext';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 import { useMemo } from 'react';
+import { useWindowInfo } from '../context/windowContext';
 
 export default function NewJobTemplateCard({
   templateTitle,
@@ -21,8 +21,7 @@ export default function NewJobTemplateCard({
   switchLikeStatus,
 }) {
   const { themeController } = useComponentContext();
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;

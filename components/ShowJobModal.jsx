@@ -12,7 +12,6 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { JOB_SUB_TYPES } from '../constants/jobSubTypes';
 import { JOB_TYPES } from '../constants/jobTypes';
@@ -20,12 +19,13 @@ import { LICENSES } from '../constants/licenses';
 import { useComponentContext } from '../context/globalAppContext';
 import JobHistoryModal from './JobHistoryModal';
 import NewJobModal from './NewJobModal';
+import JobExpectationsBadge from './ui/JobExpectationsBadge';
 import ProvidersSection from './ProvidersSection';
 import CustomFlatList from './ui/CustomFlatList';
 import DateTimeInput from './ui/DateTimeInput';
 import DateTimeInputDouble from './ui/DateTimeInputDouble';
 import { useTranslation } from 'react-i18next';
-// import { useWindowInfo } from '../context/windowContext';
+import { useWindowInfo } from '../context/windowContext';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import JobModalWrapper from './JobModalWrapper';
@@ -34,13 +34,26 @@ import {
   completeJob,
   payForJob,
   updateJobComment,
+  respondToJobAgreement,
+  confirmProviderSelection,
+  rejectProviderSelection,
 } from '../src/api/jobs';
 import { useWebView } from '../context/webViewContext';
+import { useWebSocket } from '../context/webSocketContext';
 import SubscriptionsModal from './SubscriptionsModal';
 import CommentsSection from './CommentsSection';
 import CompleteJobModal from './CompleteJobModal';
 import { useLocalization } from '../src/services/useLocalization';
 import { useNotification } from '../src/render';
+import { formatExperience } from '../utils/experience_ulit';
+import { formatCurrency } from '../utils/currency_formatter';
+import { PublishJobModal } from './PublishJobModal';
+import PurchaseModal from './PurchaseModal';
+import ChosenUserModal from './ChosenUserModal';
+import InterestRequestModal from './InterestRequestModal';
+import AlertModal from './AlertModal';
+import { logError } from '../utils/log_util';
+import CustomTextInput from './ui/CustomTextInput';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -63,9 +76,145 @@ async function editJobById(jobId, updates, session) {
     const updatedJob = await response.json();
     return updatedJob;
   } catch (error) {
-    console.error('Ошибка обновления job:', error.message);
+    logError('Ошибка обновления job:', error.message);
     throw error;
   }
+}
+
+/**
+ * Format field values for display in agreement modal.
+ * Converts IDs to names for type/subtype fields, formats dates, etc.
+ */
+const MOCK_JOB = {
+  id: 'mock-job-id',
+  type: {
+    id: '7d0d9b2d-135d-47a5-89a1-743209e43bac',
+    key: 'cleaner',
+    name: 'Cleaner',
+    name_i18n: {
+      en: 'Cleaner',
+      he: 'מנקה',
+    },
+  },
+  subType: {
+    id: '5ca068e1-3eee-41a4-85bd-3cbcf4ce49d7',
+    key: 'house_cleaning',
+    name: 'House Cleaning',
+    name_i18n: {
+      en: 'House Cleaning',
+      he: 'ניקיון בית',
+    },
+  },
+  description: 'Mock Job for Testing',
+  price: '333',
+  images: [],
+  startDateTime: '2026-01-14T10:57:00+00:00',
+  endDateTime: '2026-01-30T10:57:00+00:00',
+  createdAt: '2026-01-18T10:57:30.787203+00:00',
+  status: 'waiting',
+  creator: '4f04025a-eeaa-451d-a25c-586f6bdcf8f9',
+  created_by_account_type: 'client',
+  provider_status: 'choosed',
+  providers: [
+    {
+      id: 'p1',
+      name: 'John Doe',
+      rating: 4.8,
+      avatar: null,
+      professions: ['cleaner'],
+      proposed_price: '50',
+      proposed_time_from: '2026-01-14T10:57:00+00:00',
+      proposed_time_to: '2026-01-30T10:57:00+00:00',
+    },
+    {
+      id: 'p2',
+      name: 'Jane Smith',
+      rating: 3.5,
+      avatar: null,
+      professions: ['cleaner'],
+      proposed_price: '45',
+      proposed_time_from: '2026-01-15T12:00:00+00:00',
+      proposed_time_to: '2026-01-25T18:00:00+00:00',
+    },
+  ],
+};
+
+function formatFieldValue(field, value, jobTypesController, t) {
+  if (value == null) return '—';
+
+  switch (field) {
+    case 'type':
+      return jobTypesController?.jobTypesWithSubtypes?.find(t => t.id === value)?.name || String(value);
+    case 'subType':
+      return jobTypesController?.jobTypesWithSubtypes?.flatMap(t => t.subtypes || []).find(st => st.id === value)?.name || String(value);
+    case 'start':
+    case 'startDateTime':
+    case 'end':
+    case 'endDateTime': {
+      const date = new Date(value);
+      if (isNaN(date)) return String(value);
+      return date.toLocaleString();
+    }
+    case 'location':
+      return typeof value === 'object' ? (value?.address || String(value)) : String(value);
+    case 'experience':
+      return typeof value === 'object' ? `${value.min || 0}-${value.max || 0}` : String(value);
+    default:
+      return String(value);
+  }
+}
+
+/**
+ * Given a job's changes_history array and the agreement_change_date of the
+ * provider, compute the before→after diff to display in the agreement modal.
+ *
+ * Algorithm:
+ * 1. Find anchor entry A whose date is within ±2 s of agreementChangeDate
+ * 2. BLOCK_WILL: merge changes from A onwards (last-write-wins per field)
+ * 3. BLOCK_WAS: for each field in BLOCK_WILL, walk backwards from A-1 to
+ *    find the last known previous value
+ * 4. Return array of { field, was, will } objects
+ */
+function computeAgreementDiff(changesHistory, agreementChangeDate) {
+  if (!Array.isArray(changesHistory) || !agreementChangeDate) return null;
+
+  const sorted = [...changesHistory].sort(
+    (a, b) => new Date(a.date) - new Date(b.date)
+  );
+
+  const anchorMs = new Date(agreementChangeDate).getTime();
+
+  const anchorIdx = sorted.findIndex(
+    (e) => Math.abs(new Date(e.date).getTime() - anchorMs) <= 2000
+  );
+  console.log(anchorIdx, agreementChangeDate);
+  if (anchorIdx === -1) return null;
+
+  // BLOCK_WILL: accumulate from anchor onwards (last entry wins per field)
+  const blockWill = {};
+  for (let i = anchorIdx + 1; i < sorted.length; i++) {
+    Object.assign(blockWill, sorted[i].changes || {});
+    console.log(blockWill);
+
+  }
+
+  // BLOCK_WAS: walk backwards before anchor to find last value per field
+  const blockWas = {};
+  for (const field of Object.keys(blockWill)) {
+    for (let i = anchorIdx; i >= 0; i--) {
+      const prev = sorted[i].changes || {};
+      if (Object.prototype.hasOwnProperty.call(prev, field)) {
+        blockWas[field] = prev[field];
+        break;
+      }
+    }
+  }
+
+  return Object.keys(blockWill).map((field) => ({
+    field,
+    was: Object.prototype.hasOwnProperty.call(blockWas, field) ? blockWas[field] : null,
+    will: blockWill[field],
+  }));
 }
 
 export default function ShowJobModal({
@@ -76,35 +225,26 @@ export default function ShowJobModal({
   const {
     themeController,
     session,
+    user,
     jobsController,
     languageController,
     setAppLoading,
     subscription,
-    user,
+    couponsManagerController,
+    jobTypesController,
   } = useComponentContext();
   const { tField } = useLocalization(languageController.current);
-  const { showError } = useNotification();
+  const { showError, showWarning } = useNotification();
   const { t } = useTranslation();
-  const { width, height } = useWindowDimensions();
-  const isLandscape = width > height;
+  const { width, height, isLandscape } = useWindowInfo();
   const { openWebView } = useWebView();
+  const { lastMessage } = useWebSocket();
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const [status, setStatus] = useState(initialStatus || 'store-waiting');
 
   const prevJobLocation = useRef(null);
-
-  const experienceLevels = [
-    { label: t('register.experience.none'), value: 'none' },
-    { label: t('register.experience.month'), value: 'month' },
-    { label: t('register.experience.months', {months: 3}), value: '3_months' },
-    { label: t('register.experience.months', {months: 6}), value: '6_months' },
-    { label: t('register.experience.year'), value: 'year' },
-    { label: t('register.experience.years', {years: 2}), value: '2_years' },
-    { label: t('register.experience.years', {years: 3}), value: '3_years' },
-    { label: t('register.experience.other'), value: 'other' },
-  ];
 
   useEffect(() => {
     if (!currentJobId) return;
@@ -145,9 +285,6 @@ export default function ShowJobModal({
         const fromStatus = `${isCreator ? 'client' : 'business'}-${prev}`;
         const toStatus = `${isCreator ? 'client' : 'business'
           }-${currentLocation}`;
-        console.log(
-          `Заявка ${currentJobId} переместилась: ${fromStatus} → ${toStatus}`
-        );
         setStatus(toStatus);
       }
 
@@ -155,7 +292,6 @@ export default function ShowJobModal({
     } else {
       // если заявка пропала из списка (например, удалена)
       if (prevJobLocation.current) {
-        console.log(`Заявка ${currentJobId} больше не найдена`);
         prevJobLocation.current = null;
       }
     }
@@ -454,7 +590,13 @@ export default function ShowJobModal({
 
   const [showCancelRequestModal, setCancelRequestModal] = useState(false);
   const [showConfirmInterestModal, setConfirmInterestModal] = useState(false);
+  const [showInterestRequestModal, setShowInterestRequestModal] = useState(false);
   const [completeJobModalVisible, setCompleteJobModalVisible] = useState(false);
+
+  const [publishModalVisible, setPublishModalVisible] = useState(false);
+  const [interestFormData, setInterestFormData] = useState({ price: '', startDate: null, endDate: null });
+  const [interestStep, setInterestStep] = useState(1);
+  const [plansModalReturnTarget, setPlansModalReturnTarget] = useState(null); // 'interest' | 'purchase' | 'publish'
 
   const [showHistoryModal, setHistoryModal] = useState(false);
 
@@ -466,39 +608,93 @@ export default function ShowJobModal({
 
   const [plansModalVisible, setPlansModalVisible] = useState(false);
 
+  const [agreementModalVisible, setAgreementModalVisible] = useState(false);
+  const [agreementChanges, setAgreementChanges] = useState(null);
+
   const [currentJobInfo, setCurrentJobInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showChosenUserModal, setShowChosenUserModal] = useState(false);
+  const [chargeEvent, setChargeEvent] = useState(null);
+  const [alertModalVisible, setAlertModalVisible] = useState(false);
+  const [alertModalTitle, setAlertModalTitle] = useState('');
 
-  const location = useMemo(() => {
-    if (!currentJobInfo?.location) return null;
-    return JSON.parse(currentJobInfo.location);
-  }, [currentJobInfo?.location]);
+  // Drive ChosenUserModal state via WS charge events for this job
+  useEffect(() => {
+    if (!lastMessage || !currentJobId) return;
+    const chargeTypes = ['JOB_CHARGING_STARTED', 'JOB_CHARGE_COMPLETED', 'JOB_CHARGE_FAILED_RETRYING', 'JOB_CHARGE_FINAL_FAILED'];
+    if (chargeTypes.includes(lastMessage.type) && lastMessage.payload?.jobId === currentJobId) {
+      setChargeEvent(lastMessage);
+    }
+  }, [lastMessage, currentJobId]);
 
-  // Подгружаем job при редактировании
+  useEffect(() => {
+    console.log('Current job info updated:', currentJobInfo);
+    const needsConfirmation =
+      currentJobInfo?.provider_status === 'choosed' ||
+      currentJobInfo?.provider_status === 'pending_supplier_approval';
+    if (needsConfirmation && status.startsWith('jobs')) {
+      setShowChosenUserModal(true);
+    }
+    if (currentJobInfo?.status === 'expired') {
+      setAlertModalTitle(t('showJobModal.job_expired', { defaultValue: 'Job has expired' }));
+      setAlertModalVisible(true);
+    }
+    if (currentJobInfo?.provider_status === 'obsolete') {
+      setAlertModalTitle(t('showJobModal.provider_obsolete', { defaultValue: 'The application is obsolete' }));
+      setAlertModalVisible(true);
+    }
+  }, [currentJobInfo?.provider_status, currentJobInfo?.status, status]);
+
+  const location = currentJobInfo?.location;
+
+  // Подгружаем job из уже загруженных списков (list-эндпоинты возвращают полные данные)
   useEffect(() => {
     if (!currentJobId) return;
     let cancelled = false;
 
+    if (!currentJobInfo) setLoading(true);
+
+    const allLists = [
+      ...jobsController.creator.pending,
+      ...jobsController.creator.waiting,
+      ...jobsController.creator.inProgress,
+      ...jobsController.creator.done,
+      ...jobsController.executor.new,
+      ...jobsController.executor.waiting,
+      ...jobsController.executor.inProgress,
+      ...jobsController.executor.done,
+    ];
+    const job = allLists.find(j => j.id === currentJobId);
+
+    if (!job) {
+      setLoading(false);
+      return;
+    }
+
+    setCurrentJobInfo(job);
+    if (job?.job_comment) {
+      setEditableCommentValue(job?.job_comment?.comment);
+    }
+
+    // Auto-show agreement modal if provider hasn't agreed to current job version
+    if (status.startsWith('jobs') && user.current?.id) {
+      const myEntry = job?.providers?.find((p) => (p?.id || p) === user.current.id);
+      if (myEntry && myEntry.job_agreement != null && myEntry.job_agreement !== 'agreed') {
+        const diff = computeAgreementDiff(
+          job?.changes_history,
+          myEntry.agreement_change_date
+        );
+        setAgreementChanges(diff);
+        setAgreementModalVisible(true);
+      }
+    }
+
     (async () => {
       try {
-        setLoading(true);
-        const job = await jobsController.actions.getJobById(
-          currentJobId,
-          session
-        );
-
-        if (cancelled) return;
-        setCurrentJobInfo(job);
-        if (job?.job_comment) {
-          setEditableCommentValue(job?.job_comment?.comment);
-        }
-
-        const isProvider = await jobsController.actions.checkIsProviderInJob(
-          currentJobId
-        );
-        setInterestedRequest(isProvider);
+        const isProvider = await jobsController.actions.checkIsProviderInJob(currentJobId);
+        if (!cancelled) setInterestedRequest(isProvider);
       } catch (e) {
-        console.error('Failed to load job:', e);
+        logInfo('Failed to check provider status:', e);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -507,48 +703,183 @@ export default function ShowJobModal({
     return () => {
       cancelled = true;
     };
-  }, [currentJobId, session]);
+  }, [
+    currentJobId,
+    session?.token?.access_token,
+    jobsController.creator.waiting,
+    jobsController.creator.inProgress,
+    jobsController.creator.done,
+    jobsController.executor.new,
+    jobsController.executor.waiting,
+    jobsController.executor.inProgress,
+    jobsController.executor.done,
+  ]);
 
   const [editableCommentState, setEditableCommentState] = useState(false);
   const [editableCommentValue, setEditableCommentValue] = useState(
     currentJobInfo?.job_comment?.comment || ''
   );
 
-  const handleAddingSelfToJobProviders = async () => {
+  // Direct call (no paywall) — used when user already has a subscription
+  const handleAddingSelfToJobProviders = async (paymentOptions = {}) => {
     try {
       setAppLoading(true);
-      const { success, payment } = await addSelfToJobProviders(
-        currentJobId,
-        session
-      );
-      if (success == true) {
-        if (payment != null) {
-          openWebView(payment?.paymentMetadata?.paypalApproval?.href);
-        } else {
+      const result = await addSelfToJobProviders(currentJobId, session, paymentOptions);
+
+      if (result.success === true) {
+        couponsManagerController?.refreshBalance();
+        jobsController.reloadAll();
+        setInterestedRequest(true);
+      } else if (result.directAuth === true) {
+        jobsController.reloadAll();
+        setInterestedRequest(true);
+      } else if (result.paymentUrl) {
+        openWebView(result.paymentUrl, () => {
           jobsController.reloadAll();
-        }
+          setInterestedRequest(true);
+        });
+      } else {
+        jobsController.reloadAll();
       }
+
+      return result;
     } catch (e) {
-      console.error('Error adding self to job providers:', e);
-
-      setAppLoading(false);
-      setConfirmInterestModal(false);
-      // setInterestedRequest(true);
-
+      if (e.response?.status === 400 && e.response.data?.code === 'NO_COUPONS_AVAILABLE') {
+        showWarning(t('errors.no_coupons', {
+          defaultValue: 'You have no coupons available',
+        }));
+      }
       throw e;
     } finally {
       setAppLoading(false);
-      setConfirmInterestModal(false);
-      // setInterestedRequest(true);
     }
   };
 
-  const handleInterestRequest = async () => {
-    if (subscription.current == null) {
-      setConfirmInterestModal(true);
-    } else {
-      handleAddingSelfToJobProviders();
+  // PurchaseModal: onPurchase handler for the interest/provider paywall
+  const handlePurchaseInterest = async (payload) => {
+    const finalPayload = {
+      ...payload,
+      ...(interestFormData && {
+        proposed_price: interestFormData.price,
+        proposed_time_from: interestFormData.startDate,
+        proposed_time_to: interestFormData.endDate,
+      }),
+    };
+    const result = await addSelfToJobProviders(currentJobId, session, finalPayload);
+    if (result.paymentUrl) {
+      openWebView(result.paymentUrl, () => { jobsController.reloadAll(); setInterestedRequest(true); });
+    } else if (result.directAuth || result.success) {
+      jobsController.reloadAll();
       setInterestedRequest(true);
+    }
+    return result;
+  };
+
+  // PurchaseModal: onPayWithCoupons handler for the interest/provider paywall
+  const handlePayCouponsInterest = () => {
+    const payload = {
+      useCoupon: true,
+      ...(interestFormData && {
+        proposed_price: interestFormData.price,
+        proposed_time_from: interestFormData.startDate,
+        proposed_time_to: interestFormData.endDate,
+      }),
+    };
+    setConfirmInterestModal(false);
+    setShowInterestRequestModal(false);
+    setAppLoading(true);
+    addSelfToJobProviders(currentJobId, session, payload)
+      .then((result) => {
+        if (result.success) {
+          couponsManagerController?.refreshBalance();
+          jobsController.reloadAll();
+          setInterestedRequest(true);
+        }
+      })
+      .catch((e) => {
+        if (e.response?.status === 400 && e.response.data?.code === 'NO_COUPONS_AVAILABLE') {
+          showWarning(t('errors.no_coupons', { defaultValue: 'You have no coupons available' }));
+        }
+      })
+      .finally(() => setAppLoading(false));
+  };
+
+  const handleInterestRequest = async () => {
+    // We don't reset formData here to allow persistence across payment flows
+    const isBusinessJob = currentJobInfo?.created_by_account_type === 'business';
+    const hasSubscription = subscription.current != null;
+
+    if (isBusinessJob) {
+      if (hasSubscription) {
+        handleAddingSelfToJobProviders({});
+      } else {
+        setConfirmInterestModal(true);
+      }
+    } else {
+      // If we are starting a fresh request (no price entered), reset step to 1
+      if (!interestFormData.price) setInterestStep(1);
+      setShowInterestRequestModal(true);
+    }
+  };
+
+  const handleConfirmInterestRequest = async (formData, paymentOptions = {}) => {
+    try {
+      setInterestFormData(formData);
+      const finalOptions = {
+        ...paymentOptions,
+        ...(formData.price && { proposed_price: formData.price }),
+        ...(formData.startDate && { proposed_time_from: formData.startDate }),
+        ...(formData.endDate && { proposed_time_to: formData.endDate }),
+      };
+
+      const result = await handleAddingSelfToJobProviders(finalOptions);
+      setShowInterestRequestModal(false);
+      setConfirmInterestModal(false);
+      return result || { success: true };
+    } catch (error) {
+      logError('Error adding self to job providers:', error.message);
+      throw error;
+    }
+  };
+
+  useEffect(() => {
+    if (!lastMessage) return;
+    if (lastMessage.type === 'JOB_UPDATED_REQUIRES_AGREEMENT' &&
+      lastMessage.payload?.jobId === currentJobId &&
+      status.startsWith('jobs')) {
+      const diff = computeAgreementDiff(
+        currentJobInfo?.changes_history,
+        lastMessage.payload?.changeDate
+      );
+      setAgreementChanges(diff);
+      setAgreementModalVisible(true);
+    }
+  }, [lastMessage]);
+
+  const handleAgreeToJobUpdate = async () => {
+    try {
+      setAppLoading(true);
+      await respondToJobAgreement(currentJobId, session, true);
+      setAgreementModalVisible(false);
+      jobsController.reloadExecutor();
+    } catch {
+      // silently ignore
+    } finally {
+      setAppLoading(false);
+    }
+  };
+
+  const handleDeclineJobUpdate = async () => {
+    try {
+      setAppLoading(true);
+      await respondToJobAgreement(currentJobId, session, false);
+      setAgreementModalVisible(false);
+      jobsController.reloadExecutor();
+      closeModal();
+    } catch {
+      // silently ignore
+    } finally {
+      setAppLoading(false);
     }
   };
 
@@ -586,6 +917,43 @@ export default function ShowJobModal({
                 defaultValue: 'Waiting for moderation...',
               })}
             </Text>]
+          case 'requires_editing':
+            return [<View key='requires-editing-block' style={{ marginBottom: sizes.margin / 2 }}>
+              <Text style={{
+                alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                color: '#EF4F6B',
+                fontFamily: 'Rubik-Bold',
+                fontSize: sizes.font,
+                marginBottom: sizes.margin / 4,
+              }}>
+                {t('showJob.messages.requiresEditing', { defaultValue: 'This job was rejected by moderation and requires editing.' })}
+              </Text>
+              {currentJobInfo?.rejection_reason ? (
+                <Text style={{
+                  alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                  color: themeController.current?.textColor,
+                  fontSize: sizes.font,
+                  marginBottom: sizes.margin / 4,
+                }}>
+                  <Text style={{ fontFamily: 'Rubik-Bold' }}>
+                    {t('showJob.messages.rejectionReason', { defaultValue: 'Rejection reason' })}{': '}
+                  </Text>
+                  {currentJobInfo.rejection_reason}
+                </Text>
+              ) : null}
+              {currentJobInfo?.moderation_comment ? (
+                <Text style={{
+                  alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                  color: themeController.current?.textColor,
+                  fontSize: sizes.font,
+                }}>
+                  <Text style={{ fontFamily: 'Rubik-Bold' }}>
+                    {t('showJob.messages.moderationComment', { defaultValue: 'Moderator comment' })}{': '}
+                  </Text>
+                  {currentJobInfo.moderation_comment}
+                </Text>
+              ) : null}
+            </View>]
           default:
             return [<ProvidersSection
               key='providers'
@@ -653,7 +1021,7 @@ export default function ShowJobModal({
                   defaultValue: 'Provider comments',
                 })}
               </Text>
-              <TextInput
+              <CustomTextInput
                 value={currentJobInfo?.job_comment?.comment || ''}
                 placeholder={t('showJob.fields.commentsPlaceholder', {
                   defaultValue: 'Comment on the completed work...',
@@ -682,6 +1050,7 @@ export default function ShowJobModal({
             userId={currentJobInfo?.executor}
             allowAdd={currentJobInfo?.comments?.length == 0}
             allowAddOnly={true}
+            onRated={() => jobsController.reloadAll()}
           />,
         ];
       case 'jobs-new':
@@ -772,6 +1141,13 @@ export default function ShowJobModal({
           //     </Text>
           //   </TouchableOpacity>
           // ),
+          <ProvidersSection
+            key='providers'
+            styles={styles}
+            currentJobInfo={currentJobInfo}
+            status={status}
+            closeAllModal={closeModal}
+          />,
         ];
       case 'jobs-waiting':
         return [
@@ -862,6 +1238,13 @@ export default function ShowJobModal({
           //     </Text>
           //   </TouchableOpacity>
           // ),
+          <ProvidersSection
+            key='providers'
+            styles={styles}
+            currentJobInfo={currentJobInfo}
+            status={status}
+            closeAllModal={closeModal}
+          />,
         ];
       case 'jobs-in-progress':
         return [
@@ -945,7 +1328,7 @@ export default function ShowJobModal({
                       <MaterialIcons
                         name='cancel'
                         size={sizes.icon}
-                      color={themeController.current?.unactiveTextColor}
+                        color={themeController.current?.unactiveTextColor}
                       />
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -964,7 +1347,7 @@ export default function ShowJobModal({
                       <MaterialIcons
                         name='check-circle'
                         size={sizes.icon}
-                      color={themeController.current?.unactiveTextColor}
+                        color={themeController.current?.unactiveTextColor}
                       />
                     </TouchableOpacity>
                   </View>
@@ -980,7 +1363,7 @@ export default function ShowJobModal({
                   </TouchableOpacity>
                 )}
               </View>
-              <TextInput
+              <CustomTextInput
                 value={
                   editableCommentState
                     ? editableCommentValue
@@ -1042,7 +1425,13 @@ export default function ShowJobModal({
                   height: sizes.saveBtnHeight,
                 },
               ]}
-              onPress={payToPublish}
+              onPress={() => {
+                if (subscription.current != null && currentJobInfo?.jobType == 'normal') {
+                  payToPublish({});
+                } else {
+                  setPublishModalVisible(true);
+                }
+              }}
             >
               <Text
                 style={{
@@ -1051,14 +1440,8 @@ export default function ShowJobModal({
                   fontSize: sizes.saveBtnFont,
                 }}
               >
-                {t('newJob.statusModal.buttons.confirmWithPrice', {
-                  defaultValue: 'Publish for {{price}}',
-                  price: subscription.current != null &&
-                    currentJobInfo.type == 'normal' ? t('newJob.statusModal.free', {
-                      defaultValue: 'Free',
-                    }) : `$${jobsController.products.find(e => {
-                      return e.type === currentJobInfo.jobType;
-                    })?.price.toFixed(2)}`
+                {t('newJob.statusModal.buttons.confirm', {
+                  defaultValue: 'Publish'
                 })}
               </Text>
             </TouchableOpacity>}
@@ -1107,7 +1490,7 @@ export default function ShowJobModal({
                       .deleteJob(currentJobId)
                       .then(closeModal());
                   } catch (err) {
-                    console.error('Ошибка закрытия заявки:', err.message);
+                    logInfo('Ошибка закрытия заявки:', err.message);
                   }
                   setAcceptModalVisible(false);
                 });
@@ -1368,30 +1751,78 @@ export default function ShowJobModal({
           //   key='done-view'
           // >
           // </View>,
+          <CommentsSection
+            key='commentsSection'
+            jobId={currentJobInfo?.id}
+            userId={currentJobInfo?.creator}
+            allowAdd={currentJobInfo?.comments?.length == 0}
+            allowAddOnly={true}
+            onRated={() => jobsController.reloadAll()}
+          />
         ];
       default:
         return [];
     }
   }
 
-  async function payToPublish() {
+  // Direct publish (no paywall modal) — used when user has subscription
+  async function payToPublish(paymentOptions = {}) {
     try {
       setAppLoading(true);
-
-      const data = await payForJob(currentJobInfo.id, session);
-      if (data.paymentUrl) {
+      const data = await payForJob(currentJobInfo.id, session, paymentOptions);
+      if (data.success || data.directAuth) {
+        // Coupon / subscription bypass or direct auth — already pending_moderation
+        jobsController.reloadCreator();
+      } else if (data.paymentUrl) {
         openWebView(data.paymentUrl, () => { });
       } else {
         jobsController.reloadCreator();
       }
-
+      if (paymentOptions.useCoupon) {
+        couponsManagerController?.refreshBalance();
+      }
       setAppLoading(false);
+      setPublishModalVisible(false);
     } catch (e) {
-      console.error('Error paying for job:', e);
-      showError(t('errors.unexpected_error'));
-
       setAppLoading(false);
+      if (e.response && e.response.status === 400 && e.response.data.code == 'NO_COUPONS_AVAILABLE') {
+        showWarning(t('errors.no_coupons', {
+          defaultValue: 'You have no coupons available',
+        }));
+      } else {
+        setPublishModalVisible(false);
+      }
     }
+  }
+
+  // PurchaseModal: onPurchase handler for the publish paywall
+  const handlePurchasePublish = async (payload) => {
+    const data = await payForJob(currentJobInfo.id, session, payload);
+    if (data.success || data.directAuth) {
+      jobsController.reloadCreator();
+    } else if (data.paymentUrl) {
+      openWebView(data.paymentUrl, () => { });
+    } else {
+      jobsController.reloadCreator();
+    }
+    return data;
+  };
+
+  // PurchaseModal: onPayWithCoupons handler for the publish paywall
+  const handlePayCouponsPublish = () => {
+    setPublishModalVisible(false);
+    setAppLoading(true);
+    payForJob(currentJobInfo.id, session, { useCoupon: true })
+      .then((data) => {
+        jobsController.reloadCreator();
+        couponsManagerController?.refreshBalance();
+      })
+      .catch((e) => {
+        if (e.response?.status === 400 && e.response.data?.code === 'NO_COUPONS_AVAILABLE') {
+          showWarning(t('errors.no_coupons', { defaultValue: 'You have no coupons available' }));
+        }
+      })
+      .finally(() => setAppLoading(false));
   }
 
   const formContent = [
@@ -1412,7 +1843,7 @@ export default function ShowJobModal({
       >
         {t('showJob.fields.type', { defaultValue: 'Type' })}
       </Text>
-      <TextInput
+      <CustomTextInput
         value={tField(currentJobInfo?.type, 'name') || '-'}
         style={[
           styles.input,
@@ -1439,7 +1870,7 @@ export default function ShowJobModal({
       >
         {t('showJob.fields.subType', { defaultValue: 'Sub type' })}
       </Text>
-      <TextInput
+      <CustomTextInput
         value={tField(currentJobInfo?.subType, 'name') || '-'}
         style={[
           styles.input,
@@ -1466,7 +1897,7 @@ export default function ShowJobModal({
     //   >
     //     {t('showJob.fields.profession', { defaultValue: 'Profession' })}
     //   </Text>
-    //   <TextInput
+    //   <CustomTextInput
     //     value={LICENSES[currentJobInfo?.profession] || '-'}
     //     style={[
     //       styles.input,
@@ -1493,7 +1924,7 @@ export default function ShowJobModal({
       >
         {t('showJob.fields.location', { defaultValue: 'Location' })}
       </Text>
-      <TextInput
+      <CustomTextInput
         value={location?.address || '-'}
         style={[
           styles.input,
@@ -1520,7 +1951,7 @@ export default function ShowJobModal({
       >
         {t('showJob.fields.description', { defaultValue: 'Description' })}
       </Text>
-      <TextInput
+      <CustomTextInput
         value={currentJobInfo?.description || ''}
         style={[
           styles.input,
@@ -1532,7 +1963,7 @@ export default function ShowJobModal({
         readOnly
       />
     </View>,
-    <View
+    currentJobInfo?.created_by_account_type === 'business' ? <View
       style={[
         styles.inputBlock,
         dynamicStyles.inputBlock,
@@ -1549,7 +1980,7 @@ export default function ShowJobModal({
       >
         {t('showJob.fields.price', { defaultValue: 'Price' })}
       </Text>
-      <TextInput
+      <CustomTextInput
         value={currentJobInfo?.price || '-'}
         style={[
           styles.input,
@@ -1559,7 +1990,7 @@ export default function ShowJobModal({
         keyboardType='numeric'
         readOnly
       />
-    </View>,
+    </View> : null,
     <View
       style={[styles.imageInputBlock, dynamicStyles.imageInputBlock]}
       key='images'
@@ -1642,38 +2073,41 @@ export default function ShowJobModal({
         </ScrollView>
       </View>
     </View>,
-    <View
-      style={[
-        styles.inputBlock,
-        dynamicStyles.inputBlock,
-        { backgroundColor: themeController.current?.formInputBackground },
-      ]}
-      key='experience'
-    >
-      <Text
+    currentJobInfo?.experience ? (
+      <View
         style={[
-          styles.label,
-          dynamicStyles.label,
-          isRTL && { textAlign: 'right' },
+          styles.inputBlock,
+          dynamicStyles.inputBlock,
+          { backgroundColor: themeController.current?.formInputBackground },
         ]}
+        key='experience'
       >
-        {t('showJob.fields.experience', { defaultValue: 'Experience' })}
-      </Text>
-      <TextInput
-        value={experienceLevels.find(level => level.value === currentJobInfo?.experience)?.label || '-'}
-        style={[
-          styles.input,
-          dynamicStyles.input,
-          isRTL && { textAlign: 'right' },
-        ]}
-        readOnly
-      />
-    </View>,
-    <View
+        <Text
+          style={[
+            styles.label,
+            dynamicStyles.label,
+            isRTL && { textAlign: 'right' },
+          ]}
+        >
+          {t('showJob.fields.experience', { defaultValue: 'Experience' })}
+        </Text>
+        <CustomTextInput
+          value={formatExperience(currentJobInfo?.experience, t)}
+          style={[
+            styles.input,
+            dynamicStyles.input,
+            isRTL && { textAlign: 'right' },
+          ]}
+          readOnly
+        />
+      </View>
+    ) : null,
+    currentJobInfo?.created_by_account_type === 'business' ? <View
       style={[
         styles.row,
         {
           gap: sizes.dateTimeGapMobile,
+          paddingBottom: sizes.mobileBottomPaddingExtraSpace, // чтобы не закрывались кнопками
         },
         isRTL && { flexDirection: 'row-reverse' },
       ]}
@@ -1707,9 +2141,9 @@ export default function ShowJobModal({
           readOnly={true}
         />
       )}
-    </View>,
+    </View> : null,
     ...extraUiByStatus(status),
-  ];
+  ].filter(Boolean);
 
   // Грид версия (только веб-альбомная)
   const bg = themeController.current?.formInputBackground;
@@ -1810,7 +2244,10 @@ export default function ShowJobModal({
                         ${scaleByHeight(64, height)}px 
                         ${scaleByHeight(75, height)}px 
                         ${scaleByHeight(75, height)}px 
-                        ${scaleByHeight(64, height)}px
+                        ${currentJobInfo?.experience
+                          ? `${scaleByHeight(64, height)}px`
+                          : ''
+                        }
                         ${scaleByHeight(64, height)}px 
                       `,
                     },
@@ -1848,7 +2285,7 @@ export default function ShowJobModal({
                       >
                         {t('showJob.fields.type', { defaultValue: 'Type' })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={tField(currentJobInfo?.type, 'name') || '-'}
                         style={{
                           // fontWeight: '500',
@@ -1900,7 +2337,7 @@ export default function ShowJobModal({
                           defaultValue: 'Description',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={currentJobInfo?.description || ''}
                         style={{
                           // fontWeight: '500',
@@ -1954,7 +2391,7 @@ export default function ShowJobModal({
                           defaultValue: 'Sub type',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={tField(currentJobInfo?.subType, 'name') || '-'}
                         style={{
                           // fontWeight: '500',
@@ -2007,7 +2444,7 @@ export default function ShowJobModal({
                           defaultValue: 'Location',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={location?.address || '-'}
                         style={{
                           // fontWeight: '500',
@@ -2052,7 +2489,7 @@ export default function ShowJobModal({
                           defaultValue: 'Profession',
                         })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={LICENSES[currentJobInfo?.profession] || '-'}
                         style={{
                           fontWeight: '500',
@@ -2070,7 +2507,7 @@ export default function ShowJobModal({
                   </View>
 
                   {/* Price */}
-                  <View
+                  {currentJobInfo?.created_by_account_type === 'business' && <View
                     style={{
                       gridArea: isRTL ? '3 / 1 / 4 / 2' : '3 / 2 / 4 / 3',
                     }}
@@ -2102,7 +2539,7 @@ export default function ShowJobModal({
                       >
                         {t('showJob.fields.price', { defaultValue: 'Price' })}
                       </Text>
-                      <TextInput
+                      <CustomTextInput
                         value={currentJobInfo?.price || '-'}
                         style={{
                           // fontWeight: '500',
@@ -2119,7 +2556,7 @@ export default function ShowJobModal({
                         readOnly
                       />
                     </View>
-                  </View>
+                  </View>}
 
                   {/* Photos (full width) */}
                   <View style={{ gridArea: '4 / 1 / 6 / 3' }}>
@@ -2206,61 +2643,74 @@ export default function ShowJobModal({
                   </View>
 
                   {/* Experience */}
-                  <View
-                    style={{
-                      gridArea: isRTL ? '6 / 2 / 7 / 3' : '6 / 1 / 7 / 2',
-                    }}
-                  >
+                  {currentJobInfo?.experience && (
                     <View
-                      style={[
-                        styles.inputBlock,
-                        {
-                          backgroundColor: bg,
-                          padding: 0,
-                          paddingHorizontal:
-                            sizes.inputContainerPaddingHorizontal,
-                          paddingVertical: sizes.inputContainerPaddingVertical,
-                          borderRadius: sizes.borderRadius,
-                          marginBottom: 0,
-                          height: sizes.inputHeight,
-                        },
-                      ]}
+                      style={{
+                        gridArea: isRTL ? '6 / 2 / 7 / 3' : '6 / 1 / 7 / 2',
+                      }}
                     >
-                      <Text
+                      <View
                         style={[
-                          styles.label,
+                          styles.inputBlock,
                           {
-                            color: themeController.current?.unactiveTextColor,
+                            backgroundColor: bg,
+                            padding: 0,
+                            paddingHorizontal:
+                              sizes.inputContainerPaddingHorizontal,
+                            paddingVertical:
+                              sizes.inputContainerPaddingVertical,
+                            borderRadius: sizes.borderRadius,
+                            marginBottom: 0,
+                            height: sizes.inputHeight,
                           },
-                          isRTL && { textAlign: 'right' },
-                          { fontSize: sizes.font },
                         ]}
                       >
-                        {t('showJob.fields.experience')}
-                      </Text>
-                      <TextInput
-                        value={experienceLevels.find(level => level.value === currentJobInfo?.experience)?.label || '-'}
-                        style={{
-                          // fontWeight: '500',
-                          fontFamily: 'Rubik-Medium',
-                          padding: 0,
-                          paddingVertical: sizes.padding,
-                          color: themeController.current?.textColor,
-                          fontSize: sizes.inputFont,
-                          borderRadius: sizes.borderRadius,
-                          backgroundColor: 'transparent',
-                          textAlign: isRTL ? 'right' : 'left',
-                        }}
-                        keyboardType='numeric'
-                        readOnly
-                      />
+                        <Text
+                          style={[
+                            styles.label,
+                            {
+                              color:
+                                themeController.current?.unactiveTextColor,
+                            },
+                            isRTL && { textAlign: 'right' },
+                            { fontSize: sizes.font },
+                          ]}
+                        >
+                          {t('showJob.fields.experience')}
+                        </Text>
+                        <CustomTextInput
+                          value={formatExperience(
+                            currentJobInfo?.experience,
+                            t
+                          )}
+                          style={{
+                            // fontWeight: '500',
+                            fontFamily: 'Rubik-Medium',
+                            padding: 0,
+                            paddingVertical: sizes.padding,
+                            color: themeController.current?.textColor,
+                            fontSize: sizes.inputFont,
+                            borderRadius: sizes.borderRadius,
+                            backgroundColor: 'transparent',
+                            textAlign: isRTL ? 'right' : 'left',
+                          }}
+                          keyboardType='numeric'
+                          readOnly
+                        />
+                      </View>
                     </View>
-                  </View>
+                  )}
 
                   {/* Start date */}
-                  <View
+                  {currentJobInfo?.created_by_account_type === 'business' && <View
                     style={{
-                      gridArea: isRTL ? '7 / 2 / 8 / 3' : '7 / 1 / 8 / 2',
+                      gridArea: isRTL
+                        ? currentJobInfo?.experience
+                          ? '7 / 2 / 8 / 3'
+                          : '6 / 2 / 7 / 3'
+                        : currentJobInfo?.experience
+                          ? '7 / 1 / 8 / 2'
+                          : '6 / 1 / 7 / 2',
                     }}
                   >
                     <View
@@ -2285,12 +2735,18 @@ export default function ShowJobModal({
                         />
                       )}
                     </View>
-                  </View>
+                  </View>}
 
                   {/* End date */}
-                  <View
+                  {currentJobInfo?.created_by_account_type === 'business' && <View
                     style={{
-                      gridArea: isRTL ? '7 / 1 / 8 / 2' : '7 / 2 / 8 / 3',
+                      gridArea: isRTL
+                        ? currentJobInfo?.experience
+                          ? '7 / 1 / 8 / 2'
+                          : '6 / 1 / 7 / 2'
+                        : currentJobInfo?.experience
+                          ? '7 / 2 / 8 / 3'
+                          : '6 / 2 / 7 / 3',
                     }}
                   >
                     <View
@@ -2315,7 +2771,7 @@ export default function ShowJobModal({
                         />
                       )}
                     </View>
-                  </View>
+                  </View>}
                 </View>
 
                 {/* Остальные элементы ВНЕ сетки, обычной колонкой */}
@@ -2326,10 +2782,10 @@ export default function ShowJobModal({
                   }}
                 >
                   {extraUiByStatus(status).map((node, idx) => (
-                    <View key={`extra-${idx}`}>{node}</View>
+                    <View key={`extra-${idx}`} style={{ alignItems: isRTL ? 'flex-end' : 'flex-start' }}>{node}</View>
                   ))}
                   {bottomButtonByStatus(status).map((node, idx) => (
-                    <View key={`extra-btn-${idx}`}>{node}</View>
+                    <View key={`extra-btn-${idx}`} style={{ alignItems: isRTL ? 'flex-end' : 'flex-start' }}>{node}</View>
                   ))}
                 </View>
               </ScrollView>
@@ -2419,6 +2875,21 @@ export default function ShowJobModal({
           />
         </Modal>
       )}
+      {currentJobInfo && <PurchaseModal
+        visible={publishModalVisible}
+        onClose={() => setPublishModalVisible(false)}
+        price={formatCurrency(
+          jobsController.products?.find((p) => p.type === currentJobInfo.jobType)?.price,
+          jobsController.products?.find((p) => p.type === currentJobInfo.jobType)?.currency,
+        )}
+        onPurchase={handlePurchasePublish}
+        onPayWithCoupons={handlePayCouponsPublish}
+        onOpenSubscriptions={() => {
+          setPlansModalVisible(true);
+          setPublishModalVisible(false);
+        }}
+      />}
+
       {/* Cancel interest modal */}
       <Modal visible={showCancelRequestModal} transparent animationType='fade'>
         <View style={styles.modalOverlay}>
@@ -2539,181 +3010,66 @@ export default function ShowJobModal({
           </View>
         </View>
       </Modal>
-      {/* Confirm interest modal */}
-      <Modal
+      {/* Confirm interest (paywall) modal */}
+      <PurchaseModal
         visible={showConfirmInterestModal}
-        transparent
-        animationType='fade'
-      >
-        <View style={styles.modalOverlay}>
-          <View
-            style={[
-              styles.modalCard,
-              {
-                backgroundColor: themeController.current?.backgroundColor,
-                width: sizes.modalWidth,
-                padding: sizes.modalPadding,
-                borderRadius: sizes.modalBtnBorderRadius,
-              },
-              // isWebLandscape && { height: sizes.doubleBtnLineModalHeight },
-            ]}
-          >
-            <TouchableOpacity
-              // onPress={() =>
-              //   router.canGoBack?.() ? router.back() : router.replace('/store')
-              // }
-              onPress={() => setConfirmInterestModal(false)}
-              style={[
-                {
-                  position: 'absolute',
-                  top: sizes.modalCloseBtnTopRightPosition,
-                  right: sizes.modalCloseBtnTopRightPosition,
-                },
-              ]}
-            >
-              <Image
-                source={icons.cross}
-                style={{
-                  width: sizes.iconSize,
-                  height: sizes.iconSize,
-                  tintColor: themeController.current?.textColor,
-                }}
-              />
-            </TouchableOpacity>
-            <Text
-              style={[
-                styles.modalText,
-                {
-                  fontSize: sizes.modalFont,
-                  marginBottom: sizes.modalTextMarginBottom,
-                  textAlign: 'center',
-                  color: themeController.current?.textColor,
-                  lineHeight: sizes.modalLineHeight,
-                },
-              ]}
-            >
-              {t('showJob.paywall.notice', {
-                defaultValue:
-                  'To continue this action, you need to pay or subscribe',
-              })}
-            </Text>
-            <View style={[styles.buttonColumn, { gap: sizes.btnsColumnGap }]}>
-              <TouchableOpacity
-                style={[
-                  styles.modalBtn,
-                  {
-                    backgroundColor:
-                      themeController.current?.buttonTextColorSecondary,
-                    borderColor:
-                      themeController.current?.buttonColorPrimaryDefault,
-                    height: sizes.modalBtnHeight,
-                    width: sizes.modalLongBtnWidth,
-                    borderRadius: sizes.modalBtnBorderRadius,
-                    borderWidth: 1,
-                  },
-                ]}
-                onPress={handleAddingSelfToJobProviders}
-              >
-                <Text
-                  style={[
-                    {
-                      color: themeController.current?.buttonColorPrimaryDefault,
-                      fontSize: sizes.modalBtnFont,
-                    },
-                  ]}
-                >
-                  {t('showJob.buttons.buyForPrice', {
-                    defaultValue: 'Buy for 0.99$',
-                    price: '0.99',
-                  })}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.modalBtn,
-                  {
-                    backgroundColor:
-                      themeController.current?.buttonTextColorSecondary,
-                    borderColor:
-                      themeController.current?.buttonColorSecondaryDefault,
-                    height: sizes.modalBtnHeight,
-                    width: sizes.modalLongBtnWidth,
-                    borderRadius: sizes.modalBtnBorderRadius,
-                    borderWidth: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    flexDirection: isRTL ? 'row-reverse' : 'row',
-                  },
-                ]}
-                onPress={() => {}}
-              >
-                <Text
-                  style={[
-                    {
-                      color: themeController.current?.buttonColorSecondaryDefault,
-                      fontSize: sizes.modalBtnFont,
-                    },
-                  ]}
-                >
-                  {t('showJob.buttons.buyForCoupons', {
-                    defaultValue: 'Buy for 1',
-                    count: 1,
-                  })}
-                </Text>
-                <Image
-                  source={icons.coupon}
-                  style={{
-                    width: sizes.iconSize,
-                    height: sizes.iconSize,
-                    tintColor: themeController.current?.buttonColorSecondaryDefault,
-                  }}
-                />
-                <Text
-                  style={[
-                    {
-                      color: themeController.current?.buttonColorSecondaryDefault,
-                      fontSize: sizes.modalBtnFont,
-                    },
-                  ]}
-                >
-                  {` (${user.current?.coupons || 0})`}
-                </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-                style={[
-                  styles.modalBtn,
-                  {
-                    backgroundColor:
-                      themeController.current?.buttonColorPrimaryDefault,
-                    height: sizes.modalBtnHeight,
-                    width: sizes.modalLongBtnWidth,
-                    borderRadius: sizes.modalBtnBorderRadius,
-                  },
-                ]}
-                onPress={() => {
-                  setPlansModalVisible(true);
-                  setConfirmInterestModal(false);
-                }}
-              // onPress={() => {
-              //   setConfirmInterestModal(false);
-              //   setInterestedRequest(true);
-              // }}
-              >
-                <Text
-                  style={{
-                    color: themeController.current?.buttonTextColorPrimary,
-                    fontSize: sizes.modalBtnFont,
-                  }}
-                >
-                  {t('showJob.buttons.getSubscription', {
-                    defaultValue: 'Get a subscription',
-                  })}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setConfirmInterestModal(false)}
+        price={formatCurrency(
+          jobsController.providerProduct?.price,
+          jobsController.providerProduct?.currency,
+        )}
+        onPurchase={handlePurchaseInterest}
+        onPayWithCoupons={handlePayCouponsInterest}
+        onOpenSubscriptions={() => {
+          setPlansModalReturnTarget('purchase');
+          setPlansModalVisible(true);
+          setConfirmInterestModal(false);
+        }}
+        footerText={t('interestRequest.funds_disclosure')}
+      />
+      <InterestRequestModal
+        visible={showInterestRequestModal}
+        onClose={() => setShowInterestRequestModal(false)}
+        isBusinessJob={currentJobInfo?.created_by_account_type === 'business'}
+        hasSubscription={subscription.current != null}
+        price={formatCurrency(
+          jobsController.providerProduct?.price,
+          jobsController.providerProduct?.currency,
+        )}
+        onConfirm={handleConfirmInterestRequest}
+        onPayWithCoupons={handlePayCouponsInterest}
+        onOpenSubscriptions={() => {
+          setPlansModalReturnTarget('interest');
+          setPlansModalVisible(true);
+          setShowInterestRequestModal(false);
+        }}
+        formData={interestFormData}
+        setFormData={setInterestFormData}
+        step={interestStep}
+        setStep={setInterestStep}
+      />
+      <AlertModal
+        visible={alertModalVisible}
+        title={alertModalTitle}
+        onConfirm={() => {
+          setAlertModalVisible(false);
+          closeModal();
+        }}
+        onClose={() => {
+          setAlertModalVisible(false);
+          closeModal();
+        }}
+        useConfirmAsClose={true}
+      />
+
+      <ChosenUserModal
+        visible={showChosenUserModal}
+        onClose={() => setShowChosenUserModal(false)}
+        job={currentJobInfo}
+        chargeEvent={chargeEvent}
+        onConfirm={(jobId) => confirmProviderSelection(jobId, session)}
+        onDecline={(jobId) => rejectProviderSelection(jobId, session)}
+      />
       {/* <Modal visible={showHistoryModal} animationType='fade'>
         <View
           style={{
@@ -2856,7 +3212,12 @@ export default function ShowJobModal({
         main={false}
         closeModal={() => {
           setPlansModalVisible(false);
-          if (subscription.current == null) setConfirmInterestModal(true);
+          if (subscription.current == null) {
+            if (plansModalReturnTarget === 'interest') setShowInterestRequestModal(true);
+            else if (plansModalReturnTarget === 'purchase') setConfirmInterestModal(true);
+            else if (plansModalReturnTarget === 'publish' || currentJobInfo.status === 'pending') setPublishModalVisible(true);
+          }
+          setPlansModalReturnTarget(null);
         }}
       />
       <CompleteJobModal
@@ -2872,6 +3233,176 @@ export default function ShowJobModal({
           );
         }}
       />
+      <Modal visible={agreementModalVisible} transparent animationType='fade'>
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalCard,
+              {
+                backgroundColor: themeController.current?.backgroundColor,
+                width: sizes.modalWidth,
+                padding: sizes.modalPadding,
+                borderRadius: sizes.modalBtnBorderRadius,
+              },
+            ]}
+          >
+            <TouchableOpacity
+              style={[
+                {
+                  position: 'absolute',
+                  top: sizes.modalCloseBtnTopRightPosition,
+                  right: sizes.modalCloseBtnTopRightPosition,
+                },
+              ]}
+              onPress={() => {
+                setAgreementModalVisible(false);
+                closeModal();
+              }}
+            >
+              <Image
+                source={icons.cross}
+                style={{
+                  width: sizes.iconSize,
+                  height: sizes.iconSize,
+                  tintColor: themeController.current?.textColor,
+                }}
+              />
+            </TouchableOpacity>
+            <Text
+              style={[
+                styles.modalText,
+                {
+                  fontSize: sizes.modalFont,
+                  marginBottom: sizes.modalTextMarginBottom,
+                  textAlign: 'center',
+                  color: themeController.current?.textColor,
+                  lineHeight: sizes.modalLineHeight,
+                },
+              ]}
+            >
+              {t('showJob.agreement.title', {
+                defaultValue: 'The job has been updated. Do you agree to the new terms?',
+              })}
+            </Text>
+            {agreementChanges && Array.isArray(agreementChanges) && agreementChanges.length > 0 && (
+              <View style={{ marginBottom: sizes.modalTextMarginBottom, alignSelf: 'stretch', alignItems: 'center' }}>
+                {agreementChanges.map(({ field, was, will }, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      {
+                        flexDirection: isRTL ? 'row-reverse' : 'row',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 4,
+                        marginBottom: 6,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        fontSize: sizes.inputFont,
+                        fontFamily: 'Rubik-SemiBold',
+                        color: themeController.current?.textColor,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {t(`showJob.fields.${field}`, { defaultValue: field })}:
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: sizes.inputFont,
+                        color: themeController.current?.unactiveTextColor,
+                        textDecorationLine: 'line-through',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {formatFieldValue(field, was, jobTypesController, t)}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: sizes.inputFont,
+                        color: themeController.current?.unactiveTextColor,
+                        textAlign: 'center',
+                      }}
+                    >
+                      →
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: sizes.inputFont,
+                        fontFamily: 'Rubik-SemiBold',
+                        color: themeController.current?.primaryColor,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {formatFieldValue(field, will, jobTypesController, t)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            <View
+              style={[
+                styles.modalButtonsRow,
+                {
+                  flexDirection: isRTL ? 'row-reverse' : 'row',
+                  gap: sizes.modalBtnsGap,
+                },
+              ]}
+            >
+              <TouchableOpacity
+                style={[
+                  styles.modalBtn,
+                  {
+                    backgroundColor:
+                      themeController.current?.buttonTextColorSecondary,
+                    borderColor:
+                      themeController.current?.buttonColorPrimaryDefault,
+                    height: sizes.modalBtnHeight,
+                    width: sizes.modalBtnWidth,
+                    borderRadius: sizes.modalBtnBorderRadius,
+                    borderWidth: 1,
+                  },
+                ]}
+                onPress={handleDeclineJobUpdate}
+              >
+                <Text
+                  style={{
+                    color: themeController.current?.buttonColorPrimaryDefault,
+                    fontSize: sizes.modalBtnFont,
+                  }}
+                >
+                  {t('showJob.agreement.decline', { defaultValue: 'Decline' })}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.modalBtn,
+                  {
+                    backgroundColor:
+                      themeController.current?.buttonColorPrimaryDefault,
+                    height: sizes.modalBtnHeight,
+                    width: sizes.modalBtnWidth,
+                    borderRadius: sizes.modalBtnBorderRadius,
+                  },
+                ]}
+                onPress={handleAgreeToJobUpdate}
+              >
+                <Text
+                  style={{
+                    color: themeController.current?.buttonTextColorPrimary || 'white',
+                    fontSize: sizes.modalBtnFont,
+                  }}
+                >
+                  {t('showJob.agreement.agree', { defaultValue: 'Agree' })}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }

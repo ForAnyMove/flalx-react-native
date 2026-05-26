@@ -64,7 +64,6 @@ export default function providersManager({ session }) {
       if (!alive.current) return;
 
       setProviders(data);
-
       // обновляем кэш
       setCache((prev) => {
         const newCache = { ...prev };
@@ -150,6 +149,23 @@ export default function providersManager({ session }) {
     return comments;
   }
 
+  function appendUserData(userId, email, phoneNumber) {
+    setProviders((prev) => {
+      return prev.map((user) => {
+        if (user.id !== userId) return user;
+        return { ...user, email, phoneNumber };
+      });
+    });
+
+    setCache((prev) => {
+      const user = prev[userId] || {};
+      return {
+        ...prev,
+        [userId]: { ...user, email, phoneNumber },
+      };
+    });
+  }
+
   // авто-загрузка, как только есть сессия
   useEffect(() => {
     if (serverURL && token) {
@@ -168,5 +184,6 @@ export default function providersManager({ session }) {
     getCommentsWritten,
     getCommentsReceived,
     refreshUserComments,
+    appendUserData
   };
 }
