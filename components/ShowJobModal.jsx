@@ -917,6 +917,43 @@ export default function ShowJobModal({
                 defaultValue: 'Waiting for moderation...',
               })}
             </Text>]
+          case 'requires_editing':
+            return [<View key='requires-editing-block' style={{ marginBottom: sizes.margin / 2 }}>
+              <Text style={{
+                alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                color: '#EF4F6B',
+                fontFamily: 'Rubik-Bold',
+                fontSize: sizes.font,
+                marginBottom: sizes.margin / 4,
+              }}>
+                {t('showJob.messages.requiresEditing', { defaultValue: 'This job was rejected by moderation and requires editing.' })}
+              </Text>
+              {currentJobInfo?.rejection_reason ? (
+                <Text style={{
+                  alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                  color: themeController.current?.textColor,
+                  fontSize: sizes.font,
+                  marginBottom: sizes.margin / 4,
+                }}>
+                  <Text style={{ fontFamily: 'Rubik-Bold' }}>
+                    {t('showJob.messages.rejectionReason', { defaultValue: 'Rejection reason' })}{': '}
+                  </Text>
+                  {currentJobInfo.rejection_reason}
+                </Text>
+              ) : null}
+              {currentJobInfo?.moderation_comment ? (
+                <Text style={{
+                  alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                  color: themeController.current?.textColor,
+                  fontSize: sizes.font,
+                }}>
+                  <Text style={{ fontFamily: 'Rubik-Bold' }}>
+                    {t('showJob.messages.moderationComment', { defaultValue: 'Moderator comment' })}{': '}
+                  </Text>
+                  {currentJobInfo.moderation_comment}
+                </Text>
+              ) : null}
+            </View>]
           default:
             return [<ProvidersSection
               key='providers'

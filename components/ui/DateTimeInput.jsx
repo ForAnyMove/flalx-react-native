@@ -33,6 +33,7 @@ export default function DateTimeInput({
   value,
   onChange,
   readOnly = false,
+  error = false,
 }) {
   const { themeController, languageController } = useComponentContext();
   const [showPicker, setShowPicker] = useState(false);
@@ -83,6 +84,7 @@ export default function DateTimeInput({
             borderRadius: sizes.borderRadius,
             height: sizes.inputHeight,
           },
+          error && { borderWidth: 1, borderColor: 'red' },
         ]}
         onClick={() => {
           if (!readOnly && inputRef.current) {
@@ -95,7 +97,7 @@ export default function DateTimeInput({
           style={[
             styles.label,
             {
-              color: themeController.current?.unactiveTextColor,
+              color: error ? 'red' : themeController.current?.unactiveTextColor,
               fontSize: sizes.font,
             },
           ]}
@@ -186,13 +188,14 @@ export default function DateTimeInput({
           paddingHorizontal: sizes.inputContainerPaddingHorizontal,
           height: sizes.inputHeight,
         },
+        error && { borderWidth: 1, borderColor: 'red' },
       ]}
     >
       <Text
         style={[
           styles.label,
           {
-            color: themeController.current?.formInputLabelColor,
+            color: error ? 'red' : themeController.current?.formInputLabelColor,
             fontSize: sizes.font,
           },
         ]}

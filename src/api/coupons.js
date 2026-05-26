@@ -26,9 +26,9 @@ export async function getReferralLink(session) {
 export async function getCouponsBalance(session) {
     try {
         const response = await fetchWithSession({ session, endpoint: ENDPOINTS.balance() });
-        const { balance } = response.data;
+        const { balance, monthly_allowance } = response.data;
 
-        return balance;
+        return { balance, monthlyAllowance: monthly_allowance ?? null };
     } catch (error) {
         logError('Error fetching coupons balance:', error);
         throw error;

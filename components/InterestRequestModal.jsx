@@ -323,9 +323,10 @@ const InterestRequestModal = ({
   };
 
   const handleFinalSubmit = () => {
+    const savedMethod = savedMethods.find(m => m.id === selectedMethodId);
     const paymentOptions = {
-      paymentMethodId: selectedMethodId,
-      saveForFuture,
+      paymentMethod: savedMethod?.type,
+      savedPaymentMethodId: selectedMethodId,
     };
     onConfirm(formData, paymentOptions);
   };
@@ -333,8 +334,7 @@ const InterestRequestModal = ({
   const handleAddMethodPay = () => {
     const paymentOptions = {
       paymentMethod: newMethodId,
-      saveForFuture,
-      isNewMethod: true,
+      ...(saveForFuture && { savePaymentMethod: true }),
     };
     onConfirm(formData, paymentOptions);
   };
@@ -467,8 +467,9 @@ const InterestRequestModal = ({
     const step2Footer = (
       <View>
         <TouchableOpacity
-          style={[styles.outlineButton, { borderColor: theme.primaryColor, height: sizes.buttonHeight, borderRadius: sizes.borderRadius, backgroundColor: theme.backgroundColor }]}
+          style={[styles.outlineButton, { borderColor: theme.primaryColor, height: sizes.buttonHeight, borderRadius: sizes.borderRadius, backgroundColor: theme.backgroundColor }, !selectedMethodId && { opacity: 0.4 }]}
           onPress={handleFinalSubmit}
+          disabled={!selectedMethodId}
         >
           <Text style={[styles.outlineButtonText, { color: theme.primaryColor, fontSize: sizes.buttonTextSize }]}>
             {t('interestRequest.pay_and_submit', { price, defaultValue: `Pay ${price} & Submit` })}

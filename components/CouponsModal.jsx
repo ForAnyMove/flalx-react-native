@@ -18,16 +18,19 @@ import { icons } from '../constants/icons';
 import CustomTextInput from './ui/CustomTextInput';
 
 const CouponsModal = ({ visible, onClose }) => {
-  const { themeController, languageController, couponsManagerController } = useComponentContext();
+  const { themeController, languageController, couponsManagerController, user } = useComponentContext();
   const theme = themeController.current;
   const { height, width, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 
+  const isClient = user?.current?.account_type === 'client';
+
   const [linkCopied, setLinkCopied] = useState(false);
   const referralLink = couponsManagerController.referralLink;
   const couponsCount = couponsManagerController.balance;
+  const monthlyAllowance = couponsManagerController.monthlyAllowance;
 
   useEffect(() => {
     if (!visible) {
@@ -234,40 +237,11 @@ const CouponsModal = ({ visible, onClose }) => {
             </View>
           </View>
 
-          <Text style={styles.description}>{t('coupons.description')}</Text>
-
-          <View style={{ width: sizes.infoFieldWidth }}>
-            <View style={styles.infoField}>
-              <Text style={styles.infoFieldLabel}>
-                {t('coupons.copy_link_label')}
-              </Text>
-              <CustomTextInput
-                style={styles.infoFieldText}
-                value={referralLink}
-                editable={false}
-              />
-              <TouchableOpacity
-                style={styles.copyIcon}
-                onPress={copyToClipboard}
-              >
-                <Image
-                  source={icons.copy}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    tintColor: linkCopied
-                      ? theme.formInputLabelColor
-                      : theme.primaryColor,
-                  }}
-                />
-              </TouchableOpacity>
-            </View>
-            {linkCopied && (
-              <Text style={styles.linkCopiedText}>
-                {t('coupons.link_copied')}
-              </Text>
-            )}
-          </View>
+          <Text style={styles.description}>
+            {isClient
+              ? t('coupons.description_client', { allowance: monthlyAllowance ?? '?' })
+              : t('coupons.description_provider')}
+          </Text>
 
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeButtonText}>{t('common.close')}</Text>

@@ -161,6 +161,8 @@ export default function WaitingScreen({
           return t('common.expired');
         case 'pending_moderation':
           return t('common.pending_moderation');
+        case 'requires_editing':
+          return t('common.requires_editing');
         default:
           return t('common.waiting_payment');
       }
@@ -291,12 +293,16 @@ export default function WaitingScreen({
             </View>
           )}
           {(job.status === 'pending' || job.status === 'expired' ||
-            job.status === 'pending_moderation') && (
+            job.status === 'pending_moderation' || job.status === 'requires_editing') && (
               <View
                 style={[
                   styles.badge,
                   {
-                    backgroundColor: job.status === 'expired' ? themeController.current?.expiredBadgeBackground : themeController.current?.mainBadgeBackground,
+                    backgroundColor: job.status === 'expired'
+                      ? themeController.current?.expiredBadgeBackground
+                      : job.status === 'requires_editing'
+                        ? themeController.current?.expiredBadgeBackground
+                        : themeController.current?.mainBadgeBackground,
                     minWidth: sizes.badgeSize,
                     height: sizes.badgeSize,
                     borderRadius: sizes.badgeSize / 4,

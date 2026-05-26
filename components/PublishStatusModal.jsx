@@ -577,21 +577,50 @@ const PublishStatusModal = ({
           </View>
 
           {/* Success Checkmark Circle (Asset checkDefault) */}
-          <Image
-            source={icons.checkDefault}
-            style={{
-              width: sizes.successCircleSize,
-              height: sizes.successCircleSize,
-              marginBottom: sizes.successCircleMarginVertical,
-            }}
-          />
+          {jobType === 'normal' ? (
+            <>
+              <Image
+                source={icons.checkDefault}
+                style={{
+                  width: sizes.successCircleSize,
+                  height: sizes.successCircleSize,
+                  marginBottom: sizes.successCircleMarginVertical,
+                }}
+              />
 
-          <Text style={[styles.title, { color: theme.primaryColor, marginBottom: sizes.successTitleMarginBottom }]}>
-            {t('payment_modal.subscription_active')}
-          </Text>
-          <Text style={[styles.subtitle, { marginBottom: sizes.successSubtitleMarginBottom }]}>
-            {t('payment_modal.subscription_active_unlimited')}
-          </Text>
+              <Text style={[styles.title, { color: theme.primaryColor, marginBottom: sizes.successTitleMarginBottom }]}>
+                {t('payment_modal.subscription_active')}
+              </Text>
+              <Text style={[styles.subtitle, { marginBottom: sizes.successSubtitleMarginBottom }]}>
+                {t('payment_modal.subscription_active_unlimited')}
+              </Text>
+            </>
+          ) : (
+            <View
+              style={{
+                flexDirection: isRTL ? 'row-reverse' : 'row',
+                alignItems: 'center',
+                gap: sizes.compoundButtonGap,
+                marginBottom: sizes.successSubtitleMarginBottom,
+              }}
+            >
+              <Text style={[styles.priceLabel, { fontSize: sizes.titleSize, fontFamily: 'Rubik-Bold', marginRight: sizes.priceLabelMarginRight }]}>
+                {t('interestRequest.total')}
+              </Text>
+              <Text style={[styles.priceValue, { color: theme.buttonColorSecondaryDefault }]}>1</Text>
+              <Text style={{ color: theme.buttonColorSecondaryDefault, fontSize: sizes.titleSize, fontFamily: 'Rubik-Bold', marginHorizontal: sizes.pricePlusMarginHorizontal }}>
+                {t('payment_modal.coupon', { defaultValue: 'coupon' })}
+              </Text>
+              <Image
+                source={icons.coupon}
+                style={{
+                  width: sizes.couponIconSize,
+                  height: sizes.couponIconSize,
+                  tintColor: theme.buttonColorSecondaryDefault,
+                }}
+              />
+            </View>
+          )}
 
           <TouchableOpacity
             style={[styles.button, styles.primaryButton, { marginTop: sizes.marginTopZero }]}
@@ -817,16 +846,17 @@ const PublishStatusModal = ({
                 }
               }}
             >
-              <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
                 <View
                   style={{
                     flexDirection: isRTL ? 'row-reverse' : 'row',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: sizes.compoundButtonGap,
+                    width: '100%',
                   }}
                 >
-                  <Text style={[styles.buttonText, styles.outlinePrimaryButtonText, { fontSize: sizes.buttonTextSize, marginHorizontal: sizes.compoundTextMarginHorizontal }]}>
+                  <Text style={[styles.buttonText, styles.outlinePrimaryButtonText, { fontSize: sizes.buttonTextSize, marginHorizontal: sizes.compoundTextMarginHorizontal, flexShrink: 1, maxWidth: undefined }]} numberOfLines={1} ellipsizeMode="tail">
                     {getPayButtonBaseLabel()}
                   </Text>
                   <Text style={{ color: theme.formInputPlaceholderColor, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>+</Text>

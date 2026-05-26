@@ -16,6 +16,7 @@ export default function DateTimeInputDouble({
   value,
   onChange,
   readOnly = false,
+  error = false,
 }) {
   const { themeController } = useComponentContext();
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -79,13 +80,14 @@ export default function DateTimeInputDouble({
           marginRight: sizes.containerMarginRight,
           height: sizes.containerHeight,
         },
+        error && { borderWidth: 1, borderColor: 'red' },
       ]}
     >
       <Text
         style={{
           fontWeight: 'bold',
           marginBottom: sizes.labelMarginBottom,
-          color: themeController.current?.textColor,
+          color: error ? 'red' : themeController.current?.textColor,
           fontSize: sizes.font,
         }}
       >

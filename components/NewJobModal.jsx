@@ -25,6 +25,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { t } from 'i18next';
 import SubscriptionsModal from './SubscriptionsModal';
 import { createJob, payForJob } from '../src/api/jobs';
+import { useNotification } from '../src/render';
 import { useWebView } from '../context/webViewContext';
 import AutocompletePicker from './ui/AutocompletePicker';
 import AddressPicker from './ui/AddressPicker';
@@ -143,9 +144,11 @@ export default function NewJobModal({
   const { tField } = useLocalization(languageController.current);
   const { width, height, isLandscape, effectiveSidebarWidth = 0 } = useWindowInfo();
   const { t } = useTranslation();
+  const { showError } = useNotification();
   const isRTL = languageController.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const isClient = user.current?.account_type === 'client';
+  const isBusiness = user.current?.account_type === 'business';
 
   // Объявляем состояния сначала, чтобы они были доступны в useMemo
   const [type, setType] = useState(
@@ -359,6 +362,7 @@ export default function NewJobModal({
     'type',
     'subType',
     ...(isClient ? [] : ['price']),
+    ...(isBusiness ? ['startDateTime', 'endDateTime'] : []),
     // 'location',
     // 'description',
   ];
@@ -448,6 +452,7 @@ export default function NewJobModal({
             setAppLoading(false);
           });
       }
+      closeModal();
     } else {
       const newJob = {
         type: getTypeIdByKey(type),
@@ -483,9 +488,19 @@ export default function NewJobModal({
         paymentOptions
       ).then(() => {
         setAppLoading(false);
+        closeModal();
+      }).catch((err) => {
+        setAppLoading(false);
+        const code = err?.response?.data?.code;
+        if (code === 'INSUFFICIENT_COUPONS') {
+          showError(t('errors.insufficient_coupons'));
+        } else if (code === 'TIME_REQUIRED') {
+          showError(t('errors.time_required'));
+        } else {
+          showError(t('errors.unexpected_error'));
+        }
       });
     }
-    closeModal();
   };
 
   const handleImageAdd = async (uris) => {
@@ -844,6 +859,7 @@ export default function NewJobModal({
             })}
             value={startDateTime}
             onChange={setStartDateTime}
+            error={fieldErrors.startDateTime}
           />
         ) : (
           <DateTimeInputDouble
@@ -852,6 +868,7 @@ export default function NewJobModal({
             })}
             value={startDateTime}
             onChange={setStartDateTime}
+            error={fieldErrors.startDateTime}
           />
         )}
         {Platform.OS !== 'android' ? (
@@ -862,6 +879,7 @@ export default function NewJobModal({
             })}
             value={endDateTime}
             onChange={setEndDateTime}
+            error={fieldErrors.endDateTime}
           />
         ) : (
           <DateTimeInputDouble
@@ -870,6 +888,7 @@ export default function NewJobModal({
             })}
             value={endDateTime}
             onChange={setEndDateTime}
+            error={fieldErrors.endDateTime}
           />
         )}
       </View>
@@ -1386,6 +1405,7 @@ export default function NewJobModal({
                             })}
                             value={startDateTime}
                             onChange={setStartDateTime}
+                            error={fieldErrors.startDateTime}
                           />
                         ) : (
                           <DateTimeInputDouble
@@ -1394,6 +1414,7 @@ export default function NewJobModal({
                             })}
                             value={startDateTime}
                             onChange={setStartDateTime}
+                            error={fieldErrors.startDateTime}
                           />
                         )}
                       </View>
@@ -1422,6 +1443,7 @@ export default function NewJobModal({
                             })}
                             value={endDateTime}
                             onChange={setEndDateTime}
+                            error={fieldErrors.endDateTime}
                           />
                         ) : (
                           <DateTimeInputDouble
@@ -1430,6 +1452,7 @@ export default function NewJobModal({
                             })}
                             value={endDateTime}
                             onChange={setEndDateTime}
+                            error={fieldErrors.endDateTime}
                           />
                         )}
                       </View>

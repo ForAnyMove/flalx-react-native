@@ -4,6 +4,7 @@ import { logError } from "../utils/log_util";
 
 export default function couponsManager({ session }) {
     const [couponsBalance, setCouponsBalance] = useState(0);
+    const [monthlyAllowance, setMonthlyAllowance] = useState(null);
     const [link, setLink] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -12,6 +13,7 @@ export default function couponsManager({ session }) {
     useEffect(() => {
         // Сбрасываем состояние при смене аккаунта (или выходе)
         setCouponsBalance(0);
+        setMonthlyAllowance(null);
         setLink('');
 
         if (!session || !session?.token) return;
@@ -21,7 +23,8 @@ export default function couponsManager({ session }) {
             try {
                 const balance = await getCouponsBalance(session);
                 const referralData = await getReferralLink(session);
-                setCouponsBalance(balance);
+                setCouponsBalance(balance.balance);
+                setMonthlyAllowance(balance.monthlyAllowance);
                 setLink(referralData.referral_link);
             } catch (error) {
                 logError('Error fetching coupons data:', error);
@@ -38,7 +41,8 @@ export default function couponsManager({ session }) {
             if (!session || !session?.token) return;
 
             const balance = await getCouponsBalance(session);
-            setCouponsBalance(balance);
+            setCouponsBalance(balance.balance);
+            setMonthlyAllowance(balance.monthlyAllowance);
         } catch (error) {
             logError('Error refreshing coupons balance:', error);
         }
@@ -46,6 +50,7 @@ export default function couponsManager({ session }) {
 
     return {
         balance: couponsBalance,
+        monthlyAllowance,
         referralLink: link,
         refreshBalance
     };

@@ -157,6 +157,8 @@ const UserSummaryBlock = ({
   const proposed_time_from = _userData.proposed_time_from ?? jobExpectations?.proposed_time_from;
   const proposed_time_to = _userData.proposed_time_to ?? jobExpectations?.proposed_time_to;
 
+  console.log(proposed_price, proposed_time_from, proposed_time_to);
+
   const handleUserRevealTry = async (payload = {}) => {
     try {
       setAppLoading(true);
