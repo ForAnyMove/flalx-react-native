@@ -7,12 +7,8 @@ export async function fetchWithSession({ session, endpoint, data = {}, method = 
         const token = session?.token?.access_token;
         const url = session?.serverURL || FALLBACK_API_BASE_URL;
 
-        if (!token) {
-            throw new Error('No valid session token found');
-        }
-
-        if (!url) {
-            throw new Error('No valid server URL found in session');
+        if (!token || !url) {
+            return null;
         }
 
         const headers = {

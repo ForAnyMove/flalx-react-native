@@ -102,18 +102,19 @@ export default function sessionManager() {
         }
 
         // data.session уже будет с обновлённым токеном, если refresh прошёл
+        const freshSession = data.session ?? parsed;
 
-        await saveSession(data.session);
-        setSession(parsed);
+        await saveSession(freshSession);
+        setSession(freshSession);
 
         // Загружаем профиль пользователя
-        await fetchUserProfile(parsed.access_token);
+        await fetchUserProfile(freshSession.access_token);
         await refreshRevealedUsers({
-          token: { access_token: parsed.access_token },
+          token: { access_token: freshSession.access_token },
           serverURL: API_BASE_URL,
         });
         await refreshRevealProduct({
-          token: { access_token: parsed.access_token },
+          token: { access_token: freshSession.access_token },
           serverURL: API_BASE_URL,
         });
 
