@@ -28,6 +28,7 @@ import { logError } from '../utils/log_util';
 import { useWindowInfo } from '../context/windowContext';
 import CustomTextInput from '../components/ui/CustomTextInput';
 import UniversalProfessionComponent from '../components/ui/UniversalProfessionComponent';
+import { useLocalization } from '../src/services/useLocalization';
 import RequestProfessionModal from '../components/RequestProfessionModal';
 import { PROFESSION_TYPES } from '../constants/enums';
 
@@ -42,6 +43,7 @@ export default function RegisterScreen() {
   } = useComponentContext();
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
+  const { tField } = useLocalization(languageController.current);
 
   const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -179,8 +181,8 @@ export default function RegisterScreen() {
         job_subtype_id: data.job_subtype_id,
         passport_photo_urls: data.passport_photo_urls ?? null,
         certificate_photo_urls: data.certificate_photo_urls ?? null,
-        title: typeInfo?.name || '',
-        subtitle: subtypeInfo?.name || '',
+        title: tField(typeInfo, 'name') || '',
+        subtitle: tField(subtypeInfo, 'name') || '',
         type: PROFESSION_TYPES.PENDING,
       },
     ]);

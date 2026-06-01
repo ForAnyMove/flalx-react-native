@@ -741,7 +741,8 @@ or reject it. Please adhere to the platform rules.`,
         btn_close: 'Close'
       },
       misc: {
-        search_request_by_location: 'You can only see requests based on your approximate location.'
+        search_request_by_location: 'You can only see requests based on your approximate location.',
+        reset_filters: 'Reset filters',
       },
       coupons: {
         title: 'Coupons',
@@ -1506,7 +1507,8 @@ or reject it. Please adhere to the platform rules.`,
         btn_close: 'סגור'
       },
       misc: {
-        search_request_by_location: 'אתה יכול לראות בקשות רק על בסיס המיקום המשוער שלך.'
+        search_request_by_location: 'אתה יכול לראות בקשות רק על בסיס המיקום המשוער שלך.',
+        reset_filters: 'אפס פילטרים',
       },
       coupons: {
         title: 'קופונים',

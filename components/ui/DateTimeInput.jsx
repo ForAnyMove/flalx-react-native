@@ -72,6 +72,12 @@ export default function DateTimeInput({
   }, [isWebLandscape, height]);
   if (Platform.OS === 'web') {
     const inputRef = useRef(null);
+    const toLocalInputValue = (isoStr) => {
+      if (!isoStr) return '';
+      const d = new Date(isoStr);
+      const pad = (n) => n.toString().padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
     return (
       <View
         style={[
@@ -111,7 +117,7 @@ export default function DateTimeInput({
               ref={inputRef}
               disabled={readOnly}
               type='datetime-local'
-              value={value ? new Date(value).toISOString().slice(0, 16) : ''}
+              value={toLocalInputValue(value)}
               onChange={(e) => {
                 const isoString = new Date(e.target.value).toISOString();
                 onChange(isoString);
@@ -140,7 +146,7 @@ export default function DateTimeInput({
               }}
             />
             <DateTimeDisplay
-              value={value ? new Date(value).toISOString().slice(0, 16) : null}
+              value={value || null}
               style={{
                 width: '100%',
                 paddingTop: sizes.padding,

@@ -143,18 +143,18 @@ export const useGeolocation = () => {
     const requestIpGeolocationPermission = useCallback(async () => {
         return new Promise((resolve) => {
             const dialogData = {
-                message: 'Точное местоположение недоступно.\n\nРазрешить определение приблизительного местоположения по IP-адресу?\n\n• Точность: ~10-50км (город/регион)\n• Данные: только координаты и город\n• Конфиденциальность: IP-адрес передается внешнему сервису\n\nВы сможете изменить это решение в настройках.',
+                message: 'Precise location is unavailable.\n\nAllow approximate location detection by IP address?\n\n\u2022 Accuracy: ~10-50 km (city/region)\n\u2022 Data: coordinates and city only\n\u2022 Privacy: IP address is sent to an external service\n\nYou can change this in settings.',
                 buttons: [
                     {
                         key: 'deny',
-                        title: 'Отказаться',
+                        title: 'Decline',
                         onPress: () => {
                             resolve(false);
                         }
                     },
                     {
                         key: 'allow',
-                        title: 'Разрешить',
+                        title: 'Allow',
                         onPress: () => {
                             resolve(true);
                         }
@@ -190,15 +190,15 @@ export const useGeolocation = () => {
                         // Выключаем геолокацию если не удалось получить позицию
                         setEnabled(false);
                         await saveSettings(false);
-                        setError('Не удалось получить местоположение: ' + locationError.message);
+                        setError('Could not get location: ' + locationError.message);
                     }
                 } else {
-                    const errorMessage = 'Доступ к геолокации заблокирован. Для включения геолокации разрешите доступ в настройках браузера или перезагрузите страницу и выберите "Разрешить" при запросе.';
+                    const errorMessage = 'Location access is blocked. To enable geolocation, allow access in your browser settings or reload the page and select "Allow" when prompted.';
                     setError(errorMessage);
                     // Не включаем геолокацию без разрешения
                 }
             } catch (err) {
-                setError('Ошибка проверки разрешений: ' + err.message);
+                setError('Error checking permissions: ' + err.message);
             }
         } else {
             // При отключении просто выключаем
@@ -232,16 +232,16 @@ export const useGeolocation = () => {
                         // Выключаем геолокацию если не удалось получить позицию
                         setEnabled(false);
                         await saveSettings(false);
-                        setError('Не удалось получить местоположение: ' + locationError.message);
+                        setError('Could not get location: ' + locationError.message);
                         throw locationError; // Пробрасываем ошибку для setGeolocationEnabled
                     }
                 } else {
-                    const errorMessage = 'Доступ к геолокации заблокирован. Для включения геолокации разрешите доступ в настройках браузера или перезагрузите страницу и выберите "Разрешить" при запросе.';
+                    const errorMessage = 'Location access is blocked. To enable geolocation, allow access in your browser settings or reload the page and select "Allow" when prompted.';
                     setError(errorMessage);
-                    throw new Error('Нет разрешения на доступ к геолокации');
+                    throw new Error('Location permission denied');
                 }
             } catch (err) {
-                setError('Ошибка проверки разрешений: ' + err.message);
+                setError('Error checking permissions: ' + err.message);
                 throw err;
             }
         } else {

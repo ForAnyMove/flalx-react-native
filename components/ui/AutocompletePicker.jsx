@@ -281,7 +281,18 @@ const AutocompletePicker = ({
             ]}
           />
           {arrowIcon && (
-            <View style={styles.arrowContainer}>
+            <TouchableOpacity
+              style={styles.arrowContainer}
+              onPress={() => {
+                if (isFocused) {
+                  setIsFocused(false);
+                } else {
+                  setInputText('');
+                  setIsFocused(true);
+                  inputRef.current?.focus();
+                }
+              }}
+            >
               <Image
                 source={icons.arrowDown}
                 style={[
@@ -296,15 +307,13 @@ const AutocompletePicker = ({
                   },
                 ]}
               />
-            </View>
+            </TouchableOpacity>
           )}
         </View>
       </View>
 
       {/* Выпадающий список без Modal */}
-      {isFocused &&
-        filteredEntries.length > 0 &&
-        inputText !== filteredEntries[0][1] && (
+      {isFocused && filteredEntries.length > 0 && (
           <View
             style={[
               styles.dropdownContent,

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
   View,
@@ -19,6 +19,7 @@ import { useNotification } from '../src/render';
 import CustomTextInput from './ui/CustomTextInput';
 import CustomExperiencePicker from './ui/CustomExperiencePicker';
 import AddProfessionModal from './AddProfessionModal';
+import { useLocalization } from '../src/services/useLocalization';
 
 const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) => {
   const { themeController, languageController, jobTypesController, setAppLoading } = useComponentContext();
@@ -27,12 +28,23 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
+  const { tField } = useLocalization(languageController.current);
 
   const [type, setType] = useState(null);
   const [subtype, setSubtype] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [experience, setExperience] = useState(null);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      setType(null);
+      setSubtype('');
+      setIsSubmitted(false);
+      setExperience(null);
+      setIsAddModalVisible(false);
+    }
+  }, [visible]);
 
   const requiresVerification = useMemo(() => {
     if (!type) return false;
@@ -44,10 +56,10 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
   const jobTypesOptions = useMemo(() => {
     const options = {};
     jobTypesController.jobTypesWithSubtypes?.forEach(type => {
-      options[type.key] = type.name;
+      options[type.key] = tField(type, 'name');
     });
     return options;
-  }, [jobTypesController.jobTypesWithSubtypes]);
+  }, [jobTypesController.jobTypesWithSubtypes, languageController.current]);
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
