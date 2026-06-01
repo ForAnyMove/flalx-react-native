@@ -741,7 +741,26 @@ or reject it. Please adhere to the platform rules.`,
         btn_close: 'Close'
       },
       misc: {
-        search_request_by_location: 'You can only see requests based on your approximate location.'
+        search_request_by_location: 'You can only see requests based on your approximate location.',
+        reset_filters: 'Reset filters',
+      },
+      geolocation: {
+        errors: {
+          access_blocked: 'Location access is blocked. To enable geolocation, allow access in your browser settings or reload the page and select "Allow" when prompted.',
+          could_not_get_location: 'Could not get location: {{message}}',
+          permission_check_failed: 'Error checking permissions: {{message}}',
+        },
+        ip_dialog: {
+          message: 'Precise location is unavailable.\n\nAllow approximate location detection by IP address?\n\n\u2022 Accuracy: ~10\u201350\u00a0km (city/region)\n\u2022 Data: coordinates and city only\n\u2022 Privacy: IP address is sent to an external service\n\nYou can change this in settings.',
+          decline: 'Decline',
+          allow: 'Allow',
+        },
+      },
+      address_picker: {
+        error_title: 'Address error: {{message}}',
+        server_unavailable: 'There is a problem connecting to the server',
+        too_many_requests: 'Too many requests. Please try again later.',
+        api_key_error: 'There is a problem with the API key on the server',
       },
       coupons: {
         title: 'Coupons',
@@ -1506,7 +1525,26 @@ or reject it. Please adhere to the platform rules.`,
         btn_close: 'סגור'
       },
       misc: {
-        search_request_by_location: 'אתה יכול לראות בקשות רק על בסיס המיקום המשוער שלך.'
+        search_request_by_location: 'אתה יכול לראות בקשות רק על בסיס המיקום המשוער שלך.',
+        reset_filters: 'אפס פילטרים',
+      },
+      geolocation: {
+        errors: {
+          access_blocked: 'הגישה למיקום חסומה. כדי להפעיל את הגיאולוקציה, אפשר גישה בהגדרות הדפדפן שלך או טען מחדש את הדף ובחר "אפשר" כאשר תתבקש.',
+          could_not_get_location: 'לא ניתן לקבל את המיקום: {{message}}',
+          permission_check_failed: 'שגיאה בבדיקת הרשאות: {{message}}',
+        },
+        ip_dialog: {
+          message: 'המיקום המדויק אינו זמין.\n\nלאפשר זיהוי מיקום משוער לפי כתובת IP?\n\n\u2022 דיוק: ~10\u201350\u00a0ק"מ (עיר/אזור)\n\u2022 נתונים: קואורדינטות ועיר בלבד\n\u2022 פרטיות: כתובת ה-IP נשלחת לשירות חיצוני\n\nניתן לשנות זאת בהגדרות.',
+          decline: 'דחה',
+          allow: 'אפשר',
+        },
+      },
+      address_picker: {
+        error_title: 'שגיאת כתובת: {{message}}',
+        server_unavailable: 'יש בעיה בהתחברות לשרת',
+        too_many_requests: 'יותר מדי בקשות. אנא נסה שוב מאוחר יותר.',
+        api_key_error: 'יש בעיה עם מפתח ה-API בשרת',
       },
       coupons: {
         title: 'קופונים',

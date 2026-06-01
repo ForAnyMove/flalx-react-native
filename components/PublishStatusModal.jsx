@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -44,12 +44,12 @@ const PublishStatusModal = ({
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 
-  // â”€â”€â”€ Step State Management (Fallback to local if no parent prop) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Step State Management (Fallback to local if no parent prop) ──────────────
   const [localStep, setLocalStep] = useState(1);
   const activeStep = setStep ? step : localStep;
   const activeSetStep = setStep ? setStep : setLocalStep;
 
-  // â”€â”€â”€ Local State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Local State ─────────────────────────────────────────────────────────────
   const [selectedMethodId, setSelectedMethodId] = useState(null);
   const [selectedSource, setSelectedSource] = useState('available'); // 'saved' | 'available'
   const [saveForFuture, setSaveForFuture] = useState(false);
@@ -58,7 +58,7 @@ const PublishStatusModal = ({
   const [newMethodId, setNewMethodId] = useState(null);
 
   // â”€â”€â”€ Data Extraction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const isClient = user.current?.account_type === 'client';
+  const isClient = true;
   const hasSubscription = subscription.current != null;
   const savedMethods = paymentsManagerController?.savedMethods ?? [];
   const availableMethods = paymentsManagerController?.availableMethods ?? [];
@@ -88,7 +88,7 @@ const PublishStatusModal = ({
     return savedMethods.find((m) => m.default) ?? savedMethods[0];
   }, [savedMethods]);
 
-  // â”€â”€â”€ Reset on Modal Open â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Reset on Modal Open ─────────────────────────────────────────────────────
   useEffect(() => {
     if (!visible) return;
     couponsManagerController?.refreshBalance?.();
@@ -106,7 +106,7 @@ const PublishStatusModal = ({
     }
   }, [visible, defaultSavedMethod, availableMethods]);
 
-  // â”€â”€â”€ Sizes Metric (Dynamic & Scaled) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Sizes Metric (Dynamic & Scaled) ─────────────────────────────────────────
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
     const mobile = (size) => scaleByHeightMobile(size, height);
@@ -160,7 +160,7 @@ const PublishStatusModal = ({
       chipGap: scale(8),
       chipMarginBottom: scale(24),
       changeMethodLinkMarginTop: scale(16),
-      // â”€â”€â”€ Extra Dynamic Properties to Eliminate Hardcoded Values â”€â”€â”€
+      // ─── Extra Dynamic Properties to Eliminate Hardcoded Values ───
       priceRowMarginBottom: scale(8),
       priceRowGap: scale(6),
       infoTextMarginBottom: scale(20),
@@ -196,15 +196,15 @@ const PublishStatusModal = ({
     };
   }, [height, isWebLandscape]);
 
-  // â”€â”€â”€ Label Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Label Helpers ───────────────────────────────────────────────────────────
   const getSavedMethodLabel = (method) => {
     if (method.type === 'paypal') {
       return `PayPal (${method.details?.title || 'user@email'})`;
     }
-    return `${t('payment_modal.credit_card', { defaultValue: 'Credit card' })} â€¢â€¢â€¢â€¢ â€¢â€¢â€¢â€¢ â€¢â€¢â€¢â€¢ ${method.details?.last4 || '4352'}`;
+    return `${t('payment_modal.credit_card', { defaultValue: 'Credit card' })} •••• •••• •••• ${method.details?.last4 || '4352'}`;
   };
 
-  // â”€â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Actions ─────────────────────────────────────────────────────────────────
   const handleConfirmPayment = () => {
     setIsLoading(true);
     const chosenMethod =
@@ -213,7 +213,7 @@ const PublishStatusModal = ({
         : selectedMethodId;
 
     const payload = {
-      useCoupon: selectedOption.type !== 'normal', // Always deduct coupon for TOP/Quickly combined payments
+      useCoupon: isClient && selectedOption.type !== 'normal', // Always deduct coupon for TOP/Quickly combined payments for clients
       paymentMethod: chosenMethod,
       ...(selectedSource === 'saved' && { savedPaymentMethodId: selectedMethodId }),
       ...(selectedSource === 'available' && saveForFuture && { savePaymentMethod: true }),
@@ -234,7 +234,7 @@ const PublishStatusModal = ({
 
   const handleAddMethodPay = () => {
     setIsLoading(true);
-    const isCombined = selectedOption.type !== 'normal';
+    const isCombined = isClient && selectedOption.type !== 'normal';
     const payload = {
       useCoupon: isCombined,
       paymentMethod: newMethodId,
@@ -243,7 +243,7 @@ const PublishStatusModal = ({
     onSubmit(payload);
   };
 
-  // â”€â”€â”€ Layout Styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Layout Styles ───────────────────────────────────────────────────────────
   const styles = StyleSheet.create({
     modalOverlay: {
       flex: 1,
@@ -512,7 +512,7 @@ const PublishStatusModal = ({
   };
 
   const getPayButtonLabel = () => {
-    const isCombined = selectedOption.type !== 'normal';
+    const isCombined = isClient && selectedOption.type !== 'normal';
     let baseLabel = '';
     if (savedMethods.length > 0 && defaultSavedMethod) {
       const methodName = t(`payment_modal.method_${defaultSavedMethod.type === 'hyp' ? 'card' : defaultSavedMethod.type}`);
@@ -523,12 +523,12 @@ const PublishStatusModal = ({
     }
 
     if (isCombined) {
-      return `${baseLabel} + 1 ðŸŽ«`;
+      return `${baseLabel} + 1 🎫`;
     }
     return baseLabel;
   };
 
-  // â”€â”€â”€ Render Screen: Selection & Prices (Step 1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Render Screen: Selection & Prices (Step 1) ─────────────────────────────
   const renderStep1 = () => {
     // CASE A: Active Subscription (Any Role)
     if (hasSubscription) {
@@ -635,97 +635,97 @@ const PublishStatusModal = ({
 
     // CASE B: No Subscription - Normal type (coupon button only for client)
     if (selectedOption.type === 'normal') {
-        // CASE B: Client default (Choose payment style)
-        return (
-          <View style={styles.contentContainer}>
-            <Text style={styles.title}>
-              {t('payment_modal.publish_status_title')}
-            </Text>
+      // CASE B: Client default (Choose payment style)
+      return (
+        <View style={styles.contentContainer}>
+          <Text style={styles.title}>
+            {t('payment_modal.publish_status_title')}
+          </Text>
 
-            {/* Chips */}
-            <View style={styles.chipContainer}>
-              {displayProducts.map((opt) => {
-                const active = jobType === opt.type;
-                return (
-                  <TouchableOpacity
-                    key={opt.type}
-                    onPress={() => setJobType(opt.type)}
+          {/* Chips */}
+          <View style={styles.chipContainer}>
+            {displayProducts.map((opt) => {
+              const active = jobType === opt.type;
+              return (
+                <TouchableOpacity
+                  key={opt.type}
+                  onPress={() => setJobType(opt.type)}
+                  style={[
+                    styles.chip,
+                    {
+                      borderColor: active
+                        ? theme.primaryColor
+                        : theme.formInputPlaceholderColor,
+                      backgroundColor: active
+                        ? theme.primaryColor
+                        : 'transparent',
+                    },
+                  ]}
+                >
+                  <Text
                     style={[
-                      styles.chip,
-                      {
-                        borderColor: active
-                          ? theme.primaryColor
-                          : theme.formInputPlaceholderColor,
-                        backgroundColor: active
-                          ? theme.primaryColor
-                          : 'transparent',
-                      },
+                      styles.chipText,
+                      { color: active ? '#fff' : theme.formInputLabelColor },
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        { color: active ? '#fff' : theme.formInputLabelColor },
-                      ]}
-                    >
-                      {opt.type === 'normal'
-                        ? t('payment_modal.option_default', { defaultValue: 'Default' })
-                        : opt.type === 'quick'
-                          ? t('payment_modal.option_quickly', { defaultValue: 'Quickly' })
-                          : t('payment_modal.option_top', { defaultValue: 'TOP' })}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+                    {opt.type === 'normal'
+                      ? t('payment_modal.option_default', { defaultValue: 'Default' })
+                      : opt.type === 'quick'
+                        ? t('payment_modal.option_quickly', { defaultValue: 'Quickly' })
+                        : t('payment_modal.option_top', { defaultValue: 'TOP' })}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
-            {/* Price display separate */}
-            <View
-              style={[
-                styles.priceRow,
-                { flexDirection: isRTL ? 'row-reverse' : 'row' },
-              ]}
-            >
-              <Text style={styles.priceLabel}>
-                {t('payment_modal.price_label')}
-              </Text>
-              <Text style={styles.priceValue}>{formattedMoneyPrice}</Text>
-            </View>
-
-            <Text style={styles.subtitle}>
-              {t('payment_modal.choose_how_to_pay')}
+          {/* Price display separate */}
+          <View
+            style={[
+              styles.priceRow,
+              { flexDirection: isRTL ? 'row-reverse' : 'row' },
+            ]}
+          >
+            <Text style={styles.priceLabel}>
+              {t('payment_modal.price_label')}
             </Text>
+            <Text style={styles.priceValue}>{formattedMoneyPrice}</Text>
+          </View>
 
-            {/* Button 1: Card / saved payment method */}
+          <Text style={styles.subtitle}>
+            {t('payment_modal.choose_how_to_pay')}
+          </Text>
+
+          {/* Button 1: Card / saved payment method */}
+          <TouchableOpacity
+            style={[styles.button, styles.outlinePrimaryButton, { marginTop: sizes.marginTopZero }]}
+            onPress={() => {
+              if (savedMethods.length > 0 && defaultSavedMethod) {
+                handleConfirmPayment();
+              } else {
+                activeSetStep(2);
+              }
+            }}
+          >
+            <Text style={[styles.buttonText, styles.outlinePrimaryButtonText]} numberOfLines={1}>
+              {getPayButtonLabel()}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Change method link â€” only when saved methods exist */}
+          {savedMethods.length > 0 && (
             <TouchableOpacity
-              style={[styles.button, styles.outlinePrimaryButton, { marginTop: sizes.marginTopZero }]}
-              onPress={() => {
-                if (savedMethods.length > 0 && defaultSavedMethod) {
-                  handleConfirmPayment();
-                } else {
-                  activeSetStep(2);
-                }
-              }}
+              style={styles.changeMethodLink}
+              onPress={() => activeSetStep(2)}
             >
-              <Text style={[styles.buttonText, styles.outlinePrimaryButtonText]} numberOfLines={1}>
-                {getPayButtonLabel()}
+              <Text style={styles.changeMethodLinkText}>
+                {t('payment_modal.change_method', { defaultValue: 'Change payment method' })}
               </Text>
             </TouchableOpacity>
+          )}
 
-            {/* Change method link â€” only when saved methods exist */}
-            {savedMethods.length > 0 && (
-              <TouchableOpacity
-                style={styles.changeMethodLink}
-                onPress={() => activeSetStep(2)}
-              >
-                <Text style={styles.changeMethodLinkText}>
-                  {t('payment_modal.change_method', { defaultValue: 'Change payment method' })}
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Button 2: Pay with Coupon (clients only) */}
-            {isClient && (
+          {/* Button 2: Pay with Coupon (clients only) */}
+          {isClient && (
             <TouchableOpacity
               style={[styles.button, styles.outlineSecondaryButton]}
               onPress={handleCouponOnlyPayment}
@@ -752,169 +752,169 @@ const PublishStatusModal = ({
                 />
               </View>
             </TouchableOpacity>
-            )}
+          )}
 
-            {/* Button 3: Subscription plans */}
-            <TouchableOpacity
-              style={[styles.button, styles.primaryButton]}
-              onPress={() => {
-                onSubmit({ viewPlans: true });
-              }}
-            >
-              <Text style={[styles.buttonText, styles.primaryButtonText]}>
-                {t('payment_modal.get_subscription', { defaultValue: 'Get a subscription' })}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        );
-      } else {
-        // CASE C: No Subscription - TOP / Quickly (combined payment for all roles)
-        return (
-          <View style={styles.contentContainer}>
-            <Text style={styles.title}>
-              {t('payment_modal.publish_status_title')}
+          {/* Button 3: Subscription plans */}
+          <TouchableOpacity
+            style={[styles.button, styles.primaryButton]}
+            onPress={() => {
+              onSubmit({ viewPlans: true });
+            }}
+          >
+            <Text style={[styles.buttonText, styles.primaryButtonText]}>
+              {t('payment_modal.get_subscription', { defaultValue: 'Get a subscription' })}
             </Text>
+          </TouchableOpacity>
+        </View>
+      );
+    } else {
+      // CASE C: No Subscription - TOP / Quickly (combined payment for all roles)
+      return (
+        <View style={styles.contentContainer}>
+          <Text style={styles.title}>
+            {t('payment_modal.publish_status_title')}
+          </Text>
 
-            {/* Chips */}
-            <View style={styles.chipContainer}>
-              {displayProducts.map((opt) => {
-                const active = jobType === opt.type;
-                return (
-                  <TouchableOpacity
-                    key={opt.type}
-                    onPress={() => setJobType(opt.type)}
-                    style={[
-                      styles.chip,
-                      {
-                        borderColor: active
-                          ? theme.primaryColor
-                          : theme.formInputPlaceholderColor,
-                        backgroundColor: active
-                          ? theme.primaryColor
-                          : 'transparent',
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        { color: active ? '#fff' : theme.formInputLabelColor },
-                      ]}
-                    >
-                      {opt.type === 'normal'
-                        ? t('payment_modal.option_default', { defaultValue: 'Default' })
-                        : opt.type === 'quick'
-                          ? t('payment_modal.option_quickly', { defaultValue: 'Quickly' })
-                          : t('payment_modal.option_top', { defaultValue: 'TOP' })}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* Combined Price Header */}
-            <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>{t('payment_modal.price_label')}</Text>
-              <Text style={styles.priceValue}>{formattedMoneyPrice}</Text>
-              <Text style={{ color: theme.formInputPlaceholderColor, fontSize: sizes.priceValueSize, fontFamily: 'Rubik-Bold', marginHorizontal: sizes.pricePlusMarginHorizontal }}>+</Text>
-              <Text style={[styles.priceValue, { color: theme.buttonColorSecondaryDefault }]}>1</Text>
-              <Text style={{ color: theme.buttonColorSecondaryDefault, fontSize: sizes.priceTextSize, fontFamily: 'Rubik-Bold', marginHorizontal: sizes.pricePlusMarginHorizontal }}>
-                {t('payment_modal.coupon', { defaultValue: 'coupon' })}
-              </Text>
-              <Image
-                source={icons.coupon}
-                style={{
-                  width: sizes.couponIconSize,
-                  height: sizes.couponIconSize,
-                  tintColor: theme.buttonColorSecondaryDefault,
-                }}
-              />
-            </View>
-
-            <Text style={styles.infoText}>
-              {t('payment_modal.card_coupon_charged_simultaneously')}
-            </Text>
-
-            {/* Combined Pay Button */}
-            <TouchableOpacity
-              style={[styles.button, styles.outlinePrimaryButton, { height: sizes.buttonHeight * 1.15 }]}
-              onPress={() => {
-                if (savedMethods.length > 0 && defaultSavedMethod) {
-                  handleConfirmPayment();
-                } else {
-                  activeSetStep(2);
-                }
-              }}
-            >
-              <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-                <View
-                  style={{
-                    flexDirection: isRTL ? 'row-reverse' : 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: sizes.compoundButtonGap,
-                    width: '100%',
-                  }}
-                >
-                  <Text style={[styles.buttonText, styles.outlinePrimaryButtonText, { fontSize: sizes.buttonTextSize, marginHorizontal: sizes.compoundTextMarginHorizontal, flexShrink: 1, maxWidth: undefined }]} numberOfLines={1} ellipsizeMode="tail">
-                    {getPayButtonBaseLabel()}
-                  </Text>
-                  <Text style={{ color: theme.formInputPlaceholderColor, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>+</Text>
-                  <Text style={{ color: theme.buttonColorSecondaryDefault, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>1</Text>
-                  <Text style={{ color: theme.buttonColorSecondaryDefault, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>
-                    {t('payment_modal.coupon', { defaultValue: 'coupon' })}
-                  </Text>
-                  <Image
-                    source={icons.coupon}
-                    style={{
-                      width: sizes.couponIconSize,
-                      height: sizes.couponIconSize,
-                      tintColor: theme.buttonColorSecondaryDefault,
-                    }}
-                  />
-                </View>
-                <Text
+          {/* Chips */}
+          <View style={styles.chipContainer}>
+            {displayProducts.map((opt) => {
+              const active = jobType === opt.type;
+              return (
+                <TouchableOpacity
+                  key={opt.type}
+                  onPress={() => setJobType(opt.type)}
                   style={[
-                    styles.buttonSubText,
-                    { color: theme.formInputLabelColor },
+                    styles.chip,
+                    {
+                      borderColor: active
+                        ? theme.primaryColor
+                        : theme.formInputPlaceholderColor,
+                      backgroundColor: active
+                        ? theme.primaryColor
+                        : 'transparent',
+                    },
                   ]}
                 >
-                  {t('payment_modal.card_charged_coupon_deducted_once')}
-                </Text>
-              </View>
-            </TouchableOpacity>
+                  <Text
+                    style={[
+                      styles.chipText,
+                      { color: active ? '#fff' : theme.formInputLabelColor },
+                    ]}
+                  >
+                    {opt.type === 'normal'
+                      ? t('payment_modal.option_default', { defaultValue: 'Default' })
+                      : opt.type === 'quick'
+                        ? t('payment_modal.option_quickly', { defaultValue: 'Quickly' })
+                        : t('payment_modal.option_top', { defaultValue: 'TOP' })}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
-            {/* Change method link â€” only when saved methods exist */}
-            {savedMethods.length > 0 && (
-              <TouchableOpacity
-                style={styles.changeMethodLink}
-                onPress={() => activeSetStep(2)}
-              >
-                <Text style={styles.changeMethodLinkText}>
-                  {t('payment_modal.change_method', { defaultValue: 'Change payment method' })}
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Subscription plans */}
-            <TouchableOpacity
-              style={[styles.button, styles.primaryButton]}
-              onPress={() => {
-                onSubmit({ viewPlans: true });
+          {/* Combined Price Header */}
+          <View style={styles.priceRow}>
+            <Text style={styles.priceLabel}>{t('payment_modal.price_label')}</Text>
+            <Text style={styles.priceValue}>{formattedMoneyPrice}</Text>
+            <Text style={{ color: theme.formInputPlaceholderColor, fontSize: sizes.priceValueSize, fontFamily: 'Rubik-Bold', marginHorizontal: sizes.pricePlusMarginHorizontal }}>+</Text>
+            <Text style={[styles.priceValue, { color: theme.buttonColorSecondaryDefault }]}>1</Text>
+            <Text style={{ color: theme.buttonColorSecondaryDefault, fontSize: sizes.priceTextSize, fontFamily: 'Rubik-Bold', marginHorizontal: sizes.pricePlusMarginHorizontal }}>
+              {t('payment_modal.coupon', { defaultValue: 'coupon' })}
+            </Text>
+            <Image
+              source={icons.coupon}
+              style={{
+                width: sizes.couponIconSize,
+                height: sizes.couponIconSize,
+                tintColor: theme.buttonColorSecondaryDefault,
               }}
+            />
+          </View>
+
+          <Text style={styles.infoText}>
+            {t('payment_modal.card_coupon_charged_simultaneously')}
+          </Text>
+
+          {/* Combined Pay Button */}
+          <TouchableOpacity
+            style={[styles.button, styles.outlinePrimaryButton, { height: sizes.buttonHeight * 1.15 }]}
+            onPress={() => {
+              if (savedMethods.length > 0 && defaultSavedMethod) {
+                handleConfirmPayment();
+              } else {
+                activeSetStep(2);
+              }
+            }}
+          >
+            <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+              <View
+                style={{
+                  flexDirection: isRTL ? 'row-reverse' : 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: sizes.compoundButtonGap,
+                  width: '100%',
+                }}
+              >
+                <Text style={[styles.buttonText, styles.outlinePrimaryButtonText, { fontSize: sizes.buttonTextSize, marginHorizontal: sizes.compoundTextMarginHorizontal, flexShrink: 1, maxWidth: undefined }]} numberOfLines={1} ellipsizeMode="tail">
+                  {getPayButtonBaseLabel()}
+                </Text>
+                <Text style={{ color: theme.formInputPlaceholderColor, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>+</Text>
+                <Text style={{ color: theme.buttonColorSecondaryDefault, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>1</Text>
+                <Text style={{ color: theme.buttonColorSecondaryDefault, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>
+                  {t('payment_modal.coupon', { defaultValue: 'coupon' })}
+                </Text>
+                <Image
+                  source={icons.coupon}
+                  style={{
+                    width: sizes.couponIconSize,
+                    height: sizes.couponIconSize,
+                    tintColor: theme.buttonColorSecondaryDefault,
+                  }}
+                />
+              </View>
+              <Text
+                style={[
+                  styles.buttonSubText,
+                  { color: theme.formInputLabelColor },
+                ]}
+              >
+                {t('payment_modal.card_charged_coupon_deducted_once')}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Change method link â€” only when saved methods exist */}
+          {savedMethods.length > 0 && (
+            <TouchableOpacity
+              style={styles.changeMethodLink}
+              onPress={() => activeSetStep(2)}
             >
-              <Text style={[styles.buttonText, styles.primaryButtonText]}>
-                {t('payment_modal.get_subscription', { defaultValue: 'Get a subscription' })}
+              <Text style={styles.changeMethodLinkText}>
+                {t('payment_modal.change_method', { defaultValue: 'Change payment method' })}
               </Text>
             </TouchableOpacity>
-          </View>
-        );
-      }
+          )}
+
+          {/* Subscription plans */}
+          <TouchableOpacity
+            style={[styles.button, styles.primaryButton]}
+            onPress={() => {
+              onSubmit({ viewPlans: true });
+            }}
+          >
+            <Text style={[styles.buttonText, styles.primaryButtonText]}>
+              {t('payment_modal.get_subscription', { defaultValue: 'Get a subscription' })}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
   };
 
-  // â”€â”€â”€ Render Screen: Select Payment Method (Step 2) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Render Screen: Select Payment Method (Step 2) ─────────────────────────
   const renderStep2 = () => {
-    const isCombined = selectedOption.type !== 'normal';
+    const isCombined = isClient && selectedOption.type !== 'normal';
 
     const step2Header = (
       <>
@@ -1073,7 +1073,7 @@ const PublishStatusModal = ({
     );
   };
 
-  // â”€â”€â”€ Render Main â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Render Main ─────────────────────────────────────────────────────────────
   return (
     <BaseActionModal
       visible={visible}

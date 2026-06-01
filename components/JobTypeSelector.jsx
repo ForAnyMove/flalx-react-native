@@ -5,12 +5,10 @@ import {
   TouchableOpacity,
   View,
   Platform,
-  Image,
   useWindowDimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
-import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocalization } from '../src/services/useLocalization';
@@ -176,10 +174,19 @@ export default function JobTypeSelector({
         },
         trashButton: {
           [isRTL ? 'marginRight' : 'marginLeft']: sizes.trashSizeMargin,
+          justifyContent: 'center',
+          alignSelf: 'center',
+          borderWidth: 1,
+          borderColor: colors.dangerActive,
+          borderRadius: sizes.radius,
+          backgroundColor: 'rgba(239, 68, 68, 0.07)',
+          paddingHorizontal: sizes.padH,
+          height: sizes.height,
         },
-        trashIcon: {
-          width: sizes.trashSize,
-          height: sizes.trashSize,
+        resetText: {
+          fontSize: sizes.font,
+          color: colors.dangerActive,
+          fontFamily: 'Rubik-Medium',
         },
       }),
     [sizes, isRTL, wrapperHeight, containerWidth]
@@ -235,24 +242,16 @@ export default function JobTypeSelector({
       </ScrollView>
 
       {/* Корзина (очистить всё) */}
-      <TouchableOpacity
-        onPress={clearAll}
-        style={[styles.trashButton, dynamicStyles.trashButton]}
-      >
-        <Image
-          source={icons.delete}
-          style={[
-            dynamicStyles.trashIcon,
-            {
-              tintColor:
-                selectedTypes.length > 0
-                  ? colors.dangerActive
-                  : colors.dangerInactive,
-            },
-          ]}
-          resizeMode='contain'
-        />
-      </TouchableOpacity>
+      {selectedTypes.length > 0 && (
+        <TouchableOpacity
+          onPress={clearAll}
+          style={[styles.trashButton, dynamicStyles.trashButton]}
+        >
+          <Text style={[dynamicStyles.resetText]}>
+            {t('misc.reset_filters', { defaultValue: 'Reset filters' })}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }

@@ -20,6 +20,7 @@ import { PROFESSION_TYPES } from '../../../../constants/enums';
 import { icons } from '../../../../constants/icons';
 import RequestProfessionModal from '../../../../components/RequestProfessionModal';
 import { useTranslation } from 'react-i18next';
+import { useLocalization } from '../../../../src/services/useLocalization';
 import { SubmitModal } from '../../../../components/modals/misc/SubmitModal';
 import { useNotification } from '../../../../src/render';
 
@@ -31,13 +32,16 @@ const MyProfessions = ({ openSystemRegistration, onBackFromSystemRegistration, i
   const { themeController, languageController, jobTypesController, setAppLoading } = useComponentContext();
   const isRTL = languageController.isRTL;
   const { t } = useTranslation();
+  const { tField } = useLocalization(languageController.current);
 
   const formattedUserRequests = useMemo(() => {
     const requests = [];
     jobTypesController.userToUserRequest.list.forEach((request) => {
+      const typeObj = jobTypesController.jobTypesWithSubtypes.find(jt => jt.id === request.job_type_id);
+      const subtypeObj = typeObj?.subtypes.find(st => st.id === request.job_subtype_id);
       const reuqestObject = {
-        title: jobTypesController.jobTypesWithSubtypes.find(t => t.id === request.job_type_id)?.name || request.requested_type_name,
-        subtitle: jobTypesController.jobTypesWithSubtypes.find(t => t.id === request.job_type_id)?.subtypes.find(st => st.id === request.job_subtype_id)?.name || request.requested_subtype_name,
+        title: tField(typeObj, 'name') || request.requested_type_name,
+        subtitle: tField(subtypeObj, 'name') || request.requested_subtype_name,
         type: (() => {
           switch (request.status) {
             case "pending":
@@ -55,7 +59,7 @@ const MyProfessions = ({ openSystemRegistration, onBackFromSystemRegistration, i
       if (request.rejection_reason != null && request.rejection_reason.length > 0) {
         reuqestObject.extra = {
           comment: {
-            title: 'Rejection reason:',
+            title: t('jobs.modal.messages.rejectionReason'),
             content: request.rejection_reason,
           },
         };
@@ -65,7 +69,7 @@ const MyProfessions = ({ openSystemRegistration, onBackFromSystemRegistration, i
     });
 
     return requests;
-  }, [jobTypesController.userToUserRequest.list]);
+  }, [jobTypesController.userToUserRequest.list, languageController.current]);
 
   const filteredFormattedUserRequests = useMemo(() => {
     if (searchValue.trim() === '') {

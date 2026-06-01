@@ -220,6 +220,7 @@ export default function OnboardingScreen({ onFinish }) {
                 {
                   gap: sizes.indicatorContainerGap,
                   marginBottom: sizes.indicatorContainerMarginBottom,
+                  flexDirection: isRTL ? 'row-reverse' : 'row',
                 },
               ]}
             >
@@ -328,9 +329,7 @@ const styles = StyleSheet.create({
   description: {
     textAlign: 'center',
   },
-  indicatorContainer: {
-    flexDirection: 'row',
-  },
+  indicatorContainer: {},
   indicator: {},
   button: {
     alignItems: 'center',

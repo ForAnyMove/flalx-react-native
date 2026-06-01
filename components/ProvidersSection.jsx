@@ -72,7 +72,7 @@ function UserSummaryBlockWrapper({
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    if (preloadedUser && (preloadedUser.name || preloadedUser.name_i18n)) {
+    if (preloadedUser && (preloadedUser.name || preloadedUser.name_i18n) && preloadedUser.professions !== undefined) {
       setUser(preloadedUser);
       return;
     }

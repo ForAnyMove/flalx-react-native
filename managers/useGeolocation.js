@@ -3,6 +3,7 @@ import { Platform, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from 'react-native-geolocation-service';
 import { logError } from '../utils/log_util';
+import i18n from '../utils/i18n/i18n';
 
 const GEOLOCATION_ENABLED_KEY = '@geolocation_enabled';
 const IP_GEOLOCATION_ENABLED_KEY = '@ip_geolocation_enabled';
@@ -143,18 +144,18 @@ export const useGeolocation = () => {
     const requestIpGeolocationPermission = useCallback(async () => {
         return new Promise((resolve) => {
             const dialogData = {
-                message: 'Точное местоположение недоступно.\n\nРазрешить определение приблизительного местоположения по IP-адресу?\n\n• Точность: ~10-50км (город/регион)\n• Данные: только координаты и город\n• Конфиденциальность: IP-адрес передается внешнему сервису\n\nВы сможете изменить это решение в настройках.',
+                message: i18n.t('geolocation.ip_dialog.message'),
                 buttons: [
                     {
                         key: 'deny',
-                        title: 'Отказаться',
+                        title: i18n.t('geolocation.ip_dialog.decline'),
                         onPress: () => {
                             resolve(false);
                         }
                     },
                     {
                         key: 'allow',
-                        title: 'Разрешить',
+                        title: i18n.t('geolocation.ip_dialog.allow'),
                         onPress: () => {
                             resolve(true);
                         }
@@ -190,15 +191,14 @@ export const useGeolocation = () => {
                         // Выключаем геолокацию если не удалось получить позицию
                         setEnabled(false);
                         await saveSettings(false);
-                        setError('Не удалось получить местоположение: ' + locationError.message);
+                        setError(i18n.t('geolocation.errors.could_not_get_location', { message: locationError.message }));
                     }
                 } else {
-                    const errorMessage = 'Доступ к геолокации заблокирован. Для включения геолокации разрешите доступ в настройках браузера или перезагрузите страницу и выберите "Разрешить" при запросе.';
-                    setError(errorMessage);
+                    setError(i18n.t('geolocation.errors.access_blocked'));
                     // Не включаем геолокацию без разрешения
                 }
             } catch (err) {
-                setError('Ошибка проверки разрешений: ' + err.message);
+                setError(i18n.t('geolocation.errors.permission_check_failed', { message: err.message }));
             }
         } else {
             // При отключении просто выключаем
@@ -232,16 +232,16 @@ export const useGeolocation = () => {
                         // Выключаем геолокацию если не удалось получить позицию
                         setEnabled(false);
                         await saveSettings(false);
-                        setError('Не удалось получить местоположение: ' + locationError.message);
+                        setError(i18n.t('geolocation.errors.could_not_get_location', { message: locationError.message }));
                         throw locationError; // Пробрасываем ошибку для setGeolocationEnabled
                     }
                 } else {
-                    const errorMessage = 'Доступ к геолокации заблокирован. Для включения геолокации разрешите доступ в настройках браузера или перезагрузите страницу и выберите "Разрешить" при запросе.';
+                    const errorMessage = i18n.t('geolocation.errors.access_blocked');
                     setError(errorMessage);
-                    throw new Error('Нет разрешения на доступ к геолокации');
+                    throw new Error('Location permission denied');
                 }
             } catch (err) {
-                setError('Ошибка проверки разрешений: ' + err.message);
+                setError(i18n.t('geolocation.errors.permission_check_failed', { message: err.message }));
                 throw err;
             }
         } else {

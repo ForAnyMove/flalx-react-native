@@ -70,7 +70,7 @@ async function editJobById(jobId, updates, session) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Ошибка при обновлении заявки');
+      throw new Error(errorData.error || 'Error updating job');
     }
 
     const updatedJob = await response.json();

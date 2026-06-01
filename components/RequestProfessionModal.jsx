@@ -19,6 +19,7 @@ import { useNotification } from '../src/render';
 import CustomTextInput from './ui/CustomTextInput';
 import CustomExperiencePicker from './ui/CustomExperiencePicker';
 import AddProfessionModal from './AddProfessionModal';
+import { useLocalization } from '../src/services/useLocalization';
 
 const RequestProfessionModal = ({
   visible,
@@ -34,6 +35,7 @@ const RequestProfessionModal = ({
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
+  const { tField } = useLocalization(languageController.current);
 
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -45,10 +47,10 @@ const RequestProfessionModal = ({
   const jobTypesOptions = useMemo(() => {
     const options = {};
     jobTypesController.jobTypesWithSubtypes?.forEach(type => {
-      options[type.key] = type.name;
+      options[type.key] = tField(type, 'name');
     });
     return options;
-  }, [jobTypesController.jobTypesWithSubtypes]);
+  }, [jobTypesController.jobTypesWithSubtypes, languageController.current]);
 
   const jobSubTypesOptions = useMemo(() => {
     setSubType(null);
@@ -59,7 +61,7 @@ const RequestProfessionModal = ({
       );
       if (selectedType?.subtypes) {
         selectedType.subtypes.forEach(subtype => {
-          options[subtype.key] = subtype.name;
+          options[subtype.key] = tField(subtype, 'name');
         });
       }
     }
