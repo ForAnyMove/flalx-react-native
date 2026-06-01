@@ -613,6 +613,7 @@ export default function NewJobModal({
       placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
       isRTL={isRTL}
       error={fieldErrors.location}
+      language={languageController.current}
     />,
     <View
       style={[
@@ -1158,6 +1159,7 @@ export default function NewJobModal({
                       })}
                       isRTL={isRTL}
                       error={fieldErrors.location}
+                      language={languageController.current}
                     />
                   </View>
 

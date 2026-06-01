@@ -67,7 +67,7 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
     const scale = isWebLandscape ? web : mobile;
 
     return {
-      modalWidth: isWebLandscape ? scale(450) : width*0.9,
+      modalWidth: isWebLandscape ? scale(450) : width * 0.9,
       modalMaxHeight: isWebLandscape ? height * 0.8 : height,
       borderRadius: scale(8),
       padding: scale(24),
@@ -100,7 +100,7 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
 
   const handleSend = async () => {
     if (!validateForm()) {
-      showWarning('Invalid Input', [
+      showWarning(t('professions.warnings.invalid_input'), [
         {
           title: 'OK',
           backgroundColor: '#3B82F6',
@@ -323,131 +323,131 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
 
   return (
     <>
-    <Modal visible={visible && !isAddModalVisible} transparent={true} animationType='fade'>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          {isSubmitted ? (
-            <>
-              <View style={styles.successContainer}>
-                <View style={styles.successIconContainer}>
-                  <Image
-                    source={icons.checkDefault}
-                    style={{
-                      width: sizes.successIconSize,
-                      height: sizes.successIconSize,
-                    }}
-                  />
-                </View>
-                <Text style={styles.successTitle}>
-                  {t('professions.register_modal.success_title')}
-                </Text>
-                <Text style={styles.successDescription}>
-                  {t('professions.register_modal.success_description')}
-                </Text>
-                <TouchableOpacity style={styles.okButton} onPress={handleClose}>
-                  <Text style={styles.okButtonText}>
-                    {t('professions.register_modal.ok_button')}
+      <Modal visible={visible && !isAddModalVisible} transparent={true} animationType='fade'>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            {isSubmitted ? (
+              <>
+                <View style={styles.successContainer}>
+                  <View style={styles.successIconContainer}>
+                    <Image
+                      source={icons.checkDefault}
+                      style={{
+                        width: sizes.successIconSize,
+                        height: sizes.successIconSize,
+                      }}
+                    />
+                  </View>
+                  <Text style={styles.successTitle}>
+                    {t('professions.register_modal.success_title')}
                   </Text>
+                  <Text style={styles.successDescription}>
+                    {t('professions.register_modal.success_description')}
+                  </Text>
+                  <TouchableOpacity style={styles.okButton} onPress={handleClose}>
+                    <Text style={styles.okButtonText}>
+                      {t('professions.register_modal.ok_button')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity
+                  onPress={handleClose}
+                  style={{
+                    position: 'absolute',
+                    top: sizes.crossSpace,
+                    right: sizes.crossSpace,
+                  }}
+                >
+                  <Image source={icons.cross} style={styles.crossIcon} />
                 </TouchableOpacity>
-              </View>
-              <TouchableOpacity
-                onPress={handleClose}
-                style={{
-                  position: 'absolute',
-                  top: sizes.crossSpace,
-                  right: sizes.crossSpace,
-                }}
-              >
-                <Image source={icons.cross} style={styles.crossIcon} />
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <View style={styles.header}>
-                <Text style={styles.title}>
-                  {t('professions.register_modal.title')}
+              </>
+            ) : (
+              <>
+                <View style={styles.header}>
+                  <Text style={styles.title}>
+                    {t('professions.register_modal.title')}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={handleClose}
+                  style={{
+                    position: 'absolute',
+                    top: sizes.crossSpace,
+                    right: sizes.crossSpace,
+                  }}
+                >
+                  <Image source={icons.cross} style={styles.crossIcon} />
+                </TouchableOpacity>
+
+                <Text style={styles.description}>
+                  {t('professions.register_modal.description')}
                 </Text>
-              </View>
-              <TouchableOpacity
-                onPress={handleClose}
-                style={{
-                  position: 'absolute',
-                  top: sizes.crossSpace,
-                  right: sizes.crossSpace,
-                }}
-              >
-                <Image source={icons.cross} style={styles.crossIcon} />
-              </TouchableOpacity>
 
-              <Text style={styles.description}>
-                {t('professions.register_modal.description')}
-              </Text>
-
-              <AutocompletePicker
-                label={t('professions.register_modal.profession_label')}
-                placeholder={t(
-                  'professions.register_modal.profession_placeholder'
-                )}
-                setValue={applySelectedType}
-                options={jobTypesOptions}
-                onValueChange={applySelectedType}
-                selectedValue={type}
-                value={type}
-                isRTL={isRTL}
-                containerStyle={{
-                  marginBottom: sizes.inputGap,
-                  width: sizes.inputWidth,
-                }}
-                arrowIcon={true}
-                allowCustomText={true}
-              />
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>
-                  {t('professions.register_modal.subtype_label')}
-                </Text>
-                <CustomTextInput
-                  style={styles.textInput}
+                <AutocompletePicker
+                  label={t('professions.register_modal.profession_label')}
                   placeholder={t(
-                    'professions.register_modal.subtype_placeholder'
+                    'professions.register_modal.profession_placeholder'
                   )}
-                  placeholderTextColor={
-                    themeController.current?.formInputPlaceholderColor
-                  }
-                  value={subtype}
-                  onChangeText={applySelectedSubtype}
-                />
-              </View>
-
-              {requiresVerification && (
-                <CustomExperiencePicker
-                  label={t('register.experience_label')}
-                  selectedValue={experience}
-                  onValueChange={setExperience}
+                  setValue={applySelectedType}
+                  options={jobTypesOptions}
+                  onValueChange={applySelectedType}
+                  selectedValue={type}
+                  value={type}
                   isRTL={isRTL}
                   containerStyle={{
                     marginBottom: sizes.inputGap,
                     width: sizes.inputWidth,
                   }}
-                  bottomDropdown={false}
+                  arrowIcon={true}
+                  allowCustomText={true}
                 />
-              )}
 
-              <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-                <Text style={styles.sendButtonText}>
-                  {requiresVerification ? t('common.next') : t('professions.register_modal.send_button')}
-                </Text>
-              </TouchableOpacity>
-            </>
-          )}
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>
+                    {t('professions.register_modal.subtype_label')}
+                  </Text>
+                  <CustomTextInput
+                    style={styles.textInput}
+                    placeholder={t(
+                      'professions.register_modal.subtype_placeholder'
+                    )}
+                    placeholderTextColor={
+                      themeController.current?.formInputPlaceholderColor
+                    }
+                    value={subtype}
+                    onChangeText={applySelectedSubtype}
+                  />
+                </View>
+
+                {requiresVerification && (
+                  <CustomExperiencePicker
+                    label={t('register.experience_label')}
+                    selectedValue={experience}
+                    onValueChange={setExperience}
+                    isRTL={isRTL}
+                    containerStyle={{
+                      marginBottom: sizes.inputGap,
+                      width: sizes.inputWidth,
+                    }}
+                    bottomDropdown={false}
+                  />
+                )}
+
+                <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+                  <Text style={styles.sendButtonText}>
+                    {requiresVerification ? t('common.next') : t('professions.register_modal.send_button')}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
         </View>
-      </View>
-    </Modal>
-    <AddProfessionModal
-      visible={visible && isAddModalVisible}
-      onClose={handleAddModalClose}
-      onSubmit={handleDocumentsProvided}
-    />
+      </Modal>
+      <AddProfessionModal
+        visible={visible && isAddModalVisible}
+        onClose={handleAddModalClose}
+        onSubmit={handleDocumentsProvided}
+      />
     </>
   );
 };

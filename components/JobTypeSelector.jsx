@@ -175,6 +175,13 @@ export default function JobTypeSelector({
         trashButton: {
           [isRTL ? 'marginRight' : 'marginLeft']: sizes.trashSizeMargin,
           justifyContent: 'center',
+          alignSelf: 'center',
+          borderWidth: 1,
+          borderColor: colors.dangerActive,
+          borderRadius: sizes.radius,
+          backgroundColor: 'rgba(239, 68, 68, 0.07)',
+          paddingHorizontal: sizes.padH,
+          height: sizes.height,
         },
         resetText: {
           fontSize: sizes.font,

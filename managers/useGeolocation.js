@@ -3,6 +3,7 @@ import { Platform, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from 'react-native-geolocation-service';
 import { logError } from '../utils/log_util';
+import i18n from '../utils/i18n/i18n';
 
 const GEOLOCATION_ENABLED_KEY = '@geolocation_enabled';
 const IP_GEOLOCATION_ENABLED_KEY = '@ip_geolocation_enabled';
@@ -143,18 +144,18 @@ export const useGeolocation = () => {
     const requestIpGeolocationPermission = useCallback(async () => {
         return new Promise((resolve) => {
             const dialogData = {
-                message: 'Precise location is unavailable.\n\nAllow approximate location detection by IP address?\n\n\u2022 Accuracy: ~10-50 km (city/region)\n\u2022 Data: coordinates and city only\n\u2022 Privacy: IP address is sent to an external service\n\nYou can change this in settings.',
+                message: i18n.t('geolocation.ip_dialog.message'),
                 buttons: [
                     {
                         key: 'deny',
-                        title: 'Decline',
+                        title: i18n.t('geolocation.ip_dialog.decline'),
                         onPress: () => {
                             resolve(false);
                         }
                     },
                     {
                         key: 'allow',
-                        title: 'Allow',
+                        title: i18n.t('geolocation.ip_dialog.allow'),
                         onPress: () => {
                             resolve(true);
                         }
@@ -190,15 +191,14 @@ export const useGeolocation = () => {
                         // Выключаем геолокацию если не удалось получить позицию
                         setEnabled(false);
                         await saveSettings(false);
-                        setError('Could not get location: ' + locationError.message);
+                        setError(i18n.t('geolocation.errors.could_not_get_location', { message: locationError.message }));
                     }
                 } else {
-                    const errorMessage = 'Location access is blocked. To enable geolocation, allow access in your browser settings or reload the page and select "Allow" when prompted.';
-                    setError(errorMessage);
+                    setError(i18n.t('geolocation.errors.access_blocked'));
                     // Не включаем геолокацию без разрешения
                 }
             } catch (err) {
-                setError('Error checking permissions: ' + err.message);
+                setError(i18n.t('geolocation.errors.permission_check_failed', { message: err.message }));
             }
         } else {
             // При отключении просто выключаем
@@ -232,16 +232,16 @@ export const useGeolocation = () => {
                         // Выключаем геолокацию если не удалось получить позицию
                         setEnabled(false);
                         await saveSettings(false);
-                        setError('Could not get location: ' + locationError.message);
+                        setError(i18n.t('geolocation.errors.could_not_get_location', { message: locationError.message }));
                         throw locationError; // Пробрасываем ошибку для setGeolocationEnabled
                     }
                 } else {
-                    const errorMessage = 'Location access is blocked. To enable geolocation, allow access in your browser settings or reload the page and select "Allow" when prompted.';
+                    const errorMessage = i18n.t('geolocation.errors.access_blocked');
                     setError(errorMessage);
                     throw new Error('Location permission denied');
                 }
             } catch (err) {
-                setError('Error checking permissions: ' + err.message);
+                setError(i18n.t('geolocation.errors.permission_check_failed', { message: err.message }));
                 throw err;
             }
         } else {

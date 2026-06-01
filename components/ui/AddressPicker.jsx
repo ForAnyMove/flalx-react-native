@@ -6,6 +6,7 @@ import {
   Platform,
 } from 'react-native';
 import GooglePlacesTextInput from 'react-native-google-places-textinput';
+import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import themeManager from '../../managers/themeManager';
@@ -22,10 +23,12 @@ const AddressPicker = ({
   isRTL,
   error,
   containerStyle = {},
+  language = 'en',
 }) => {
   const { themeController } = useComponentContext();
   const { width, height, isLandscape } = useWindowInfo();
   const { showError } = useNotification();
+  const { t } = useTranslation();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   // --- Размеры и стили ---
@@ -66,17 +69,17 @@ const AddressPicker = ({
   const handleError = (error) => {
     logError('Places API Error:', error);
 
-    let errorMessage = 'There is a problem connecting to the server';
+    let errorMessage = t('address_picker.server_unavailable');
 
     if (error.message?.includes('Network request failed')) {
-      errorMessage = 'Proxy server is unavailable. Please run: cd proxy-server && npm start';
+      errorMessage = t('address_picker.server_unavailable');
     } else if (error.message?.includes('Too many requests')) {
-      errorMessage = 'Too many requests. Please try again later.';
+      errorMessage = t('address_picker.too_many_requests');
     } else if (error.message?.includes('API key')) {
-      errorMessage = 'There is a problem with the API key on the server';
+      errorMessage = t('address_picker.api_key_error');
     }
 
-    showError(`Address pick error: ${errorMessage}`);
+    showError(t('address_picker.error_title', { message: errorMessage }));
   };
 
   const customStyles = {
@@ -142,8 +145,8 @@ const AddressPicker = ({
   const PROXY_CONFIG = {
     baseUrl: API_BASE_URL,
     endpoints: {
-      autocomplete: '/api/google-places/autocomplete',
-      details: '/api/google-places/details'
+      autocomplete: `/api/google-places/autocomplete?language=${language}`,
+      details: `/api/google-places/details?language=${language}`
     }
   };
 
