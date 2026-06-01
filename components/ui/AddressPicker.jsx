@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -31,6 +31,14 @@ const AddressPicker = ({
   const { t } = useTranslation();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
+  const [displayValue, setDisplayValue] = useState(initialAddress);
+  const [inputKey, setInputKey] = useState(0);
+
+  useEffect(() => {
+    setDisplayValue(initialAddress);
+    setInputKey(k => k + 1);
+  }, [initialAddress]);
+
   // --- Размеры и стили ---
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -54,13 +62,15 @@ const AddressPicker = ({
   }, [isWebLandscape, height]);
 
   const handleSelect = (place) => {
-
     if (place?.details) {
+      const formattedAddress = place.details.formattedAddress;
+      setDisplayValue(formattedAddress);
+      setInputKey(k => k + 1);
       const location = {
         latitude: place.details.location.latitude,
         longitude: place.details.location.longitude,
-        address: place.details.displayName.text,
-        formatterAddress: place.details.formattedAddress,
+        address: formattedAddress,
+        formattedAddress,
       };
       onLocationSelect(location);
     }
@@ -146,7 +156,7 @@ const AddressPicker = ({
     baseUrl: API_BASE_URL,
     endpoints: {
       autocomplete: `/api/google-places/autocomplete?language=${language}`,
-      details: `/api/google-places/details?language=${language}`
+      details: `/api/google-places/details`
     }
   };
 
@@ -178,7 +188,8 @@ const AddressPicker = ({
           {label}
         </Text>
         <GooglePlacesTextInput
-          value={initialAddress}
+          key={inputKey}
+          value={displayValue}
           proxyUrl={`${PROXY_CONFIG.baseUrl}${PROXY_CONFIG.endpoints.autocomplete}`}
           detailsProxyUrl={`${PROXY_CONFIG.baseUrl}${PROXY_CONFIG.endpoints.details}`}
           onPlaceSelect={handleSelect}
