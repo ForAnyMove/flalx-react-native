@@ -201,7 +201,7 @@ const PublishStatusModal = ({
     if (method.type === 'paypal') {
       return `PayPal (${method.details?.title || 'user@email'})`;
     }
-    return `${t('payment_modal.credit_card', { defaultValue: 'Credit card' })} •••• •••• •••• ${method.details?.last4 || '4352'}`;
+    return `${t('payment_modal.credit_card', { defaultValue: 'Credit card' })} ${method.details?.cardNumber || '•••• •••• •••• 4352'}`;
   };
 
   // ─── Actions ─────────────────────────────────────────────────────────────────
