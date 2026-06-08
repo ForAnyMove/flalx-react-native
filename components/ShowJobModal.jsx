@@ -776,7 +776,31 @@ export default function ShowJobModal({
     return result;
   };
 
-  // PurchaseModal: onPayWithCoupons handler for the interest/provider paywall
+  // PurchaseModal: coupon-only handler for business-created job interest paywall.
+  const handlePayCouponsPurchaseInterest = () => {
+    const payload = {
+      useCoupon: true,
+      ...(user.current?.id && { providerId: user.current.id }),
+    };
+    setConfirmInterestModal(false);
+    setAppLoading(true);
+    addSelfToJobProviders(currentJobId, session, payload)
+      .then((result) => {
+        if (result.success) {
+          couponsManagerController?.refreshBalance();
+          jobsController.reloadAll();
+          setInterestedRequest(true);
+        }
+      })
+      .catch((e) => {
+        if (e.response?.status === 400 && e.response.data?.code === 'NO_COUPONS_AVAILABLE') {
+          showWarning(t('errors.no_coupons', { defaultValue: 'You have no coupons available' }));
+        }
+      })
+      .finally(() => setAppLoading(false));
+  };
+
+  // InterestRequestModal: coupon-only handler with form data for client-created jobs.
   const handlePayCouponsInterest = () => {
     const payload = {
       useCoupon: true,
@@ -3027,6 +3051,7 @@ export default function ShowJobModal({
           jobsController.providerProduct?.currency,
         )}
         onPurchase={handlePurchaseInterest}
+        onPayWithCoupons={handlePayCouponsPurchaseInterest}
         onOpenSubscriptions={() => {
           setPlansModalReturnTarget('purchase');
           setPlansModalVisible(true);
