@@ -111,7 +111,6 @@ async function addSelfToJobProviders(jobId, session, options = {}) {
             savePaymentMethod,
             savedPaymentMethodId,
             language,
-            providerId,
             proposed_price,
             proposed_time_from,
             proposed_time_to,
@@ -130,13 +129,10 @@ async function addSelfToJobProviders(jobId, session, options = {}) {
             ...(proposed_time_from && { proposed_time_from }),
             ...(proposed_time_to && { proposed_time_to }),
         };
-        const endpoint = providerId
-            ? `/api/jobs/${jobId}/providers/${providerId}/pay`
-            : `/api/jobs/${jobId}/providers`;
 
         const response = await fetchWithSession({
             session,
-            endpoint,
+            endpoint: `/api/jobs/${jobId}/providers`,
             data,
             method: 'POST'
         });
