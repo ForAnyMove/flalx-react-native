@@ -1,5 +1,8 @@
 import { fetchWithSession } from './apiBase';
 import { logError, logInfo } from '../../utils/log_util';
+import i18n from '../../utils/i18n/i18n';
+
+const getCurrentLanguage = (language) => language ?? i18n.language ?? 'en';
 
 async function getRevealedUsers(session) {
     try {
@@ -21,9 +24,10 @@ async function getRevealedUsers(session) {
 
 async function revealUser(userId, session, paymentOptions = {}) {
     try {
-        const { useCoupon = false, paymentMethod = 'paypal', currency = 'USD', savePaymentMethod, savedPaymentMethodId } = paymentOptions;
+        const { useCoupon = false, paymentMethod = 'paypal', currency = 'USD', savePaymentMethod, savedPaymentMethodId, language } = paymentOptions;
         const data = {
             currency,
+            language: getCurrentLanguage(language),
             ...(useCoupon
                 ? { use_coupon: true, paymentMethod: 'none' }
                 : savedPaymentMethodId
@@ -34,7 +38,7 @@ async function revealUser(userId, session, paymentOptions = {}) {
         };
         const response = await fetchWithSession({
             session,
-            endpoint: `/api/user-info/reveal/${userId}`,
+            endpoint: `/api/user-info/${userId}/pay`,
             method: 'POST',
             data,
         });

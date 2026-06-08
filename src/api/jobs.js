@@ -1,6 +1,9 @@
 import axios from 'axios';
 import { fetchWithSession } from './apiBase';
 import { logError } from '../../utils/log_util';
+import i18n from '../../utils/i18n/i18n';
+
+const getCurrentLanguage = (language) => language ?? i18n.language ?? 'en';
 
 async function createJob(jobData, session) {
     try {
@@ -21,9 +24,10 @@ async function createJob(jobData, session) {
 
 async function payForJob(jobDataId, session, paymentOptions = {}) {
     try {
-        const { useCoupon = false, paymentMethod = 'paypal', currency = 'USD', savePaymentMethod, savedPaymentMethodId } = paymentOptions;
+        const { useCoupon = false, paymentMethod = 'paypal', currency = 'USD', savePaymentMethod, savedPaymentMethodId, language } = paymentOptions;
         const data = {
             currency,
+            language: getCurrentLanguage(language),
             ...(useCoupon
                 ? { use_coupon: true, paymentMethod: 'none' }
                 : savedPaymentMethodId
@@ -106,12 +110,15 @@ async function addSelfToJobProviders(jobId, session, options = {}) {
             currency = 'USD',
             savePaymentMethod,
             savedPaymentMethodId,
+            language,
+            providerId,
             proposed_price,
             proposed_time_from,
             proposed_time_to,
         } = options;
 
         const data = {
+            language: getCurrentLanguage(language),
             ...(useCoupon
                 ? { use_coupon: true, paymentMethod: 'none' }
                 : savedPaymentMethodId
@@ -123,9 +130,13 @@ async function addSelfToJobProviders(jobId, session, options = {}) {
             ...(proposed_time_from && { proposed_time_from }),
             ...(proposed_time_to && { proposed_time_to }),
         };
+        const endpoint = providerId
+            ? `/api/jobs/${jobId}/providers/${providerId}/pay`
+            : `/api/jobs/${jobId}/providers`;
+
         const response = await fetchWithSession({
             session,
-            endpoint: `/api/jobs/${jobId}/providers`,
+            endpoint,
             data,
             method: 'POST'
         });

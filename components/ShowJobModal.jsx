@@ -759,6 +759,7 @@ export default function ShowJobModal({
   const handlePurchaseInterest = async (payload) => {
     const finalPayload = {
       ...payload,
+      ...(user.current?.id && { providerId: user.current.id }),
       ...(interestFormData && {
         proposed_price: interestFormData.price,
         proposed_time_from: interestFormData.startDate,
@@ -779,6 +780,7 @@ export default function ShowJobModal({
   const handlePayCouponsInterest = () => {
     const payload = {
       useCoupon: true,
+      ...(user.current?.id && { providerId: user.current.id }),
       ...(interestFormData && {
         proposed_price: interestFormData.price,
         proposed_time_from: interestFormData.startDate,
@@ -825,8 +827,14 @@ export default function ShowJobModal({
   const handleConfirmInterestRequest = async (formData, paymentOptions = {}) => {
     try {
       setInterestFormData(formData);
+      const usesPaymentRoute =
+        paymentOptions.paymentMethod ||
+        paymentOptions.useCoupon ||
+        paymentOptions.savedPaymentMethodId ||
+        paymentOptions.savePaymentMethod;
       const finalOptions = {
         ...paymentOptions,
+        ...(usesPaymentRoute && user.current?.id && { providerId: user.current.id }),
         ...(formData.price && { proposed_price: formData.price }),
         ...(formData.startDate && { proposed_time_from: formData.startDate }),
         ...(formData.endDate && { proposed_time_to: formData.endDate }),

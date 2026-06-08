@@ -1,8 +1,11 @@
 import { fetchWithSession } from './apiBase';
 import { logError } from '../../utils/log_util';
+import i18n from '../../utils/i18n/i18n';
+
+const getCurrentLanguage = (language) => language ?? i18n.language ?? 'en';
 
 async function createSubscription(session, planId, paymentOptions = {}) {
-    const { paymentMethod = 'paypal', savedPaymentMethodId } = paymentOptions;
+    const { paymentMethod = 'paypal', savedPaymentMethodId, language } = paymentOptions;
     const providerMap = { paypal: 'PAYPAL', hyp: 'HYP', card: 'HYP' };
     const provider = providerMap[paymentMethod] ?? 'PAYPAL';
     try {
@@ -12,6 +15,7 @@ async function createSubscription(session, planId, paymentOptions = {}) {
             data: {
                 planId,
                 provider,
+                language: getCurrentLanguage(language),
                 ...(savedPaymentMethodId && { savedPaymentMethodId }),
             },
             method: 'POST'
@@ -180,14 +184,15 @@ async function updateSubscriptionPaymentMethod(session, subscriptionId, paymentM
     }
 }
 
-async function addPaymentMethodToSubscription(session, subscriptionId, paymentMethod = 'paypal') {
+async function addPaymentMethodToSubscription(session, subscriptionId, paymentMethod = 'paypal', options = {}) {
+    const { language } = options;
     const providerMap = { paypal: 'PAYPAL', hyp: 'HYP', card: 'HYP' };
     const provider = providerMap[paymentMethod] ?? 'PAYPAL';
     try {
         const response = await fetchWithSession({
             session,
             endpoint: `/api/billing/subscriptions/${subscriptionId}/add-payment-method`,
-            data: { provider },
+            data: { provider, language: getCurrentLanguage(language) },
             method: 'POST'
         });
         return response.data;
