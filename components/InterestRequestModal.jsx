@@ -179,7 +179,12 @@ const InterestRequestModal = ({
   step,
   setStep,
 }) => {
-  const { themeController, languageController, paymentsManagerController } = useComponentContext();
+  const {
+    themeController,
+    languageController,
+    paymentsManagerController,
+    couponsManagerController,
+  } = useComponentContext();
   const theme = themeController.current;
   const { height, width, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -198,10 +203,12 @@ const InterestRequestModal = ({
 
   const savedMethods = paymentsManagerController?.savedMethods ?? [];
   const availableMethods = paymentsManagerController?.availableMethods ?? [];
+  const couponsCount = couponsManagerController?.balance ?? 0;
 
   // ─── Effect: Reset/Initialize ────────────────────────────────────────────────
   useEffect(() => {
     if (visible) {
+      couponsManagerController?.refreshBalance?.();
       // Only set step automatically if it's not already set to something meaningful or if it's a fresh open
       if (isBusinessJob && !hasSubscription) {
         setStep(2);
@@ -276,6 +283,8 @@ const InterestRequestModal = ({
       hintSize: scale(12),
       inputTextSize: scale(18),
       totalPriceSize: scale(24),
+      couponIconSize: scale(24),
+      couponButtonGap: scale(6),
 
       // New restored sizes
       dotsRowMarginBottom: scale(8),
@@ -475,6 +484,52 @@ const InterestRequestModal = ({
             {t('interestRequest.pay_and_submit', { price, defaultValue: `Pay ${price} & Submit` })}
           </Text>
         </TouchableOpacity>
+
+        {onPayWithCoupons && (
+          <TouchableOpacity
+            style={[
+              styles.outlineButton,
+              {
+                borderColor: theme.buttonColorSecondaryDefault || theme.primaryColor,
+                height: sizes.buttonHeight,
+                borderRadius: sizes.borderRadius,
+                backgroundColor: theme.backgroundColor,
+                marginTop: 12,
+              },
+            ]}
+            onPress={onPayWithCoupons}
+          >
+            <View
+              style={{
+                flexDirection: isRTL ? 'row-reverse' : 'row',
+                alignItems: 'center',
+                gap: sizes.couponButtonGap,
+              }}
+            >
+              <Text
+                style={[
+                  styles.outlineButtonText,
+                  {
+                    color: theme.buttonColorSecondaryDefault || theme.primaryColor,
+                    fontSize: sizes.buttonTextSize,
+                  },
+                ]}
+              >
+                {t('payment_modal.pay_with_coupon_balance', {
+                  balance: couponsCount,
+                })}
+              </Text>
+              <Image
+                source={icons.coupon}
+                style={{
+                  width: sizes.couponIconSize,
+                  height: sizes.couponIconSize,
+                  tintColor: theme.buttonColorSecondaryDefault || theme.primaryColor,
+                }}
+              />
+            </View>
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           style={[styles.primaryButton, { backgroundColor: theme.primaryColor, height: sizes.buttonHeight, borderRadius: sizes.borderRadius, marginTop: 12 }]}
