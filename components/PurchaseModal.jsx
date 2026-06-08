@@ -15,6 +15,7 @@ import { useComponentContext } from '../context/globalAppContext';
 import { useWindowInfo } from '../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
+import PaymentLegalNotice from './PaymentLegalNotice';
 
 /**
  * PurchaseModal — modal for selecting a payment method and completing a purchase.
@@ -55,6 +56,7 @@ const PurchaseModal = ({
   startStep = 'select', // 'select' | 'method'
   skipBackOnMethod = false,
   footerText,
+  legalNoticeType,
 }) => {
   const {
     themeController,
@@ -272,8 +274,40 @@ const PurchaseModal = ({
       // Change method link
       changeLinkMarginTop: scale(16),
       changeLinkTextSize: scale(16),
+      legalNoticeFontSize: scale(11),
+      legalNoticeMarginVertical: scale(14),
     };
   }, [height, width, isWebLandscape]);
+
+  const renderLegalNotice = () => {
+    if (!legalNoticeType) return null;
+
+    const scenarioKey =
+      legalNoticeType === 'creator'
+        ? 'payment_modal.legal_authorization_creator_body'
+        : legalNoticeType === 'provider'
+          ? 'payment_modal.legal_authorization_provider_body'
+          : null;
+
+    if (!scenarioKey) return null;
+
+    return (
+      <PaymentLegalNotice
+        title={t('payment_modal.legal_authorization_title')}
+        texts={[
+          t('payment_modal.legal_authorization_body'),
+          t(scenarioKey),
+        ]}
+        theme={theme}
+        isRTL={isRTL}
+        fontSize={sizes.legalNoticeFontSize}
+        style={{
+          marginTop: sizes.legalNoticeMarginVertical,
+          marginBottom: sizes.legalNoticeMarginVertical,
+        }}
+      />
+    );
+  };
 
   // ─── Styles ──────────────────────────────────────────────────────────────────
   const styles = StyleSheet.create({
@@ -512,6 +546,8 @@ const PurchaseModal = ({
           </View>
         )}
 
+        {renderLegalNotice()}
+
         {/* Primary pay button */}
         <TouchableOpacity
           style={[styles.button, styles.outlinePrimaryButton]}
@@ -584,6 +620,8 @@ const PurchaseModal = ({
         <Text style={styles.title}>
           {t('payment_modal.select_method_title')}
         </Text>
+
+        {renderLegalNotice()}
 
         {/* ── Available methods (не прокручиваются — всегда видны целиком) ── */}
         {hasSaved && (

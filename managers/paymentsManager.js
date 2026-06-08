@@ -5,6 +5,7 @@ import {
   fetchPaymentMethods,
   deletePaymentMethod,
   setDefaultPaymentMethod,
+  setupPaymentMethod,
   updateSubscriptionMethod,
 } from '../src/api/paymentMethods';
 
@@ -114,6 +115,15 @@ export default function paymentsManager({ session }) {
     }
   }
 
+  async function setupNewPaymentMethod(paymentMethod, options = {}) {
+    try {
+      return await setupPaymentMethod(session, paymentMethod, options);
+    } catch (e) {
+      logError('Failed to setup payment method:', e);
+      throw e;
+    }
+  }
+
   return {
     availableMethods: availablePaymentMethods,
     savedMethods: savedPaymentMethods,
@@ -122,5 +132,6 @@ export default function paymentsManager({ session }) {
     updateSubscriptionPaymentMethod,
     updateFromSnapshot,
     refreshSavedMethods,
+    setupNewPaymentMethod,
   };
 }

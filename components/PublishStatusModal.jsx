@@ -18,6 +18,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { formatCurrency } from '../utils/currency_formatter';
 import BaseActionModal from './BaseActionModal';
 import PaymentFlowStep from './PaymentFlowStep';
+import PaymentLegalNotice from './PaymentLegalNotice';
 
 const PublishStatusModal = ({
   visible,
@@ -193,6 +194,9 @@ const PublishStatusModal = ({
       step2SubscriptionButtonMarginTop: scale(12),
       compoundButtonGap: scale(4),
       compoundTextMarginHorizontal: 0,
+      legalNoticeFontSize: scale(11),
+      legalNoticeMarginBottom: scale(16),
+      legalNoticeMarginTop: scale(12),
     };
   }, [height, isWebLandscape]);
 
@@ -203,6 +207,20 @@ const PublishStatusModal = ({
     }
     return `${t('payment_modal.credit_card', { defaultValue: 'Credit card' })} ${method.details?.cardNumber || '•••• •••• •••• 4352'}`;
   };
+
+  const renderCreatorAuthorizationNotice = (style) => (
+    <PaymentLegalNotice
+      title={t('payment_modal.legal_authorization_title')}
+      texts={[
+        t('payment_modal.legal_authorization_body'),
+        t('payment_modal.legal_authorization_creator_body'),
+      ]}
+      theme={theme}
+      isRTL={isRTL}
+      fontSize={sizes.legalNoticeFontSize}
+      style={style}
+    />
+  );
 
   // ─── Actions ─────────────────────────────────────────────────────────────────
   const handleConfirmPayment = () => {
@@ -696,6 +714,10 @@ const PublishStatusModal = ({
             {t('payment_modal.choose_how_to_pay')}
           </Text>
 
+          {renderCreatorAuthorizationNotice({
+            marginBottom: sizes.legalNoticeMarginBottom,
+          })}
+
           {/* Button 1: Card / saved payment method */}
           <TouchableOpacity
             style={[styles.button, styles.outlinePrimaryButton, { marginTop: sizes.marginTopZero }]}
@@ -834,6 +856,10 @@ const PublishStatusModal = ({
           <Text style={styles.infoText}>
             {t('payment_modal.card_coupon_charged_simultaneously')}
           </Text>
+
+          {renderCreatorAuthorizationNotice({
+            marginBottom: sizes.legalNoticeMarginBottom,
+          })}
 
           {/* Combined Pay Button */}
           <TouchableOpacity
@@ -985,6 +1011,11 @@ const PublishStatusModal = ({
             </View>
           </View>
         )}
+
+        {renderCreatorAuthorizationNotice({
+          marginTop: sizes.legalNoticeMarginTop,
+          marginBottom: sizes.legalNoticeMarginBottom,
+        })}
       </>
     );
 
@@ -1067,6 +1098,9 @@ const PublishStatusModal = ({
         isRTL={isRTL}
         step2Header={step2Header}
         step2Footer={step2Footer}
+        addMethodNotice={renderCreatorAuthorizationNotice({
+          marginBottom: sizes.legalNoticeMarginBottom,
+        })}
         onAddMethodPay={handleAddMethodPay}
         addMethodPayLabel={`${t('payment_modal.pay')} ${formattedMoneyPrice}`}
       />

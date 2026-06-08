@@ -2907,6 +2907,7 @@ export default function ShowJobModal({
         )}
         onPurchase={handlePurchasePublish}
         onPayWithCoupons={user.current?.account_type === 'client' ? handlePayCouponsPublish : undefined}
+        legalNoticeType="creator"
         onOpenSubscriptions={() => {
           setPlansModalVisible(true);
           setPublishModalVisible(false);
@@ -3043,12 +3044,12 @@ export default function ShowJobModal({
         )}
         onPurchase={handlePurchaseInterest}
         onPayWithCoupons={handlePayCouponsPurchaseInterest}
+        legalNoticeType="provider"
         onOpenSubscriptions={() => {
           setPlansModalReturnTarget('purchase');
           setPlansModalVisible(true);
           setConfirmInterestModal(false);
         }}
-        footerText={t('interestRequest.funds_disclosure')}
       />
       <InterestRequestModal
         visible={showInterestRequestModal}

@@ -30,6 +30,7 @@ const PaymentFlowStep = ({
   step2Footer,
   onAddMethodPay,
   addMethodPayLabel,
+  addMethodNotice,
 }) => {
   if (!sizes || !theme) return null;
 
@@ -148,6 +149,8 @@ const PaymentFlowStep = ({
         <Text style={styles.title}>
           {t('payment_modal.select_method_title')}
         </Text>
+
+        {addMethodNotice}
 
         {availableMethods.map((methodType) => {
           const isSelected = newMethodId === methodType;

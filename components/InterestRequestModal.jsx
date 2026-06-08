@@ -19,6 +19,7 @@ import { scale, scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs'
 import BaseActionModal from './BaseActionModal';
 import PaymentFlowStep from './PaymentFlowStep';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import PaymentLegalNotice from './PaymentLegalNotice';
 
 // ─── Internal Helper Components (Defined outside to prevent focus loss) ───
 
@@ -285,6 +286,9 @@ const InterestRequestModal = ({
       totalPriceSize: scale(24),
       couponIconSize: scale(24),
       couponButtonGap: scale(6),
+      legalNoticeFontSize: scale(11),
+      legalNoticeMarginTop: scale(12),
+      legalNoticeMarginBottom: scale(16),
 
       // New restored sizes
       dotsRowMarginBottom: scale(8),
@@ -470,6 +474,21 @@ const InterestRequestModal = ({
             {t('interestRequest.total', { defaultValue: 'Total:' })} <Text style={{ color: theme.primaryColor }}>{price}</Text>
           </Text>
         </View>
+
+        <PaymentLegalNotice
+          title={t('payment_modal.legal_authorization_title')}
+          texts={[
+            t('payment_modal.legal_authorization_body'),
+            t('payment_modal.legal_authorization_provider_body'),
+          ]}
+          theme={theme}
+          isRTL={isRTL}
+          fontSize={sizes.legalNoticeFontSize}
+          style={{
+            marginTop: sizes.legalNoticeMarginTop,
+            marginBottom: sizes.legalNoticeMarginBottom,
+          }}
+        />
       </>
     );
 
@@ -560,6 +579,19 @@ const InterestRequestModal = ({
         isRTL={isRTL}
         step2Header={step2Header}
         step2Footer={step2Footer}
+        addMethodNotice={
+          <PaymentLegalNotice
+            title={t('payment_modal.legal_authorization_title')}
+            texts={[
+              t('payment_modal.legal_authorization_body'),
+              t('payment_modal.legal_authorization_provider_body'),
+            ]}
+            theme={theme}
+            isRTL={isRTL}
+            fontSize={sizes.legalNoticeFontSize}
+            style={{ marginBottom: sizes.legalNoticeMarginBottom }}
+          />
+        }
         onAddMethodPay={handleAddMethodPay}
         addMethodPayLabel={`${t('payment_modal.pay')} ${price}`}
       />

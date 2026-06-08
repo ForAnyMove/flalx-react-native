@@ -13,8 +13,12 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { useWindowInfo } from '../context/windowContext';
+import { useWebView } from '../context/webViewContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
+import PaymentLegalNotice from './PaymentLegalNotice';
+
+const SETUP_PAYMENT_METHODS = ['paypal', 'hyp'];
 
 const PaymentMethodsModal = ({ visible, onClose }) => {
   const { themeController, languageController, paymentsManagerController } =
@@ -23,11 +27,13 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
   const { height, width, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
+  const { openWebView } = useWebView();
   const isRTL = languageController.isRTL;
 
-  const [step, setStep] = useState('list'); // 'list', 'confirmDelete', 'success', 'error', 'cantDelete'
+  const [step, setStep] = useState('list'); // 'list', 'addMethod', 'confirmDelete', 'success', 'error', 'cantDelete'
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [selectedMethod, setSelectedMethod] = useState(null);
+  const [selectedSetupMethod, setSelectedSetupMethod] = useState(SETUP_PAYMENT_METHODS[0]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -35,6 +41,7 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
     if (visible) {
       setPaymentMethods(paymentsManagerController.savedMethods);
       setStep('list');
+      setSelectedSetupMethod(SETUP_PAYMENT_METHODS[0]);
       setIsLoading(false);
       setError(null);
     }
@@ -64,6 +71,39 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
       setStep('success');
     } catch (e) {
       setError(t('errors.cant_remove_payment'));
+      setStep('error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSetupPaymentMethod = async () => {
+    setIsLoading(true);
+    try {
+      const result = await paymentsManagerController.setupNewPaymentMethod(
+        selectedSetupMethod,
+        {
+          language: languageController.current,
+          currency: 'ILS',
+        },
+      );
+      const redirectUrl =
+        result?.redirectUrl ||
+        result?.paymentUrl ||
+        result?.approvalUrl ||
+        result?.setupUrl ||
+        result?.url;
+
+      setStep('list');
+      if (redirectUrl) {
+        openWebView(redirectUrl, () => {
+          paymentsManagerController.refreshSavedMethods?.();
+        });
+      } else {
+        await paymentsManagerController.refreshSavedMethods?.();
+      }
+    } catch (e) {
+      setError(e?.response?.data?.error || e?.message || t('errors.unexpected_error'));
       setStep('error');
     } finally {
       setIsLoading(false);
@@ -119,6 +159,12 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
       itemIconMargin: scale(16),
       itemDeleteIconSize: scale(24),
       cardIconSize: scale(32),
+      methodIconWidth: scale(110),
+      methodIconHeight: scale(36),
+      paypalMethodWidth: scale(150),
+      paypalMethodHeight: scale(38),
+      hypMethodWidth: scale(80),
+      hypMethodHeight: scale(34),
       // For confirmation/status screens
       statusIconSize: scale(64),
       statusTitleSize: scale(22),
@@ -128,6 +174,8 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
       buttonHeight: scale(52),
       buttonTextSize: scale(18),
       buttonMarginTop: scale(8),
+      legalNoticeFontSize: scale(11),
+      legalNoticeMarginBottom: scale(16),
     };
   }, [height, width, isWebLandscape]);
 
@@ -175,10 +223,12 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
       width: '100%',
     },
     itemContainer: {
+      width: '100%',
       height: sizes.itemHeight,
       borderRadius: sizes.itemBorderRadius,
       paddingHorizontal: sizes.itemPaddingHorizontal,
       alignItems: 'center',
+      justifyContent: 'flex-start',
       marginBottom: sizes.itemMarginBottom,
       flexDirection: 'row',
     },
@@ -218,6 +268,10 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
     itemDeleteIcon: {
       width: sizes.itemDeleteIconSize,
       height: sizes.itemDeleteIconSize,
+    },
+    methodIcon: {
+      resizeMode: 'contain',
+      marginHorizontal: sizes.itemIconMargin,
     },
     loadingOverlay: {
       position: 'absolute',
@@ -343,9 +397,29 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
     );
   };
 
+  const handleAddMethodPress = () => {
+    setSelectedSetupMethod(SETUP_PAYMENT_METHODS[0]);
+    setStep('addMethod');
+  };
+
+  const renderAddButton = () => (
+    <TouchableOpacity
+      style={[styles.button, styles.primaryButton]}
+      onPress={handleAddMethodPress}
+    >
+      <Text style={[styles.buttonText, styles.primaryButtonText]}>
+        {t('payment_modal.add_method_button', { defaultValue: 'Add' })}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  const renderListHeader = () => (
+    <Text style={styles.title}>{t('my_profile.payment')}</Text>
+  );
+
   const renderList = () => (
     <>
-      <Text style={styles.title}>{t('my_profile.payment')}</Text>
+      {renderListHeader()}
       {paymentMethods.length > 0 ? (
         <FlatList
           data={paymentMethods}
@@ -358,7 +432,73 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
           {t('my_profile.no_payment_methods')}
         </Text>
       )}
+      {renderAddButton()}
     </>
+  );
+
+  const renderAddMethod = () => (
+    <View style={styles.statusContainer}>
+      <Text style={styles.title}>
+        {t('payment_modal.select_method_title')}
+      </Text>
+
+      <PaymentLegalNotice
+        title={t('payment_modal.legal_add_payment_method_title')}
+        texts={[t('payment_modal.legal_add_payment_method_body')]}
+        theme={theme}
+        isRTL={isRTL}
+        fontSize={sizes.legalNoticeFontSize}
+        style={{ marginBottom: sizes.legalNoticeMarginBottom }}
+      />
+
+      {SETUP_PAYMENT_METHODS.map((methodType) => {
+        const isSelected = selectedSetupMethod === methodType;
+        return (
+          <TouchableOpacity
+            key={methodType}
+            style={[
+              styles.itemContainer,
+              { flexDirection: 'row' },
+              {
+                borderColor: isSelected ? theme.primaryColor : 'transparent',
+                borderWidth: 1,
+                backgroundColor: isSelected
+                  ? theme.primaryColor + '10'
+                  : theme.defaultBlocksMockBackground + '33',
+              },
+            ]}
+            onPress={() => setSelectedSetupMethod(methodType)}
+          >
+            <Image
+              source={isSelected ? icons.radioOn : icons.radioOff}
+              style={[
+                styles.itemCircle,
+                { tintColor: isSelected ? theme.primaryColor : theme.formInputLabelColor },
+              ]}
+            />
+            <Image
+              source={icons[`method_${methodType}`]}
+              style={[
+                styles.methodIcon,
+                {
+                  width: sizes[`${methodType}MethodWidth`] || sizes.methodIconWidth,
+                  height: sizes[`${methodType}MethodHeight`] || sizes.methodIconHeight,
+                },
+              ]}
+            />
+          </TouchableOpacity>
+        );
+      })}
+
+      <TouchableOpacity
+        style={[styles.button, styles.primaryButton]}
+        onPress={handleSetupPaymentMethod}
+      >
+        <Text style={[styles.buttonText, styles.primaryButtonText]}>
+          {t('common.continue')}
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 
   const renderConfirmDelete = () => (
@@ -454,6 +594,8 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
     switch (step) {
       case 'list':
         return renderList();
+      case 'addMethod':
+        return renderAddMethod();
       case 'confirmDelete':
         return renderConfirmDelete();
       case 'success':
@@ -479,7 +621,7 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
           <TouchableOpacity
             style={styles.crossButton}
             onPress={() =>
-              step === 'confirmDelete' || step === 'cantDelete'
+              step === 'addMethod' || step === 'confirmDelete' || step === 'cantDelete'
                 ? setStep('list')
                 : onClose()
             }
