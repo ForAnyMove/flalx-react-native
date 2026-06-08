@@ -1001,10 +1001,8 @@ const UserSummaryBlock = ({
                           style={[
                             styles.primaryBtn,
                             {
-                              backgroundColor: usersReveal.contains(user.id)
-                                ? themeController.current?.buttonColorPrimaryDefault
-                                : themeController.current
-                                  ?.buttonColorPrimaryDisabled,
+                              backgroundColor:
+                                themeController.current?.buttonColorPrimaryDefault,
                               borderRadius: sizes.borderRadius,
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -1018,17 +1016,15 @@ const UserSummaryBlock = ({
                             },
                           ]}
                           onPress={() => {
-                            if (usersReveal.contains(user.id)) {
-                              setAppLoading(true);
-                              jobsController.actions
-                                .selectProvider(currentJobId, userId)
-                                .then(() => {
-                                  setModalVisible(false);
-                                  setShowContactInfo(false);
-                                  closeAllModal();
-                                  setAppLoading(false);
-                                });
-                            }
+                            setAppLoading(true);
+                            jobsController.actions
+                              .selectProvider(currentJobId, userId)
+                              .then(() => {
+                                setModalVisible(false);
+                                setShowContactInfo(false);
+                                closeAllModal();
+                                setAppLoading(false);
+                              });
                           }}
                         >
                           <Text
