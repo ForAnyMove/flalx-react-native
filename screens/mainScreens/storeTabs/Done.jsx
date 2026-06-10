@@ -228,7 +228,7 @@ export default function DoneScreen({
                         },
                         isRTL
                           ? {
-                            left: 0,
+                            left: -1,
                             borderBottomRightRadius: isWebLandscape
                               ? sizes.personalMarkerBottomAngleRadius
                               : 0,
@@ -237,7 +237,7 @@ export default function DoneScreen({
                               : sizes.personalMarkerBottomAngleRadius,
                           }
                           : {
-                            right: 0,
+                            right: -1,
                             borderBottomLeftRadius:
                               sizes.personalMarkerBottomAngleRadius,
                           },

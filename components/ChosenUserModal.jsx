@@ -35,18 +35,24 @@ const ChosenUserModal = ({
   const [step, setStep] = useState('info');
   const [retryInfo, setRetryInfo] = useState(null);
   const [errorReason, setErrorReason] = useState(null);
+  // null = fallback (generic), set by JOB_CHARGING_STARTED WS event
+  const [chargeScenario, setChargeScenario] = useState(null);
 
   useEffect(() => {
     if (visible) {
       setStep('info');
       setRetryInfo(null);
       setErrorReason(null);
+      setChargeScenario(null);
     }
   }, [visible]);
 
   useEffect(() => {
     if (!chargeEvent) return;
     switch (chargeEvent.type) {
+      case 'JOB_CHARGING_STARTED':
+        setChargeScenario(chargeEvent.payload?.chargeScenario ?? null);
+        break;
       case 'JOB_CHARGE_COMPLETED':
         setStep('success');
         break;
@@ -258,16 +264,32 @@ const ChosenUserModal = ({
     </View>
   );
 
-  const renderLoading = () => (
-    <View style={styles.contentContainer}>
-      <View style={{ width: sizes.statusIconSize, height: sizes.statusIconSize, borderRadius: sizes.statusIconSize / 2, backgroundColor: theme.defaultBlocksMockBackground, justifyContent: 'center', alignItems: 'center', marginBottom: sizes.statusIconMarginBottom }}>
-        <Image source={icons.salary} style={{ width: sizes.statusIconSize * 0.5, height: sizes.statusIconSize * 0.5, tintColor: theme.primaryColor, resizeMode: 'contain' }} />
+  const renderLoading = () => {
+    const isFreeFlow = chargeScenario === 'both_subscribed';
+    const loadingTitle = isFreeFlow
+      ? t('chosen_user_modal.title_loading_both_subscribed')
+      : t('chosen_user_modal.title_loading');
+    const loadingDesc = chargeScenario === 'both_subscribed'
+      ? t('chosen_user_modal.desc_loading_both_subscribed')
+      : chargeScenario === 'creator_pays'
+        ? t('chosen_user_modal.desc_loading_creator_pays')
+        : chargeScenario === 'provider_pays'
+          ? t('chosen_user_modal.desc_loading_provider_pays')
+          : chargeScenario === 'both_pay'
+            ? t('chosen_user_modal.desc_loading_both_pay')
+            : t('chosen_user_modal.desc_loading');
+
+    return (
+      <View style={styles.contentContainer}>
+        <View style={{ width: sizes.statusIconSize, height: sizes.statusIconSize, borderRadius: sizes.statusIconSize / 2, backgroundColor: theme.defaultBlocksMockBackground, justifyContent: 'center', alignItems: 'center', marginBottom: sizes.statusIconMarginBottom }}>
+          <Image source={icons.salary} style={{ width: sizes.statusIconSize * 0.5, height: sizes.statusIconSize * 0.5, tintColor: theme.primaryColor, resizeMode: 'contain' }} />
+        </View>
+        <Text style={styles.title}>{loadingTitle}</Text>
+        <Text style={[styles.desc, { marginBottom: 0 }]}>{loadingDesc}</Text>
+        <ActivityIndicator size={sizes.loadingIndicatorSize} color={theme.primaryColor} style={{ marginVertical: 20 }} />
       </View>
-      <Text style={styles.title}>{t('chosen_user_modal.title_loading')}</Text>
-      <Text style={[styles.desc, { marginBottom: 0 }]}>{t('chosen_user_modal.desc_loading')}</Text>
-      <ActivityIndicator size={sizes.loadingIndicatorSize} color={theme.primaryColor} style={{ marginVertical: 20 }} />
-    </View>
-  );
+    );
+  };
 
   const renderRetrying = () => {
     const nextAttemptTime = retryInfo?.nextAttemptAt
@@ -288,24 +310,30 @@ const ChosenUserModal = ({
     );
   };
 
-  const renderSuccess = () => (
-    <View style={styles.contentContainer}>
-      <Image source={icons.checkDefault} style={styles.statusIcon} />
-      <Text style={styles.title}>{t('chosen_user_modal.title_success')}</Text>
-      <Text style={styles.desc}>
-        <Trans
-          i18nKey="chosen_user_modal.desc_success"
-          values={{ jobTitle }}
-          components={{ highlight: <Text style={{ color: theme.textColor }} /> }}
-        />
-      </Text>
-      <TouchableOpacity style={[styles.button, styles.primaryButton, { width: '100%' }]} onPress={onClose}>
-        <Text style={[styles.buttonText, styles.primaryButtonText]}>
-          {t('chosen_user_modal.btn_got_it')}
+  const renderSuccess = () => {
+    const successDescKey = chargeScenario === 'both_subscribed'
+      ? 'chosen_user_modal.desc_success_both_subscribed'
+      : 'chosen_user_modal.desc_success';
+
+    return (
+      <View style={styles.contentContainer}>
+        <Image source={icons.checkDefault} style={styles.statusIcon} />
+        <Text style={styles.title}>{t('chosen_user_modal.title_success')}</Text>
+        <Text style={styles.desc}>
+          <Trans
+            i18nKey={successDescKey}
+            values={{ jobTitle }}
+            components={{ highlight: <Text style={{ color: theme.textColor }} /> }}
+          />
         </Text>
-      </TouchableOpacity>
-    </View>
-  );
+        <TouchableOpacity style={[styles.button, styles.primaryButton, { width: '100%' }]} onPress={onClose}>
+          <Text style={[styles.buttonText, styles.primaryButtonText]}>
+            {t('chosen_user_modal.btn_got_it')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   const renderError = () => {
     const titleKey = errorReason === 'client_charge'

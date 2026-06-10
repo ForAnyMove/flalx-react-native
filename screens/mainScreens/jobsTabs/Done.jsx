@@ -54,6 +54,14 @@ export default function DoneScreen({
       personalMarkerHP: isWebLandscape ? web(12) : mobile(12),
       personalMarkerBottomAngleRadius: isWebLandscape ? web(8) : mobile(8),
       personalMarkerFontSize: isWebLandscape ? web(15) : mobile(15),
+      containerMarginTop: isWebLandscape ? web(24) : mobile(24),
+      containerPaddingH: isWebLandscape ? web(10) : mobile(10),
+      containerPaddingV: isWebLandscape ? web(14) : mobile(14),
+      badgePadding: isWebLandscape ? web(2) : mobile(2),
+      badgeSize: isWebLandscape ? web(20) : mobile(20),
+      badgeFont: isWebLandscape ? web(12) : mobile(12),
+      badgePosition: isWebLandscape ? web(5) : mobile(5),
+      personalMarkerBorderWidth: isWebLandscape ? web(2) : mobile(2),
     };
   }, [height, isWebLandscape]);
 
@@ -143,6 +151,7 @@ export default function DoneScreen({
                         themeController.current?.formInputBackground,
                       borderRadius: sizes.cardRadius,
                     },
+                    extraMarkerStyle
                   ]}
                 >
                   <View
@@ -236,7 +245,7 @@ export default function DoneScreen({
                         },
                         isRTL
                           ? {
-                            left: 0,
+                            left: -1,
                             borderBottomRightRadius: isWebLandscape
                               ? sizes.personalMarkerBottomAngleRadius
                               : 0,
@@ -245,7 +254,7 @@ export default function DoneScreen({
                               : sizes.personalMarkerBottomAngleRadius,
                           }
                           : {
-                            right: 0,
+                            right: -1,
                             borderBottomLeftRadius:
                               sizes.personalMarkerBottomAngleRadius,
                           },
