@@ -24,9 +24,8 @@ async function createJob(jobData, session) {
 
 async function payForJob(jobDataId, session, paymentOptions = {}) {
     try {
-        const { useCoupon = false, paymentMethod = 'paypal', currency = 'USD', savePaymentMethod, savedPaymentMethodId, language } = paymentOptions;
+        const { useCoupon = false, paymentMethod = 'paypal', savePaymentMethod, savedPaymentMethodId, language } = paymentOptions;
         const data = {
-            currency,
             language: getCurrentLanguage(language),
             ...(useCoupon
                 ? { use_coupon: true, paymentMethod: 'none' }
@@ -107,7 +106,6 @@ async function addSelfToJobProviders(jobId, session, options = {}) {
         const {
             useCoupon = false,
             paymentMethod = 'paypal',
-            currency = 'USD',
             savePaymentMethod,
             savedPaymentMethodId,
             language,

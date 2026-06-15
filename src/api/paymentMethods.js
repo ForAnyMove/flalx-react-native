@@ -38,7 +38,7 @@ export async function setDefaultPaymentMethod(session, methodId, type = 'purchas
 }
 
 export async function setupPaymentMethod(session, paymentMethod = 'paypal', options = {}) {
-    const { language, currency = 'ILS' } = options;
+    const { language, } = options;
     const provider = providerMap[paymentMethod] ?? 'PAYPAL';
     const response = await fetchWithSession({
         session,
@@ -46,7 +46,6 @@ export async function setupPaymentMethod(session, paymentMethod = 'paypal', opti
         data: {
             provider,
             language: getCurrentLanguage(language),
-            currency,
         },
         method: 'POST',
     });

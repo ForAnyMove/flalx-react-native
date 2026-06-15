@@ -135,7 +135,6 @@ const PurchaseModal = ({
 
       const payload = {
         paymentMethod: paymentMethodType,
-        currency: 'USD',
         ...(selectedSource === 'saved' && selectedMethodId && { savedPaymentMethodId: selectedMethodId }),
         ...(selectedSource === 'available' && saveForFuture && { savePaymentMethod: true }),
       };

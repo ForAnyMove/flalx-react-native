@@ -24,9 +24,8 @@ async function getRevealedUsers(session) {
 
 async function revealUser(userId, session, paymentOptions = {}) {
     try {
-        const { useCoupon = false, paymentMethod = 'paypal', currency = 'USD', savePaymentMethod, savedPaymentMethodId, language } = paymentOptions;
+        const { useCoupon = false, paymentMethod = 'paypal', savePaymentMethod, savedPaymentMethodId, language } = paymentOptions;
         const data = {
-            currency,
             language: getCurrentLanguage(language),
             ...(useCoupon
                 ? { use_coupon: true, paymentMethod: 'none' }

@@ -84,7 +84,6 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
         selectedSetupMethod,
         {
           language: languageController.current,
-          currency: 'ILS',
         },
       );
       const redirectUrl =
