@@ -112,6 +112,9 @@ async function addSelfToJobProviders(jobId, session, options = {}) {
             proposed_price,
             proposed_time_from,
             proposed_time_to,
+            proposed_time_from_local,
+            proposed_time_to_local,
+            source_timezone,
         } = options;
 
         const data = {
@@ -126,6 +129,9 @@ async function addSelfToJobProviders(jobId, session, options = {}) {
             ...(proposed_price !== undefined && proposed_price !== '' && { proposed_price: parseFloat(proposed_price) }),
             ...(proposed_time_from && { proposed_time_from }),
             ...(proposed_time_to && { proposed_time_to }),
+            ...(proposed_time_from_local && { proposed_time_from_local }),
+            ...(proposed_time_to_local && { proposed_time_to_local }),
+            ...(source_timezone && { source_timezone }),
         };
 
         const response = await fetchWithSession({

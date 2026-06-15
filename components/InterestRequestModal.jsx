@@ -18,8 +18,8 @@ import { icons } from '../constants/icons';
 import { scale, scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import BaseActionModal from './BaseActionModal';
 import PaymentFlowStep from './PaymentFlowStep';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import PaymentLegalNotice from './PaymentLegalNotice';
+import CustomDateTimeInput from './ui/CustomDateTimeInput';
 
 // ─── Internal Helper Components (Defined outside to prevent focus loss) ───
 
@@ -104,68 +104,42 @@ const FormInput = ({ label, value, placeholder, onChangeText, hint, keyboardType
   </View>
 );
 
-const DateInput = ({ label, value, onPress, mode, sizes, theme, isRTL, t, error, locale }) => {
-  const webInputRef = React.useRef(null);
-
-  const handlePress = () => {
-    if (Platform.OS === 'web') {
-      if (webInputRef.current) {
-        webInputRef.current.showPicker?.();
-        webInputRef.current.click?.();
-      }
-    } else {
-      onPress?.();
-    }
-  };
-
-  return (
-    <View style={{ flex: 1 }}>
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={handlePress}
-        style={[
-          styles.inputContainer,
-          {
-            backgroundColor: theme.formInputBackground,
-            height: sizes.buttonHeight,
-            borderRadius: sizes.borderRadius,
-            paddingHorizontal: sizes.inputPaddingHorizontal,
-            borderWidth: (error && mode === 'start') ? 1 : 0,
-            borderColor: theme.errorTextColor,
-            justifyContent: 'center',
-            position: 'relative',
-          }
-        ]}
-      >
-        <Text style={[styles.inputLabelInside, { color: theme.formInputLabelColor, fontSize: sizes.hintSize, left: sizes.inputPaddingHorizontal, top: sizes.inputLabelInsideTop }]}>{label}</Text>
-        <View style={[styles.dateRow, isRTL && { flexDirection: 'row-reverse' }, { marginTop: sizes.dateRowMarginTop }]}>
-          <Text style={[styles.dateText, { color: value ? theme.textColor : theme.formInputPlaceholderColor, fontSize: sizes.inputTextSize }]}>
-            {value ? new Date(value).toLocaleDateString(locale) : t('interestRequest.pick_date', { defaultValue: 'Pick date' })}
-          </Text>
-          <Image source={icons.calendar || icons.calendarDefault} style={{ width: sizes.crossIconSize, height: sizes.crossIconSize, tintColor: theme.formInputLabelColor }} />
-        </View>
-        {Platform.OS === 'web' && (
-          <input
-            ref={webInputRef}
-            type="date"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              opacity: 0,
-              pointerEvents: 'none',
-            }}
-            lang={locale}
-            value={value ? new Date(value).toISOString().split('T')[0] : ''}
-            onChange={(e) => onPress?.(mode, e)}
-          />
-        )}
-      </TouchableOpacity>
-    </View>
-  );
-};
+const DateInput = ({
+  label,
+  value,
+  localValue,
+  onChange,
+  sizes,
+  error,
+  placeholder,
+  minValue,
+  maxValue,
+  minErrorMessage,
+  maxErrorMessage,
+  timezone,
+  onTimezoneChange,
+}) => (
+  <CustomDateTimeInput
+    label={label}
+    value={value}
+    localValue={localValue}
+    onChange={onChange}
+    error={error}
+    mode="datetime"
+    placeholder={placeholder}
+    minValue={minValue}
+    maxValue={maxValue}
+    minErrorMessage={minErrorMessage}
+    maxErrorMessage={maxErrorMessage}
+    timezone={timezone}
+    onTimezoneChange={onTimezoneChange}
+    containerStyle={{
+      height: sizes.buttonHeight,
+      borderRadius: sizes.borderRadius,
+      paddingHorizontal: sizes.inputPaddingHorizontal,
+    }}
+  />
+);
 
 const InterestRequestModal = ({
   visible,
@@ -192,7 +166,6 @@ const InterestRequestModal = ({
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
-  const datePickerLocale = languageController.current === 'he' ? 'he-IL' : 'en-US';
 
   // ─── State ───────────────────────────────────────────────────────────────────
   const [selectedMethodId, setSelectedMethodId] = useState(null);
@@ -200,9 +173,6 @@ const InterestRequestModal = ({
   const [fieldErrors, setFieldErrors] = useState({ price: false, date: false });
   const [showAddMethod, setShowAddMethod] = useState(false);
   const [newMethodId, setNewMethodId] = useState(null);
-
-  // Date Picker States
-  const [pickerMode, setPickerMode] = useState(null); // 'start' | 'end' | null
 
   const savedMethods = paymentsManagerController?.savedMethods ?? [];
   const availableMethods = paymentsManagerController?.availableMethods ?? [];
@@ -359,30 +329,18 @@ const InterestRequestModal = ({
     onConfirm(formData, paymentOptions);
   };
 
-  const onDateChange = (event, selectedDate) => {
-    const mode = pickerMode;
-    setPickerMode(null);
-    if (selectedDate) {
-      if (mode === 'start') {
-        setFormData(prev => ({ ...prev, startDate: selectedDate.toISOString() }));
-      } else {
-        setFormData(prev => ({ ...prev, endDate: selectedDate.toISOString() }));
-      }
-      setFieldErrors(prev => ({ ...prev, date: false }));
-    }
+  const handleDateChange = (field, localField, nextValue, meta) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: nextValue,
+      [localField]: meta?.localDateTime,
+      sourceTimezone: meta?.timezone || prev.sourceTimezone,
+    }));
+    setFieldErrors(prev => ({ ...prev, date: false }));
   };
 
-  const handleWebDateChange = (mode, e) => {
-    const val = e.target.value;
-    if (val) {
-      const date = new Date(val);
-      if (mode === 'start') {
-        setFormData(prev => ({ ...prev, startDate: date.toISOString() }));
-      } else {
-        setFormData(prev => ({ ...prev, endDate: date.toISOString() }));
-      }
-      setFieldErrors(prev => ({ ...prev, date: false }));
-    }
+  const handleTimezoneChange = (timezone) => {
+    setFormData(prev => ({ ...prev, sourceTimezone: timezone }));
   };
 
   const handleBackToForm = () => {
@@ -459,30 +417,32 @@ const InterestRequestModal = ({
           <Text style={[styles.inputLabelOutside, { color: theme.textColor, fontSize: sizes.sectionHeaderFontSize, marginBottom: sizes.sectionHeaderMarginBottom, textAlign: isRTL ? 'right' : 'left' }]}>
             {t('interestRequest.time_label', { defaultValue: 'Available time' })}
           </Text>
-          <View style={[styles.row, { gap: sizes.itemMarginBottom, marginBottom: 8 }]}>
+          <View style={{ gap: sizes.itemMarginBottom / 2, marginBottom: 8 }}>
             <DateInput
               label={t('common.from', { defaultValue: 'From' })}
               value={formData.startDate}
-              onPress={Platform.OS === 'web' ? handleWebDateChange : () => setPickerMode('start')}
-              mode="start"
+              localValue={formData.startLocal}
+              onChange={(nextValue, meta) => handleDateChange('startDate', 'startLocal', nextValue, meta)}
               sizes={sizes}
-              theme={theme}
-              isRTL={isRTL}
-              t={t}
               error={fieldErrors.date}
-              locale={datePickerLocale}
+              placeholder={t('dateTimePicker.select', { defaultValue: 'Select date and time' })}
+              maxValue={formData.endDate}
+              maxErrorMessage={t('dateTimePicker.start_after_end')}
+              timezone={formData.sourceTimezone}
+              onTimezoneChange={handleTimezoneChange}
             />
             <DateInput
               label={t('common.to', { defaultValue: 'To' })}
               value={formData.endDate}
-              onPress={Platform.OS === 'web' ? handleWebDateChange : () => setPickerMode('end')}
-              mode="end"
+              localValue={formData.endLocal}
+              onChange={(nextValue, meta) => handleDateChange('endDate', 'endLocal', nextValue, meta)}
               sizes={sizes}
-              theme={theme}
-              isRTL={isRTL}
-              t={t}
               error={fieldErrors.date}
-              locale={datePickerLocale}
+              placeholder={t('dateTimePicker.select', { defaultValue: 'Select date and time' })}
+              minValue={formData.startDate}
+              minErrorMessage={t('dateTimePicker.end_before_start')}
+              timezone={formData.sourceTimezone}
+              onTimezoneChange={handleTimezoneChange}
             />
           </View>
           <Text style={[styles.hintText, { color: theme.unactiveTextColor, fontSize: sizes.hintSize, textAlign: isRTL ? 'right' : 'left' }]}>
@@ -700,15 +660,6 @@ const InterestRequestModal = ({
         {content}
         {step === 2 && !showAddMethod && !isBusinessJob && !hasSubscription && renderStepBackButton()}
       </BaseActionModal>
-      {Platform.OS !== 'web' && pickerMode && (
-        <DateTimePicker
-          value={formData[pickerMode === 'start' ? 'startDate' : 'endDate'] ? new Date(formData[pickerMode === 'start' ? 'startDate' : 'endDate']) : new Date()}
-          mode="date"
-          display="default"
-          locale={datePickerLocale}
-          onChange={onDateChange}
-        />
-      )}
     </>
   );
 };

@@ -156,6 +156,9 @@ const UserSummaryBlock = ({
   const proposed_price = _userData.proposed_price ?? jobExpectations?.proposed_price;
   const proposed_time_from = _userData.proposed_time_from ?? jobExpectations?.proposed_time_from;
   const proposed_time_to = _userData.proposed_time_to ?? jobExpectations?.proposed_time_to;
+  const proposed_time_from_local = _userData.proposed_time_from_local ?? jobExpectations?.proposed_time_from_local;
+  const proposed_time_to_local = _userData.proposed_time_to_local ?? jobExpectations?.proposed_time_to_local;
+  const source_timezone = _userData.source_timezone ?? jobExpectations?.source_timezone;
 
   const handleUserRevealTry = async (payload = {}) => {
     try {
@@ -397,7 +400,14 @@ const UserSummaryBlock = ({
           </View>
           {(proposed_price || proposed_time_from) && (
             <JobExpectationsBadge
-              expectations={{ proposed_price, proposed_time_from, proposed_time_to }}
+              expectations={{
+                proposed_price,
+                proposed_time_from,
+                proposed_time_to,
+                proposed_time_from_local,
+                proposed_time_to_local,
+                source_timezone,
+              }}
               isRTL={isRTL}
               containerStyle={{ marginTop: 6, justifyContent: 'flex-start' }}
               badgeStyle={{ paddingVertical: 2, paddingHorizontal: 6 }}

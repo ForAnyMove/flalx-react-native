@@ -35,6 +35,7 @@ import CustomExperiencePicker from './ui/CustomExperiencePicker';
 import { formatCurrency } from '../utils/currency_formatter';
 import { logError } from '../utils/log_util';
 import CustomTextInput from './ui/CustomTextInput';
+import { getDeviceTimezone } from '../utils/datetimeTimezone';
 import PublishStatusModal from './PublishStatusModal';
 
 async function editJobById(jobId, updates, session) {
@@ -315,6 +316,11 @@ export default function NewJobModal({
   const [endDateTime, setEndDateTime] = useState(
     initialJob?.endDateTime || null
   );
+  const [startLocal, setStartLocal] = useState(initialJob?.startLocal || initialJob?.start_local || null);
+  const [endLocal, setEndLocal] = useState(initialJob?.endLocal || initialJob?.end_local || null);
+  const [sourceTimezone, setSourceTimezone] = useState(
+    initialJob?.source_timezone || initialJob?.sourceTimezone || getDeviceTimezone()
+  );
   const [jobType, setJobType] = useState('normal');
   const selectedOption =
     jobsController.products.find((o) => o.type === jobType) ||
@@ -440,6 +446,15 @@ export default function NewJobModal({
       ) {
         jobChanges.endDateTime = new Date(endDateTime).toISOString();
       }
+      if (startLocal && startLocal !== (initialJob.startLocal || initialJob.start_local)) {
+        jobChanges.startLocal = startLocal;
+      }
+      if (endLocal && endLocal !== (initialJob.endLocal || initialJob.end_local)) {
+        jobChanges.endLocal = endLocal;
+      }
+      if (sourceTimezone && sourceTimezone !== (initialJob.source_timezone || initialJob.sourceTimezone)) {
+        jobChanges.source_timezone = sourceTimezone;
+      }
       setAppLoading(true);
 
       if (Object.keys(jobChanges).length > 0) {
@@ -467,6 +482,9 @@ export default function NewJobModal({
           ? new Date(startDateTime).toISOString()
           : null,
         endDateTime: endDateTime ? new Date(endDateTime).toISOString() : null,
+        startLocal,
+        endLocal,
+        source_timezone: sourceTimezone,
         // createdAt: new Date().toISOString(),
         jobType: jobType, // статус задания
         creator: user.current.id,
@@ -501,6 +519,18 @@ export default function NewJobModal({
         }
       });
     }
+  };
+
+  const handleStartDateTimeChange = (nextValue, meta) => {
+    setStartDateTime(nextValue);
+    if (meta?.localDateTime) setStartLocal(meta.localDateTime);
+    if (meta?.timezone) setSourceTimezone(meta.timezone);
+  };
+
+  const handleEndDateTimeChange = (nextValue, meta) => {
+    setEndDateTime(nextValue);
+    if (meta?.localDateTime) setEndLocal(meta.localDateTime);
+    if (meta?.timezone) setSourceTimezone(meta.timezone);
   };
 
   const handleImageAdd = async (uris) => {
@@ -859,8 +889,13 @@ export default function NewJobModal({
               defaultValue: 'Start date and time',
             })}
             value={startDateTime}
-            onChange={setStartDateTime}
+            localValue={startLocal}
+            onChange={handleStartDateTimeChange}
             error={fieldErrors.startDateTime}
+            maxValue={endDateTime}
+            maxErrorMessage={t('dateTimePicker.start_after_end')}
+            timezone={sourceTimezone}
+            onTimezoneChange={setSourceTimezone}
           />
         ) : (
           <DateTimeInputDouble
@@ -868,8 +903,13 @@ export default function NewJobModal({
               defaultValue: 'Start date and time',
             })}
             value={startDateTime}
-            onChange={setStartDateTime}
+            localValue={startLocal}
+            onChange={handleStartDateTimeChange}
             error={fieldErrors.startDateTime}
+            maxValue={endDateTime}
+            maxErrorMessage={t('dateTimePicker.start_after_end')}
+            timezone={sourceTimezone}
+            onTimezoneChange={setSourceTimezone}
           />
         )}
         {Platform.OS !== 'android' ? (
@@ -879,8 +919,13 @@ export default function NewJobModal({
               defaultValue: 'End date and time',
             })}
             value={endDateTime}
-            onChange={setEndDateTime}
+            localValue={endLocal}
+            onChange={handleEndDateTimeChange}
             error={fieldErrors.endDateTime}
+            minValue={startDateTime}
+            minErrorMessage={t('dateTimePicker.end_before_start')}
+            timezone={sourceTimezone}
+            onTimezoneChange={setSourceTimezone}
           />
         ) : (
           <DateTimeInputDouble
@@ -888,8 +933,13 @@ export default function NewJobModal({
               defaultValue: 'End date and time',
             })}
             value={endDateTime}
-            onChange={setEndDateTime}
+            localValue={endLocal}
+            onChange={handleEndDateTimeChange}
             error={fieldErrors.endDateTime}
+            minValue={startDateTime}
+            minErrorMessage={t('dateTimePicker.end_before_start')}
+            timezone={sourceTimezone}
+            onTimezoneChange={setSourceTimezone}
           />
         )}
       </View>
@@ -1406,8 +1456,13 @@ export default function NewJobModal({
                               defaultValue: 'Start date and time',
                             })}
                             value={startDateTime}
-                            onChange={setStartDateTime}
+                            localValue={startLocal}
+                            onChange={handleStartDateTimeChange}
                             error={fieldErrors.startDateTime}
+                            maxValue={endDateTime}
+                            maxErrorMessage={t('dateTimePicker.start_after_end')}
+                            timezone={sourceTimezone}
+                            onTimezoneChange={setSourceTimezone}
                           />
                         ) : (
                           <DateTimeInputDouble
@@ -1415,8 +1470,13 @@ export default function NewJobModal({
                               defaultValue: 'Start date and time',
                             })}
                             value={startDateTime}
-                            onChange={setStartDateTime}
+                            localValue={startLocal}
+                            onChange={handleStartDateTimeChange}
                             error={fieldErrors.startDateTime}
+                            maxValue={endDateTime}
+                            maxErrorMessage={t('dateTimePicker.start_after_end')}
+                            timezone={sourceTimezone}
+                            onTimezoneChange={setSourceTimezone}
                           />
                         )}
                       </View>
@@ -1444,8 +1504,13 @@ export default function NewJobModal({
                               defaultValue: 'End date and time',
                             })}
                             value={endDateTime}
-                            onChange={setEndDateTime}
+                            localValue={endLocal}
+                            onChange={handleEndDateTimeChange}
                             error={fieldErrors.endDateTime}
+                            minValue={startDateTime}
+                            minErrorMessage={t('dateTimePicker.end_before_start')}
+                            timezone={sourceTimezone}
+                            onTimezoneChange={setSourceTimezone}
                           />
                         ) : (
                           <DateTimeInputDouble
@@ -1453,8 +1518,13 @@ export default function NewJobModal({
                               defaultValue: 'End date and time',
                             })}
                             value={endDateTime}
-                            onChange={setEndDateTime}
+                            localValue={endLocal}
+                            onChange={handleEndDateTimeChange}
                             error={fieldErrors.endDateTime}
+                            minValue={startDateTime}
+                            minErrorMessage={t('dateTimePicker.end_before_start')}
+                            timezone={sourceTimezone}
+                            onTimezoneChange={setSourceTimezone}
                           />
                         )}
                       </View>

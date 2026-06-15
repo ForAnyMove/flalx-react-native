@@ -325,7 +325,14 @@ export default function ProvidersSection({
                 preloadedUser={item}
                 isClientCreator={currentJobInfo?.created_by_account_type === 'client'}
                 isFullScreen={isFull}
-                jobExpectations={(status === 'store-in-progress' || status === 'store-done') ? { proposed_price: currentJobInfo?.proposed_price, proposed_time_from: currentJobInfo?.proposed_time_from, proposed_time_to: currentJobInfo?.proposed_time_to } : null}
+                jobExpectations={(status === 'store-in-progress' || status === 'store-done') ? {
+                  proposed_price: currentJobInfo?.proposed_price,
+                  proposed_time_from: currentJobInfo?.proposed_time_from,
+                  proposed_time_to: currentJobInfo?.proposed_time_to,
+                  proposed_time_from_local: currentJobInfo?.proposed_time_from_local,
+                  proposed_time_to_local: currentJobInfo?.proposed_time_to_local,
+                  source_timezone: currentJobInfo?.source_timezone,
+                } : null}
               />
             </View>
           )}
@@ -356,7 +363,14 @@ export default function ProvidersSection({
                 preloadedUser={item}
                 isClientCreator={currentJobInfo?.created_by_account_type === 'client'}
                 isFullScreen={isFull}
-                jobExpectations={(status === 'store-in-progress' || status === 'store-done') ? { proposed_price: currentJobInfo?.proposed_price, proposed_time_from: currentJobInfo?.proposed_time_from, proposed_time_to: currentJobInfo?.proposed_time_to } : null}
+                jobExpectations={(status === 'store-in-progress' || status === 'store-done') ? {
+                  proposed_price: currentJobInfo?.proposed_price,
+                  proposed_time_from: currentJobInfo?.proposed_time_from,
+                  proposed_time_to: currentJobInfo?.proposed_time_to,
+                  proposed_time_from_local: currentJobInfo?.proposed_time_from_local,
+                  proposed_time_to_local: currentJobInfo?.proposed_time_to_local,
+                  source_timezone: currentJobInfo?.source_timezone,
+                } : null}
               />
             </View>
           )}

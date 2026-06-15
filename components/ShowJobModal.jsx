@@ -54,6 +54,7 @@ import InterestRequestModal from './InterestRequestModal';
 import AlertModal from './AlertModal';
 import { logError } from '../utils/log_util';
 import CustomTextInput from './ui/CustomTextInput';
+import { getDeviceTimezone } from '../utils/datetimeTimezone';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -594,7 +595,14 @@ export default function ShowJobModal({
   const [completeJobModalVisible, setCompleteJobModalVisible] = useState(false);
 
   const [publishModalVisible, setPublishModalVisible] = useState(false);
-  const [interestFormData, setInterestFormData] = useState({ price: '', startDate: null, endDate: null });
+  const [interestFormData, setInterestFormData] = useState({
+    price: '',
+    startDate: null,
+    endDate: null,
+    startLocal: null,
+    endLocal: null,
+    sourceTimezone: getDeviceTimezone(),
+  });
   const [interestStep, setInterestStep] = useState(1);
   const [plansModalReturnTarget, setPlansModalReturnTarget] = useState(null); // 'interest' | 'purchase' | 'publish'
 
@@ -763,6 +771,9 @@ export default function ShowJobModal({
         proposed_price: interestFormData.price,
         proposed_time_from: interestFormData.startDate,
         proposed_time_to: interestFormData.endDate,
+        proposed_time_from_local: interestFormData.startLocal,
+        proposed_time_to_local: interestFormData.endLocal,
+        source_timezone: interestFormData.sourceTimezone,
       }),
     };
     const result = await addSelfToJobProviders(currentJobId, session, finalPayload);
@@ -806,6 +817,9 @@ export default function ShowJobModal({
         proposed_price: interestFormData.price,
         proposed_time_from: interestFormData.startDate,
         proposed_time_to: interestFormData.endDate,
+        proposed_time_from_local: interestFormData.startLocal,
+        proposed_time_to_local: interestFormData.endLocal,
+        source_timezone: interestFormData.sourceTimezone,
       }),
     };
     setConfirmInterestModal(false);
@@ -853,6 +867,9 @@ export default function ShowJobModal({
         ...(formData.price && { proposed_price: formData.price }),
         ...(formData.startDate && { proposed_time_from: formData.startDate }),
         ...(formData.endDate && { proposed_time_to: formData.endDate }),
+        ...(formData.startLocal && { proposed_time_from_local: formData.startLocal }),
+        ...(formData.endLocal && { proposed_time_to_local: formData.endLocal }),
+        ...(formData.sourceTimezone && { source_timezone: formData.sourceTimezone }),
       };
 
       const result = await handleAddingSelfToJobProviders(finalOptions);
@@ -2141,12 +2158,16 @@ export default function ShowJobModal({
           key='startDateTime'
           label={t('showJob.fields.start', { defaultValue: 'Start' })}
           value={currentJobInfo?.startDateTime}
+          localValue={currentJobInfo?.startLocal || currentJobInfo?.start_local}
+          timezone={currentJobInfo?.source_timezone || currentJobInfo?.sourceTimezone}
           readOnly={true}
         />
       ) : (
         <DateTimeInputDouble
           label={t('showJob.fields.start', { defaultValue: 'Start' })}
           value={currentJobInfo?.startDateTime}
+          localValue={currentJobInfo?.startLocal || currentJobInfo?.start_local}
+          timezone={currentJobInfo?.source_timezone || currentJobInfo?.sourceTimezone}
           readOnly={true}
         />
       )}
@@ -2155,12 +2176,16 @@ export default function ShowJobModal({
           key='endDateTime'
           label={t('showJob.fields.end', { defaultValue: 'End' })}
           value={currentJobInfo?.endDateTime}
+          localValue={currentJobInfo?.endLocal || currentJobInfo?.end_local}
+          timezone={currentJobInfo?.source_timezone || currentJobInfo?.sourceTimezone}
           readOnly={true}
         />
       ) : (
         <DateTimeInputDouble
           label={t('showJob.fields.end', { defaultValue: 'End' })}
           value={currentJobInfo?.endDateTime}
+          localValue={currentJobInfo?.endLocal || currentJobInfo?.end_local}
+          timezone={currentJobInfo?.source_timezone || currentJobInfo?.sourceTimezone}
           readOnly={true}
         />
       )}
@@ -2746,6 +2771,8 @@ export default function ShowJobModal({
                             defaultValue: 'Start',
                           })}
                           value={currentJobInfo?.startDateTime}
+                          localValue={currentJobInfo?.startLocal || currentJobInfo?.start_local}
+                          timezone={currentJobInfo?.source_timezone || currentJobInfo?.sourceTimezone}
                           readOnly={true}
                         />
                       ) : (
@@ -2754,6 +2781,8 @@ export default function ShowJobModal({
                             defaultValue: 'Start',
                           })}
                           value={currentJobInfo?.startDateTime}
+                          localValue={currentJobInfo?.startLocal || currentJobInfo?.start_local}
+                          timezone={currentJobInfo?.source_timezone || currentJobInfo?.sourceTimezone}
                           readOnly={true}
                         />
                       )}
@@ -2782,6 +2811,8 @@ export default function ShowJobModal({
                             defaultValue: 'End',
                           })}
                           value={currentJobInfo?.endDateTime}
+                          localValue={currentJobInfo?.endLocal || currentJobInfo?.end_local}
+                          timezone={currentJobInfo?.source_timezone || currentJobInfo?.sourceTimezone}
                           readOnly={true}
                         />
                       ) : (
@@ -2790,6 +2821,8 @@ export default function ShowJobModal({
                             defaultValue: 'End',
                           })}
                           value={currentJobInfo?.endDateTime}
+                          localValue={currentJobInfo?.endLocal || currentJobInfo?.end_local}
+                          timezone={currentJobInfo?.source_timezone || currentJobInfo?.sourceTimezone}
                           readOnly={true}
                         />
                       )}
