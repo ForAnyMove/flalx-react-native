@@ -17,6 +17,7 @@ const BaseActionModal = ({
   theme,
   children,
   overlayColor = 'rgba(0, 0, 0, 0.5)',
+  isRTL = false,
 }) => {
   if (!sizes || !theme) {
     return null; // Ensure sizes and theme are provided
@@ -41,7 +42,8 @@ const BaseActionModal = ({
     crossButton: {
       position: 'absolute',
       top: sizes.crossIconPosition,
-      right: sizes.crossIconPosition,
+      right: isRTL ? undefined : sizes.crossIconPosition,
+      left: isRTL ? sizes.crossIconPosition : undefined,
       zIndex: 1,
     },
     crossIcon: {

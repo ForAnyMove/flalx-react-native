@@ -23,9 +23,9 @@ import PaymentLegalNotice from './PaymentLegalNotice';
 
 // ─── Internal Helper Components (Defined outside to prevent focus loss) ───
 
-const PaginationDots = ({ activeStep, sizes, theme, t }) => (
+const PaginationDots = ({ activeStep, sizes, theme, t, isRTL }) => (
   <View style={[styles.paginationContainer, { marginBottom: sizes.paginationMarginBottom }]}>
-    <View style={[styles.dotsRow, { marginBottom: sizes.dotsRowMarginBottom }]}>
+    <View style={[styles.dotsRow, isRTL && { flexDirection: 'row-reverse' }, { marginBottom: sizes.dotsRowMarginBottom }]}>
       <View style={[styles.dot, {
         width: activeStep === 1 ? sizes.dotActiveSize : sizes.dotInactiveSize,
         height: activeStep === 1 ? sizes.dotActiveSize : sizes.dotInactiveSize,
@@ -72,7 +72,7 @@ const SuccessHeader = ({ subtitle, text, sizes, theme }) => (
 const FormInput = ({ label, value, placeholder, onChangeText, hint, keyboardType, sizes, theme, isRTL, error, t }) => (
   <View style={[styles.inputWrapper, { marginBottom: sizes.sectionMarginBottom }]}>
     <Text style={[styles.inputLabelOutside, { color: theme.textColor, fontSize: sizes.sectionHeaderFontSize, marginBottom: sizes.sectionHeaderMarginBottom, textAlign: isRTL ? 'right' : 'left' }]}>
-      {t('interestRequest.price_header', { defaultValue: 'Price' })}
+      {label}
     </Text>
     <View style={[
       styles.inputContainer,
@@ -104,7 +104,7 @@ const FormInput = ({ label, value, placeholder, onChangeText, hint, keyboardType
   </View>
 );
 
-const DateInput = ({ label, value, onPress, mode, sizes, theme, handleWebDateChange, isRTL, t, error }) => {
+const DateInput = ({ label, value, onPress, mode, sizes, theme, isRTL, t, error, locale }) => {
   const webInputRef = React.useRef(null);
 
   const handlePress = () => {
@@ -140,7 +140,7 @@ const DateInput = ({ label, value, onPress, mode, sizes, theme, handleWebDateCha
         <Text style={[styles.inputLabelInside, { color: theme.formInputLabelColor, fontSize: sizes.hintSize, left: sizes.inputPaddingHorizontal, top: sizes.inputLabelInsideTop }]}>{label}</Text>
         <View style={[styles.dateRow, isRTL && { flexDirection: 'row-reverse' }, { marginTop: sizes.dateRowMarginTop }]}>
           <Text style={[styles.dateText, { color: value ? theme.textColor : theme.formInputPlaceholderColor, fontSize: sizes.inputTextSize }]}>
-            {value ? new Date(value).toLocaleDateString() : t('interestRequest.pick_date', { defaultValue: 'Pick date' })}
+            {value ? new Date(value).toLocaleDateString(locale) : t('interestRequest.pick_date', { defaultValue: 'Pick date' })}
           </Text>
           <Image source={icons.calendar || icons.calendarDefault} style={{ width: sizes.crossIconSize, height: sizes.crossIconSize, tintColor: theme.formInputLabelColor }} />
         </View>
@@ -157,8 +157,9 @@ const DateInput = ({ label, value, onPress, mode, sizes, theme, handleWebDateCha
               opacity: 0,
               pointerEvents: 'none',
             }}
+            lang={locale}
             value={value ? new Date(value).toISOString().split('T')[0] : ''}
-            onChange={(e) => handleWebDateChange(mode, e)}
+            onChange={(e) => onPress?.(mode, e)}
           />
         )}
       </TouchableOpacity>
@@ -191,6 +192,7 @@ const InterestRequestModal = ({
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
+  const datePickerLocale = languageController.current === 'he' ? 'he-IL' : 'en-US';
 
   // ─── State ───────────────────────────────────────────────────────────────────
   const [selectedMethodId, setSelectedMethodId] = useState(null);
@@ -289,6 +291,11 @@ const InterestRequestModal = ({
       legalNoticeFontSize: scale(11),
       legalNoticeMarginTop: scale(12),
       legalNoticeMarginBottom: scale(16),
+      backButtonMarginBottom: scale(12),
+      backButtonGap: scale(6),
+      backButtonIconSize: scale(18),
+      backButtonTextSize: scale(16),
+      backButtonTop: scale(15),
 
       // New restored sizes
       dotsRowMarginBottom: scale(8),
@@ -377,6 +384,42 @@ const InterestRequestModal = ({
       setFieldErrors(prev => ({ ...prev, date: false }));
     }
   };
+
+  const handleBackToForm = () => {
+    setShowAddMethod(false);
+    setStep(1);
+  };
+
+  const renderStepBackButton = () => (
+    <TouchableOpacity
+      style={[
+        styles.stepBackButton,
+        {
+          alignSelf: isRTL ? 'flex-end' : 'flex-start',
+          flexDirection: isRTL ? 'row-reverse' : 'row',
+          position: 'absolute',
+          top: sizes.backButtonTop,
+          [isRTL ? 'right' : 'left']: sizes.crossIconPosition,
+          gap: sizes.backButtonGap,
+        },
+      ]}
+      onPress={handleBackToForm}
+    >
+      <Image
+        source={isRTL ? icons.forward : icons.back}
+        style={{
+          width: sizes.backButtonIconSize,
+          height: sizes.backButtonIconSize,
+          tintColor: theme.primaryColor,
+        }}
+        resizeMode="contain"
+      />
+      <Text style={[styles.stepBackText, { color: theme.primaryColor, fontSize: sizes.backButtonTextSize }]}>
+        {t('common.back')}
+      </Text>
+    </TouchableOpacity>
+  );
+
   // ─── Render Content ──────────────────────────────────────────────────────────
   const renderForm = () => {
     const showHeader = hasSubscription;
@@ -389,7 +432,7 @@ const InterestRequestModal = ({
             theme={theme}
           />
         ) : (
-          <PaginationDots activeStep={1} sizes={sizes} theme={theme} t={t} />
+          <PaginationDots activeStep={1} sizes={sizes} theme={theme} t={t} isRTL={isRTL} />
         )}
 
         <Text style={[styles.modalTitle, { color: theme.textColor, fontSize: sizes.titleSize, marginBottom: sizes.titleBottomMargin }]}>
@@ -420,26 +463,26 @@ const InterestRequestModal = ({
             <DateInput
               label={t('common.from', { defaultValue: 'From' })}
               value={formData.startDate}
-              onPress={() => Platform.OS !== 'web' && setPickerMode('start')}
+              onPress={Platform.OS === 'web' ? handleWebDateChange : () => setPickerMode('start')}
               mode="start"
               sizes={sizes}
               theme={theme}
-              handleWebDateChange={handleWebDateChange}
               isRTL={isRTL}
               t={t}
               error={fieldErrors.date}
+              locale={datePickerLocale}
             />
             <DateInput
               label={t('common.to', { defaultValue: 'To' })}
               value={formData.endDate}
-              onPress={() => Platform.OS !== 'web' && setPickerMode('end')}
+              onPress={Platform.OS === 'web' ? handleWebDateChange : () => setPickerMode('end')}
               mode="end"
               sizes={sizes}
               theme={theme}
-              handleWebDateChange={handleWebDateChange}
               isRTL={isRTL}
               t={t}
               error={fieldErrors.date}
+              locale={datePickerLocale}
             />
           </View>
           <Text style={[styles.hintText, { color: theme.unactiveTextColor, fontSize: sizes.hintSize, textAlign: isRTL ? 'right' : 'left' }]}>
@@ -464,7 +507,7 @@ const InterestRequestModal = ({
 
     const step2Header = (
       <>
-        {isClientJob && <PaginationDots activeStep={2} sizes={sizes} theme={theme} t={t} />}
+        {isClientJob && <PaginationDots activeStep={2} sizes={sizes} theme={theme} t={t} isRTL={isRTL} />}
 
         <View style={[styles.paymentHeader, { marginBottom: sizes.paymentHeaderMarginBottom }]}>
           <Text style={[styles.modalTitle, { color: theme.textColor, fontSize: sizes.titleSize, marginBottom: 4 }]}>
@@ -493,7 +536,7 @@ const InterestRequestModal = ({
     );
 
     const step2Footer = (
-      <View>
+      <View style={styles.footerContainer}>
         <TouchableOpacity
           style={[styles.outlineButton, { borderColor: theme.primaryColor, height: sizes.buttonHeight, borderRadius: sizes.borderRadius, backgroundColor: theme.backgroundColor }, !selectedMethodId && { opacity: 0.4 }]}
           onPress={handleFinalSubmit}
@@ -522,6 +565,8 @@ const InterestRequestModal = ({
               style={{
                 flexDirection: isRTL ? 'row-reverse' : 'row',
                 alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
                 gap: sizes.couponButtonGap,
               }}
             >
@@ -649,15 +694,18 @@ const InterestRequestModal = ({
         }}
         sizes={sizes}
         theme={theme}
+        isRTL={isRTL}
         overlayColor="rgba(59, 70, 99, 0.6)"
       >
         {content}
+        {step === 2 && !showAddMethod && !isBusinessJob && !hasSubscription && renderStepBackButton()}
       </BaseActionModal>
       {Platform.OS !== 'web' && pickerMode && (
         <DateTimePicker
           value={formData[pickerMode === 'start' ? 'startDate' : 'endDate'] ? new Date(formData[pickerMode === 'start' ? 'startDate' : 'endDate']) : new Date()}
           mode="date"
           display="default"
+          locale={datePickerLocale}
           onChange={onDateChange}
         />
       )}
@@ -699,6 +747,12 @@ const styles = StyleSheet.create({
   dot: {
   },
   stepText: {
+    fontFamily: 'Rubik-Medium',
+  },
+  stepBackButton: {
+    alignItems: 'center',
+  },
+  stepBackText: {
     fontFamily: 'Rubik-Medium',
   },
   // Success Header
@@ -761,6 +815,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Rubik-Medium',
   },
   // Buttons
+  footerContainer: {
+    width: '100%',
+  },
   primaryButton: {
     width: '100%',
     justifyContent: 'center',
@@ -821,7 +878,7 @@ const styles = StyleSheet.create({
   },
   confirmText: {
     fontFamily: 'Rubik-Regular',
-  }
+  },
 });
 
 export default InterestRequestModal;
