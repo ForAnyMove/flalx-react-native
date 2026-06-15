@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, View, Text, StyleSheet } from 'react-native';
 
 const PaymentLegalNotice = ({
   title,
@@ -9,7 +9,9 @@ const PaymentLegalNotice = ({
   fontSize = 12,
   style,
 }) => {
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const noticeColor = theme?.buttonColorSecondaryDefault || '#FE8A01';
+  const textColor = theme?.textColor || noticeColor;
   const visibleTexts = texts.filter(Boolean);
 
   if (!title && visibleTexts.length === 0) return null;
@@ -21,6 +23,7 @@ const PaymentLegalNotice = ({
         {
           borderColor: noticeColor,
           backgroundColor: `${noticeColor}10`,
+          flexDirection: isRTL ? 'row-reverse' : 'row',
         },
         style,
       ]}
@@ -39,22 +42,54 @@ const PaymentLegalNotice = ({
           {title}
         </Text>
       )}
-      {visibleTexts.map((text, index) => (
-        <Text
-          key={`${index}-${text.slice(0, 12)}`}
+
+      {visibleTexts.length > 0 && (
+        <Pressable
+          onHoverIn={() => setIsTooltipVisible(true)}
+          onHoverOut={() => setIsTooltipVisible(false)}
+          onPress={() => setIsTooltipVisible((visible) => !visible)}
           style={[
-            styles.text,
+            styles.infoButton,
             {
-              color: noticeColor,
-              fontSize,
-              textAlign: isRTL ? 'right' : 'left',
-              marginTop: title || index > 0 ? 4 : 0,
+              borderColor: noticeColor,
+              marginLeft: isRTL ? 0 : 8,
+              marginRight: isRTL ? 8 : 0,
             },
           ]}
         >
-          {text}
-        </Text>
-      ))}
+          <Text style={[styles.infoText, { color: noticeColor, fontSize }]}>i</Text>
+
+          {isTooltipVisible && (
+            <View
+              style={[
+                styles.tooltip,
+                {
+                  borderColor: noticeColor,
+                  backgroundColor: theme?.backgroundColor || '#fff',
+                  [isRTL ? 'left' : 'right']: 0,
+                },
+              ]}
+            >
+              {visibleTexts.map((text, index) => (
+                <Text
+                  key={`${index}-${text.slice(0, 12)}`}
+                  style={[
+                    styles.tooltipText,
+                    {
+                      color: textColor,
+                      fontSize,
+                      textAlign: isRTL ? 'right' : 'left',
+                      marginTop: index > 0 ? 6 : 0,
+                    },
+                  ]}
+                >
+                  {text}
+                </Text>
+              ))}
+            </View>
+          )}
+        </Pressable>
+      )}
     </View>
   );
 };
@@ -65,12 +100,46 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    position: 'relative',
+    zIndex: 20,
   },
   title: {
     fontFamily: 'Rubik-Bold',
+    flex: 1,
   },
-  text: {
+  infoButton: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    zIndex: 30,
+  },
+  infoText: {
+    fontFamily: 'Rubik-Bold',
+    lineHeight: 18,
+  },
+  tooltip: {
+    position: 'absolute',
+    top: 28,
+    width: 280,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    zIndex: 40,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  tooltipText: {
     fontFamily: 'Rubik-Regular',
     lineHeight: 17,
   },
