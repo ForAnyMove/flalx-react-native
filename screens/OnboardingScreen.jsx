@@ -110,7 +110,7 @@ export default function OnboardingScreen({ onFinish }) {
         isWebLandscape && { justifyContent: 'center' },
       ]}
     >
-      <View style={[styles.topControlsContainer, { top: sizes.skipBtnTop }]}>
+      <View style={[styles.topControlsContainer, { top: sizes.skipBtnTop, justifyContent: isRTL ? 'flex-end' : 'flex-start', }]}>
         <CustomPicker
           options={[
             { label: t('settings.lang_en', 'English'), value: 'en' },
@@ -119,10 +119,8 @@ export default function OnboardingScreen({ onFinish }) {
           selectedValue={languageController.current}
           onValueChange={(itemValue) => languageController.setLang(itemValue)}
           isRTL={isRTL}
-          containerStyle={{
-            width: sizes.pickerWidth,
-          }}
           headerStyle={true}
+          iconOnly={true}
         />
         {/* Кнопка пропуска */}
         <TouchableOpacity
@@ -288,9 +286,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: '100%',
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
+    paddingHorizontal: '5%'
   },
   skipButton: {
     position: 'absolute',

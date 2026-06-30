@@ -32,7 +32,6 @@ export default function Header({ switchToProfile }) {
       logoFontSize: isWebLandscape ? scaleByHeight(24, height) : scaleByHeightMobile(24, height),
       avatarSize: isWebLandscape ? scaleByHeight(32, height) : scaleByHeightMobile(32, height),
       avatarBorderRadius: isWebLandscape ? scaleByHeight(16, height) : scaleByHeightMobile(16, height),
-      pickerWidth: isWebLandscape ? scaleByHeight(185, height) : scaleByHeightMobile(185, height),
     };
   }, [isWebLandscape, height]);
 
@@ -52,19 +51,7 @@ export default function Header({ switchToProfile }) {
         isRTL && { flexDirection: 'row-reverse' },
       ]}
     >
-      <Text
-        style={[
-          styles.logoText,
-          {
-            color: themeController.current?.primaryColor,
-            fontSize: sizes.logoFontSize,
-          },
-        ]}
-      >
-        Flalx
-      </Text>
       <CustomPicker
-        label={t('settings.language')}
         options={[
           { label: t('settings.lang_en', 'English'), value: 'en' },
           { label: t('settings.lang_he', 'עברית'), value: 'he' },
@@ -72,9 +59,22 @@ export default function Header({ switchToProfile }) {
         selectedValue={languageController.current}
         onValueChange={(itemValue) => languageController.setLang(itemValue)}
         isRTL={isRTL}
-        containerStyle={{ width: sizes.pickerWidth }}
         headerStyle={true}
+        iconOnly={true}
       />
+      <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 8 }}>
+        <Text
+          style={[
+            styles.logoText,
+            {
+              color: themeController.current?.primaryColor,
+              fontSize: sizes.logoFontSize,
+            },
+          ]}
+        >
+          Flalx
+        </Text>
+      </View>
       <TouchableOpacity onPress={() => switchToProfile()}>
         <Image
           source={userAvatar ? { uri: userAvatar } : icons.defaultAvatarInverse}

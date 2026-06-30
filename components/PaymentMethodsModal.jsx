@@ -18,11 +18,12 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 import PaymentLegalNotice from './PaymentLegalNotice';
 
-const SETUP_PAYMENT_METHODS = ['paypal', 'hyp'];
-
 const PaymentMethodsModal = ({ visible, onClose }) => {
   const { themeController, languageController, paymentsManagerController } =
     useComponentContext();
+
+  const getFirstAvailable = () => paymentsManagerController.availableMethods && paymentsManagerController.availableMethods.length > 0 ? paymentsManagerController.availableMethods[0] : null;
+
   const theme = themeController.current;
   const { height, width, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -33,15 +34,16 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
   const [step, setStep] = useState('list'); // 'list', 'addMethod', 'confirmDelete', 'success', 'error', 'cantDelete'
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [selectedMethod, setSelectedMethod] = useState(null);
-  const [selectedSetupMethod, setSelectedSetupMethod] = useState(SETUP_PAYMENT_METHODS[0]);
+  const [selectedSetupMethod, setSelectedSetupMethod] = useState(getFirstAvailable());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
 
   useEffect(() => {
     if (visible) {
       setPaymentMethods(paymentsManagerController.savedMethods);
       setStep('list');
-      setSelectedSetupMethod(SETUP_PAYMENT_METHODS[0]);
+      setSelectedSetupMethod(getFirstAvailable());
       setIsLoading(false);
       setError(null);
     }
@@ -397,7 +399,7 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
   };
 
   const handleAddMethodPress = () => {
-    setSelectedSetupMethod(SETUP_PAYMENT_METHODS[0]);
+    setSelectedSetupMethod(getFirstAvailable());
     setStep('addMethod');
   };
 
@@ -450,7 +452,7 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
         style={{ marginBottom: sizes.legalNoticeMarginBottom }}
       />
 
-      {SETUP_PAYMENT_METHODS.map((methodType) => {
+      {[...paymentsManagerController.availableMethods ?? []].map((methodType) => {
         const isSelected = selectedSetupMethod === methodType;
         return (
           <TouchableOpacity

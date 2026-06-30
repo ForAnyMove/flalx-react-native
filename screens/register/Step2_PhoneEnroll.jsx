@@ -306,7 +306,7 @@ export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
               {
                 width: sizes.linksRowWidth,
                 marginBottom: sizes.linksRowMarginBottom,
-                flexDirection: 'row',
+                flexDirection: isRTL ? 'row-reverse' : 'row',
                 justifyContent: 'space-between',
                 alignItems: 'center',
               },

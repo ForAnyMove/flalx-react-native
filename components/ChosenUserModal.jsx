@@ -281,8 +281,8 @@ const ChosenUserModal = ({
 
     return (
       <View style={styles.contentContainer}>
-        <View style={{ width: sizes.statusIconSize, height: sizes.statusIconSize, borderRadius: sizes.statusIconSize / 2, backgroundColor: theme.defaultBlocksMockBackground, justifyContent: 'center', alignItems: 'center', marginBottom: sizes.statusIconMarginBottom }}>
-          <Image source={icons.salary} style={{ width: sizes.statusIconSize * 0.5, height: sizes.statusIconSize * 0.5, tintColor: theme.primaryColor, resizeMode: 'contain' }} />
+        <View style={{ width: sizes.statusIconSize, height: sizes.statusIconSize, borderRadius: sizes.statusIconSize / 2, backgroundColor: 'transparent', justifyContent: 'center', alignItems: 'center', marginBottom: sizes.statusIconMarginBottom }}>
+          <Image source={icons.logo_large} style={{ width: sizes.statusIconSize, height: sizes.statusIconSize, }} />
         </View>
         <Text style={styles.title}>{loadingTitle}</Text>
         <Text style={[styles.desc, { marginBottom: 0 }]}>{loadingDesc}</Text>

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 
+import CustomPicker from '../../components/ui/CustomPicker';
 import Step1_EmailPassword from './Step1_EmailPassword';
 import Step2_PhoneEnroll from './Step2_PhoneEnroll';
 import Step3_PhoneVerify from './Step3_PhoneVerify';
@@ -19,13 +20,13 @@ function PrimaryOutlineButton({
   height,
   containerStyle = {},
 }) {
-    const buttonDynamicStyles = useMemo(
+  const buttonDynamicStyles = useMemo(
     () => ({
       outlineBtn: {
         height: isLandscape && Platform.OS === 'web' ? scaleByHeight(62, height) : scaleByHeightMobile(62, height),
         width: isLandscape && Platform.OS === 'web' ? scaleByHeight(330, height) : '100%',
         marginTop: isLandscape && Platform.OS === 'web' ? scaleByHeight(38, height) : scaleByHeightMobile(12, height),
-        borderRadius: isLandscape && Platform.OS === 'web' ? scaleByHeight(8, height) : scaleByHeightMobile(12, height),  
+        borderRadius: isLandscape && Platform.OS === 'web' ? scaleByHeight(8, height) : scaleByHeightMobile(12, height),
       },
       outlineBtnText: {
         fontSize: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
@@ -47,10 +48,10 @@ function PrimaryOutlineButton({
         buttonDynamicStyles.outlineBtn,
         { borderColor: theme.primaryColor, opacity: disabled ? 0.6 : 1 },
         isLandscape &&
-          Platform.OS === 'web' && {
-            width: scaleByHeight(330, height),
-            height: scaleByHeight(62, height),
-          },
+        Platform.OS === 'web' && {
+          width: scaleByHeight(330, height),
+          height: scaleByHeight(62, height),
+        },
         containerStyle,
       ]}
     >
@@ -74,7 +75,8 @@ function PrimaryOutlineButton({
 
 export default function MultiStepRegisterScreen({ skipMFA = false }) {
   const { t } = useTranslation();
-  const { themeController, registerControl } = useComponentContext();
+  const { themeController, registerControl, languageController } = useComponentContext();
+  const isRTL = languageController.isRTL;
   const theme = themeController.current;
 
   const { width, height, isLandscape } = useWindowInfo();
@@ -95,7 +97,7 @@ export default function MultiStepRegisterScreen({ skipMFA = false }) {
   };
 
   const handleEmailVerified = () => {
-     if (skipMFA) {
+    if (skipMFA) {
       setStep('finished');
     } else {
       setStep('phone_enroll');
@@ -121,6 +123,7 @@ export default function MultiStepRegisterScreen({ skipMFA = false }) {
 
   const sizes = useMemo(
     () => ({
+      skipBtnTop: isWebLandscape ? scaleByHeight(103) : scaleByHeightMobile(10),
       titleFontSize: isWebLandscape ? scaleByHeight(18, height) : scaleByHeightMobile(18, height),
       subtitleFontSize: isWebLandscape ? scaleByHeight(18, height) : scaleByHeightMobile(18, height),
       finishTitleMarginBottom: isWebLandscape ? scaleByHeight(18, height) : scaleByHeightMobile(8, height),
@@ -193,11 +196,11 @@ export default function MultiStepRegisterScreen({ skipMFA = false }) {
               {t('auth.verify_message_sended')}
             </Text>
             <PrimaryOutlineButton
-                isLandscape={isLandscape}
-                height={height}
-                theme={theme}
-                title={t('common.close')}
-                onPress={() => registerControl.leaveRegisterScreen()}
+              isLandscape={isLandscape}
+              height={height}
+              theme={theme}
+              title={t('common.close')}
+              onPress={() => registerControl.leaveRegisterScreen()}
             />
           </Animated.View>
         );
@@ -206,7 +209,24 @@ export default function MultiStepRegisterScreen({ skipMFA = false }) {
     }
   };
 
-  return <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>{renderStep()}</View>;
+  return (
+    <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+      <View style={{ position: 'absolute', top: sizes.skipBtnTop, left: isRTL ? undefined : '5%', right: isRTL ? '5%' : undefined, zIndex: 100 }}>
+        <CustomPicker
+          options={[
+            { label: t('settings.lang_en', 'English'), value: 'en' },
+            { label: t('settings.lang_he', 'עברית'), value: 'he' },
+          ]}
+          selectedValue={languageController.current}
+          onValueChange={(val) => languageController.setLang(val)}
+          isRTL={isRTL}
+          headerStyle={true}
+          iconOnly={true}
+        />
+      </View>
+      {renderStep()}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

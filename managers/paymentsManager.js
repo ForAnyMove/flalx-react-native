@@ -9,15 +9,12 @@ import {
   updateSubscriptionMethod,
 } from '../src/api/paymentMethods';
 
-const WEB_PAYMENT_METHODS = ['paypal', 'hyp'];
+const WEB_PAYMENT_METHODS = ['hyp', 'paypal'];
 const ANDROID_PAYMENT_METHODS = ['google_pay'];
 const IOS_PAYMENT_METHODS = ['apple_pay'];
 
 function getAvailablePaymentMethods() {
-  if (Platform.OS === 'web') return WEB_PAYMENT_METHODS;
-  if (Platform.OS === 'android') return ANDROID_PAYMENT_METHODS;
-  if (Platform.OS === 'ios') return IOS_PAYMENT_METHODS;
-  return [];
+  return WEB_PAYMENT_METHODS;
 }
 
 function transformBackendMethod(pm) {

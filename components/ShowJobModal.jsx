@@ -54,6 +54,7 @@ import InterestRequestModal from './InterestRequestModal';
 import AlertModal from './AlertModal';
 import { logError } from '../utils/log_util';
 import CustomTextInput from './ui/CustomTextInput';
+import ImageViewerModal from './ui/ImageViewerModal';
 import { getDeviceTimezone } from '../utils/datetimeTimezone';
 
 async function editJobById(jobId, updates, session) {
@@ -625,6 +626,8 @@ export default function ShowJobModal({
   const [chargeEvent, setChargeEvent] = useState(null);
   const [alertModalVisible, setAlertModalVisible] = useState(false);
   const [alertModalTitle, setAlertModalTitle] = useState('');
+  const [imagePreviewVisible, setImagePreviewVisible] = useState(false);
+  const [imagePreviewIndex, setImagePreviewIndex] = useState(0);
 
   // Drive ChosenUserModal state via WS charge events for this job
   useEffect(() => {
@@ -2061,23 +2064,28 @@ export default function ShowJobModal({
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}
           contentContainerStyle={[
             styles.imageScrollContainer,
             dynamicStyles.imageScrollContainer,
             !isWebLandscape && { width: '100%' },
-            isRTL && { flexDirection: 'row-reverse' },
           ]}
         >
           {currentJobInfo?.images.length > 0 ? (
             <>
               {currentJobInfo?.images.map((uri, index) => (
-                <View
+                <TouchableOpacity
                   key={index}
+                  activeOpacity={0.85}
                   style={[
                     styles.imageWrapper,
                     dynamicStyles.imageWrapper,
-                    isRTL && { marginRight: 0, marginLeft: 8 },
+                    isRTL && { transform: [{ scaleX: -1 }] },
                   ]}
+                  onPress={() => {
+                    setImagePreviewIndex(index);
+                    setImagePreviewVisible(true);
+                  }}
                 >
                   <Image
                     source={{ uri }}
@@ -2086,7 +2094,7 @@ export default function ShowJobModal({
                       dynamicStyles.imageThumbnail,
                     ]}
                   />
-                </View>
+                </TouchableOpacity>
               ))}
             </>
           ) : (
@@ -2624,34 +2632,34 @@ export default function ShowJobModal({
                       })}
                     </Text>
                     <View
-                      style={[
-                        styles.imageRow,
-                        isRTL && { flexDirection: 'row-reverse' },
-                      ]}
+                      style={styles.imageRow}
                     >
                       <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={[
-                          styles.imageScrollContainer,
-                          isRTL && { flexDirection: 'row-reverse' },
-                        ]}
+                        style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}
+                        contentContainerStyle={styles.imageScrollContainer}
                       >
                         {currentJobInfo?.images.length > 0 ? (
                           <>
                             {currentJobInfo?.images.map((uri, index) => (
-                              <View
+                              <TouchableOpacity
                                 key={index}
+                                activeOpacity={0.85}
                                 style={[
                                   styles.imageWrapper,
                                   {
                                     backgroundColor:
                                       themeController.current
                                         ?.formInputBackground,
-                                    marginRight: isRTL ? 0 : sizes.margin / 2,
-                                    marginLeft: isRTL ? sizes.margin / 2 : 0,
+                                    marginRight: sizes.margin / 2,
+                                    transform: isRTL ? [{ scaleX: -1 }] : undefined,
                                   },
                                 ]}
+                                onPress={() => {
+                                  setImagePreviewIndex(index);
+                                  setImagePreviewVisible(true);
+                                }}
                               >
                                 <Image
                                   source={{ uri }}
@@ -2661,7 +2669,7 @@ export default function ShowJobModal({
                                     borderRadius: sizes.borderRadius,
                                   }}
                                 />
-                              </View>
+                              </TouchableOpacity>
                             ))}
                           </>
                         ) : (
@@ -3104,6 +3112,12 @@ export default function ShowJobModal({
         setFormData={setInterestFormData}
         step={interestStep}
         setStep={setInterestStep}
+      />
+      <ImageViewerModal
+        visible={imagePreviewVisible}
+        images={currentJobInfo?.images ?? []}
+        initialIndex={imagePreviewIndex}
+        onClose={() => setImagePreviewVisible(false)}
       />
       <AlertModal
         visible={alertModalVisible}

@@ -126,6 +126,7 @@ const STATUS_OPTIONS = {
 export default function NewJobModal({
   activeKey = '',
   closeModal,
+  redirectToWaiting,
   editMode = false,
   currentJobId = null,
   initialJob = null,
@@ -367,8 +368,8 @@ export default function NewJobModal({
   const requiredFields = [
     'type',
     'subType',
-    ...(isClient ? [] : ['price']),
-    ...(isBusiness ? ['startDateTime', 'endDateTime'] : []),
+    // ...(isClient ? [] : ['price']),
+    // ...(isBusiness ? ['startDateTime', 'endDateTime'] : []),
     // 'location',
     // 'description',
   ];
@@ -467,7 +468,7 @@ export default function NewJobModal({
             setAppLoading(false);
           });
       }
-      closeModal();
+      redirectToWaiting?.();
     } else {
       const newJob = {
         type: getTypeIdByKey(type),
@@ -506,7 +507,7 @@ export default function NewJobModal({
         paymentOptions
       ).then(() => {
         setAppLoading(false);
-        closeModal();
+        redirectToWaiting?.();
       }).catch((err) => {
         setAppLoading(false);
         const code = err?.response?.data?.code;
@@ -807,7 +808,7 @@ export default function NewJobModal({
               key={index}
               style={[
                 styles.imageWrapper,
-                isWebLandscape && {
+                {
                   marginRight: isRTL ? 0 : sizes.margin / 2,
                   marginLeft: isRTL ? sizes.margin / 2 : 0,
                 },
@@ -817,7 +818,7 @@ export default function NewJobModal({
                 source={{ uri }}
                 style={[
                   styles.imageThumbnail,
-                  isWebLandscape && {
+                  {
                     width: sizes.thumb,
                     height: sizes.thumb,
                     borderRadius: sizes.borderRadius,

@@ -1,20 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
 import { logError, logInfo } from '../../utils/log_util';
+import CustomPicker from '../../components/ui/CustomPicker';
 
 import LoginStep1_EmailPassword from './LoginStep1_EmailPassword';
 import LoginStep2_PhoneSetup from './LoginStep2_PhoneSetup';
 import LoginStep3_VerifyCode from './LoginStep3_VerifyCode';
+import { useWindowInfo } from '../../context/windowContext';
+import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 
 export default function MultiStepLoginScreen({ onGoToRegister, onGoToForgottenPassword, skipMFA = false }) {
-  const { session } = useComponentContext();
+  const { t } = useTranslation();
+  const { session, languageController } = useComponentContext();
+  const isRTL = languageController.isRTL;
   const [step, setStep] = useState('email'); // email, phone_setup, verify_code, loading
   const [mfaData, setMfaData] = useState({
     phone: '',
     isExistingUserWithMfa: false,
   });
   const [error, setError] = useState(null);
+  const { width, height, isLandscape } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  const sizes = useMemo(() => {
+    const web = (size) => scaleByHeight(size, height);
+    const mobile = (size) => scaleByHeightMobile(size, height);
+
+    return {
+      skipBtnTop: isWebLandscape ? web(103) : mobile(10),
+    };
+  }, [isWebLandscape, height]);
 
   useEffect(() => {
     const checkMfaStatusOnMount = async () => {
@@ -113,7 +130,24 @@ export default function MultiStepLoginScreen({ onGoToRegister, onGoToForgottenPa
     }
   };
 
-  return <View style={styles.container}>{renderStep()}</View>;
+  return (
+    <View style={styles.container}>
+      <View style={{ position: 'absolute', top: sizes.skipBtnTop, left: isRTL ? undefined : '5%', right: isRTL ? '5%' : undefined, zIndex: 100 }}>
+        <CustomPicker
+          options={[
+            { label: t('settings.lang_en', 'English'), value: 'en' },
+            { label: t('settings.lang_he', 'עברית'), value: 'he' },
+          ]}
+          selectedValue={languageController.current}
+          onValueChange={(val) => languageController.setLang(val)}
+          isRTL={isRTL}
+          headerStyle={true}
+          iconOnly={true}
+        />
+      </View>
+      {renderStep()}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

@@ -80,7 +80,7 @@ const PurchaseModal = ({
 
   // ─── Data ────────────────────────────────────────────────────────────────────
   const savedMethods = paymentsManagerController?.savedMethods ?? [];
-  const availableMethods = paymentsManagerController?.availableMethods ?? [];
+  const availableMethods = [...(paymentsManagerController?.availableMethods ?? [])];
   const couponsCount = couponsManagerController?.balance ?? 0;
   // subscription mode: use the subscription-default method (not the purchase default)
   const defaultSavedMethod =

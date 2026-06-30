@@ -698,7 +698,7 @@ export default function Step1_EmailPassword({ onNext }) {
               styles.linksRow,
               dynamicStyles.linksRow,
               {
-                flexDirection: 'row',
+                flexDirection: isRTL ? 'row-reverse' : 'row',
                 justifyContent: 'space-between',
                 alignItems: 'center',
               },

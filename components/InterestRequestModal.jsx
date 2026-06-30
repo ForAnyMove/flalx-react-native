@@ -404,7 +404,7 @@ const InterestRequestModal = ({
             setFormData(p => ({ ...p, price: v }));
             setFieldErrors(p => ({ ...p, price: false }));
           }}
-          placeholder="$0"
+          placeholder={isRTL ? "0₪" : "₪0"}
           hint={t('interestRequest.price_hint', { defaultValue: 'Enter the amount you are willing to work for' })}
           sizes={sizes}
           theme={theme}

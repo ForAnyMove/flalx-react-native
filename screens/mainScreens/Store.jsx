@@ -515,6 +515,9 @@ export default function Store() {
         <JobModalWrapper visible={newJobModalVisible} main={true}>
           <NewJobModal
             closeModal={() => setNewJobModalVisible(false)}
+            redirectToWaiting={() => {
+              setNewJobModalVisible(false); handleTabPress(orderedTabs.indexOf('waiting') >= 0 ? orderedTabs.indexOf('waiting') : 0);
+            }}
             activeKey={activeKey}
           />
         </JobModalWrapper>
@@ -522,6 +525,7 @@ export default function Store() {
         <Modal visible={newJobModalVisible} animationType='slide' transparent>
           <NewJobModal
             closeModal={() => setNewJobModalVisible(false)}
+            redirectToWaiting={() => { setNewJobModalVisible(false); handleTabPress(orderedTabs.indexOf('waiting') >= 0 ? orderedTabs.indexOf('waiting') : 0); }}
             activeKey={activeKey}
           />
         </Modal>

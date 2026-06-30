@@ -47,7 +47,7 @@ import JobExpectationsBadge from '../../../components/ui/JobExpectationsBadge';
 //     "creator": "4f04025a-eeaa-451d-a25c-586f6bdcf8f9",
 //     "doneComment": null,
 //     "extraMarker": null,
-//     "providerStatus": 'obsolete',
+//     "provider_status": 'obsolete',
 //     "myProviderSource": 'personal',
 //     "proposed_price": "50",
 //     "proposed_time_from": "2026-01-14T10:57:00+00:00",
@@ -273,11 +273,11 @@ export default function WaitingScreen({
             const needsAgreement = myEntry && myEntry.job_agreement != null && myEntry.job_agreement !== 'agreed';
 
             function checkIsBadgeExist() {
-              if (job?.providerStatus) {
-                switch (job.providerStatus) {
+              if (job?.provider_status) {
+                switch (job.provider_status) {
                   case 'obsolete':
                     return true;
-                  case 'choosed':
+                  case 'pending_supplier_approval':
                     return true;
                   default:
                     return false;
@@ -295,11 +295,11 @@ export default function WaitingScreen({
             }
 
             function getBadgeText() {
-              if (job?.providerStatus) {
-                switch (job.providerStatus) {
+              if (job?.provider_status) {
+                switch (job.provider_status) {
                   case 'obsolete':
                     return t('extra_markers.obsolete');
-                  case 'choosed':
+                  case 'pending_supplier_approval':
                     return t('extra_markers.choosed');
                   default:
                     return '';
@@ -315,11 +315,11 @@ export default function WaitingScreen({
               return '';
             }
             function getBadgeBackgroundColor() {
-              if (job?.providerStatus) {
-                switch (job.providerStatus) {
+              if (job?.provider_status) {
+                switch (job.provider_status) {
                   case 'obsolete':
                     return themeController.current?.mainBadgeBackground;
-                  case 'choosed':
+                  case 'pending_supplier_approval':
                     return themeController.current?.verifiedMarkerColor;
                   default:
                     return '';

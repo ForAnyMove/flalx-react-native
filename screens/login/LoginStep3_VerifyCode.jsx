@@ -288,7 +288,7 @@ const LoginStep3_VerifyCode = ({ onNext, onBack, phone, isExistingUserWithMfa })
               {otpError}
             </Text>
           )}
-          <View style={[styles.linksRow, dynamicStyles.linksRow, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: sizes.linksRowMarginTop }]}>
+          <View style={[styles.linksRow, dynamicStyles.linksRow, { flexDirection: isRTL ? 'row-reverse' : 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: sizes.linksRowMarginTop }]}>
             <TouchableOpacity onPress={onBack}>
               <Text style={[styles.link, dynamicStyles.link, { color: theme.formInputLabelColor, textDecorationLine: 'none' }]}>
                 {t('common.back')}

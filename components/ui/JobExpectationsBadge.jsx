@@ -142,8 +142,7 @@ export default function JobExpectationsBadge({ expectations, isRTL, iconStyle, t
     }, containerStyle]}>
       {proposed_price && (
         <View style={defaultBadgeStyle}>
-          <Image source={icons.salary} style={defaultIconStyle} />
-          <Text style={defaultTextStyle}>${proposed_price}</Text>
+          <Text style={defaultTextStyle}>₪ {proposed_price}</Text>
         </View>
       )}
       {dateText !== '' && (

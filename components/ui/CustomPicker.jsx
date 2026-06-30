@@ -21,12 +21,13 @@ const CustomPicker = ({
   selectedValue,
   onValueChange,
   isRTL,
-  fullScreen = false, // Новый пропс, по умолчанию false
+  fullScreen = false,
   containerStyle = {},
   placeholder = null,
   placeholderColor = null,
   bottomDropdown = true,
   headerStyle = false,
+  iconOnly = false, // compact mode: globe icon only, content-width dropdown
 }) => {
   const { themeController } = useComponentContext();
   const { width, height, isLandscape } = useWindowInfo();
@@ -72,12 +73,29 @@ const CustomPicker = ({
   const handlePress = () => {
     if (fullScreen) {
       setModalVisible(true);
+    } else if (iconOnly) {
+      pickerRef.current.measure((fx, fy, btnW, btnH, px, py) => {
+        const dropdownW = 170;
+        // measure() returns physical coords regardless of RTL.
+        // If the button center is in the right half of the screen, right-align
+        // the dropdown (dropdown's right edge = button's right edge).
+        // Otherwise left-align (dropdown's left edge = button's left edge).
+        // Then clamp so the dropdown never exceeds the screen.
+        const buttonCenter = px + btnW / 2;
+        const preferred = buttonCenter > width / 2
+          ? px + btnW - dropdownW  // right-align
+          : px;                    // left-align
+        const left = Math.max(0, Math.min(preferred, width - dropdownW));
+        setPickerLayout({ top: py + btnH, left, width: dropdownW });
+        setModalVisible(true);
+      });
     } else {
-      pickerRef.current.measure((fx, fy, width, height, px, py) => {
+      pickerRef.current.measure((fx, fy, btnW, btnH, px, py) => {
+        const left = Math.max(0, Math.min(px, width - btnW));
         setPickerLayout({
-          top: bottomDropdown ? py + height : py - dropdownHeight,
-          left: px,
-          width: width,
+          top: bottomDropdown ? py + btnH : py - dropdownHeight,
+          left,
+          width: btnW,
         });
         setModalVisible(true);
       });
@@ -278,11 +296,16 @@ const CustomPicker = ({
             {
               borderColor: themeController.current?.primaryColor,
               height: sizes.headerPickerHeight,
-              justifyContent: 'space-between',
               alignItems: 'center',
+              justifyContent: iconOnly ? 'center' : 'space-between',
               flexDirection: isRTL ? 'row-reverse' : 'row',
             },
-            modalVisible
+            iconOnly
+              ? {
+                  width: sizes.headerPickerHeight,
+                  borderRadius: sizes.borderRadius,
+                }
+              : modalVisible
               ? {
                   borderTopLeftRadius: sizes.borderRadius,
                   borderTopRightRadius: sizes.borderRadius,
@@ -291,7 +314,7 @@ const CustomPicker = ({
               : {
                   borderRadius: sizes.borderRadius,
                 },
-            isRTL
+            !iconOnly && (isRTL
               ? {
                   paddingRight: sizes.headerInputContainerPaddingLeft,
                   paddingLeft: sizes.headerInputContainerPaddingRight,
@@ -299,7 +322,7 @@ const CustomPicker = ({
               : {
                   paddingRight: sizes.headerInputContainerPaddingRight,
                   paddingLeft: sizes.headerInputContainerPaddingLeft,
-                },
+                }),
             containerStyle,
           ]}
           onPress={handlePress}
@@ -310,32 +333,34 @@ const CustomPicker = ({
               width: sizes.langIconSize,
               height: sizes.langIconSize,
               tintColor: themeController.current?.primaryColor,
-              // marginHorizontal: sizes.headerInputContainerPaddingHorizontal / 2,
             }}
           />
-          <Text
-            style={{
-              color: themeController.current?.primaryColor,
-              fontSize: sizes.headerFont,
-            }}
-          >
-            {selectedLabel}
-          </Text>
-          <Image
-            source={icons.arrowDown}
-            style={[
-              styles.arrowIcon,
-              {
-                width: sizes.iconSize,
-                height: sizes.iconSize,
-                tintColor: themeController.current?.primaryColor,
-                transform: modalVisible
-                  ? [{ rotate: '180deg' }]
-                  : [{ rotate: '0deg' }],
-                // marginHorizontal: sizes.inputContainerPaddingHorizontal / 2,
-              },
-            ]}
-          />
+          {!iconOnly && (
+            <>
+              <Text
+                style={{
+                  color: themeController.current?.primaryColor,
+                  fontSize: sizes.headerFont,
+                }}
+              >
+                {selectedLabel}
+              </Text>
+              <Image
+                source={icons.arrowDown}
+                style={[
+                  styles.arrowIcon,
+                  {
+                    width: sizes.iconSize,
+                    height: sizes.iconSize,
+                    tintColor: themeController.current?.primaryColor,
+                    transform: modalVisible
+                      ? [{ rotate: '180deg' }]
+                      : [{ rotate: '0deg' }],
+                  },
+                ]}
+              />
+            </>
+          )}
         </TouchableOpacity>
 
         {fullScreen ? renderFullScreenModal() : renderDropdownModal()}

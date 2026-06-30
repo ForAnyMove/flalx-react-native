@@ -139,7 +139,8 @@ export default function LoginStep1_EmailPassword({ onNext, onGoToRegister, onGoT
       },
       eyeIconContainer: {
         position: 'absolute',
-        right: isWebLandscape ? scaleByHeight(14, h) : scaleByHeightMobile(14, h),
+        right: isRTL ? undefined : (isWebLandscape ? scaleByHeight(14, h) : scaleByHeightMobile(14, h)),
+        left: isRTL ? (isWebLandscape ? scaleByHeight(14, h) : scaleByHeightMobile(14, h)) : undefined,
         top: isWebLandscape ? scaleByHeight(35, h) : scaleByHeightMobile(35, h),
         width: isWebLandscape ? scaleByHeight(24, h) : scaleByHeightMobile(24, h),
         height: isWebLandscape ? scaleByHeight(24, h) : scaleByHeightMobile(24, h),
@@ -152,7 +153,7 @@ export default function LoginStep1_EmailPassword({ onNext, onGoToRegister, onGoT
         tintColor: theme.formInputLabelColor,
       },
       linksRow: {
-        flexDirection: 'row',
+        flexDirection: isRTL ? 'row-reverse' : 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: isWebLandscape ? scaleByHeight(8, h) : scaleByHeightMobile(30, h),
