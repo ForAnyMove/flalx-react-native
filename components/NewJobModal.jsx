@@ -36,6 +36,7 @@ import { formatCurrency } from '../utils/currency_formatter';
 import { logError } from '../utils/log_util';
 import CustomTextInput from './ui/CustomTextInput';
 import { getDeviceTimezone } from '../utils/datetimeTimezone';
+import ImageViewerModal from './ui/ImageViewerModal';
 import PublishStatusModal from './PublishStatusModal';
 
 async function editJobById(jobId, updates, session) {
@@ -357,6 +358,8 @@ export default function NewJobModal({
   const [plansModalVisible, setPlansModalVisible] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [imagePreviewVisible, setImagePreviewVisible] = useState(false);
+  const [imagePreviewIndex, setImagePreviewIndex] = useState(0);
 
   // Состояния для управления фокусом на полях ввода
   const [focusStates, setFocusStates] = useState([false, false, false]);
@@ -804,8 +807,9 @@ export default function NewJobModal({
           contentContainerStyle={styles.imageScrollContainer}
         >
           {images.map((uri, index) => (
-            <View
+            <TouchableOpacity
               key={index}
+              activeOpacity={0.85}
               style={[
                 styles.imageWrapper,
                 {
@@ -813,6 +817,10 @@ export default function NewJobModal({
                   marginLeft: isRTL ? sizes.margin / 2 : 0,
                 },
               ]}
+              onPress={() => {
+                setImagePreviewIndex(index);
+                setImagePreviewVisible(true);
+              }}
             >
               <Image
                 source={{ uri }}
@@ -848,7 +856,7 @@ export default function NewJobModal({
                   resizeMode='contain'
                 />
               </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
@@ -1353,8 +1361,9 @@ export default function NewJobModal({
                         ]}
                       >
                         {images.map((uri, index) => (
-                          <View
+                          <TouchableOpacity
                             key={index}
+                            activeOpacity={0.85}
                             style={[
                               styles.imageWrapper,
                               {
@@ -1364,6 +1373,10 @@ export default function NewJobModal({
                                 marginLeft: isRTL ? sizes.margin / 2 : 0,
                               },
                             ]}
+                            onPress={() => {
+                              setImagePreviewIndex(index);
+                              setImagePreviewVisible(true);
+                            }}
                           >
                             <Image
                               source={{ uri }}
@@ -1396,7 +1409,7 @@ export default function NewJobModal({
                                 resizeMode='contain'
                               />
                             </TouchableOpacity>
-                          </View>
+                          </TouchableOpacity>
                         ))}
                       </ScrollView>
                     </View>
@@ -1715,6 +1728,13 @@ export default function NewJobModal({
           setPlansModalVisible(false);
           setStatusModalVisible(true);
         }}
+      />
+
+      <ImageViewerModal
+        visible={imagePreviewVisible}
+        images={images}
+        initialIndex={imagePreviewIndex}
+        onClose={() => setImagePreviewVisible(false)}
       />
       {/* <Modal visible={plansModalVisible} animationType='fade' transparent>
         <TouchableOpacity

@@ -153,6 +153,15 @@ export default function ImageViewerModal({ visible, images, initialIndex = 0, on
         prevTouchCount.current = count;
 
         if (count >= 2) {
+          // Second finger may arrive during Move (not Grant) — initialize here
+          // to avoid initialDist=0 which causes scale to jump to infinity/MAX.
+          if (!pinch.current.active) {
+            pinch.current = {
+              active: true,
+              initialDist: getTouchDistance(touches),
+              initialScale: scaleVal.current,
+            };
+          }
           const dist = getTouchDistance(touches);
           const next = clamp(
             pinch.current.initialScale * (dist / pinch.current.initialDist),
