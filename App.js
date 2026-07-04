@@ -18,7 +18,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import CustomTextInput from './components/ui/CustomTextInput';
 
 // Экраны
-import AuthScreen from './screens/AuthScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import AppScreen from './screens/AppScreen';
@@ -28,15 +27,11 @@ import { WebViewProvider } from './context/webViewContext';
 import { GlobalWebScreen } from './screens/GlobalWebScreen';
 import { WebSocketProvider } from './context/webSocketContext';
 import { GlobalNotificationHandler, NotificationProvider } from './src/render';
-import AuthScreenWithPass from './screens/AuthScreenWithPass';
-import RegisterScreenWithPass from './screens/RegisterScreenWithPass';
 import LoadingStub from './screens/LoaderScreen';
 import ForgottenPasswordScreen from './screens/ForgottenPasswordScreen';
-import ResetPasswordScreen from './screens/ResetPasswordScreen';
-import ForgottenPasswordScreenSms from './screens/ForgottenPasswordScreenSms';
-import RegisterScreenWithPassSms from './screens/RegisterScreenWithPassSms';
 import MultiStepLoginScreen from './screens/login/MultiStepLoginScreen';
 import MultiStepRegisterScreen from './screens/register/MultiStepRegisterScreen';
+import MfaSetupScreen from './screens/register/MfaSetupScreen';
 import { logError } from './utils/log_util';
 import usePushNotifications from './managers/pushNotificationsManager';
 
@@ -84,7 +79,6 @@ function App() {
     languageController,
     isLoader,
     registerControl,
-    authControl,
     forgotPassControl,
   } = useComponentContext();
 
@@ -183,40 +177,22 @@ function App() {
 
   let content;
 
-  // const theme = themeController.current;
-
-  // if (!session.status || (session.token && !session.mfaVerified)) {
-  //   if (forgotPassControl.isGoToReset) {
-  //     return <ResetPasswordScreen />;
-  //   }
-  //   if (authControl.isGoToRegister) {
-  //     return <RegisterScreen />;
-  //   }
-  //   return <AuthScreen />;
-  // }
-
-  // if (!onboardingStatusChecked) {
-  //   return <LoadingStub />;
-  // }
-
   // 1. Онбординг
   if (!isOnboardingShowed) {
     content = <OnboardingScreen onFinish={handleOnboardingFinish} />;
   }
   // 2. Авторизация
   else if (!(session.status && session.mfaVerified)) {
-    // Авторизация с OTP
-    if (authControl.state) {
-      content = <AuthScreen />;
+    // Authenticated at aal1 but the backend forces MFA setup before app access.
+    if (session.status && session.mfaSetup?.required) {
+      content = <MfaSetupScreen optional={false} onDone={() => {}} />;
     } else {
       content = (
         <MultiStepLoginScreen
-          skipMFA={true}
-          onGoToRegister={() => registerControl.goToRegisterScreen()}
+          onGoToRegister={(method) => registerControl.goToRegisterScreen(method)}
           onGoToForgottenPassword={() => forgotPassControl.switch()}
         />
       );
-      // content = <AuthScreenWithPass />;
     }
   }
 
@@ -234,25 +210,12 @@ function App() {
   }
   // Регистрация перед входом
   if (registerControl.state) {
-    // content = <RegisterScreenWithPass />;
-    content = <MultiStepRegisterScreen skipMFA={true} />;
-    // content = <MultiStepRegisterScreen />;
+    content = <MultiStepRegisterScreen initialMethod={registerControl.initialMethod} />;
   }
-  // if (registerControl.state) {
-  //   content = <RegisterScreenWithPassSms />;
-  // }
-  // Регистрация перед входом
-  // if (forgotPassControl.state) {
-  //   content = <ForgottenPasswordScreenSms />;
-  // }
   if (forgotPassControl.state) {
     content = <ForgottenPasswordScreen />;
   }
-  if (session.resetPassword) {
-    content = <ResetPasswordScreen />;
-  }
 
-  // content = <RegisterScreen />;
   return (
     <SafeAreaProvider>
       <SafeAreaView

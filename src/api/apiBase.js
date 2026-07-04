@@ -1,26 +1,42 @@
 import axios from "axios";
 import { logError } from "../../utils/log_util";
 import { FALLBACK_API_BASE_URL } from "../../utils/config";
+import { getSessionToken } from "../auth/authStorage";
 
+/**
+ * Shared transport for all authenticated data-API calls.
+ *
+ * Auth is resolved from the backend app session (NOT a Supabase token):
+ *   - Web: HttpOnly cookie -> `withCredentials: true` (no Authorization header).
+ *   - Native: `Authorization: Bearer <app_session_token>` from SecureStore.
+ *
+ * The `session` argument is kept for backwards compatibility (call sites still
+ * pass it), but the Supabase access_token it used to carry is no longer read.
+ * Only `session.serverURL` is still used to resolve the base URL.
+ */
 export async function fetchWithSession({ session, endpoint, data = {}, method = 'GET', responseType }) {
     try {
-        const token = session?.token?.access_token;
         const url = session?.serverURL || FALLBACK_API_BASE_URL;
 
-        if (!token || !url) {
+        if (!url) {
             return null;
         }
 
+        const token = await getSessionToken();
+
         const headers = {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
+            // Native transport: attach the backend app session token when present.
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
         };
 
         const config = {
             method,
             url: `${url}${endpoint}`,
             headers,
-            data
+            data,
+            // Required for web HttpOnly cookie sessions.
+            withCredentials: true,
         };
 
         // Add responseType if specified (for binary data like PDFs)

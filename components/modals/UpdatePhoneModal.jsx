@@ -56,7 +56,7 @@ const UpdatePhoneModal = ({
     }
     setError(null);
     setInternalLoading(true);
-    const result = await session.rebindMfaPhoneNumber(phone);
+    const result = await session.changePhoneStart(phone);
     setInternalLoading(false);
     if (result.success) {
       setStep('enterCode');
@@ -73,7 +73,7 @@ const UpdatePhoneModal = ({
     }
     setError(null);
     setInternalLoading(true);
-    const result = await session.verifyRebindMfaPhoneNumber(phone, code);
+    const result = await session.changePhoneVerify(phone, code);
     setInternalLoading(false);
     if (result.success) {
       onSave(phone); // Let parent know about the success

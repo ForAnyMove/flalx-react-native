@@ -42,12 +42,11 @@ function PrimaryOutlineButton({
     );
   }
 
-export default function LoginStep1_EmailPassword({ onNext, onGoToRegister, onGoToForgottenPassword }) {
+export default function LoginStep1_EmailPassword({ onSubmit, onSwitchMethod, onGoToRegister, onGoToForgottenPassword, apiError }) {
   const { t } = useTranslation();
   const {
     themeController,
     languageController,
-    session,
   } = useComponentContext();
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
@@ -217,17 +216,14 @@ export default function LoginStep1_EmailPassword({ onNext, onGoToRegister, onGoT
     setSending(true);
     setEmailError(null);
 
-    const { success, error } = await session.signInWithPassword(email, password);
+    const res = await onSubmit(email, password);
 
     setSending(false);
 
-    if (success) {
-      // Теперь мы не передаем данные MFA отсюда, 
-      // а просто вызываем onNext, который запустит проверку статуса MFA в MultiStepLoginScreen
-      onNext(); 
-    } else {
-      setEmailError(error);
+    if (res && !res.success) {
+      setEmailError(res.error);
     }
+    // On success the parent advances the state machine (app or MFA verify).
   };
 
   return (
@@ -325,11 +321,17 @@ export default function LoginStep1_EmailPassword({ onNext, onGoToRegister, onGoT
             </TouchableOpacity>
           </View>
 
-          {!!emailError && (
+          {(!!emailError || !!apiError) && (
             <Text style={dynamicStyles.error}>
-              {emailError}
+              {emailError || apiError}
             </Text>
           )}
+
+          <TouchableOpacity onPress={onSwitchMethod} style={{ marginTop: 12 }}>
+            <Text style={[dynamicStyles.link, { color: theme.primaryColor, textDecorationLine: 'underline', textAlign: 'center' }]}>
+              {t('auth.login_with_phone')}
+            </Text>
+          </TouchableOpacity>
 
           <PrimaryOutlineButton
             title={

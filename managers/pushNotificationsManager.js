@@ -29,7 +29,7 @@ export default function usePushNotifications({
 
     useEffect(() => {
         // Only run when authenticated
-        if (!session?.status || !session?.token?.access_token) return;
+        if (!session?.status) return;
 
         let unsubForeground = () => { };
         let unsubResponse = () => { };
@@ -86,5 +86,5 @@ export default function usePushNotifications({
             unsubForeground();
             unsubResponse();
         };
-    }, [session?.status, session?.token?.access_token]);
+    }, [session?.status]);
 }

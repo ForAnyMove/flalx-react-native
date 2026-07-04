@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import { useComponentContext } from '../context/globalAppContext';
 import ImagePickerModal from '../components/ui/ImagePickerModal';
-import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
+import { uploadImageAsset } from '../src/files/uploadFile';
 import { icons } from '../constants/icons';
 import {
   BASE_DESIGN_HEIGHT,
@@ -195,13 +195,10 @@ export default function RegisterScreen() {
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [pickerVisible, setPickerVisible] = useState(false);
 
-  // загрузка в supabase
+  // загрузка на backend storage
   async function uploadImage(uri) {
-    const res = await uploadImageToSupabase(uri, user?.current?.id, {
-      bucket: 'avatars',
-      isAvatar: true,
-    });
-    setAvatarUrl(res.publicUrl);
+    const res = await uploadImageAsset(uri, { purpose: 'avatar', fileName: 'avatar' });
+    setAvatarUrl(res.url);
   }
 
   async function handleSubmit() {

@@ -63,9 +63,10 @@ async function editJobById(jobId, updates, session) {
 
     const response = await fetch(`${session.serverURL}/jobs/${jobId}`, {
       method: 'PATCH',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(updates),
     });
@@ -716,7 +717,7 @@ export default function ShowJobModal({
     };
   }, [
     currentJobId,
-    session?.token?.access_token,
+    session?.status,
     jobsController.creator.waiting,
     jobsController.creator.inProgress,
     jobsController.creator.done,

@@ -13,14 +13,14 @@ export function useArchivedRefs(session) {
     const [refs, setRefs] = useState([]);
 
     const fetchRefs = useCallback(async () => {
-        if (!session?.token?.access_token) return;
+        if (!session?.status) return;
         try {
             const data = await getArchivedRefs(session);
             setRefs(data);
         } catch (error) {
             logError('useArchivedRefs: failed to fetch', error);
         }
-    }, [session?.token?.access_token]);
+    }, [session?.status]);
 
     const markSeen = useCallback(async (jobId) => {
         // Optimistically remove from local state immediately
@@ -30,7 +30,7 @@ export function useArchivedRefs(session) {
         } catch (error) {
             logError('useArchivedRefs: failed to mark seen', error);
         }
-    }, [session?.token?.access_token]);
+    }, [session?.status]);
 
     // Fetch on session ready
     useEffect(() => {

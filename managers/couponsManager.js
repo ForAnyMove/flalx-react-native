@@ -8,7 +8,9 @@ export default function couponsManager({ session }) {
     const [link, setLink] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const token = session?.token?.access_token;
+    // Auth-change key: a stable boolean that flips on login/logout on both
+    // web (cookie) and native (token). access_token is null on web.
+    const token = session?.status;
 
     useEffect(() => {
         // Сбрасываем состояние при смене аккаунта (или выходе)

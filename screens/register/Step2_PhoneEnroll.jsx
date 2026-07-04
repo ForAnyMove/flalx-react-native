@@ -83,11 +83,20 @@ function PrimaryOutlineButton({
 }
 
 
-export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
+export default function Step2_PhoneEnroll({
+  onSubmit,
+  onSwitchMethod,
+  title,
+  subtitle,
+  switchLabel,
+  error,
+}) {
   const { t } = useTranslation();
-  const { session, themeController, languageController, registerControl } =
-    useComponentContext();
+  const { themeController, languageController } = useComponentContext();
   const theme = themeController.current;
+  const titleText = title ?? t('auth.create_user_title');
+  const subtitleText = subtitle ?? t('auth.sms_description');
+  const switchText = switchLabel ?? t('auth.register_with_email');
   const isRTL = languageController.isRTL;
 
   const { width, height, isLandscape } = useWindowInfo();
@@ -96,6 +105,10 @@ export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState(null);
   const [sending, setSending] = useState(false);
+
+  // External errors (e.g. an MFA challenge failure routed back to this step
+  // by the parent) take priority once shown; a fresh submit attempt clears both.
+  const displayError = phoneError || error;
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -158,14 +171,13 @@ export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
     setSending(true);
 
     try {
-      const result = await session.sendPhoneVerificationCode(phone.trim(), userId);
-      if (result.success) {
-        onNext(phone.trim());
-      } else {
-        throw new Error(result.error);
+      const result = await onSubmit(phone.trim());
+
+      if (result && !result.success) {
+        setPhoneError(result.error);
       }
     } catch (e) {
-      logError('Phone Enrollment Error:', e.message);
+      logError('Phone registration error:', e.message);
       setPhoneError(e.message || 'An unknown error occurred.');
     } finally {
       setSending(false);
@@ -224,7 +236,7 @@ export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
               },
             ]}
           >
-            {t('register.mfa_title')}
+            {titleText}
           </Text>
           <Text
             style={[
@@ -237,7 +249,7 @@ export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
               },
             ]}
           >
-            {t('register.mfa_enroll_subtitle')}
+            {subtitleText}
           </Text>
 
           <View
@@ -296,10 +308,27 @@ export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
               autoCapitalize='none'
               autoCorrect={false}
               value={phone}
-              onChangeText={setPhone}
+              onChangeText={(text) => {
+                setPhone(text);
+                if (phoneError) setPhoneError(null);
+              }}
               returnKeyType='done'
             />
           </View>
+
+          {!!displayError && (
+            <Text
+              style={{
+                color: theme.errorTextColor,
+                textAlign: 'center',
+                fontSize: sizes.errorFontSize,
+                marginBottom: sizes.fieldBlockMarginBottom,
+              }}
+            >
+              {displayError}
+            </Text>
+          )}
+
           <View
             style={[
               styles.linksRow,
@@ -312,18 +341,18 @@ export default function Step2_PhoneEnroll({ userId, onNext, onBack }) {
               },
             ]}
           >
-            <TouchableOpacity onPress={onBack}>
+            <TouchableOpacity onPress={onSwitchMethod}>
               <Text
                 style={[
                   styles.link,
                   {
                     fontSize: sizes.linkFontSize,
-                    color: theme.formInputLabelColor,
-                    textDecorationLine: 'none',
+                    color: theme.primaryColor,
+                    textDecorationLine: 'underline',
                   },
                 ]}
               >
-                {t('register.back_to_email')}
+                {switchText}
               </Text>
             </TouchableOpacity>
           </View>

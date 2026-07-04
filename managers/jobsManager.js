@@ -50,12 +50,15 @@ export default function jobsManager({ session, user, geolocation }) {
     return () => { alive.current = false; };
   }, []);
 
-  const authHeaders = useMemo(() => ({
-    Authorization: `Bearer ${token}`,
-  }), [token]);
+  // Only send a bearer when we actually have a token (native). On web the
+  // backend session travels via the HttpOnly cookie (credentials: 'include').
+  const authHeaders = useMemo(
+    () => (token ? { Authorization: `Bearer ${token}` } : {}),
+    [token]
+  );
 
   async function safeFetch(url, opts) {
-    const res = await fetch(url, opts);
+    const res = await fetch(url, { ...opts, credentials: 'include' });
     if (!res.ok) {
       let msg = "Request failed";
       try {
@@ -122,7 +125,7 @@ export default function jobsManager({ session, user, geolocation }) {
   }
 
   async function reloadCreator() {
-    if (!serverURL || !token || !userId) return;
+    if (!serverURL || !session?.status || !userId) return;
     setLoadingCreator(true);
     setError(null);
     try {
@@ -150,7 +153,7 @@ export default function jobsManager({ session, user, geolocation }) {
   }
 
   async function reloadExecutor() {
-    if (!serverURL || !token || !userId) return;
+    if (!serverURL || !session?.status || !userId) return;
     setLoadingExecutor(true);
     setError(null);
 
@@ -176,7 +179,7 @@ export default function jobsManager({ session, user, geolocation }) {
   }
 
   async function reloadExecutorNew() {
-    if (!serverURL || !token || !userId) return;
+    if (!serverURL || !session?.status || !userId) return;
     setLoadingExecutor(true);
     setError(null);
 
@@ -290,11 +293,11 @@ export default function jobsManager({ session, user, geolocation }) {
 
   // авто-загрузка, как только есть сессия и юзер
   useEffect(() => {
-    if (serverURL && token && userId) {
+    if (serverURL && session?.status && userId) {
       reloadAll();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serverURL, token, userId]);
+  }, [serverURL, session?.status, userId]);
 
   return {
     creator: {

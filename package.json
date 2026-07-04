@@ -19,8 +19,7 @@
     "doctor": {
       "reactNativeDirectoryCheck": {
         "exclude": [
-          "react-native-bouncy-checkbox",
-          "base64-arraybuffer"
+          "react-native-bouncy-checkbox"
         ]
       }
     }
@@ -31,9 +30,7 @@
     "@react-native-picker/picker": "^2.11.1",
     "@react-navigation/native": "^7.1.6",
     "@react-navigation/stack": "^7.4.7",
-    "@supabase/supabase-js": "^2.55.0",
     "axios": "^1.12.2",
-    "base64-arraybuffer": "^1.0.2",
     "expo": "~53.0.24",
     "expo-clipboard": "^8.0.8",
     "expo-constants": "~17.1.7",
@@ -45,6 +42,7 @@
     "expo-notifications": "~0.31.5",
     "expo-print": "~14.1.4",
     "expo-router": "~5.1.8",
+    "expo-secure-store": "~14.2.4",
     "expo-sharing": "~13.1.5",
     "expo-status-bar": "~2.2.3",
     "i18next": "^25.3.6",
@@ -69,8 +67,10 @@
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
+    "@types/react": "~19.0.10",
     "cross-env": "^10.1.0",
-    "gh-pages": "^6.3.0"
+    "gh-pages": "^6.3.0",
+    "typescript": "~5.8.3"
   },
   "private": true
 }

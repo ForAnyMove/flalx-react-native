@@ -18,7 +18,7 @@ import DateTimeInput from './ui/DateTimeInput';
 import DateTimeInputDouble from './ui/DateTimeInputDouble';
 import ImagePickerModal from './ui/ImagePickerModal';
 import { icons } from '../constants/icons';
-import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
+import { uploadImageAsset } from '../src/files/uploadFile';
 import { useWindowInfo } from '../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
@@ -45,9 +45,10 @@ async function editJobById(jobId, updates, session) {
 
     const response = await fetch(`${session.serverURL}/jobs/${jobId}`, {
       method: 'PATCH',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(updates),
     });
@@ -544,11 +545,8 @@ export default function NewJobModal({
           // если хочешь лимит размера для локальных файлов:
           // if (uri.startsWith('file://')) await checkFileSize(uri, 5);
 
-          const res = await uploadImageToSupabase(uri, user.current.id, {
-            bucket: 'jobs',
-            isAvatar: false,
-          });
-          return res?.publicUrl || null;
+          const res = await uploadImageAsset(uri, { purpose: 'attachment', fileName: 'job' });
+          return res?.url || null;
         })
       );
 

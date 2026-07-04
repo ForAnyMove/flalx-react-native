@@ -25,7 +25,7 @@ import { useWebView } from '../context/webViewContext';
 import { useNotification } from '../src/render';
 import { useMemo, useState } from 'react';
 import ImagePickerModal from './ui/ImagePickerModal';
-import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
+import { uploadImageAsset } from '../src/files/uploadFile';
 import { scaleByHeightMobile } from '../utils/resizeFuncs';
 import { logError } from '../utils/log_util';
 import CustomTextInput from './ui/CustomTextInput';
@@ -271,11 +271,8 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
           // если хочешь лимит размера для локальных файлов:
           // if (uri.startsWith('file://')) await checkFileSize(uri, 5);
 
-          const res = await uploadImageToSupabase(uri, user.current.id, {
-            bucket: 'jobs',
-            isAvatar: false,
-          });
-          return res?.publicUrl || null;
+          const res = await uploadImageAsset(uri, { purpose: 'attachment', fileName: 'job' });
+          return res?.url || null;
         })
       );
 

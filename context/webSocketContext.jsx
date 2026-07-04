@@ -323,6 +323,22 @@ export const WebSocketProvider = ({ children }) => {
         // notify user about status change of their contact message
         break;
       }
+      case 'PHONE_CHANGED': {
+        // Fires once the SMS code for an account phone change is verified
+        // (see session.changePhoneVerify) — the backend already applied it,
+        // this just syncs our cached profile copy instantly.
+        const phone = message.payload?.phone;
+        if (phone) user.patchLocal({ phoneNumber: phone });
+        break;
+      }
+      case 'EMAIL_CHANGED': {
+        // Fires either once the confirmation link is clicked (normal flow) or
+        // immediately from startEmailChange when "Secure email change" is off
+        // and Supabase applies it right away — both cases land here.
+        const email = message.payload?.email;
+        if (email) user.patchLocal({ email });
+        break;
+      }
       case 'PROFILE_UPDATED': {
         const userId = message.payload?.userId;
         const updatedFields = message.payload?.updatedFields; // array of field names

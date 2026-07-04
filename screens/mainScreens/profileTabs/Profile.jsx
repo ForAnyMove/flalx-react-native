@@ -36,12 +36,12 @@ import { exportHtmlToPdf } from '../../../utils/htmlToPdf';
 export default function Profile() {
   const { user, themeController, languageController, session, setAppLoading } =
     useComponentContext();
-  const { showError, showInfo } = useNotification();
   const [userState, setUserState] = useState(user.current || {});
+  const { showError, showInfo } = useNotification();
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
-    () => () => {},
+    () => () => { },
   );
   const [changePasswordModal, showPasswordModal] = useState(false);
 
@@ -156,22 +156,13 @@ export default function Profile() {
     console.log(`Email change process initiated for ${newEmail}.`);
   };
 
-  const handleUpdatePhone = async (newPhone) => {
-    setIsUpdating(true);
-    try {
-      // The actual update happens inside the modal flow now.
-      // We just need to update the local state and close the modal.
-      const updatedUser = await user.update({ phoneNumber: newPhone });
-      if (updatedUser) {
-        setUserState(updatedUser);
-      }
-      setUpdatePhoneModalVisible(false);
-      // Maybe show a success message
-    } catch (error) {
-      console.error('Failed to update user phone:', error);
-    } finally {
-      setIsUpdating(false);
-    }
+  const handleUpdatePhone = (newPhone) => {
+    // newPhone was already verified via the auth flow (session.changePhoneVerify)
+    // by the time this fires — the backend syncs its own profile record
+    // automatically on that route, so /users/me is not PATCHed for this field
+    // anymore. Just reflect it in the UI immediately.
+    setUserState((prev) => ({ ...prev, phoneNumber: newPhone }));
+    setUpdatePhoneModalVisible(false);
   };
 
   // Функция загрузки и обновления аватара через сервер
@@ -723,10 +714,11 @@ export default function Profile() {
           }}
         >
           {[
-            {
-              key: user.current?.is_password_exist
-                ? 'change_password'
-                : 'create_password',
+            // OTP-only users (no password set yet) don't get a password
+            // button for now — "create password" isn't wired up on the
+            // backend yet.
+            ...(user.current?.is_password_exist ? [{
+              key: 'change_password',
               style: styles.primaryReverseBtn,
               textStyle: styles.primaryText,
               bg: themeController.current?.backgroundColor,
@@ -738,7 +730,7 @@ export default function Profile() {
                 setRepeatPassword('');
                 showPasswordModal(true);
               },
-            },
+            }] : []),
             {
               key: 'logout',
               style: styles.secondaryReverseBtn,
@@ -1235,21 +1227,30 @@ export default function Profile() {
                     return;
                   }
 
-                  if (user.current?.is_password_exist) {
-                    const res = await session.changePassword(
-                      oldPassword,
-                      newPassword,
-                    );
-                    if (!res.success) {
-                      alert(t(`errors.${res.error}`));
-                      return;
+                  try {
+                    if (user.current?.is_password_exist) {
+                      setAppLoading(true);
+                      const res = await session.changePassword(
+                        oldPassword,
+                        newPassword,
+                      );
+                      if (!res.success) {
+                        // res.error is already a localized message (see
+                        // getAuthErrorMessage) — don't re-wrap it as a t() key.
+                        showError(res.error);
+                        return;
+                      }
+                    } else {
+                      const res = await session.createPassword(newPassword);
+                      if (!res.success) {
+                        showError(res.error);
+                        return;
+                      }
                     }
-                  } else {
-                    const res = await session.createPassword(newPassword);
-                    if (!res.success) {
-                      alert(t(`errors.${res.error}`));
-                      return;
-                    }
+                  } catch (err) {
+                    showError(err);
+                  } finally {
+                    setAppLoading(false);
                   }
 
                   showPasswordModal(false);
@@ -1417,11 +1418,11 @@ function InfoField({
         style={
           multiline
             ? {
-                paddingVertical: sizes.fieldPaddingVertical,
-                alignItems: 'flex-start',
-                flex: 1,
-                height: '100%',
-              }
+              paddingVertical: sizes.fieldPaddingVertical,
+              alignItems: 'flex-start',
+              flex: 1,
+              height: '100%',
+            }
             : { flex: 1 }
         }
       >

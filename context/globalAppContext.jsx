@@ -22,7 +22,16 @@ const profileTabsList = ['profile', 'professions', 'settings'];
 
 export const ComponentProvider = ({ children }) => {
   const themeController = themeManager();
-  const { session, user, subscription, usersReveal, isLoader } = sessionManager();
+  const [loadingCounter, setLoadingCounter] = useState(0);
+
+  const setAppLoading = (isLoading) => {
+    setLoadingCounter(prev => {
+      if (isLoading) return prev + 1;
+      return Math.max(prev - 1, 0);
+    });
+  };
+
+  const { session, user, subscription, usersReveal, isLoader } = sessionManager({ setAppLoading });
   const languageController = languageManager();
   const appTabController = tabsManager({ name: 'app', defaultTab: appTabsList[0], list: appTabsList });
   const profileTabController = tabsManager({ name: 'profile', defaultTab: profileTabsList[0], list: profileTabsList });
@@ -30,13 +39,12 @@ export const ComponentProvider = ({ children }) => {
   const couponsManagerController = couponsManager({ session });
   const paymentsManagerController = paymentsManager({ session });
 
-  const { registerControl, authControl, forgotPassControl } = authTabsManager();
+  const { registerControl, forgotPassControl } = authTabsManager();
 
   const jobsController = jobsManager({ session, user, geolocation: geolocationController });
   const jobTypesController = jobTypeManager({ session });
 
   const providersController = providersManager({ session });
-  const [loadingCounter, setLoadingCounter] = useState(0);
   const [subscriptionPlans, setSubscriptionPlans] = useState(null);
 
   useEffect(() => {
@@ -56,13 +64,6 @@ export const ComponentProvider = ({ children }) => {
 
   }, [session.token, subscriptionPlans]);
 
-  const setAppLoading = (isLoading) => {
-    setLoadingCounter(prev => {
-      if (isLoading) return prev + 1;
-      return Math.max(prev - 1, 0);
-    });
-  };
-
   return (
     <ComponentContext.Provider
       value={{
@@ -81,7 +82,6 @@ export const ComponentProvider = ({ children }) => {
         subscriptionPlans,
         isLoader,
         registerControl,
-        authControl,
         forgotPassControl,
         geolocationController,
         couponsManagerController,

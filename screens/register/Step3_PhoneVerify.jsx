@@ -31,13 +31,13 @@ function PrimaryOutlineButton({
   height,
   containerStyle = {},
 }) {
-    const buttonDynamicStyles = useMemo(
+  const buttonDynamicStyles = useMemo(
     () => ({
       outlineBtn: {
         height: isLandscape && Platform.OS === 'web' ? scaleByHeight(62, height) : scaleByHeightMobile(62, height),
         width: isLandscape && Platform.OS === 'web' ? scaleByHeight(330, height) : '100%',
         marginTop: isLandscape && Platform.OS === 'web' ? scaleByHeight(38, height) : scaleByHeightMobile(12, height),
-        borderRadius: isLandscape && Platform.OS === 'web' ? scaleByHeight(8, height) : scaleByHeightMobile(12, height),  
+        borderRadius: isLandscape && Platform.OS === 'web' ? scaleByHeight(8, height) : scaleByHeightMobile(12, height),
       },
       outlineBtnText: {
         fontSize: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
@@ -59,10 +59,10 @@ function PrimaryOutlineButton({
         buttonDynamicStyles.outlineBtn,
         { borderColor: theme.primaryColor, opacity: disabled ? 0.6 : 1 },
         isLandscape &&
-          Platform.OS === 'web' && {
-            width: scaleByHeight(330, height),
-            height: scaleByHeight(62, height),
-          },
+        Platform.OS === 'web' && {
+          width: scaleByHeight(330, height),
+          height: scaleByHeight(62, height),
+        },
         containerStyle,
       ]}
     >
@@ -83,9 +83,9 @@ function PrimaryOutlineButton({
   );
 }
 
-export default function Step3_PhoneVerify({ userId, phone, onNext, onBack }) {
+export default function Step3_PhoneVerify({ phone, onVerify, onResend, onBack }) {
   const { t } = useTranslation();
-  const { session, themeController, languageController } = useComponentContext();
+  const { themeController, languageController } = useComponentContext();
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
 
@@ -110,10 +110,10 @@ export default function Step3_PhoneVerify({ userId, phone, onNext, onBack }) {
     }
     return () => clearInterval(timerRef.current);
   }, [cooldown]);
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
-        inputsRef.current[0]?.focus();
+      inputsRef.current[0]?.focus();
     }, 150);
     return () => clearTimeout(timer);
   }, []);
@@ -130,10 +130,10 @@ export default function Step3_PhoneVerify({ userId, phone, onNext, onBack }) {
     setOtpError(null);
 
     try {
-      const result = await session.verifyPhoneCode(phone, code, userId);
+      const result = await onVerify(code);
 
-      if (result.success) {
-        onNext(); // Success, move to the finished screen
+      if (!result || result.success) {
+        // Parent handles navigation on success.
       } else {
         setOtpError(result.error || 'Invalid OTP. Please try again.');
         setOtp(Array.from({ length: OTP_LENGTH }, () => ''));
@@ -152,8 +152,8 @@ export default function Step3_PhoneVerify({ userId, phone, onNext, onBack }) {
     setResending(true);
     setOtpError(null);
     try {
-      const result = await session.sendPhoneVerificationCode(phone, userId);
-      if (result.success) {
+      const result = await onResend();
+      if (!result || result.success) {
         setCooldown(60); // Reset cooldown
       } else {
         setOtpError(result.error || 'Failed to resend code.');

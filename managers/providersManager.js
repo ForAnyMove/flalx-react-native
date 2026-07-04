@@ -32,15 +32,15 @@ export default function providersManager({ session }) {
     };
   }, []);
 
+  // Only send a bearer when we actually have a token (native). On web the
+  // backend session travels via the HttpOnly cookie (credentials: 'include').
   const authHeaders = useMemo(
-    () => ({
-      Authorization: `Bearer ${token}`,
-    }),
+    () => (token ? { Authorization: `Bearer ${token}` } : {}),
     [token]
   );
 
   async function safeFetch(url, opts) {
-    const res = await fetch(url, opts);
+    const res = await fetch(url, { ...opts, credentials: 'include' });
     if (!res.ok) {
       let msg = "Request failed";
       try {
@@ -54,7 +54,7 @@ export default function providersManager({ session }) {
 
   // загрузка списка "других" пользователей
   async function reload() {
-    if (!serverURL || !token) return;
+    if (!serverURL || !session?.status) return;
     setLoading(true);
     setError(null);
     try {
@@ -168,11 +168,11 @@ export default function providersManager({ session }) {
 
   // авто-загрузка, как только есть сессия
   useEffect(() => {
-    if (serverURL && token) {
+    if (serverURL && session?.status) {
       reload();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serverURL, token]);
+  }, [serverURL, session?.status]);
 
   return {
     providers,

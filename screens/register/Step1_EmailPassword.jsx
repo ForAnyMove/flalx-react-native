@@ -105,10 +105,9 @@ function PrimaryOutlineButton({
 }
 
 
-export default function Step1_EmailPassword({ onNext }) {
+export default function Step1_EmailPassword({ onSubmit, onSwitchMethod }) {
   const { t } = useTranslation();
   const {
-    session,
     themeController,
     languageController,
     registerControl,
@@ -138,14 +137,6 @@ export default function Step1_EmailPassword({ onNext }) {
       /^(([^<>()\[\]\\.,;:\s@\"]+(\.[^<>()\[\]\\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\\.,;:\s@\"]+\.)+[^<>()[\]\\.,;:\s@\"]{2,})$/i;
     return re.test(String(value).trim().toLowerCase());
   };
-
-  const tryGetReferralCode = async () => {
-    const url = await Linking.getInitialURL();
-    if (url) {
-      const match = url.match(/[?&]ref=([^&]+)/);
-      if (match) return match[1];
-    }
-  }
 
   const validatePassword = (pwd) => pwd && pwd.trim().length >= 6;
   const passwordsMatch = () =>
@@ -186,37 +177,19 @@ export default function Step1_EmailPassword({ onNext }) {
     try {
       setLoading(true);
 
-      const referralCode = await tryGetReferralCode();
-      const res = await session.createUser(email.trim(), password, {}, referralCode);
+      const res = await onSubmit(email.trim(), password);
 
-      if (res.isUserExists) {
-        setEmailError(t('register.email_busy'));
-        setLoading(false);
-        return;
-      }
-
-      if (!res.success) {
-        const err = String(res.error || '').toLowerCase();
-        if (err.includes('already') || err.includes('exists')) {
+      if (res && !res.success) {
+        if (res.isUserExists) {
           setEmailError(t('register.email_busy'));
         } else {
           setGeneralError(res.error);
         }
-        setLoading(false);
-        return;
       }
-
-      // Call the onNext callback to proceed to the next step
-      onNext();
-
+      // On success the parent advances the state machine.
     } catch (e) {
-      const err = String(e.message || e).toLowerCase();
       logError('❌ Registration error:', e);
-      if (err.includes('already') || err.includes('exists')) {
-        setEmailError(t('register.email_busy'));
-      } else {
-        setGeneralError(String(e));
-      }
+      setGeneralError(String(e.message || e));
     } finally {
       setLoading(false);
     }
@@ -719,6 +692,23 @@ export default function Step1_EmailPassword({ onNext }) {
                 ]}
               >
                 {t('auth.back_to_sign_in')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={onSwitchMethod}
+              style={{ flexDirection: 'row', alignItems: 'center' }}
+            >
+              <Text
+                style={[
+                  styles.link,
+                  dynamicStyles.link,
+                  {
+                    color: theme.primaryColor,
+                    textDecorationLine: 'underline',
+                  },
+                ]}
+              >
+                {t('auth.register_with_phone')}
               </Text>
             </TouchableOpacity>
           </View>

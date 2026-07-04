@@ -36,12 +36,14 @@ export default function paymentsManager({ session }) {
   const [availablePaymentMethods] = useState(getAvailablePaymentMethods);
   const [savedPaymentMethods, setSavedPaymentMethods] = useState([]);
 
-  const token = session?.token?.access_token;
+  // Auth-change key: a stable boolean that flips on login/logout on both
+  // web (cookie) and native (token). access_token is null on web.
+  const token = session?.status;
 
   // ─── Load saved methods on login ─────────────────────────────────────────────
   useEffect(() => {
     setSavedPaymentMethods([]);
-    if (!session?.token) return;
+    if (!session?.status) return;
 
     fetchPaymentMethods(session)
       .then((methods) => setSavedPaymentMethods(methods.map(transformBackendMethod)))

@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import ImagePickerModal from './ui/ImagePickerModal';
 import { icons } from '../constants/icons';
-import { uploadImageToSupabase } from '../utils/supabase/uploadImageToSupabase';
+import { uploadImageAsset } from '../src/files/uploadFile';
 import { logError } from '../utils/log_util';
 
 const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
@@ -87,11 +87,8 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
           // если хочешь лимит размера для локальных файлов:
           // if (uri.startsWith('file://')) await checkFileSize(uri, 5);
 
-          const res = await uploadImageToSupabase(uri, user.current.id, {
-            bucket: 'jobs',
-            isAvatar: false,
-          });
-          return res?.publicUrl || null;
+          const res = await uploadImageAsset(uri, { purpose: 'document', fileName: activePicker || 'document' });
+          return res?.url || null;
         })
       );
 

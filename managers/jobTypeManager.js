@@ -80,10 +80,10 @@ function professionRequests({ session }) {
     }
 
     useEffect(() => {
-        if (session?.token?.access_token) {
+        if (session?.status) {
             loadProfessionRequests();
         }
-    }, [session?.token?.access_token]);
+    }, [session?.status]);
 
     return {
         professionsRequestedToSystem,
@@ -101,7 +101,7 @@ export default function jobTypeManager({ session }) {
 
     const userProfessionRequests = professionRequests({ session });
 
-    const token = session?.token?.access_token;
+    const token = session?.status;
 
     const approvedProfessions = useMemo(() => {
         const approved = new Set();

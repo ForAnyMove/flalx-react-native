@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, Platform, Animated, TouchableOpacity } from 'react-native';
+import React, { useState, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, Platform, Animated, TouchableOpacity, Linking } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
@@ -8,8 +8,9 @@ import CustomPicker from '../../components/ui/CustomPicker';
 import Step1_EmailPassword from './Step1_EmailPassword';
 import Step2_PhoneEnroll from './Step2_PhoneEnroll';
 import Step3_PhoneVerify from './Step3_PhoneVerify';
+import MfaSetupScreen from './MfaSetupScreen';
 import { useWindowInfo } from '../../context/windowContext';
-import Step_WaitForEmail from './Step_WaitForEmail';
+import { getAuthErrorMessage } from '../../src/auth/authErrors';
 
 function PrimaryOutlineButton({
   title,
@@ -31,10 +32,6 @@ function PrimaryOutlineButton({
       outlineBtnText: {
         fontSize: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
         lineHeight: isLandscape && Platform.OS === 'web' ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
-      },
-      webLandscapeButton: {
-        width: scaleByHeight(330, height),
-        height: scaleByHeight(62, height),
       },
     }),
     [height, isLandscape]
@@ -72,54 +69,125 @@ function PrimaryOutlineButton({
   );
 }
 
-
-export default function MultiStepRegisterScreen({ skipMFA = false }) {
+/**
+ * Registration state machine (backend-driven).
+ *
+ * Default method is `phone`. The user can switch phone <-> email at the first
+ * step. MFA setup is only reached AFTER the first factor (phone OTP / email) is
+ * verified and the backend returns an authenticated session with an MFA policy.
+ *
+ * Steps: phone_input | phone_otp | email_input | email_confirmation
+ *        | mfa_setup_required | mfa_setup_optional | done
+ */
+export default function MultiStepRegisterScreen({ initialMethod = null }) {
   const { t } = useTranslation();
-  const { themeController, registerControl, languageController } = useComponentContext();
+  const { session, themeController, registerControl, languageController } = useComponentContext();
   const isRTL = languageController.isRTL;
   const theme = themeController.current;
 
-  const { width, height, isLandscape } = useWindowInfo();
+  const { height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
-  const [step, setStep] = useState('email'); // email, phone_enroll, phone_verify, finished
-  const [userData, setUserData] = useState({
-    email: '',
-    password: '',
-    phone: '',
-    userId: null,
-  });
+  // Default method is 'phone' per the standard registration flow, unless the
+  // caller explicitly requested email (e.g. "Create new user" from the email
+  // login screen should open email registration, not phone-default).
+  const startMethod = initialMethod === 'email' ? 'email' : 'phone';
+  const [method, setMethod] = useState(startMethod); // 'phone' | 'email'
+  const [step, setStep] = useState(startMethod === 'email' ? 'email_input' : 'phone_input');
+  const [phone, setPhone] = useState('');
 
-  const handleEmailNext = (email, password, userId) => {
-    setUserData((prev) => ({ ...prev, email, password, userId })); // Сохраняем email и password
-    // setStep('wait_for_email');
-    handleEmailVerified(); // Для упрощения пропускаем этап верификации email
-  };
+  const tryGetReferralCode = useCallback(async () => {
+    try {
+      const url = await Linking.getInitialURL();
+      if (url) {
+        const match = url.match(/[?&]ref=([^&]+)/);
+        if (match) return match[1];
+      }
+    } catch {
+      // ignore
+    }
+    return null;
+  }, []);
 
-  const handleEmailVerified = () => {
-    if (skipMFA) {
-      setStep('finished');
+  // Route to the correct screen after the backend returns an authenticated
+  // session, based on the MFA policy it reports.
+  const routeAfterAuth = useCallback((resp) => {
+    if (resp?.mfaSetupRequired) {
+      setStep('mfa_setup_required');
+    } else if (resp?.mfaSetupOptional) {
+      setStep('mfa_setup_optional');
     } else {
-      setStep('phone_enroll');
+      // No MFA needed -> session is already authenticated & unblocked; leaving
+      // the register screen lets App.js render the app.
+      registerControl.leaveRegisterScreen();
     }
-  }
+  }, [registerControl]);
 
-  const handlePhoneEnrollNext = (phone) => {
-    setUserData((prev) => ({ ...prev, phone }));
-    setStep('phone_verify');
-  };
+  const switchToEmail = useCallback(() => {
+    setMethod('email');
+    setStep('email_input');
+  }, []);
 
-  const handlePhoneVerifyNext = () => {
-    setStep('finished');
-  };
+  const switchToPhone = useCallback(() => {
+    setMethod('phone');
+    setStep('phone_input');
+  }, []);
 
-  const handleBack = () => {
-    if (step === 'phone_enroll') {
-      setStep('email');
-    } else if (step === 'phone_verify') {
-      setStep('phone_enroll');
+  // --- Phone registration ---
+
+  const handlePhoneSubmit = useCallback(async (phoneValue) => {
+    try {
+      await session.startPhoneRegistration({ phone: phoneValue });
+      setPhone(phoneValue);
+      setStep('phone_otp');
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: getAuthErrorMessage(e) };
     }
-  };
+  }, [session]);
+
+  const handlePhoneResend = useCallback(async () => {
+    try {
+      await session.startPhoneRegistration({ phone });
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: getAuthErrorMessage(e) };
+    }
+  }, [session, phone]);
+
+  const handlePhoneVerify = useCallback(async (code) => {
+    try {
+      const resp = await session.verifyPhoneRegistration({ phone, code });
+      if (resp?.status === 'authenticated' || resp?.mfaSetupRequired || resp?.mfaSetupOptional) {
+        routeAfterAuth(resp);
+        return { success: true };
+      }
+      return { success: false, error: getAuthErrorMessage({ code: 'OTP_INVALID' }) };
+    } catch (e) {
+      return { success: false, error: getAuthErrorMessage(e) };
+    }
+  }, [session, phone, routeAfterAuth]);
+
+  // --- Email registration ---
+
+  const handleEmailSubmit = useCallback(async (email, password) => {
+    try {
+      const inviteCode = await tryGetReferralCode();
+      const resp = await session.registerEmail({ email, password, inviteCode });
+      if (resp?.status === 'email_confirmation_required') {
+        setStep('email_confirmation');
+        return { success: true };
+      }
+      if (resp?.status === 'authenticated' || resp?.mfaSetupRequired || resp?.mfaSetupOptional) {
+        routeAfterAuth(resp);
+        return { success: true };
+      }
+      return { success: false, error: getAuthErrorMessage({ code: resp?.status }) };
+    } catch (e) {
+      const isExists = String(e?.message || '').toLowerCase().includes('exist');
+      return { success: false, error: getAuthErrorMessage(e), isUserExists: isExists };
+    }
+  }, [session, tryGetReferralCode, routeAfterAuth]);
 
   const sizes = useMemo(
     () => ({
@@ -131,36 +199,32 @@ export default function MultiStepRegisterScreen({ skipMFA = false }) {
     [isWebLandscape, height]
   );
 
-  const dynamicStyles = useMemo(() => {
-    return {
-      title: {
-        fontSize: sizes.titleFontSize,
-      },
-      subtitle: {
-        fontSize: sizes.subtitleFontSize,
-      },
-    };
-  }, [sizes]);
-
-
   const renderStep = () => {
     switch (step) {
-      case 'email':
-        return <Step1_EmailPassword onNext={handleEmailNext} />;
-      case 'wait_for_email':
-        return <Step_WaitForEmail userId={userData.userId} onVerified={handleEmailVerified} />;
-      case 'phone_enroll':
-        return <Step2_PhoneEnroll onNext={handlePhoneEnrollNext} onBack={handleBack} />;
-      case 'phone_verify':
+      case 'phone_input':
         return (
-          <Step3_PhoneVerify
-            factorId={userData.factorId}
-            phone={userData.phone}
-            onNext={handlePhoneVerifyNext}
-            onBack={handleBack}
+          <Step2_PhoneEnroll
+            onSubmit={handlePhoneSubmit}
+            onSwitchMethod={switchToEmail}
           />
         );
-      case 'finished':
+      case 'phone_otp':
+        return (
+          <Step3_PhoneVerify
+            phone={phone}
+            onVerify={handlePhoneVerify}
+            onResend={handlePhoneResend}
+            onBack={() => setStep('phone_input')}
+          />
+        );
+      case 'email_input':
+        return (
+          <Step1_EmailPassword
+            onSubmit={handleEmailSubmit}
+            onSwitchMethod={switchToPhone}
+          />
+        );
+      case 'email_confirmation':
         return (
           <Animated.View
             style={[
@@ -171,29 +235,23 @@ export default function MultiStepRegisterScreen({ skipMFA = false }) {
             <Text
               style={[
                 styles.title,
-                dynamicStyles.title,
                 {
                   color: theme.unactiveTextColor,
                   textAlign: 'center',
-                  fontSize: dynamicStyles.title.fontSize * 1.5,
+                  fontSize: sizes.titleFontSize * 1.5,
                   marginBottom: sizes.finishTitleMarginBottom,
-                  fontFamily: 'Rubik-SemiBold',
                 },
               ]}
             >
-              {t('auth.verify_email')}
+              {t('auth.check_email_title')}
             </Text>
             <Text
               style={[
                 styles.subtitle,
-                dynamicStyles.subtitle,
-                {
-                  color: theme.unactiveTextColor,
-                  textAlign: 'center',
-                },
+                { color: theme.unactiveTextColor, textAlign: 'center', fontSize: sizes.subtitleFontSize },
               ]}
             >
-              {t('auth.verify_message_sended')}
+              {t('auth.check_email_subtitle')}
             </Text>
             <PrimaryOutlineButton
               isLandscape={isLandscape}
@@ -203,6 +261,21 @@ export default function MultiStepRegisterScreen({ skipMFA = false }) {
               onPress={() => registerControl.leaveRegisterScreen()}
             />
           </Animated.View>
+        );
+      case 'mfa_setup_required':
+        return (
+          <MfaSetupScreen
+            optional={false}
+            onDone={() => registerControl.leaveRegisterScreen()}
+          />
+        );
+      case 'mfa_setup_optional':
+        return (
+          <MfaSetupScreen
+            optional={true}
+            onDone={() => registerControl.leaveRegisterScreen()}
+            onSkip={() => registerControl.leaveRegisterScreen()}
+          />
         );
       default:
         return null;

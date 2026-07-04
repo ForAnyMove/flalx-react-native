@@ -1,474 +1,346 @@
-import { useEffect, useRef, useState } from 'react';
-import { AppState, Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from './../utils/supabase/supabase';
+import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import { API_BASE_URL } from '../utils/config';
+import { authApi } from '../src/auth/authApi';
+import {
+  saveSessionToken,
+  getSessionToken,
+  clearSessionToken,
+} from '../src/auth/authStorage';
+import { fetchWithSession } from '../src/api/apiBase';
 import { getRevealedUsers, getRevealProduct, revealUser } from '../src/api/users';
 import { getUserSubscription } from '../src/api/subscriptions';
+import { getAuthErrorMessage } from '../src/auth/authErrors';
 import { logError, logInfo, logWarn } from '../utils/log_util';
 
-export default function sessionManager() {
-  const [session, setSession] = useState(null);
-  const [trialSession, setTrialSession] = useState(null);
-  const [user, setUser] = useState(null);
+/**
+ * Backend-driven auth store.
+ *
+ * The frontend no longer talks to Supabase. All auth goes through the backend
+ * `/auth/*` endpoints (see src/auth/authApi.js). Session transport:
+ *   - Web: HttpOnly cookie (credentials: 'include').
+ *   - Native: opaque backend app session token in expo-secure-store, sent as
+ *     `Authorization: Bearer <token>`.
+ *
+ * `authUser` is the backend identity (from /auth/me). `user` is the app profile
+ * (account_type, firstauth, professions, ...) loaded from the profile endpoint.
+ *
+ * @param {{ setAppLoading?: (isLoading: boolean) => void }} [deps]
+ */
+export default function sessionManager({ setAppLoading } = {}) {
+  const [authUser, setAuthUser] = useState(null); // backend AuthUser from /auth/me
+  const [user, setUser] = useState(null); // app profile
   const [subscription, setSubscription] = useState(null);
-  const [revealedUsers, setRevealedUsers] = useState([]); // для хранения ID пользователей с раскрытыми контактами
+  const [revealedUsers, setRevealedUsers] = useState([]);
   const [revealProduct, setRevealProduct] = useState(null);
-  const [email, setEmail] = useState(null); // для verifyOtp
-  const [phone, setPhone] = useState(null); // для verifyOtp с телефоном
-  const [isInPasswordReset, setIsInPasswordReset] = useState(false);
-  const [mfaVerified, setMfaVerified] = useState(false); // Флаг для отслеживания прохождения MFA
-  const preResetAuthCall = useRef(false);
+  // Native only: the backend app session token kept in memory to build the
+  // Authorization header for data-API calls. Null on web (cookie transport).
+  const [appSessionToken, setAppSessionToken] = useState(null);
+  // MFA policy from the last auth response, drives post-registration routing.
+  const [mfaSetup, setMfaSetup] = useState({ required: false, optional: false });
+  // Pending factors when the backend returns status: 'mfa_required' at login.
+  const [pendingMfa, setPendingMfa] = useState(null);
 
   const [isLoader, setLoader] = useState(true);
 
-  function clearSupabaseStorage() {
-    if (Platform.OS === 'web') {
-      // Удаляем кастомную сессию
-      localStorage.removeItem('supabase_session');
+  const isAuthenticated = !!authUser;
 
-      // Удаляем все sb-*-auth-token
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
-          localStorage.removeItem(key);
-        }
-      });
-    } else {
-      // React Native: удаляем через AsyncStorage
+  // A session-like object accepted by the shared data-API helpers. `token` is
+  // kept as `{ access_token }` for backwards compatibility with data managers
+  // that build their own Authorization header — but it now carries the backend
+  // app session token (native) rather than a Supabase token.
+  const apiSession = {
+    serverURL: API_BASE_URL,
+    token: isAuthenticated ? { access_token: appSessionToken } : null,
+  };
 
-      AsyncStorage.removeItem('supabase_session');
-
-      AsyncStorage.getAllKeys().then((keys) => {
-        const sbKeys = keys.filter(
-          (k) => k.startsWith('sb-') && k.endsWith('-auth-token')
-        );
-        if (sbKeys.length > 0) {
-          AsyncStorage.multiRemove(sbKeys);
-        }
-      });
-    }
-  }
+  // Load auth state on start.
   useEffect(() => {
-    if (Platform.OS !== 'web') return;
-
-    const handler = () => {
-      if (preResetAuthCall.current || isInPasswordReset) {
-        clearSupabaseStorage();
-      }
-    };
-
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [isInPasswordReset]);
-
-  // Загружаем сессию при старте
-  useEffect(() => {
-    loadSession();
+    bootstrap();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // useEffect(() => {
-  //   if (Platform.OS === "web") return;
-
-  //   const sub = AppState.addEventListener("change", (state) => {
-  //     if (state === "background") {
-  //       if (preResetAuthCall.current || isInPasswordReset) {
-  //         logInfo("Clearing Supabase storage (RN background)");
-  //         clearSupabaseStorage();
-  //       }
-  //     }
-  //   });
-
-  //   return () => sub.remove();
-  // }, [isInPasswordReset]);
-
-  async function loadSession() {
+  async function bootstrap() {
     try {
-      let savedSession;
-      if (Platform.OS === 'web') {
-        savedSession = localStorage.getItem('supabase_session');
-      } else {
-        savedSession = await AsyncStorage.getItem('supabase_session');
-      }
-
-      if (savedSession) {
-        const parsed = JSON.parse(savedSession);
-
-        // Проверяем актуальность токена
-        const { data, error } = await supabase.auth.setSession(parsed);
-
-        if (error) {
-          // logError('Ошибка восстановления сессии:', error.message);
+      if (Platform.OS !== 'web') {
+        const token = await getSessionToken();
+        setAppSessionToken(token);
+        // No stored token on native => definitely unauthenticated, skip /me.
+        if (!token) {
+          setLoader(false);
           return;
         }
-
-        // data.session уже будет с обновлённым токеном, если refresh прошёл
-        const freshSession = data.session ?? parsed;
-
-        await saveSession(freshSession);
-        setSession(freshSession);
-
-        // Загружаем профиль пользователя
-        await fetchUserProfile(freshSession.access_token);
-        await refreshRevealedUsers({
-          token: { access_token: freshSession.access_token },
-          serverURL: API_BASE_URL,
-        });
-        await refreshRevealProduct({
-          token: { access_token: freshSession.access_token },
-          serverURL: API_BASE_URL,
-        });
-
-        // Восстанавливаем факт MFA-верификации
-        let savedMfa;
-        if (Platform.OS === 'web') {
-          savedMfa = localStorage.getItem('mfa_verified');
-        } else {
-          savedMfa = await AsyncStorage.getItem('mfa_verified');
-        }
-        if (savedMfa === 'true') {
-          setMfaVerified(true);
-        }
       }
+      await refreshMe();
     } catch (e) {
-      logError('Ошибка загрузки сессии:', e);
-      await signOut();
+      logError('Auth bootstrap error:', e);
     } finally {
       setLoader(false);
     }
   }
 
-  async function saveSession(newSession) {
-    try {
-      setSession(newSession);
-      if (Platform.OS === 'web') {
-        localStorage.setItem('supabase_session', JSON.stringify(newSession));
-      } else {
-        await AsyncStorage.setItem(
-          'supabase_session',
-          JSON.stringify(newSession)
-        );
-      }
-    } catch (e) {
-      logError('Ошибка сохранения сессии:', e);
-    }
-  }
+  // >>> CORE SESSION <<<
 
-  async function saveMfaVerifiedState(verified) {
-    try {
-      setMfaVerified(verified);
-      if (Platform.OS === 'web') {
-        if (verified) {
-          localStorage.setItem('mfa_verified', 'true');
-        } else {
-          localStorage.removeItem('mfa_verified');
-        }
-      } else {
-        if (verified) {
-          await AsyncStorage.setItem('mfa_verified', 'true');
-        } else {
-          await AsyncStorage.removeItem('mfa_verified');
-        }
-      }
-    } catch (e) {
-      logError('Ошибка сохранения MFA статуса:', e);
-    }
-  }
-
-  // Запросить код на email
-  async function signInWithEmail(userEmail) {
-    setEmail(userEmail); // сохраним email для дальнейшей проверки кода
-    const { error } = await supabase.auth.signInWithOtp({ email: userEmail });
-    if (error) {
-      logError('Ошибка при отправке кода:', error.message);
-      return { success: false, error: error.message };
-    } else {
-      return { success: true };
-    }
-  }
-  // Запросить код на email
-  async function resetPasswordWithEmail(userEmail, options = {}) {
-    setEmail(userEmail); // сохраним email для дальнейшей проверки кода
-    const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
-      redirectTo: 'flalx://reset-password', // deep link
-    });
-    if (error) {
-      logError('Ошибка при отправке кода:', error.message);
-      return { success: false, error: error.message };
-    } else {
-      logInfo('Код отправлен на email:', userEmail);
-      return { success: true };
-    }
-  }
-
-  // Запросить код на телефон
-  async function resetPasswordWithPhone(userPhone) {
-    setPhone(userPhone); // сохраним телефон для дальнейшей проверки кода
-    const { error } = await supabase.auth.signInWithOtp({
-      phone: userPhone,
-    });
-    if (error) {
-      logError('Ошибка при отправке SMS:', error.message);
-      return { success: false, error: error.message };
-    } else {
-      logInfo('SMS отправлено на номер:', userPhone);
-      return { success: true };
-    }
-  }
-
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'PASSWORD_RECOVERY') {
-      logInfo('Пользователь открыл ссылку восстановления');
-      setIsInPasswordReset(true); // поместить в контекст
-    }
-  });
-
-  // Проверка кода
-  async function verifyOtp(code) {
-    if (!email) {
-      logError('Email не установлен. Сначала вызови signInWithEmail().');
-      return;
-    }
-
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token: code,
-      type: 'email',
-    });
-
-    if (error) {
-      logError('Ошибка проверки кода:', error.message);
-      throw new Error(`Ошибка проверки кода: ${error.message}`);
-    } else {
-      logInfo('Успешный вход:', data);
-      await saveSession(data.session);
-
-      try {
-        // Загружаем профиль пользователя
-        await fetchUserProfile(data.session.access_token);
-        await refreshRevealedUsers(data.session);
-        await refreshRevealProduct(data.session);
-      } catch (profileError) {
-        logError(
-          'Ошибка загрузки профиля после входа:',
-          profileError.message
-        );
-        // Выходим из системы, чтобы избежать несогласованного состояния
-        await signOut();
-        // Передаем ошибку дальше, чтобы UI мог ее обработать
-        throw new Error('Не удалось загрузить профиль пользователя.');
-      }
-    }
-  }
-
-  // >>> MFA (Multi-Factor Authentication) FUNCTIONS <<<
-
-  /**
-   * Шаг 1: Регистрация телефона как второго фактора
-   * @param {string} phone - Номер телефона в формате E.164 (например, +79991234567)
-   */
-  async function enrollPhoneNumber(phone) {
-    try {
-      const { data, error } = await supabase.auth.mfa.enroll({
-        factorType: 'phone',
-        phone: phone,
-      });
-
-      if (error) {
-        logError('MFA Enroll Error:', error.message);
-        return { success: false, error: error.message };
-      }
-
-      logInfo('MFA Enroll Success:', data);
-      return { success: true, factorId: data.id };
-    } catch (e) {
-      logError('MFA Enroll Exception:', e);
-      return { success: false, error: String(e) };
-    }
+  async function clearAuthState() {
+    setAuthUser(null);
+    setUser(null);
+    setSubscription(null);
+    setRevealedUsers([]);
+    setRevealProduct(null);
+    setMfaSetup({ required: false, optional: false });
+    setPendingMfa(null);
+    setAppSessionToken(null);
+    await clearSessionToken();
   }
 
   /**
-   * Шаг 2: Отправка СМС с кодом верификации
-   * @param {string} factorId - ID фактора, полученный на шаге enroll
+   * Fetch the current user from the backend and (re)load the app profile.
+   * On 401/no-user, clears local auth state.
    */
-  async function challengePhoneNumber(factorId) {
+  async function refreshMe() {
     try {
-      const { data, error } = await supabase.auth.mfa.challenge({
-        factorId: factorId,
-      });
+      const { user: backendUser } = await authApi.me();
 
-      if (error) {
-        logError('MFA Challenge Error:', error.message);
-        return { success: false, error: error.message };
+      if (!backendUser) {
+        await clearAuthState();
+        return;
       }
 
-      logInfo('MFA Challenge Success:', data);
-      return { success: true, challengeId: data.id };
+      setAuthUser(backendUser);
+      await loadProfile();
     } catch (e) {
-      logError('MFA Challenge Exception:', e);
-      return { success: false, error: String(e) };
+      if (e?.status === 401) {
+        await clearAuthState();
+        return;
+      }
+      logError('refreshMe error:', e.message || e);
     }
+  }
+
+  // Load the app profile (+ subscription, revealed users) via the shared,
+  // session-authenticated transport.
+  async function loadProfile() {
+    try {
+      const res = await fetchWithSession({
+        session: apiSession,
+        endpoint: '/users/me',
+        method: 'GET',
+      });
+      const profile = res?.data?.profile ?? res?.data ?? null;
+      if (profile) setUser(profile);
+    } catch (e) {
+      logWarn('Failed to load app profile:', e.message || e);
+    }
+
+    // Best-effort side data; failures shouldn't block auth.
+    await Promise.allSettled([
+      refreshRevealedUsers(),
+      refreshRevealProduct(),
+      refreshUserSubscription(),
+    ]);
   }
 
   /**
-   * Шаг 3: Проверка кода из СМС
-   * @param {string} factorId - ID фактора
-   * @param {string} challengeId - ID вызова, полученный на шаге challenge
-   * @param {string} code - Код из СМС
+   * Normalize an AuthResponse. For authenticated responses, persist the app
+   * session token (native), record MFA policy, and refresh the current user.
+   * Returns the response so callers can branch on `status`.
    */
-  async function verifyPhoneNumber(factorId, challengeId, code) {
-    try {
-      const { error } = await supabase.auth.mfa.verify({
-        factorId: factorId,
-        challengeId: challengeId,
-        code: code,
-      });
+  async function handleAuthResponse(resp) {
+    if (!resp) return { status: 'error' };
 
-      if (error) {
-        logError('MFA Verify Error:', error.message);
-        return { success: false, error: error.message };
+    // MFA is Supabase Auth MFA on the same app_session now: the session (and
+    // its sessionToken, for native) already exists at `mfa_required` (aal1),
+    // not just once fully 'authenticated' — persist it here too, otherwise
+    // the following /mfa/challenge and /mfa/verify calls have no Bearer token
+    // on native and fail with authentication_required.
+    if (resp.sessionToken) {
+      await saveSessionToken(resp.sessionToken);
+      setAppSessionToken(resp.sessionToken);
+    }
+
+    switch (resp.status) {
+      case 'authenticated':
+      case 'mfa_setup_required':
+      case 'mfa_setup_optional': {
+        const required =
+          resp.status === 'mfa_setup_required' || !!resp.mfaSetupRequired;
+        const optional =
+          resp.status === 'mfa_setup_optional' || !!resp.mfaSetupOptional;
+        setMfaSetup({ required, optional });
+        setPendingMfa(null);
+        await refreshMe();
+        return { ...resp, mfaSetupRequired: required, mfaSetupOptional: optional };
       }
+      case 'mfa_required': {
+        setPendingMfa(resp.mfa || null);
+        return resp;
+      }
+      default:
+        // email_confirmation_required / phone_confirmation_required / otp_sent
+        return resp;
+    }
+  }
 
-      logInfo('MFA Verify Success: User session now has aal2.');
-      // Сессия автоматически обновляется, пересохранять не нужно,
-      // но можно обновить стейт, если потребуется
-      const { data: { session } } = await supabase.auth.getSession();
-      await saveSession(session);
-
-      return { success: true };
+  async function logout() {
+    setAppLoading?.(true);
+    try {
+      await authApi.logout();
     } catch (e) {
-      logError('MFA Verify Exception:', e);
-      return { success: false, error: String(e) };
+      logWarn('Backend logout failed (clearing local state anyway):', e.message || e);
+    } finally {
+      await clearAuthState();
+      setAppLoading?.(false);
     }
   }
 
+  // >>> REGISTRATION <<<
 
-  // >>> END MFA FUNCTIONS <<<
-
-
-  // Проверка кода
-  async function verifyOtpResetPassword(code) {
-    if (!email) {
-      logError('Email не установлен. Сначала вызови signInWithEmail().');
-      return;
-    }
-
-    preResetAuthCall.current = true;
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token: code,
-      type: 'email',
-    });
-
-    if (error) {
-      logError('Ошибка проверки кода:', error.message);
-      throw new Error(`Ошибка проверки кода: ${error.message}`);
-    } else {
-      logInfo('Код принят:', data);
-      setTrialSession(data.session);
-
-      setIsInPasswordReset(true);
-    }
+  async function registerEmailFlow(input) {
+    // input: { email, password, inviteCode? }
+    return handleAuthResponse(await authApi.registerEmail(input));
   }
 
-  // Обновление пароля (используется в сбросе пароля)
-  async function updatePassword(newPassword) {
-    const { data, error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-
-    if (error) {
-      logError('Ошибка обновления пароля:', error.message);
-      return { success: false, error: error.message };
-    }
-
-    logInfo('Пароль успешно обновлен:', data);
-    // После успешного обновления выходим из системы,
-    // чтобы пользователь мог войти с новым паролем.
-    await signOut();
-    return { success: true };
+  async function startPhoneRegistration(input) {
+    // input: { phone }  -> { status: 'otp_sent' | 'phone_confirmation_required' }
+    return authApi.startPhoneRegistration(input);
   }
 
-  // Проверка SMS кода для сброса пароля
-  async function verifyOtpResetPasswordWithPhone(code) {
-    if (!phone) {
-      logError(
-        'Телефон не установлен. Сначала вызови resetPasswordWithPhone().'
-      );
-      return;
-    }
-
-    preResetAuthCall.current = true;
-    const { data, error } = await supabase.auth.verifyOtp({
-      phone,
-      token: code,
-      type: 'sms',
-    });
-
-    if (error) {
-      logError('Ошибка проверки SMS кода:', error.message);
-      throw new Error(`Ошибка проверки SMS кода: ${error.message}`);
-    } else {
-      logInfo('Код принят:', data);
-      setTrialSession(data.session);
-      setIsInPasswordReset(true);
-    }
+  async function verifyPhoneRegistration(input) {
+    // input: { phone, code }
+    return handleAuthResponse(await authApi.verifyPhoneRegistration(input));
   }
 
-  // Запрашиваем профиль с сервера
-  async function fetchUserProfile(token) {
+  // >>> LOGIN <<<
+
+  async function loginEmailFlow(input) {
+    // input: { email, password }
+    return handleAuthResponse(await authApi.loginEmail(input));
+  }
+
+  async function startPhoneLogin(input) {
+    return authApi.startPhoneLogin(input);
+  }
+
+  async function verifyPhoneLogin(input) {
+    return handleAuthResponse(await authApi.verifyPhoneLogin(input));
+  }
+
+  // >>> MFA <<<
+  // Supabase Auth MFA end-to-end (no custom Twilio route anymore): enroll only
+  // registers the factor, challenge is what actually sends the SMS, verify
+  // raises the existing app_session's authLevel to aal2 (no new token minted).
+
+  async function enrollMfa(input) {
+    // input: { type: 'totp' | 'phone', phone? }
+    // -> phone: { factorId, type: 'phone' }
+    // -> totp:  { factorId, type: 'totp', qrCode, secret, uri }
+    return authApi.enrollMfa(input);
+  }
+
+  async function challengeMfa(input) {
+    // input: { factorId } -> { challengeId, factorId } (SMS sent here for phone factors)
+    return authApi.challengeMfa(input);
+  }
+
+  async function verifyMfa(input) {
+    // input: { factorId, challengeId, code } -> authenticated (aal2)
+    return handleAuthResponse(await authApi.verifyMfa(input));
+  }
+
+  async function unenrollMfa(input) {
+    // input: { factorId } -> { status: 'ok' }
+    return authApi.unenrollMfa(input);
+  }
+
+  async function listMfaFactors() {
+    // -> { factors: Array<{ id, type, phone?, status? }> }
+    return authApi.listMfaFactors();
+  }
+
+  // >>> BACKWARDS-COMPATIBLE WRAPPERS <<<
+  // Kept so screens that still reference the old method names keep working.
+
+  async function signInWithPassword(email, password) {
     try {
-      const res = await fetch(`${API_BASE_URL}/users/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
-      });
-
-      if (!res.ok) {
-        throw new Error('Ошибка загрузки профиля');
+      const resp = await loginEmailFlow({ email, password });
+      if (resp.status === 'authenticated') return { success: true };
+      if (resp.status === 'mfa_required') {
+        return { success: false, mfaRequired: true, mfa: resp.mfa };
       }
-
-      const { profile, subscription } = await res.json();
-      logInfo('Профиль пользователя:', profile);
-      logInfo('Подписка пользователя:', subscription);
-
-      setUser(profile);
-      setSubscription(subscription);
-    } catch (err) {
-      // logError('Ошибка запроса профиля:', err.message);
+      return { success: false, error: resp.status };
+    } catch (e) {
+      return { success: false, error: e.message };
     }
   }
 
-  // Выход
-  async function signOut() {
-    await supabase.auth.signOut();
-    setSession(null);
-    setMfaVerified(false);
-    if (Platform.OS === 'web') {
-      localStorage.removeItem('supabase_session');
-      localStorage.removeItem('mfa_verified');
-    } else {
-      await AsyncStorage.removeItem('supabase_session');
-      await AsyncStorage.removeItem('mfa_verified');
-    }
-  }
-
-  // Обновить данные пользователя
-  async function updateUser(updates, token = null) {
+  async function createUser(email, password, _options = {}, referralCode = null) {
     try {
-      const res = await fetch(`${API_BASE_URL}/users/me`, {
+      const resp = await registerEmailFlow({
+        email,
+        password,
+        inviteCode: referralCode || null,
+      });
+      if (resp.status === 'email_confirmation_required') {
+        return { success: true, requiresEmailConfirmation: true };
+      }
+      if (
+        resp.status === 'authenticated' ||
+        resp.status === 'mfa_setup_required' ||
+        resp.status === 'mfa_setup_optional'
+      ) {
+        return { success: true, ...resp };
+      }
+      return { success: false, error: resp.status };
+    } catch (e) {
+      const err = String(e.message || e).toLowerCase();
+      if (err.includes('already') || err.includes('exists')) {
+        return { success: false, error: e.message, isUserExists: true };
+      }
+      return { success: false, error: e.message };
+    }
+  }
+
+  async function createUserWithPhone(phone) {
+    try {
+      const resp = await startPhoneRegistration({ phone });
+      return { success: true, ...resp };
+    } catch (e) {
+      const err = String(e.message || e).toLowerCase();
+      if (err.includes('already') || err.includes('exists')) {
+        return { success: false, error: e.message, isUserExists: true };
+      }
+      return { success: false, error: e.message };
+    }
+  }
+
+  async function verifyPhoneOtp(phone, code) {
+    try {
+      const resp = await verifyPhoneRegistration({ phone, code });
+      if (
+        resp.status === 'authenticated' ||
+        resp.status === 'mfa_setup_required' ||
+        resp.status === 'mfa_setup_optional'
+      ) {
+        return { success: true, ...resp };
+      }
+      return { success: false, error: resp.status };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  }
+
+  // >>> APP PROFILE <<<
+
+  async function updateUser(updates) {
+    try {
+      const res = await fetchWithSession({
+        session: apiSession,
+        endpoint: '/users/me',
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token || session?.access_token}`,
-        },
-        body: JSON.stringify(updates),
+        data: updates,
       });
-
-      if (!res.ok) throw new Error('Ошибка обновления профиля');
-
-      const updatedUser = await res.json();
-      setUser(updatedUser); // обновляем локальное состояние
-      logInfo('Данные пользователя обновлены:', updatedUser);
+      const updatedUser = res?.data?.profile ?? res?.data ?? null;
+      if (updatedUser) setUser(updatedUser);
       return updatedUser;
     } catch (err) {
       logError('Ошибка updateUser:', err.message);
@@ -476,82 +348,113 @@ export default function sessionManager() {
     }
   }
 
-  // Обновить email пользователя
-  async function updateEmail(newEmail) {
-    const { data, error } = await supabase.auth.updateUser({
-      email: newEmail,
-    });
-
-    if (error) {
-      logError('Ошибка обновления email:', error.message);
-      return { success: false, error: error.message };
-    }
-
-    logInfo('Запрос на смену email отправлен:', data);
-    return { success: true, data };
-  }
-
-  // Обновить pending_avatar локально (без запроса на сервер)
   function setPendingAvatar(avatarUrl) {
-    setUser(prev => ({ ...prev, pending_avatar: avatarUrl }));
+    setUser((prev) => ({ ...prev, pending_avatar: avatarUrl }));
   }
 
-  // Сброс пароля (новая функция)
-  async function resetPassword(newPassword) {
-    if (!trialSession) {
-      return { success: false, error: 'No temporary session for password reset.' };
-    }
-    // Устанавливаем временную сессию для сброса
-    await supabase.auth.setSession(trialSession);
-
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-
-    // Сбрасываем состояние после попытки
-    setTrialSession(null);
-    setIsInPasswordReset(false);
-    preResetAuthCall.current = false;
-
-    if (error) {
-      logError('Ошибка сброса пароля:', error.message);
-      // Важно выйти из системы, даже если была ошибка,
-      // чтобы не остаться в некорректной сессии
-      await signOut();
-      return { success: false, error: error.message };
-    }
-
-    logInfo('Пароль успешно сброшен.');
-    // Выходим, чтобы пользователь мог залогиниться с новым паролем
-    await signOut();
-    return { success: true };
+  // Patch the locally-cached app profile without a network round-trip — used
+  // to reflect server-pushed facts (e.g. the PHONE_CHANGED/EMAIL_CHANGED
+  // WebSocket events) instantly, since the backend now owns syncing its own
+  // profile record for those fields (see auth change-phone/change-email flows).
+  function patchLocalUser(fields) {
+    setUser((prev) => (prev ? { ...prev, ...fields } : prev));
   }
 
-  // Удалить пользователя
   async function deleteUser() {
     try {
-      const res = await fetch(`${API_BASE_URL}/users/me`, {
+      await fetchWithSession({
+        session: apiSession,
+        endpoint: '/users/me',
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
       });
-
-      if (!res.ok) throw new Error('Ошибка удаления пользователя');
-
       logInfo('Пользователь удалён');
-
-      // сразу выходим из аккаунта
-      await signOut();
+      await logout();
     } catch (err) {
       logError('Ошибка deleteUser:', err.message);
       throw err;
     }
   }
 
+  // Change the current (authenticated) user's password. Synchronous — no
+  // email step, no logout: the app_session (cookie/sessionToken) is left
+  // untouched by the backend. If MFA is enabled and the session is still
+  // aal1, the backend returns 403 MFA_REQUIRED (mfa_required_for_password_change).
+  async function changePassword(oldPassword, newPassword) {
+    try {
+      if (!isAuthenticated) {
+        return { success: false, error: getAuthErrorMessage({ code: 'UNAUTHORIZED' }) };
+      }
+      await authApi.changePassword({ currentPassword: oldPassword, newPassword });
+      return { success: true };
+    } catch (e) {
+      logError('changePassword error:', e.message || e);
+      return { success: false, error: getAuthErrorMessage(e) };
+    }
+  }
+
+  // Request a password-reset email for a logged-out user. The link in that
+  // email points at a page hosted by the backend itself (reset-password.html)
+  // — the app has no further role and no deep-link/redirect handling to do.
+  async function forgotPassword(email) {
+    try {
+      await authApi.forgotPassword({ email });
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: getAuthErrorMessage(e) };
+    }
+  }
+
+  // Change the account's own email. Applied immediately, or Supabase emails a
+  // confirmation link to the new address (no in-app verify step either way —
+  // see authApi.startEmailChange).
+  async function updateEmail(newEmail) {
+    try {
+      await authApi.startEmailChange({ newEmail });
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: getAuthErrorMessage(e) };
+    }
+  }
+
+  // Change the account's own phone number (NOT an MFA factor — see
+  // enrollMfa/unenrollMfa above for that). Two steps: start sends an SMS OTP
+  // to the new number, verify completes the change.
+  async function changePhoneStart(newPhone) {
+    try {
+      await authApi.startPhoneChange({ newPhone });
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: getAuthErrorMessage(e) };
+    }
+  }
+
+  async function changePhoneVerify(phone, code) {
+    try {
+      await authApi.verifyPhoneChange({ phone, code });
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: getAuthErrorMessage(e) };
+    }
+  }
+
+  // Static helper unchanged (test stub until a backend endpoint exists).
+  async function getWhatsAppNumber() {
+    return '+19876543210';
+  }
+
+  // NOTE: password-reset / create-password flows are not part of the backend
+  // auth contract yet. They previously used Supabase directly (removed). Until
+  // the backend exposes reset endpoints these return a soft "not implemented"
+  // so the UI degrades gracefully instead of crashing. See docs/rework_auth.md.
+  function notImplemented(name) {
+    logWarn(`[auth] ${name} is not implemented against the backend yet.`);
+    return { success: false, error: 'not_implemented' };
+  }
+
+  // >>> SUBSCRIPTION / REVEAL <<<
+
   function isHasSubscription() {
     if (!subscription) return false;
-
     const currentDate = new Date();
     const expiryDate = new Date(subscription.expiry);
     return expiryDate > currentDate;
@@ -559,13 +462,8 @@ export default function sessionManager() {
 
   async function refreshRevealedUsers(sessionProps = null) {
     try {
-      const revealed = await getRevealedUsers(
-        sessionProps || {
-          token: { access_token: session.access_token },
-          serverURL: API_BASE_URL,
-        }
-      );
-      setRevealedUsers(revealed.map((user) => user.id));
+      const revealed = await getRevealedUsers(sessionProps || apiSession);
+      setRevealedUsers(revealed.map((u) => u.id));
     } catch (error) {
       logError('Error refreshing revealed users:', error);
     }
@@ -573,46 +471,34 @@ export default function sessionManager() {
 
   async function refreshRevealProduct(sessionProps = null) {
     try {
-      const revealed = await getRevealProduct(
-        sessionProps || {
-          token: { access_token: session.access_token },
-          serverURL: API_BASE_URL,
-        }
-      );
+      const revealed = await getRevealProduct(sessionProps || apiSession);
       setRevealProduct(revealed);
     } catch (error) {
-      logError('Error refreshing revealed users:', error);
+      logError('Error refreshing reveal product:', error);
     }
   }
 
   async function refreshUserSubscription(sessionProps = null) {
     try {
-      const { subscription } = await getUserSubscription(
-        sessionProps || {
-          token: { access_token: session.access_token },
-          serverURL: API_BASE_URL,
-        }
+      const { subscription: sub } = await getUserSubscription(
+        sessionProps || apiSession
       );
-
-      setSubscription(subscription);
+      setSubscription(sub);
     } catch (error) {
       logError('Error refreshing user subscription:', error);
     }
   }
 
-  // Reveal user contacts
   async function tryReveal(userId, paymentOptions = {}) {
-    const resolvedOptions = typeof paymentOptions === 'boolean' ? { useCoupon: paymentOptions } : paymentOptions;
+    const resolvedOptions =
+      typeof paymentOptions === 'boolean'
+        ? { useCoupon: paymentOptions }
+        : paymentOptions;
 
-    if (revealedUsers.includes(userId)) {
-      return;
-    }
+    if (revealedUsers.includes(userId)) return;
 
     try {
-      const data = await revealUser(userId, {
-        token: { access_token: session.access_token },
-        serverURL: API_BASE_URL,
-      }, resolvedOptions);
+      const data = await revealUser(userId, apiSession, resolvedOptions);
       if (data.user) {
         setRevealedUsers((prev) => [...prev, userId]);
       }
@@ -622,782 +508,60 @@ export default function sessionManager() {
     }
   }
 
-  useEffect(() => {
-    const { data: subscription } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
-        if (event === 'PASSWORD_RECOVERY') {
-          logInfo('Password recovery mode: session НЕ сохраняем');
-          setTrialSession(newSession); // временная сессия
-          setIsInPasswordReset(true);
-          return;
-        }
-
-        if (event === 'SIGNED_IN') {
-          // но если мы в режиме reset — тоже не сохраняем!
-          if (preResetAuthCall.current || isInPasswordReset) {
-            logInfo('SIGNED_IN во время reset password – игнорируем');
-            preResetAuthCall.current = false;
-            return;
-          }
-
-          // обычный вход — сохраняем
-          logInfo('default sign in event');
-
-          await saveSession(newSession);
-          setSession(newSession);
-          return;
-        }
-
-        if (!newSession) {
-          setSession(null);
-          setUser(null);
-        }
-      }
-    );
-
-    return () => subscription.subscription.unsubscribe();
-  }, []);
-
-  // 🔐 Авторизация через email + пароль
-  async function signInWithPassword(email, password) {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        // Cпециальная обработка для MFA
-        if (error.code === 'mfa_required') {
-          logInfo('MFA is required for this user.');
-          // На этом этапе сессия не создана, но Supabase возвращает
-          // информацию, необходимую для следующего шага.
-          // Мы можем получить список факторов аутентификации.
-          const { data: mfaData, error: mfaError } = await supabase.auth.mfa.listFactors();
-
-          if (mfaError) {
-            logError('Could not list MFA factors:', mfaError.message);
-            return { success: false, error: mfaError.message };
-          }
-
-          const phoneFactor = mfaData.factors.find(f => f.factor_type === 'phone' && f.status === 'verified');
-
-          if (phoneFactor) {
-            // Теперь мы можем инициировать challenge
-            const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
-              factorId: phoneFactor.id
-            });
-
-            if (challengeError) {
-              logError('MFA Challenge failed:', challengeError.message);
-              return { success: false, error: challengeError.message };
-            }
-
-            return {
-              success: false,
-              mfaRequired: true,
-              phone: phoneFactor.friendly_name, // friendly_name usually holds the phone number
-              factorId: phoneFactor.id,
-              challengeId: challengeData.id, // ID для шага верификации
-            };
-          } else {
-            return { success: false, error: 'No verified phone factor found for MFA.' };
-          }
-        }
-
-        logError('Ошибка входа по паролю:', error.message);
-        return { success: false, error: error.message };
-      }
-
-      logInfo('Успешный вход с паролем:', data.session);
-
-      // сохраняем сессию
-      await saveSession(data.session);
-
-      // Загружаем профиль
-      await fetchUserProfile(data.session.access_token);
-      await refreshRevealedUsers(data.session);
-      await refreshRevealProduct(data.session);
-
-      return { success: true };
-    } catch (e) {
-      logError('Ошибка signInWithPassword:', e.message);
-      return { success: false, error: e.message };
-    }
-  }
-
-  // Создание пользователя по email + password
-  async function createUser(email, password, profileData = {}, referralCode = null) {
-    try {
-      // Регистрируем пользователя в Supabase
-      logInfo('Creating user with referral code:', referralCode);
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            invite_code: referralCode || null
-          }
-        }
-      });
-
-      if (error) {
-        // Явная ошибка от Supabase, например, "User already registered"
-        if (error.message.toLowerCase().includes('already registered')) {
-          return {
-            success: false,
-            error: error.message,
-            isUserExists: true,
-          };
-        }
-        logError('Ошибка регистрации в Supabase:', JSON.stringify(error));
-        return { success: false, error: error.message };
-      }
-
-      logInfo('Пользователь создан:', data);
-
-      // → data.session может быть null если email confirmation = ON
-      const sessionData = data.session;
-
-      if (!sessionData) {
-        // Если сессия не вернулась — пользователь должен подтвердить email
-        // Это может быть как новый пользователь, так и существующий неподтвержденный
-        if (data.user && data.user.identities && data.user.identities.length === 0) {
-          return {
-            success: false,
-            error: 'User with this email already exists.',
-            isUserExists: true,
-          };
-        }
-
-        return {
-          success: true,
-          requiresEmailConfirmation: true,
-          user: data.user,
-        };
-      }
-
-      // 2. Сохраняем сессию (как после логина)
-      await saveSession(sessionData);
-
-      // 3. Загружаем профиль с сервера
-      // await fetchUserProfile(sessionData.access_token);
-
-      // 4. Обновляем профиль сразу данными из формы
-      //   (имя, фамилия, профессии и т.д.)
-      // if (Object.keys(profileData).length > 0) {
-      //   await updateUser(profileData, sessionData.access_token);
-      // }
-
-      // 5. Обновить список revealedUsers (как после логина)
-      // await refreshRevealedUsers(sessionData);
-
-      return { success: true, user: data.user, session: sessionData };
-    } catch (e) {
-      logError('Ошибка createUser:', e);
-      return { success: false, error: e.message };
-    }
-  }
-
-
-  // >>> NEW MFA REGISTRATION FUNCTIONS <<<
-
-  /**
-   * Шаг 1: Регистрация пользователя на сервере
-   */
-  async function registerUserWithEmail(email, password) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/mfa/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
-      }
-      return { success: true, userId: data.userId };
-    } catch (e) {
-      logError('registerUserWithEmail error:', e.message);
-      return { success: false, error: e.message };
-    }
-  }
-
-  /**
-   * Шаг 2: Ожидание подтверждения email с сервера (Long-polling)
-   */
-  async function listenForEmailVerification(userId) {
-    logInfo(`[MFA] Starting to listen for email verification for userId: ${userId}`);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      logWarn(`[MFA] Client-side timeout reached for userId: ${userId}. Aborting fetch.`);
-      controller.abort();
-    }, 30 * 60 * 1000); // 30 минут, как на сервере
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/mfa/listen-for-verification/${userId}`, {
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId); // Очищаем таймаут, так как ответ получен
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Verification listening failed');
-      }
-      logInfo(`[MFA] Email successfully verified for userId: ${userId}`);
-      return { success: true };
-    } catch (e) {
-      clearTimeout(timeoutId);
-      if (e.name === 'AbortError') {
-        logError('[MFA] Fetch aborted due to timeout.', e.message);
-        return { success: false, error: 'Verification timed out. Please try again.' };
-      }
-      logError('listenForEmailVerification error:', e.message);
-      return { success: false, error: e.message };
-    }
-  }
-
-  /**
-   * Шаг 3: Отправка кода верификации на телефон
-   */
-  async function sendPhoneVerificationCode(phoneNumber, userId) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/mfa/send-phone-verification`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phoneNumber, userId }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send code');
-      }
-      return { success: true };
-    } catch (e) {
-      logError('sendPhoneVerificationCode error:', e.message);
-      return { success: false, error: e.message };
-    }
-  }
-
-  /**
-   * Шаг 4: Проверка кода верификации телефона
-   */
-  async function verifyPhoneCode(phoneNumber, otp, userId) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/mfa/verify-phone-code`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phoneNumber, otp, userId }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Verification failed');
-      }
-      return { success: true };
-    } catch (e) {
-      logError('verifyPhoneCode error:', e.message);
-      return { success: false, error: e.message };
-    }
-  }
-
-  // Создание пользователя по номеру телефона + пароль
-  async function createUserWithPhone(phone, password) {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        phone,
-        password,
-      });
-
-      if (error) {
-        // Обработка ошибки, если пользователь уже существует
-        if (error.message.toLowerCase().includes('already registered') || error.message.toLowerCase().includes('user already exists')) {
-          return {
-            success: false,
-            error: error.message,
-            isUserExists: true,
-          };
-        }
-        logError('Ошибка регистрации в Supabase:', error.message);
-        return { success: false, error: error.message };
-      }
-
-      // Если signUp прошел успешно, это значит, что OTP был отправлен.
-      // Сессия не создается до верификации.
-      logInfo('OTP отправлен на номер:', phone);
-      return { success: true };
-
-    } catch (e) {
-      logError('Ошибка createUserWithPhone:', e);
-      return { success: false, error: e.message };
-    }
-  }
-
-  // Проверка SMS кода
-  async function verifyPhoneOtp(phone, token) {
-    const { data, error } = await supabase.auth.verifyOtp({
-      phone,
-      token,
-      type: 'sms',
-    });
-
-    if (error) {
-      logError('Ошибка проверки SMS кода:', error.message);
-      return { success: false, error: error.message };
-    }
-
-    logInfo('Успешный вход через SMS OTP:', data);
-    await saveSession(data.session);
-
-    try {
-      // Загружаем профиль пользователя
-      await fetchUserProfile(data.session.access_token);
-      await refreshRevealedUsers(data.session);
-      await refreshRevealProduct(data.session);
-      return { success: true, session: data.session };
-    } catch (profileError) {
-      logError(
-        'Ошибка загрузки профиля после входа:',
-        profileError.message
-      );
-      await signOut();
-      return { success: false, error: 'Не удалось загрузить профиль пользователя.' };
-    }
-  }
-
-  // Смена существующего пароля
-  async function changePassword(oldPassword, newPassword) {
-    try {
-      // 1. Получаем токен доступа пользователя из текущей сессии
-      const accessToken = session?.access_token;
-
-      if (!accessToken) {
-        return { success: false, error: 'user_not_authenticated' };
-      }
-
-      // 2. Отправляем запрос на ваш сервер для смены пароля
-      const response = await fetch(`${API_BASE_URL}/api/security/change-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          old_password: oldPassword,
-          new_password: newPassword,
-          keep_count: 3, // N = 3 по умолчанию
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        // Возвращаем ошибку от сервера как ключ для перевода
-        const errorMessage = data.error || 'change_password_failed';
-        logError('Failed to change password via server endpoint:', errorMessage);
-        return { success: false, error: errorMessage };
-      }
-
-      // 3. При успехе выходим из системы, чтобы пользователь мог войти с новым паролем
-      logInfo('Password was changed successfully. Signing out.');
-      await signOut();
-
-      return { success: true };
-
-    } catch (e) {
-      logError('changePassword client-side error:', e.message);
-      return { success: false, error: e.message };
-    }
-  }
-
-  // // Смена существующего пароля
-  // async function changePassword(oldPassword, newPassword) {
-  //   try {
-  //     const email = user?.email;
-
-  //     if (!email) return { success: false, error: 'User email not found' };
-
-  //     // 1. Сохраняем основную сессию
-  //     const mainSession = { ...session };
-
-  //     // 2. Проверяем правильность старого пароля
-  //     const { data, error } = await supabase.auth.signInWithPassword({
-  //       email,
-  //       password: oldPassword,
-  //     });
-
-  //     if (error) {
-  //       // восстановить основную сессию
-  //       await supabase.auth.setSession(mainSession);
-  //       return {
-  //         success: false,
-  //         error: 'Old password is incorrect',
-  //       };
-  //     }
-
-  //     // 3. Старый пароль верный — восстанавливаем основную сессию
-  //     await supabase.auth.setSession(mainSession);
-
-  //     // 4. Меняем пароль
-  //     const { data: upd, error: updErr } = await supabase.auth.updateUser({
-  //       password: newPassword,
-  //     });
-
-  //     if (updErr) {
-  //       return { success: false, error: updErr.message };
-  //     }
-  //     logInfo('Password was changed successfully');
-
-  //     return { success: true };
-  //   } catch (e) {
-  //     logError('changePassword error:', e);
-  //     return { success: false, error: e.message };
-  //   }
-  // }
-
-  // >>> NEW MFA LOGIN FUNCTIONS <<<
-
-  async function getMfaStatus() {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        return { success: false, error: 'No active session' };
-      }
-      logInfo('Fetching MFA status for user with session:', session?.access_token);
-      const response = await fetch(`${API_BASE_URL}/api/auth/mfa/status`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        return { success: false, error: result.error || `HTTP error! status: ${response.status}` };
-      }
-
-      return { success: true, data: result };
-    } catch (e) {
-      logError('Error getting MFA status:', e);
-      return { success: false, error: e.message };
-    }
-  }
-
-  async function setupMfa(phone) {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        return { success: false, error: 'No active session' };
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/auth/mfa/setup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ phone }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        return { success: false, error: result.error || `HTTP error! status: ${response.status}` };
-      }
-
-      return { success: true, data: result };
-    } catch (e) {
-      logError('Error setting up MFA:', e);
-      return { success: false, error: e.message };
-    }
-  }
-
-  async function verifyMfaSetup(phone, code) {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        return { success: false, error: 'No active session' };
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/auth/mfa/setup/verify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ phone, code }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        return { success: false, error: result.error || `HTTP error! status: ${response.status}` };
-      }
-
-      await saveMfaVerifiedState(true);
-      return { success: true, data: result };
-    } catch (e) {
-      logError('Error verifying MFA setup:', e);
-      return { success: false, error: e.message };
-    }
-  }
-
-  async function sendMfaLoginCode() {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        return { success: false, error: 'No active session' };
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/auth/mfa/login/send`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        return { success: false, error: result.error || `HTTP error! status: ${response.status}` };
-      }
-
-      return { success: true, data: result };
-    } catch (e) {
-      logError('Error sending MFA login code:', e);
-      return { success: false, error: e.message };
-    }
-  }
-
-  async function verifyMfaLogin(code) {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        return { success: false, error: 'No active session' };
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/auth/mfa/login/verify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ code }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        return { success: false, error: result.error || `HTTP error! status: ${response.status}` };
-      }
-
-      await saveMfaVerifiedState(true);
-      return { success: true, data: result };
-    } catch (e) {
-      logError('Error verifying MFA login:', e);
-      return { success: false, error: e.message };
-    }
-  }
-
-  async function setMfaAsVerified() {
-    await saveMfaVerifiedState(true);
-  }
-
-  async function rebindMfaPhoneNumber(phone) {
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        return { success: false, error: 'No active session' };
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/auth/mfa/rebind`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ phone }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: result.error || `HTTP error! status: ${response.status}`,
-        };
-      }
-
-      return { success: true, data: result };
-    } catch (e) {
-      logError('Error rebinding MFA phone number:', e);
-      return { success: false, error: e.message };
-    }
-  }
-
-  async function verifyRebindMfaPhoneNumber(phone, code) {
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        return { success: false, error: 'No active session' };
-      }
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/auth/mfa/rebind/verify`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ phone, code }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: result.error || `HTTP error! status: ${response.status}`,
-        };
-      }
-
-      return { success: true, data: result };
-    } catch (e) {
-      logError('Error verifying rebind MFA phone number:', e);
-      return { success: false, error: e.message };
-    }
-  }
-
-
-  // >>> END NEW MFA LOGIN FUNCTIONS <<<
-
-  // Создание нового пароля для OTP-пользователя
-  async function createPassword(newPassword) {
-    try {
-      const { data, error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      // Ставим флаг is_password_exist в профиле (через твой API)
-      try {
-        await updateUser({ is_password_exist: true });
-      } catch (e) {
-        logWarn("Couldn't update profile flag is_password_exist");
-      }
-
-      return { success: true };
-    } catch (e) {
-      logError('Ошибка создания пароля:', e.message);
-      return { success: false, error: e.message };
-    }
-  }
-
-  // Получение номера WhatsApp с сервера
-  async function getWhatsAppNumber() {
-    try {
-      // ЗАГЛУШКА: Когда эндпоинт будет готов, замените это на реальный fetch
-      // const res = await fetch(`${API_BASE_URL}/settings/whatsapp-number`, {
-      //   headers: {
-      //     Authorization: `Bearer ${session?.access_token}`,
-      //   },
-      // });
-      // if (!res.ok) {
-      //   throw new Error('Failed to fetch WhatsApp number');
-      // }
-      // const data = await res.json();
-      // return data.phoneNumber;
-
-      // Возвращаем тестовый номер, пока эндпоинт не готов
-      logInfo('Используется тестовый номер WhatsApp из заглушки.');
-      return '+19876543210';
-    } catch (err) {
-      logError('Ошибка getWhatsAppNumber:', err.message);
-      // Возвращаем null или тестовый номер в случае ошибки, чтобы не ломать приложение
-      return '+1234567890';
-    }
-  }
-
-  // Обновление пароля после сброса
-  async function setNewPassword(newPassword) {
-    await supabase.auth.setSession(trialSession);
-
-    const { data, error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-
-    if (error) {
-      logError('Ошибка:', error.message);
-      return { success: false, error: error.message };
-    }
-
-    setIsInPasswordReset(false);
-    preResetAuthCall.current = false;
-    signOut();
-    return { success: true };
-  }
-
   return {
     session: {
-      status: !!session && !!user,
-      token: session,
-      mfaVerified: mfaVerified,
-      sendCode: (email) => signInWithEmail(email),
-      signInWithPassword: (email, password) =>
-        signInWithPassword(email, password),
-      resetPasswordWithEmail: (email) => resetPasswordWithEmail(email),
-      resetPasswordWithPhone: (phone) => resetPasswordWithPhone(phone),
-      checkCode: (code) => verifyOtp(code),
-      checkCodeForPaswordReset: (code) => verifyOtpResetPassword(code),
-      checkCodeForPasswordResetWithPhone: (code) =>
-        verifyOtpResetPasswordWithPhone(code),
-      signOut,
+      status: isAuthenticated && !!user,
+      token: apiSession.token,
+      // App gate: allowed into the app when authenticated and MFA setup is not
+      // being forced by the backend. (Backend still enforces MFA server-side.)
+      mfaVerified: isAuthenticated && !mfaSetup.required,
+      mfaSetup,
+      pendingMfa,
+      authUser,
       serverURL: API_BASE_URL,
-      createUser: (email, password, options, referralCode) => createUser(email, password, options, referralCode),
-      createUserWithPhone: (phone, password) => createUserWithPhone(phone, password),
-      verifyPhoneOtp: (phone, token) => verifyPhoneOtp(phone, token),
-      updatePassword: (newPassword) => updatePassword(newPassword),
+
+      // New backend flows
+      registerEmail: (input) => registerEmailFlow(input),
+      startPhoneRegistration,
+      verifyPhoneRegistration,
+      loginEmail: (input) => loginEmailFlow(input),
+      startPhoneLogin,
+      verifyPhoneLogin,
+      enrollMfa,
+      challengeMfa,
+      verifyMfa,
+      unenrollMfa,
+      listMfaFactors,
+      refreshMe,
+      logout,
+      signOut: logout,
+      setMfaAsVerified: () => refreshMe(),
+
+      // Backwards-compatible wrappers
+      signInWithPassword: (email, password) => signInWithPassword(email, password),
+      createUser: (email, password, options, referralCode) =>
+        createUser(email, password, options, referralCode),
+      createUserWithPhone: (phone) => createUserWithPhone(phone),
+      verifyPhoneOtp: (phone, code) => verifyPhoneOtp(phone, code),
       changePassword: (oldPassword, newPassword) =>
         changePassword(oldPassword, newPassword),
-      createPassword: (newPassword) => createPassword(newPassword),
-      resetPassword: isInPasswordReset,
-      setNewPassword: (newPassword) => setNewPassword(newPassword),
+      changePhoneStart,
+      changePhoneVerify,
+      forgotPassword,
       getWhatsAppNumber: () => getWhatsAppNumber(),
-      enrollPhoneNumber,
-      challengePhoneNumber,
-      verifyPhoneNumber,
-      // MFA-методы для регистрации нового пользователя
-      registerUserWithEmail,
-      listenForEmailVerification,
-      sendPhoneVerificationCode,
-      verifyPhoneCode,
-      // MFA-методы для входа
-      getMfaStatus,
-      setupMfa,
-      verifyMfaSetup,
-      sendMfaLoginCode,
-      verifyMfaLogin,
-      setMfaAsVerified,
-      rebindMfaPhoneNumber,
-      verifyRebindMfaPhoneNumber,
+
+      // OTP-only users (no password set yet) don't get a "create password"
+      // flow for now — the button is hidden in Profile, this is just a safe
+      // fallback if that code path is ever reached anyway.
+      createPassword: () => notImplemented('createPassword'),
     },
     user: {
       current: user,
       update: updateUser,
-      updateEmail: updateEmail,
+      updateEmail,
       delete: deleteUser,
-      setPendingAvatar: setPendingAvatar,
+      setPendingAvatar,
+      patchLocal: patchLocalUser,
     },
     subscription: {
       current: subscription,
@@ -1416,6 +580,6 @@ export default function sessionManager() {
         setRevealedUsers((prev) => [...prev, userId]);
       },
     },
-    isLoader: isLoader,
+    isLoader,
   };
 }

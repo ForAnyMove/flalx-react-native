@@ -12,6 +12,8 @@ export async function getSystemTypesWithSubtypes(session) {
             endpoint: '/api/job-types/user/with-subtypes',
             method: 'GET'
         });
+        console.log(response);
+
         const status = response.status;
         const returnData = {};
         if (status == 200) {
