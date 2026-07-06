@@ -31,6 +31,7 @@ import UniversalProfessionComponent from '../components/ui/UniversalProfessionCo
 import { useLocalization } from '../src/services/useLocalization';
 import RequestProfessionModal from '../components/RequestProfessionModal';
 import { PROFESSION_TYPES } from '../constants/enums';
+import { useNotification } from '../src/render';
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
@@ -40,7 +41,9 @@ export default function RegisterScreen() {
     session,
     languageController,
     jobTypesController,
+    setAppLoading,
   } = useComponentContext();
+  const { showError } = useNotification();
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
   const { tField } = useLocalization(languageController.current);
@@ -197,8 +200,16 @@ export default function RegisterScreen() {
 
   // загрузка на backend storage
   async function uploadImage(uri) {
-    const res = await uploadImageAsset(uri, { purpose: 'avatar', fileName: 'avatar' });
-    setAvatarUrl(res.url);
+    setAppLoading(true);
+    try {
+      const res = await uploadImageAsset(uri, { purpose: 'avatar', fileName: 'avatar' });
+      setAvatarUrl(res.url);
+    } catch (e) {
+      logError('Ошибка загрузки аватара:', e);
+      showError(e?.message || t('errors.unexpected_error'));
+    } finally {
+      setAppLoading(false);
+    }
   }
 
   async function handleSubmit() {

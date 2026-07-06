@@ -539,6 +539,7 @@ export default function NewJobModal({
   };
 
   const handleImageAdd = async (uris) => {
+    setAppLoading(true);
     try {
       const uploadedUrls = await Promise.all(
         uris.map(async (uri) => {
@@ -553,6 +554,9 @@ export default function NewJobModal({
       setImages((prev) => [...prev, ...uploadedUrls.filter(Boolean)]);
     } catch (e) {
       logInfo('Ошибка загрузки изображений:', e);
+      showError(e?.message || t('errors.unexpected_error'));
+    } finally {
+      setAppLoading(false);
     }
   };
 

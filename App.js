@@ -32,6 +32,7 @@ import ForgottenPasswordScreen from './screens/ForgottenPasswordScreen';
 import MultiStepLoginScreen from './screens/login/MultiStepLoginScreen';
 import MultiStepRegisterScreen from './screens/register/MultiStepRegisterScreen';
 import MfaSetupScreen from './screens/register/MfaSetupScreen';
+import MfaVerifyScreen from './screens/register/MfaVerifyScreen';
 import { logError } from './utils/log_util';
 import usePushNotifications from './managers/pushNotificationsManager';
 
@@ -181,19 +182,21 @@ function App() {
   if (!isOnboardingShowed) {
     content = <OnboardingScreen onFinish={handleOnboardingFinish} />;
   }
-  // 2. Авторизация
-  else if (!(session.status && session.mfaVerified)) {
-    // Authenticated at aal1 but the backend forces MFA setup before app access.
-    if (session.status && session.mfaSetup?.required) {
-      content = <MfaSetupScreen optional={false} onDone={() => {}} />;
-    } else {
-      content = (
-        <MultiStepLoginScreen
-          onGoToRegister={(method) => registerControl.goToRegisterScreen(method)}
-          onGoToForgottenPassword={() => forgotPassControl.switch()}
-        />
-      );
-    }
+  // 2. Авторизация — session.nextStep (from GET /users/me) is the single
+  // source of truth for which auth/MFA screen to show.
+  else if (session.nextStep === 'mfa_setup_required') {
+    content = <MfaSetupScreen optional={false} onDone={() => {}} />;
+  }
+  else if (session.nextStep === 'mfa_verification_required') {
+    content = <MfaVerifyScreen />;
+  }
+  else if (session.nextStep === 'login_required') {
+    content = (
+      <MultiStepLoginScreen
+        onGoToRegister={(method) => registerControl.goToRegisterScreen(method)}
+        onGoToForgottenPassword={() => forgotPassControl.switch()}
+      />
+    );
   }
 
   // 3. Регистрация первого входа

@@ -17,12 +17,14 @@ import ImagePickerModal from './ui/ImagePickerModal';
 import { icons } from '../constants/icons';
 import { uploadImageAsset } from '../src/files/uploadFile';
 import { logError } from '../utils/log_util';
+import { useNotification } from '../src/render';
 
 const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
-  const { themeController, languageController, user } = useComponentContext();
+  const { themeController, languageController, user, setAppLoading } = useComponentContext();
   const { height, width, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
+  const { showError } = useNotification();
   const isRTL = languageController.isRTL;
 
   const [passportPhotos, setPassportPhotos] = useState([]);
@@ -81,6 +83,7 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
   // };
 
   const handleAddImages = async (uris) => {
+    setAppLoading(true);
     try {
       const uploadedUrls = await Promise.all(
         uris.map(async (uri) => {
@@ -104,6 +107,9 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
       setActivePicker(null);
     } catch (e) {
       logError('Ошибка загрузки изображений:', e);
+      showError(e?.message || t('errors.unexpected_error'));
+    } finally {
+      setAppLoading(false);
     }
   };
 

@@ -83,7 +83,16 @@ function PrimaryOutlineButton({
   );
 }
 
-export default function Step3_PhoneVerify({ phone, onVerify, onResend, onBack }) {
+export default function Step3_PhoneVerify({
+  phone,
+  onVerify,
+  onResend,
+  onBack,
+  backLabel,
+  title,
+  subtitle,
+  showResend = true,
+}) {
   const { t } = useTranslation();
   const { themeController, languageController } = useComponentContext();
   const theme = themeController.current;
@@ -96,11 +105,14 @@ export default function Step3_PhoneVerify({ phone, onVerify, onResend, onBack })
   const inputsRef = useRef([]);
   const [verifying, setVerifying] = useState(false);
   const [otpError, setOtpError] = useState(null);
-  const [cooldown, setCooldown] = useState(60);
+  const [cooldown, setCooldown] = useState(showResend ? 60 : 0);
   const [resending, setResending] = useState(false);
   const timerRef = useRef(null);
 
   useEffect(() => {
+    // No SMS resend concept for e.g. TOTP codes — nothing was "sent", so skip
+    // the cooldown timer entirely when this screen isn't for a resendable OTP.
+    if (!showResend) return;
     if (cooldown > 0) {
       timerRef.current = setInterval(() => {
         setCooldown((prev) => prev - 1);
@@ -109,7 +121,7 @@ export default function Step3_PhoneVerify({ phone, onVerify, onResend, onBack })
       clearInterval(timerRef.current);
     }
     return () => clearInterval(timerRef.current);
-  }, [cooldown]);
+  }, [cooldown, showResend]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -267,10 +279,10 @@ export default function Step3_PhoneVerify({ phone, onVerify, onResend, onBack })
             {t('auth.app_name')}
           </Text>
           <Text style={[styles.title, { fontSize: sizes.titleFontSize, color: theme.unactiveTextColor, textAlign: 'center' }]}>
-            {t('register.mfa_verify_title')}
+            {title || t('register.mfa_verify_title')}
           </Text>
           <Text style={[styles.subtitle, { fontSize: sizes.subtitleFontSize, marginBottom: sizes.subtitleMarginBottom, color: theme.unactiveTextColor, textAlign: 'center' }]}>
-            {t('register.mfa_verify_subtitle', { phone })}
+            {subtitle || t('register.mfa_verify_subtitle', { phone })}
           </Text>
           <View style={dynamicStyles.otpRow}>
             {otp.map((digit, idx) => (
@@ -298,22 +310,24 @@ export default function Step3_PhoneVerify({ phone, onVerify, onResend, onBack })
               {otpError}
             </Text>
           )}
-          <View style={[styles.linksRow, dynamicStyles.linksRow, { flexDirection: isRTL ? 'row-reverse' : 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: sizes.linksRowMarginTop }]}>
+          <View style={[styles.linksRow, dynamicStyles.linksRow, { flexDirection: isRTL ? 'row-reverse' : 'row', justifyContent: showResend ? 'space-between' : 'center', alignItems: 'center', marginTop: sizes.linksRowMarginTop }]}>
             <TouchableOpacity onPress={onBack}>
               <Text style={[styles.link, dynamicStyles.link, { color: theme.formInputLabelColor, textDecorationLine: 'none' }]}>
-                {t('register.back_to_phone')}
+                {backLabel || t('register.back_to_phone')}
               </Text>
             </TouchableOpacity>
-            {cooldown > 0 ? (
-              <Text style={[styles.link, dynamicStyles.link, { color: theme.unactiveTextColor, textDecorationLine: 'none' }]}>
-                {t('register.resend_in', { count: cooldown })}
-              </Text>
-            ) : (
-              <TouchableOpacity onPress={handleResendCode} disabled={resending}>
-                <Text style={[styles.link, dynamicStyles.link, { color: theme.primaryColor, textDecorationLine: 'underline' }]}>
-                  {t('register.resend_code')}
+            {showResend && (
+              cooldown > 0 ? (
+                <Text style={[styles.link, dynamicStyles.link, { color: theme.unactiveTextColor, textDecorationLine: 'none' }]}>
+                  {t('register.resend_in', { count: cooldown })}
                 </Text>
-              </TouchableOpacity>
+              ) : (
+                <TouchableOpacity onPress={handleResendCode} disabled={resending}>
+                  <Text style={[styles.link, dynamicStyles.link, { color: theme.primaryColor, textDecorationLine: 'underline' }]}>
+                    {t('register.resend_code')}
+                  </Text>
+                </TouchableOpacity>
+              )
             )}
           </View>
           <PrimaryOutlineButton

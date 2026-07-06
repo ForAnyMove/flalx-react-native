@@ -217,7 +217,9 @@ export default function MultiStepLoginScreen({ onGoToRegister, onGoToForgottenPa
             )}
           </View>
         );
-      case 'mfa_verify':
+      case 'mfa_verify': {
+        const isTotp = factor?.type === 'totp';
+        const goingToSelect = factors.length > 1;
         return (
           <Step3_PhoneVerify
             phone={factor?.phone || ''}
@@ -225,10 +227,18 @@ export default function MultiStepLoginScreen({ onGoToRegister, onGoToForgottenPa
             onResend={handleMfaResend}
             onBack={() => {
               setEmailError(null);
-              setStep(factors.length > 1 ? 'mfa_select' : (method === 'phone' ? 'phone_input' : 'email_input'));
+              setStep(goingToSelect ? 'mfa_select' : (method === 'phone' ? 'phone_input' : 'email_input'));
             }}
+            backLabel={goingToSelect ? t('common.back') : t('auth.back_to_sign_in')}
+            // A TOTP factor has no phone it was "sent" to and no SMS resend —
+            // don't reuse the phone-OTP copy/resend UI for it (was showing
+            // "Enter the 6-digit code sent to" with nothing after "to").
+            title={isTotp ? t('auth.mfa_verify_title') : undefined}
+            subtitle={isTotp ? t('auth.mfa_verify_subtitle') : undefined}
+            showResend={!isTotp}
           />
         );
+      }
       default:
         return null;
     }

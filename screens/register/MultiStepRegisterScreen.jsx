@@ -8,7 +8,6 @@ import CustomPicker from '../../components/ui/CustomPicker';
 import Step1_EmailPassword from './Step1_EmailPassword';
 import Step2_PhoneEnroll from './Step2_PhoneEnroll';
 import Step3_PhoneVerify from './Step3_PhoneVerify';
-import MfaSetupScreen from './MfaSetupScreen';
 import { useWindowInfo } from '../../context/windowContext';
 import { getAuthErrorMessage } from '../../src/auth/authErrors';
 
@@ -73,11 +72,12 @@ function PrimaryOutlineButton({
  * Registration state machine (backend-driven).
  *
  * Default method is `phone`. The user can switch phone <-> email at the first
- * step. MFA setup is only reached AFTER the first factor (phone OTP / email) is
- * verified and the backend returns an authenticated session with an MFA policy.
+ * step. Once the backend returns an authenticated session, this screen exits
+ * (registerControl.leaveRegisterScreen()) and App.js's top-level nextStep
+ * routing takes over — including showing MfaSetupScreen if the backend
+ * requires it. This screen doesn't need its own MFA-routing logic.
  *
  * Steps: phone_input | phone_otp | email_input | email_confirmation
- *        | mfa_setup_required | mfa_setup_optional | done
  */
 export default function MultiStepRegisterScreen({ initialMethod = null }) {
   const { t } = useTranslation();
@@ -109,18 +109,11 @@ export default function MultiStepRegisterScreen({ initialMethod = null }) {
     return null;
   }, []);
 
-  // Route to the correct screen after the backend returns an authenticated
-  // session, based on the MFA policy it reports.
-  const routeAfterAuth = useCallback((resp) => {
-    if (resp?.mfaSetupRequired) {
-      setStep('mfa_setup_required');
-    } else if (resp?.mfaSetupOptional) {
-      setStep('mfa_setup_optional');
-    } else {
-      // No MFA needed -> session is already authenticated & unblocked; leaving
-      // the register screen lets App.js render the app.
-      registerControl.leaveRegisterScreen();
-    }
+  // Once the backend returns an authenticated session, exit this screen —
+  // App.js's top-level nextStep routing takes over from here (including
+  // showing MfaSetupScreen/MfaVerifyScreen if the backend requires it).
+  const routeAfterAuth = useCallback(() => {
+    registerControl.leaveRegisterScreen();
   }, [registerControl]);
 
   const switchToEmail = useCallback(() => {
@@ -158,8 +151,8 @@ export default function MultiStepRegisterScreen({ initialMethod = null }) {
   const handlePhoneVerify = useCallback(async (code) => {
     try {
       const resp = await session.verifyPhoneRegistration({ phone, code });
-      if (resp?.status === 'authenticated' || resp?.mfaSetupRequired || resp?.mfaSetupOptional) {
-        routeAfterAuth(resp);
+      if (resp?.status === 'authenticated') {
+        routeAfterAuth();
         return { success: true };
       }
       return { success: false, error: getAuthErrorMessage({ code: 'OTP_INVALID' }) };
@@ -178,8 +171,8 @@ export default function MultiStepRegisterScreen({ initialMethod = null }) {
         setStep('email_confirmation');
         return { success: true };
       }
-      if (resp?.status === 'authenticated' || resp?.mfaSetupRequired || resp?.mfaSetupOptional) {
-        routeAfterAuth(resp);
+      if (resp?.status === 'authenticated') {
+        routeAfterAuth();
         return { success: true };
       }
       return { success: false, error: getAuthErrorMessage({ code: resp?.status }) };
@@ -261,21 +254,6 @@ export default function MultiStepRegisterScreen({ initialMethod = null }) {
               onPress={() => registerControl.leaveRegisterScreen()}
             />
           </Animated.View>
-        );
-      case 'mfa_setup_required':
-        return (
-          <MfaSetupScreen
-            optional={false}
-            onDone={() => registerControl.leaveRegisterScreen()}
-          />
-        );
-      case 'mfa_setup_optional':
-        return (
-          <MfaSetupScreen
-            optional={true}
-            onDone={() => registerControl.leaveRegisterScreen()}
-            onSkip={() => registerControl.leaveRegisterScreen()}
-          />
         );
       default:
         return null;

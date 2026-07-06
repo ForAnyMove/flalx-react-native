@@ -74,6 +74,43 @@ async function getRevealProduct(session) {
     }
 }
 
+/**
+ * The single authoritative source of current-user state: the pre-existing
+ * rich profile (jobs, professions, avatar, referral, ...) and subscription,
+ * plus the auth-level fields that drive routing (`user`, `session.authLevel`,
+ * `mfa`, `nextStep`). Replaces the old two-call bootstrap
+ * (`GET /auth/me` + a separate `GET /users/me`) — `/auth/me` is legacy now.
+ *
+ * @param {object} session
+ * @returns {Promise<{
+ *   profile: Record<string, any>,
+ *   subscription: Record<string, any> | null,
+ *   user: { id: string, email?: string|null, phone?: string|null, emailVerified: boolean, phoneVerified: boolean, mfaEnabled: boolean },
+ *   session: { authLevel: 'aal1' | 'aal2' },
+ *   mfa: {
+ *     policy: 'disabled' | 'optional' | 'required',
+ *     enabled: boolean,
+ *     required: boolean,
+ *     setupRequired: boolean,
+ *     verificationRequired: boolean,
+ *     allowedFactors: Array<'totp' | 'phone'>,
+ *     recommendedFactor?: 'totp' | 'phone',
+ *     availableFactors?: Array<{ id: string, type: 'totp' | 'phone', phone?: string }>,
+ *   },
+ *   nextStep: 'authenticated' | 'mfa_setup_required' | 'mfa_verification_required' | 'login_required',
+ * }>}
+ */
+async function me(session) {
+    const response = await fetchWithSession({
+        session,
+        endpoint: '/users/me',
+        method: 'GET',
+    });
+    console.log(response.data);
+
+    return response.data;
+}
+
 async function addCommentToUserByJob(userId, jobId, comment, rating, session) {
     try {
         const response = await fetchWithSession({
@@ -93,4 +130,4 @@ async function addCommentToUserByJob(userId, jobId, comment, rating, session) {
     }
 }
 
-export { getRevealedUsers, revealUser, addCommentToUserByJob, getRevealProduct };
+export { getRevealedUsers, revealUser, addCommentToUserByJob, getRevealProduct, me };

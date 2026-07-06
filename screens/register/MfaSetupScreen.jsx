@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Clipboard from 'expo-clipboard';
+import { SvgXml } from 'react-native-svg';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { useWindowInfo } from '../../context/windowContext';
@@ -20,6 +21,30 @@ import { getAuthErrorMessage } from '../../src/auth/authErrors';
 import { logError } from '../../utils/log_util';
 
 const OTP_LENGTH = 6;
+
+/**
+ * Supabase's TOTP enroll response returns `totp.qr_code` as a raw SVG XML
+ * string (not a data URI or raster image) — the backend passes it through
+ * unchanged (see supabase-auth.provider.ts). SVG needs a real SVG renderer:
+ * on web, <Image> renders via a CSS `background-image` that silently fails
+ * on inline SVG data URIs (the visible layer never appears, even though the
+ * hidden accessibility <img> react-native-web also renders loads fine — which
+ * is misleading when inspecting the DOM); on native, Image can't decode SVG
+ * at all. Use react-native-svg's SvgXml for the SVG case instead.
+ */
+function normalizeQrCode(qrCode) {
+  if (!qrCode) return null;
+  const trimmed = String(qrCode).trim();
+
+  if (trimmed.includes('svg') || trimmed.startsWith('<?xml')) {
+    return { kind: 'svg', xml: trimmed };
+  }
+  if (trimmed.startsWith('data:') || /^https?:\/\//.test(trimmed)) {
+    return { kind: 'raster', uri: trimmed };
+  }
+  // Bare base64 raster fallback.
+  return { kind: 'raster', uri: `data:image/png;base64,${trimmed}` };
+}
 
 /**
  * Post-registration MFA setup (TOTP by default).
@@ -102,16 +127,15 @@ export default function MfaSetupScreen({ optional = false, onDone, onSkip }) {
     setOtpError(null);
     try {
       const challenge = await session.challengeMfa({ factorId });
-      const resp = await session.verifyMfa({
+      await session.verifyMfa({
         factorId,
         challengeId: challenge.challengeId,
         code,
       });
-      if (resp?.status === 'authenticated' || resp?.mfaSetupRequired === false) {
-        onDone?.();
-      } else {
-        onDone?.();
-      }
+      // verifyMfa() already refreshed the session (nextStep now reflects the
+      // backend's post-verify state) — App.js reactively moves the app
+      // forward, this callback just signals "done with this screen".
+      onDone?.();
     } catch (e) {
       logError('MFA verify error:', e.message || e);
       setOtpError(getAuthErrorMessage(e));
@@ -127,6 +151,8 @@ export default function MfaSetupScreen({ optional = false, onDone, onSkip }) {
       await Clipboard.setStringAsync(totp.secret);
     }
   };
+
+  const qr = useMemo(() => normalizeQrCode(totp?.qrCode), [totp?.qrCode]);
 
   const sizes = useMemo(
     () => ({
@@ -173,12 +199,18 @@ export default function MfaSetupScreen({ optional = false, onDone, onSkip }) {
             <Text style={{ color: theme.errorTextColor, textAlign: 'center' }}>{enrollError}</Text>
           ) : (
             <>
-              {!!totp?.qrCode && (
-                <Image
-                  source={{ uri: totp.qrCode }}
-                  style={{ width: sizes.qrSize, height: sizes.qrSize, alignSelf: 'center' }}
-                  resizeMode='contain'
-                />
+              {!!qr && (
+                qr.kind === 'svg' ? (
+                  <View style={{ width: sizes.qrSize, height: sizes.qrSize, alignSelf: 'center' }}>
+                    <SvgXml xml={qr.xml} width='100%' height='100%' />
+                  </View>
+                ) : (
+                  <Image
+                    source={{ uri: qr.uri }}
+                    style={{ width: sizes.qrSize, height: sizes.qrSize, alignSelf: 'center' }}
+                    resizeMode='contain'
+                  />
+                )
               )}
 
               {!!totp?.secret && (

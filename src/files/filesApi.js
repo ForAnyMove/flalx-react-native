@@ -15,12 +15,14 @@ import { API_BASE_URL } from '../../utils/config';
  * `session.serverURL`, so a minimal session shim is enough here.
  *
  * @typedef {'avatar' | 'attachment' | 'document' | 'other'} FilePurpose
+ * @typedef {'public' | 'private'} FileVisibility
  *
  * @typedef {Object} CreateUploadUrlRequest
  * @property {string} fileName
  * @property {string} contentType
  * @property {number} sizeBytes
  * @property {FilePurpose} [purpose]
+ * @property {FileVisibility} [visibility]
  *
  * @typedef {Object} CreateUploadUrlResponse
  * @property {string} fileId

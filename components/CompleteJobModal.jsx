@@ -35,11 +35,13 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
     themeController,
     languageController,
     user,
+    setAppLoading,
     // subscriptionPlans,
     // subscription,
   } = useComponentContext();
   const { width, height, isLandscape, effectiveSidebarWidth } = useWindowInfo();
   const { t } = useTranslation();
+  const { showError } = useNotification();
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
@@ -265,6 +267,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
   );
 
   const handleImageAdd = async (uris) => {
+    setAppLoading(true);
     try {
       const uploadedUrls = await Promise.all(
         uris.map(async (uri) => {
@@ -279,6 +282,9 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
       setImages((prev) => [...prev, ...uploadedUrls.filter(Boolean)]);
     } catch (e) {
       logError('Ошибка загрузки изображений:', e);
+      showError(e?.message || t('errors.unexpected_error'));
+    } finally {
+      setAppLoading(false);
     }
   };
 

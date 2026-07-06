@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { API_BASE_URL } from '../utils/config';
 import { authApi } from '../src/auth/authApi';
+import { setGlobalAuthHandler } from '../src/auth/authEvents';
 import {
   saveSessionToken,
   getSessionToken,
   clearSessionToken,
 } from '../src/auth/authStorage';
 import { fetchWithSession } from '../src/api/apiBase';
-import { getRevealedUsers, getRevealProduct, revealUser } from '../src/api/users';
+import { getRevealedUsers, getRevealProduct, revealUser, me as fetchUsersMe } from '../src/api/users';
 import { getUserSubscription } from '../src/api/subscriptions';
 import { getAuthErrorMessage } from '../src/auth/authErrors';
 import { logError, logInfo, logWarn } from '../utils/log_util';
@@ -22,13 +23,16 @@ import { logError, logInfo, logWarn } from '../utils/log_util';
  *   - Native: opaque backend app session token in expo-secure-store, sent as
  *     `Authorization: Bearer <token>`.
  *
- * `authUser` is the backend identity (from /auth/me). `user` is the app profile
- * (account_type, firstauth, professions, ...) loaded from the profile endpoint.
+ * `authUser` is the backend identity, `user` is the app profile (account_type,
+ * firstauth, professions, ...) — both come from a single `GET /users/me` call
+ * (src/api/users.js#me), which is also the source of `authLevel`/`mfa`/
+ * `nextStep`. `nextStep` is the single source of truth for what screen the
+ * app shows (see App.js) — `GET /auth/me` is legacy and unused now.
  *
  * @param {{ setAppLoading?: (isLoading: boolean) => void }} [deps]
  */
 export default function sessionManager({ setAppLoading } = {}) {
-  const [authUser, setAuthUser] = useState(null); // backend AuthUser from /auth/me
+  const [authUser, setAuthUser] = useState(null); // CurrentUser from /users/me
   const [user, setUser] = useState(null); // app profile
   const [subscription, setSubscription] = useState(null);
   const [revealedUsers, setRevealedUsers] = useState([]);
@@ -36,10 +40,13 @@ export default function sessionManager({ setAppLoading } = {}) {
   // Native only: the backend app session token kept in memory to build the
   // Authorization header for data-API calls. Null on web (cookie transport).
   const [appSessionToken, setAppSessionToken] = useState(null);
-  // MFA policy from the last auth response, drives post-registration routing.
-  const [mfaSetup, setMfaSetup] = useState({ required: false, optional: false });
-  // Pending factors when the backend returns status: 'mfa_required' at login.
-  const [pendingMfa, setPendingMfa] = useState(null);
+  const [authLevel, setAuthLevel] = useState('aal1');
+  // Full mfa object from /users/me: { policy, enabled, required, setupRequired,
+  // verificationRequired, allowedFactors, recommendedFactor?, availableFactors? }
+  const [mfa, setMfa] = useState(null);
+  // Drives app-level routing (see App.js): 'authenticated' | 'mfa_setup_required'
+  // | 'mfa_verification_required' | 'login_required'.
+  const [nextStep, setNextStep] = useState('login_required');
 
   const [isLoader, setLoader] = useState(true);
 
@@ -57,6 +64,20 @@ export default function sessionManager({ setAppLoading } = {}) {
   // Load auth state on start.
   useEffect(() => {
     bootstrap();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Let the shared transport layer (src/api/apiBase.js, src/auth/authApi.js)
+  // push a nextStep here when it sees one in an error response — even when the
+  // failing call came from an unrelated business screen (jobs/payments/...).
+  useEffect(() => {
+    setGlobalAuthHandler((pushedNextStep) => {
+      if (pushedNextStep === 'login_required') {
+        clearAuthState();
+      } else if (pushedNextStep) {
+        setNextStep(pushedNextStep);
+      }
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -87,29 +108,41 @@ export default function sessionManager({ setAppLoading } = {}) {
     setSubscription(null);
     setRevealedUsers([]);
     setRevealProduct(null);
-    setMfaSetup({ required: false, optional: false });
-    setPendingMfa(null);
+    setAuthLevel('aal1');
+    setMfa(null);
+    setNextStep('login_required');
     setAppSessionToken(null);
     await clearSessionToken();
   }
 
   /**
-   * Fetch the current user from the backend and (re)load the app profile.
-   * On 401/no-user, clears local auth state.
+   * Fetch everything current-user-related in one call: profile, subscription,
+   * auth identity, authLevel, mfa policy, and nextStep (the routing signal
+   * App.js reads). On 401/no-user, clears local auth state.
    */
   async function refreshMe() {
     try {
-      const { user: backendUser } = await authApi.me();
+      const data = await fetchUsersMe(apiSession);
 
-      if (!backendUser) {
+      if (!data) {
         await clearAuthState();
         return;
       }
 
-      setAuthUser(backendUser);
-      await loadProfile();
+      setAuthUser(data.user ?? null);
+      setUser(data.profile ?? null);
+      setSubscription(data.subscription ?? null);
+      setAuthLevel(data.session?.authLevel ?? 'aal1');
+      setMfa(data.mfa ?? null);
+      setNextStep(data.nextStep ?? 'login_required');
+
+      // Best-effort side data; failures shouldn't block auth.
+      await Promise.allSettled([
+        refreshRevealedUsers(),
+        refreshRevealProduct(),
+      ]);
     } catch (e) {
-      if (e?.status === 401) {
+      if (e?.status === 401 || e?.nextStep === 'login_required') {
         await clearAuthState();
         return;
       }
@@ -117,33 +150,12 @@ export default function sessionManager({ setAppLoading } = {}) {
     }
   }
 
-  // Load the app profile (+ subscription, revealed users) via the shared,
-  // session-authenticated transport.
-  async function loadProfile() {
-    try {
-      const res = await fetchWithSession({
-        session: apiSession,
-        endpoint: '/users/me',
-        method: 'GET',
-      });
-      const profile = res?.data?.profile ?? res?.data ?? null;
-      if (profile) setUser(profile);
-    } catch (e) {
-      logWarn('Failed to load app profile:', e.message || e);
-    }
-
-    // Best-effort side data; failures shouldn't block auth.
-    await Promise.allSettled([
-      refreshRevealedUsers(),
-      refreshRevealProduct(),
-      refreshUserSubscription(),
-    ]);
-  }
-
   /**
-   * Normalize an AuthResponse. For authenticated responses, persist the app
-   * session token (native), record MFA policy, and refresh the current user.
-   * Returns the response so callers can branch on `status`.
+   * Normalize an AuthResponse. For authenticated-ish responses, persist the
+   * app session token (native) and refresh the current user — `nextStep` from
+   * that refresh (not any locally-derived flag) is what decides which screen
+   * App.js shows next. Returns the response so callers can still branch on
+   * `status` for flow control (e.g. email_confirmation_required).
    */
   async function handleAuthResponse(resp) {
     if (!resp) return { status: 'error' };
@@ -162,17 +174,12 @@ export default function sessionManager({ setAppLoading } = {}) {
       case 'authenticated':
       case 'mfa_setup_required':
       case 'mfa_setup_optional': {
-        const required =
-          resp.status === 'mfa_setup_required' || !!resp.mfaSetupRequired;
-        const optional =
-          resp.status === 'mfa_setup_optional' || !!resp.mfaSetupOptional;
-        setMfaSetup({ required, optional });
-        setPendingMfa(null);
         await refreshMe();
-        return { ...resp, mfaSetupRequired: required, mfaSetupOptional: optional };
+        return resp;
       }
       case 'mfa_required': {
-        setPendingMfa(resp.mfa || null);
+        // Login-time only: MultiStepLoginScreen manages its own local factor
+        // list/selection state from resp.mfa — nothing to persist here.
         return resp;
       }
       default:
@@ -510,13 +517,15 @@ export default function sessionManager({ setAppLoading } = {}) {
 
   return {
     session: {
-      status: isAuthenticated && !!user,
+      // Data-loading gate used throughout the app (jobsManager, paymentsManager,
+      // etc.) — true only once the backend says the user is fully inside the
+      // app, not just mid-MFA-setup/verification.
+      status: nextStep === 'authenticated',
       token: apiSession.token,
-      // App gate: allowed into the app when authenticated and MFA setup is not
-      // being forced by the backend. (Backend still enforces MFA server-side.)
-      mfaVerified: isAuthenticated && !mfaSetup.required,
-      mfaSetup,
-      pendingMfa,
+      // Single source of truth for auth/MFA routing — see App.js.
+      nextStep,
+      mfa,
+      authLevel,
       authUser,
       serverURL: API_BASE_URL,
 
@@ -535,7 +544,6 @@ export default function sessionManager({ setAppLoading } = {}) {
       refreshMe,
       logout,
       signOut: logout,
-      setMfaAsVerified: () => refreshMe(),
 
       // Backwards-compatible wrappers
       signInWithPassword: (email, password) => signInWithPassword(email, password),

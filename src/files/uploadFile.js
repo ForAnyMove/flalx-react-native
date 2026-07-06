@@ -88,6 +88,12 @@ function assertSizeWithinLimit(file, maxMB = MAX_FILE_MB) {
   }
 }
 
+// Documents (passport/certificate uploads) are private; everything else
+// (avatars, job/attachment photos) is public.
+function visibilityForPurpose(purpose) {
+  return purpose === 'document' ? 'private' : 'public';
+}
+
 /**
  * Upload a local file to backend-managed storage via the pre-signed URL flow:
  * request an upload URL, PUT/POST the file bytes directly to it, then confirm
@@ -102,6 +108,7 @@ export async function uploadFileToBackendStorage({ file, purpose = 'other' }) {
     contentType: file.type,
     sizeBytes: file.size,
     purpose,
+    visibility: visibilityForPurpose(purpose),
   });
 
   const blob = await fetch(file.uri).then((r) => r.blob());
