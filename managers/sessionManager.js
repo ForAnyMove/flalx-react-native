@@ -526,6 +526,20 @@ export default function sessionManager({ setAppLoading } = {}) {
     }
   }
 
+  // Changes the account's own email immediately, no confirmation of any kind
+  // — used by Profile's email-change modal instead of updateEmail above.
+  // Refresh /users/me right after so authUser.email reflects it without
+  // waiting on the EMAIL_CHANGED websocket event.
+  async function updateEmailDirect(newEmail) {
+    try {
+      await authApi.changeEmailDirect({ newEmail });
+      await refreshMe();
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: getAuthErrorMessage(e) };
+    }
+  }
+
   // Change the account's own phone number (NOT an MFA factor — see
   // enrollMfa/unenrollMfa above for that). Two steps: start sends an SMS OTP
   // to the new number, verify completes the change.
@@ -680,6 +694,7 @@ export default function sessionManager({ setAppLoading } = {}) {
       current: user,
       update: updateUser,
       updateEmail,
+      updateEmailDirect,
       delete: deleteUser,
       setPendingAvatar,
       patchLocal: patchLocalUser,

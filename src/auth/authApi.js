@@ -310,6 +310,20 @@ export const authApi = {
   },
 
   /**
+   * Changes the account's email immediately, with no confirmation link/step
+   * of any kind — used by the Profile screen's email-change UI instead of
+   * startEmailChange above (which is confirmation-based and no longer used
+   * there, but stays available/untouched for any other future use).
+   * @param {{ newEmail: string }} input -> { status: 'ok' }
+   */
+  changeEmailDirect(input) {
+    return request('/change-email/direct', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+
+  /**
    * Starts an account phone number change — sends an SMS OTP to the new
    * number. @param {{ newPhone: string }} input -> { status: 'otp_sent' }
    */

@@ -30,21 +30,19 @@ const UpdateEmailModal = ({
   const isRTL = languageController.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
-  const [step, setStep] = useState('enterEmail'); // 'enterEmail' or 'success'
   const [email, setEmail] = useState('');
   const [error, setError] = useState(null);
   const [internalLoading, setInternalLoading] = useState(false);
 
   useEffect(() => {
     if (visible) {
-      setStep('enterEmail');
       setEmail(currentEmail || '');
       setError(null);
       setInternalLoading(false);
     }
   }, [visible, currentEmail]);
 
-  const handleSendLink = async () => {
+  const handleSave = async () => {
     if (email === currentEmail) {
       setError(t('errors.email_not_changed'));
       return;
@@ -57,12 +55,12 @@ const UpdateEmailModal = ({
 
     setError(null);
     setInternalLoading(true);
-    const result = await user.updateEmail(email);
+    const result = await user.updateEmailDirect(email);
     setInternalLoading(false);
 
     if (result.success) {
-      setStep('success');
-      onSave(email); // Notify parent that the process was initiated
+      onSave(email);
+      onClose();
     } else {
       setError(result.error || t('errors.unexpected_error'));
     }
@@ -93,9 +91,6 @@ const UpdateEmailModal = ({
       continueButtonTextSize: scale(20),
       errorTextSize: scale(14),
       errorTextMarginBottom: scale(12),
-      successIconSize: scale(64),
-      successTextSize: scale(16),
-      successTextMarginTop: scale(16),
     };
   }, [height, isWebLandscape]);
 
@@ -188,55 +183,7 @@ const UpdateEmailModal = ({
       marginBottom: sizes.errorTextMarginBottom,
       alignSelf: 'flex-start',
     },
-    successContainer: {
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    successIcon: {
-      width: sizes.successIconSize,
-      height: sizes.successIconSize,
-      tintColor: theme.primaryColor,
-    },
-    successText: {
-      fontSize: sizes.successTextSize,
-      color: theme.textColor,
-      textAlign: 'center',
-      marginTop: sizes.successTextMarginTop,
-      fontFamily: 'Rubik-Regular',
-    },
   });
-
-  const renderEnterEmail = () => (
-    <>
-      <Text style={styles.title}>{t('my_profile.change_email')}</Text>
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>{t('my_profile.email')}</Text>
-        <CustomTextInput
-          value={email}
-          onChangeText={setEmail}
-          style={styles.input}
-          keyboardType='email-address'
-          autoCapitalize='none'
-        />
-      </View>
-      {error && <Text style={styles.errorText}>{error}</Text>}
-      <Text style={{ ...styles.errorText, color: theme.unactiveTextColor, alignSelf: 'center' }}>
-        {t('my_profile.email_change_info')}
-      </Text>
-      <TouchableOpacity style={styles.saveButton} onPress={handleSendLink}>
-        <Text style={styles.saveButtonText}>{t('common.continue')}</Text>
-      </TouchableOpacity>
-    </>
-  );
-
-  const renderSuccess = () => (
-    <View style={styles.successContainer}>
-      <Image source={icons.checkDefault} style={styles.successIcon} />
-      <Text style={styles.successText}>
-        {t('my_profile.email_change_sent', { email })}
-      </Text>
-    </View>
-  );
 
   return (
     <Modal visible={visible} transparent={true} animationType='fade'>
@@ -251,7 +198,21 @@ const UpdateEmailModal = ({
             <Image source={icons.cross} style={styles.crossIcon} />
           </TouchableOpacity>
 
-          {step === 'enterEmail' ? renderEnterEmail() : renderSuccess()}
+          <Text style={styles.title}>{t('my_profile.change_email')}</Text>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>{t('my_profile.email')}</Text>
+            <CustomTextInput
+              value={email}
+              onChangeText={setEmail}
+              style={styles.input}
+              keyboardType='email-address'
+              autoCapitalize='none'
+            />
+          </View>
+          {error && <Text style={styles.errorText}>{error}</Text>}
+          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+            <Text style={styles.saveButtonText}>{t('common.save')}</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>

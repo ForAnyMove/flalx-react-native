@@ -148,12 +148,10 @@ export default function Profile() {
   };
 
   const handleUpdateEmail = (newEmail) => {
-    // The logic is now inside the modal.
-    // We can potentially update the user state here if needed,
-    // but Supabase handles the email change after verification.
-    // For now, we just close the modal, and the user will see the pending change.
-    // setUpdateEmailModalVisible(false);
-    console.log(`Email change process initiated for ${newEmail}.`);
+    // Email changes immediately now (session.updateEmailDirect, no
+    // confirmation step) — reflect it in the UI right away, same pattern as
+    // handleUpdatePhone below. The modal closes itself on success.
+    setUserState((prev) => ({ ...prev, email: newEmail }));
   };
 
   const handleUpdatePhone = (newPhone) => {
