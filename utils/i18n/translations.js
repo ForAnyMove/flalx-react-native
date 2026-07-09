@@ -108,9 +108,11 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         resend_code: 'Resend code',
         back_to_email: 'Back to email',
         back_to_phone: 'Back to phone number',
+        back_to_sign_up: 'Back to sign up',
 
         create_account: 'Create account',
         continue: 'Continue',
+        email_recovery_warning: 'Please enter a valid email. It may be used for account notifications and recovery.',
       },
       login: {
         phone_setup: {
@@ -203,6 +205,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         mfa_verify_subtitle: 'Enter the code from your authenticator app.',
         skip_for_now: 'Skip for now',
         select_factor: 'Choose a verification method',
+        login_label: 'Phone or email',
         errors: {
           // Precise slugs returned by the backend in `message` (see server
           // error table). Keys match the backend's message field verbatim.
@@ -235,6 +238,9 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
           provider_error: 'Something went wrong. Please try again.',
           internal_error: 'Something went wrong on our end. Please try again later.',
           too_many_requests: 'Too many attempts. Try again later.',
+          phone_already_registered: 'This phone number is already registered.',
+          email_already_registered: 'This email is already registered.',
+          rate_limited: 'Too many requests. Please wait and try again.',
           // Generic fallbacks keyed by the coarse `code`, used when `message`
           // isn't one of the precise slugs above (e.g. MFA_REQUIRED/
           // VALIDATION_ERROR cover several distinct meanings).
@@ -998,9 +1004,11 @@ or reject it. Please adhere to the platform rules.`,
         resend_code: 'שלח קוד שוב',
         back_to_email: 'חזרה למייל',
         back_to_phone: 'חזרה למספר טלפון',
+        back_to_sign_up: 'חזרה להרשמה',
 
         create_account: 'צור חשבון',
         continue: 'המשך',
+        email_recovery_warning: 'אנא הזן אימייל תקין. הוא עשוי לשמש להתראות ולשחזור החשבון.',
       },
       login: {
         phone_setup: {
@@ -1090,6 +1098,7 @@ or reject it. Please adhere to the platform rules.`,
         mfa_verify_subtitle: 'הזן את הקוד מאפליקציית האימות שלך.',
         skip_for_now: 'דלג בינתיים',
         select_factor: 'בחר שיטת אימות',
+        login_label: 'טלפון או אימייל',
         errors: {
           invalid_credentials: 'אימייל/טלפון או סיסמה שגויים.',
           email_not_confirmed: 'אנא אשר תחילה את האימייל שלך.',
@@ -1119,6 +1128,9 @@ or reject it. Please adhere to the platform rules.`,
           provider_error: 'משהו השתבש. אנא נסה שוב.',
           internal_error: 'משהו השתבש אצלנו. אנא נסה שוב מאוחר יותר.',
           too_many_requests: 'יותר מדי ניסיונות. נסה שוב מאוחר יותר.',
+          phone_already_registered: 'מספר טלפון זה כבר רשום.',
+          email_already_registered: 'כתובת אימייל זו כבר רשומה.',
+          rate_limited: 'יותר מדי בקשות. אנא המתן ונסה שוב.',
           mfa_required: 'אנא השלם את האימות הדו-שלבי.',
           validation_error: 'אנא בדוק את הנתונים שהזנת ונסה שוב.',
           AUTH_ERROR: 'משהו השתבש. אנא נסה שוב.',

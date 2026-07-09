@@ -14,6 +14,18 @@ import { getUserSubscription } from '../src/api/subscriptions';
 import { getAuthErrorMessage } from '../src/auth/authErrors';
 import { logError, logInfo, logWarn } from '../utils/log_util';
 
+// nextStep values that mean a session actually exists and GET /users/me can
+// be called — the whitelist (not a blacklist of 'login_required') because
+// endpoints keep adding new pre-session nextStep values (e.g. login's
+// `phone_verification_required` for an unconfirmed account) that must NOT
+// trigger refreshMe(). See handleAuthResponse below.
+const SESSION_ESTABLISHED_NEXT_STEPS = new Set([
+  'authenticated',
+  'mfa_setup_required',
+  'mfa_setup_optional',
+  'mfa_verification_required',
+]);
+
 /**
  * Backend-driven auth store.
  *
@@ -159,6 +171,8 @@ export default function sessionManager({ setAppLoading } = {}) {
    */
   async function handleAuthResponse(resp) {
     if (!resp) return { status: 'error' };
+    console.log(resp);
+
 
     // MFA is Supabase Auth MFA on the same app_session now: the session (and
     // its sessionToken, for native) already exists at `mfa_required` (aal1),
@@ -168,6 +182,22 @@ export default function sessionManager({ setAppLoading } = {}) {
     if (resp.sessionToken) {
       await saveSessionToken(resp.sessionToken);
       setAppSessionToken(resp.sessionToken);
+    }
+
+    // Newer endpoints (e.g. /register/verify-phone) return `nextStep`
+    // directly instead of the legacy `status` field. Only refresh full user
+    // state when nextStep says a session actually exists — e.g. login's
+    // `phone_verification_required` (unconfirmed phone) carries a nextStep
+    // too, but there's no session to fetch yet until that's completed, so
+    // calling refreshMe()/GET /users/me here would be premature (and likely
+    // 401). Callers branch on the returned resp.nextStep themselves for
+    // anything not in this whitelist (mirrors the 'mfa_required' status
+    // case below, which has always been left to the caller).
+    if (resp.nextStep) {
+      if (SESSION_ESTABLISHED_NEXT_STEPS.has(resp.nextStep)) {
+        await refreshMe();
+      }
+      return resp;
     }
 
     switch (resp.status) {
@@ -230,6 +260,79 @@ export default function sessionManager({ setAppLoading } = {}) {
 
   async function verifyPhoneLogin(input) {
     return handleAuthResponse(await authApi.verifyPhoneLogin(input));
+  }
+
+  // >>> SIMPLIFIED PASSWORD-BASED FLOW <<<
+  // Single phoneOrEmail+password login, phone+email+password registration
+  // gated by a mandatory phone OTP, phone-based password reset. Parallel to
+  // the flows above — those stay untouched and still work.
+
+  async function loginUnified(input) {
+    // input: { login, password } -> handled exactly like loginEmailFlow/
+    // verifyPhoneLogin above: 'authenticated' | 'mfa_required' | ...
+    return handleAuthResponse(await authApi.login(input));
+  }
+
+  async function registerUnified(input) {
+    // input: { phone, email, password, confirmPassword }
+    // -> { status: 'otp_sent' | 'phone_confirmation_required' } — no session
+    // yet; verifyRegistrationPhone below is what actually establishes it.
+    return authApi.register(input);
+  }
+
+  async function verifyRegistrationPhone(input) {
+    // input: { phone, code } -> the simplified flow's dedicated verify
+    // endpoint (/register/verify-phone, returns nextStep directly) — NOT
+    // verifyPhoneRegistration above, which is the legacy phone-first flow's
+    // endpoint (still used by MultiStepRegisterScreen.jsx).
+    return handleAuthResponse(await authApi.verifyRegistrationPhone(input));
+  }
+
+  // Resends/checks the registration phone OTP. manual=false is the OTP
+  // screen's own auto-check on entry (won't re-send if the previous code is
+  // still active); manual=true is an explicit "Resend code" click. Either
+  // way returns expiresInSeconds so the UI doesn't hardcode a cooldown.
+  async function resendRegistrationPhoneOtp(phone, manual = false) {
+    try {
+      const resp = await authApi.resendRegistrationPhoneOtp({ phone, manual });
+      return { success: true, ...resp };
+    } catch (e) {
+      return { success: false, error: getAuthErrorMessage(e) };
+    }
+  }
+
+  // Same manual=false/true semantics as resendRegistrationPhoneOtp above.
+  // Response is always the generic otp_sent_if_account_exists (see
+  // authApi.js) — don't branch UI on its shape, just on success/error.
+  async function forgotPasswordByPhone(phone, manual = false) {
+    try {
+      const resp = await authApi.forgotPasswordByPhone({ phone, manual });
+      return { success: true, ...resp };
+    } catch (e) {
+      return { success: false, error: getAuthErrorMessage(e) };
+    }
+  }
+
+  async function verifyPasswordResetPhoneOtp(phone, code) {
+    try {
+      const resp = await authApi.verifyPasswordResetPhoneOtp({ phone, code });
+      return { success: true, resetToken: resp?.resetToken };
+    } catch (e) {
+      return { success: false, error: getAuthErrorMessage(e) };
+    }
+  }
+
+  async function resetPasswordByPhone(input) {
+    // input: { resetToken, newPassword, confirmPassword }
+    // -> may carry a sessionToken (auto-login) — route through
+    // handleAuthResponse so that's persisted/refreshed like any other flow.
+    try {
+      const resp = await authApi.resetPasswordByPhone(input);
+      await handleAuthResponse(resp);
+      return { success: true, ...resp };
+    } catch (e) {
+      return { success: false, error: getAuthErrorMessage(e) };
+    }
   }
 
   // >>> MFA <<<
@@ -536,6 +639,16 @@ export default function sessionManager({ setAppLoading } = {}) {
       loginEmail: (input) => loginEmailFlow(input),
       startPhoneLogin,
       verifyPhoneLogin,
+
+      // Simplified password-based flow (parallel, see above)
+      loginUnified,
+      registerUnified,
+      verifyRegistrationPhone,
+      resendRegistrationPhoneOtp,
+      forgotPasswordByPhone,
+      verifyPasswordResetPhoneOtp,
+      resetPasswordByPhone,
+
       enrollMfa,
       challengeMfa,
       verifyMfa,

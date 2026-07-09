@@ -92,6 +92,11 @@ export default function Step3_PhoneVerify({
   title,
   subtitle,
   showResend = true,
+  // Lets a parent that knows the real remaining cooldown (e.g. from a
+  // backend `expiresInSeconds`, after an auto-check-on-mount call) seed/
+  // resync the countdown instead of the hardcoded 60s default below —
+  // optional, backward compatible for every other caller.
+  initialCooldown,
 }) {
   const { t } = useTranslation();
   const { themeController, languageController } = useComponentContext();
@@ -105,9 +110,20 @@ export default function Step3_PhoneVerify({
   const inputsRef = useRef([]);
   const [verifying, setVerifying] = useState(false);
   const [otpError, setOtpError] = useState(null);
-  const [cooldown, setCooldown] = useState(showResend ? 60 : 0);
+  const [cooldown, setCooldown] = useState(
+    typeof initialCooldown === 'number' ? initialCooldown : (showResend ? 60 : 0)
+  );
   const [resending, setResending] = useState(false);
   const timerRef = useRef(null);
+
+  // Resync when the parent resolves a real cooldown value asynchronously
+  // (e.g. an auto-check-on-mount call that resolves after first render).
+  useEffect(() => {
+    if (typeof initialCooldown === 'number') {
+      setCooldown(initialCooldown);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCooldown]);
 
   useEffect(() => {
     // No SMS resend concept for e.g. TOTP codes — nothing was "sent", so skip
@@ -166,7 +182,10 @@ export default function Step3_PhoneVerify({
     try {
       const result = await onResend();
       if (!result || result.success) {
-        setCooldown(60); // Reset cooldown
+        // Use the backend's real expiresInSeconds when the caller provides
+        // one (see authApi.js#resendRegistrationPhoneOtp) instead of
+        // hardcoding a duration; falls back to 60s for callers that don't.
+        setCooldown(typeof result?.expiresInSeconds === 'number' ? result.expiresInSeconds : 60);
       } else {
         setOtpError(result.error || 'Failed to resend code.');
       }

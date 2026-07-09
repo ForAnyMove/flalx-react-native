@@ -35,6 +35,9 @@ const KNOWN_MESSAGE_KEYS = new Set([
   'provider_error',
   'internal_error',
   'too_many_requests',
+  'phone_already_registered',
+  'email_already_registered',
+  'rate_limited',
 ]);
 
 /**
@@ -56,22 +59,33 @@ const CODE_FALLBACK_KEY = {
   PROVIDER_ERROR: 'provider_error',
   INTERNAL_ERROR: 'internal_error',
   TOO_MANY_REQUESTS: 'too_many_requests',
+  PHONE_ALREADY_REGISTERED: 'phone_already_registered',
+  EMAIL_ALREADY_REGISTERED: 'email_already_registered',
+  RATE_LIMITED: 'rate_limited',
 };
 
 /**
- * Map a backend auth error (thrown by authApi with `.message` and `.code`)
- * into a user-friendly, localized message.
+ * Map a backend auth error (thrown by authApi with `.message`/`.code`/
+ * `.messageMeaning`) into a user-friendly, localized message.
+ *
+ * Some responses (e.g. 429 RATE_LIMITED) now send a human-readable `message`
+ * sentence plus a separate precise slug in `messageMeaning` — when present,
+ * that's the most reliable lookup key, ahead of `message` (which may or may
+ * not be a slug depending on the endpoint) and `code` (coarse fallback).
  *
  * @param {unknown} error
  * @returns {string}
  */
 export function getAuthErrorMessage(error) {
+  const messageMeaning = error && typeof error === 'object' ? error.messageMeaning : undefined;
   const message = error && typeof error === 'object' ? error.message : undefined;
   const code = error && typeof error === 'object' ? error.code : undefined;
 
-  const key = KNOWN_MESSAGE_KEYS.has(message)
-    ? message
-    : CODE_FALLBACK_KEY[code] || 'AUTH_ERROR';
+  const key = KNOWN_MESSAGE_KEYS.has(messageMeaning)
+    ? messageMeaning
+    : KNOWN_MESSAGE_KEYS.has(message)
+      ? message
+      : CODE_FALLBACK_KEY[code] || 'AUTH_ERROR';
 
   return i18n.t(`auth.errors.${key}`);
 }

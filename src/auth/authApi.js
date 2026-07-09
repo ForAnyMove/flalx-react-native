@@ -86,7 +86,15 @@ async function request(path, options = {}) {
       if (data?.nextStep) {
         notifyAuthState(data.nextStep);
       }
-      throw Object.assign(new Error(message), { code, status: res.status, nextStep: data?.nextStep });
+      // Some responses (e.g. 429 RATE_LIMITED) now carry a human-readable
+      // `message` plus a separate precise slug in `messageMeaning` — see
+      // getAuthErrorMessage(), which prefers messageMeaning when present.
+      throw Object.assign(new Error(message), {
+        code,
+        status: res.status,
+        nextStep: data?.nextStep,
+        messageMeaning: data?.messageMeaning,
+      });
     }
 
     return data;
@@ -115,8 +123,64 @@ export const authApi = {
     });
   },
 
+  // Legacy phone-first registration flow only (MultiStepRegisterScreen.jsx).
+  // Deprecated for the simplified flow — use verifyRegistrationPhone below
+  // for new registrations (/register/verify-phone, returns nextStep).
   verifyPhoneRegistration(input /* { phone, code } */) {
     return request('/register/phone/verify', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+
+  /**
+   * Simplified registration (new flow): phone + email + password collected
+   * together in one form. Followed by a mandatory phone OTP step — see
+   * verifyRegistrationPhone below (NOT verifyPhoneRegistration above, which
+   * is the legacy phone-first flow's verify endpoint). Rejects with
+   * PHONE_ALREADY_REGISTERED / EMAIL_ALREADY_REGISTERED if either is already
+   * taken (see src/auth/authErrors.js).
+   * @param {{ phone: string, email: string, password: string, confirmPassword: string }} input
+   * -> { status: 'otp_sent' | 'phone_confirmation_required' }
+   */
+  register(input) {
+    return request('/register', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+
+  /**
+   * Verifies the mandatory phone OTP for the simplified registration flow.
+   * Distinct endpoint from the legacy verifyPhoneRegistration above — this
+   * one returns `nextStep` directly (same values as GET /users/me) instead
+   * of a legacy `status` field.
+   * @param {{ phone: string, code: string }} input
+   * -> { nextStep: 'authenticated' | 'mfa_setup_required' | 'mfa_setup_optional'
+   *    | 'mfa_verification_required', sessionToken?: string }
+   */
+  verifyRegistrationPhone(input) {
+    return request('/register/verify-phone', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+
+  /**
+   * Resends (or checks the status of) the mandatory registration phone OTP.
+   * `manual: false`/omitted (auto-call on entering the OTP screen) checks the
+   * DB first — if the previous code hasn't expired yet, no SMS is sent, the
+   * backend just replies `{status:'otp_still_active', expiresInSeconds}`.
+   * `manual: true` (the "Resend code" button) skips that still-active check
+   * but is still subject to rate limiting (429 RATE_LIMITED — see
+   * authErrors.js). Either way, a successful send/still-active response
+   * carries `expiresInSeconds` — don't hardcode a cooldown duration on the
+   * frontend, use this instead.
+   * @param {{ phone: string, manual?: boolean }} input
+   * -> { status: 'otp_sent' | 'otp_still_active', expiresInSeconds: number }
+   */
+  resendRegistrationPhoneOtp(input) {
+    return request('/register/resend-phone-otp', {
       method: 'POST',
       body: JSON.stringify(input),
     });
@@ -140,6 +204,20 @@ export const authApi = {
 
   verifyPhoneLogin(input /* { phone, code } */) {
     return request('/login/phone/verify', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+
+  /**
+   * Simplified login (new flow): a single `login` field that accepts either a
+   * phone number or an email — the backend detects/normalizes which. No OTP
+   * step; a `mfa_required` status is handled exactly like the existing
+   * login-time MFA flow (see MultiStepLoginScreen.jsx's inline handling).
+   * @param {{ login: string, password: string }} input
+   */
+  login(input) {
+    return request('/login', {
       method: 'POST',
       body: JSON.stringify(input),
     });
@@ -277,6 +355,51 @@ export const authApi = {
     return request('/forgot-password', {
       method: 'POST',
       body: JSON.stringify({ ...input, language: currentLanguage() }),
+    });
+  },
+
+  // --- Forgot password by phone (new simplified flow, logged-out user) ---
+  // Primary recovery channel now that email verification isn't mandatory at
+  // registration (an unverified email is a weak recovery channel) — see the
+  // rework_auth simplified-flow notes. 3 steps: start (send OTP), verify OTP
+  // (returns a short-lived, single-use resetToken), then reset with that token.
+
+  /**
+   * Same `manual` semantics as resendRegistrationPhoneOtp above: omitted/false
+   * for the OTP screen's auto-check on entry, true for an explicit "Resend
+   * code" click — still subject to rate limiting either way. Unlike the
+   * registration resend, the response is always the same generic
+   * `otp_sent_if_account_exists` regardless of whether the phone is actually
+   * registered or the code was already active — anything phone-existence-
+   * revealing (including a differing status) would be an account-enumeration
+   * leak, so don't branch UI on this response's shape.
+   * @param {{ phone: string, manual?: boolean }} input
+   * -> { status: 'otp_sent_if_account_exists' }
+   */
+  forgotPasswordByPhone(input) {
+    return request('/password/forgot-phone', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+
+  /** @param {{ phone: string, code: string }} input -> { status: 'ok', resetToken: string } */
+  verifyPasswordResetPhoneOtp(input) {
+    return request('/forgot-password/phone/verify', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+
+  /**
+   * @param {{ resetToken: string, newPassword: string, confirmPassword: string }} input
+   * -> { status: 'ok', sessionToken?: string } (sessionToken only if the backend
+   * auto-logs the user in after reset — treat as optional)
+   */
+  resetPasswordByPhone(input) {
+    return request('/reset-password/phone', {
+      method: 'POST',
+      body: JSON.stringify(input),
     });
   },
 };

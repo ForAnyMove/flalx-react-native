@@ -28,9 +28,9 @@ import { GlobalWebScreen } from './screens/GlobalWebScreen';
 import { WebSocketProvider } from './context/webSocketContext';
 import { GlobalNotificationHandler, NotificationProvider } from './src/render';
 import LoadingStub from './screens/LoaderScreen';
-import ForgottenPasswordScreen from './screens/ForgottenPasswordScreen';
-import MultiStepLoginScreen from './screens/login/MultiStepLoginScreen';
-import MultiStepRegisterScreen from './screens/register/MultiStepRegisterScreen';
+import ForgotPasswordPhoneScreen from './screens/ForgotPasswordPhoneScreen';
+import SimpleLoginScreen from './screens/login/SimpleLoginScreen';
+import SimpleRegisterScreen from './screens/register/SimpleRegisterScreen';
 import MfaSetupScreen from './screens/register/MfaSetupScreen';
 import MfaVerifyScreen from './screens/register/MfaVerifyScreen';
 import { logError } from './utils/log_util';
@@ -192,8 +192,8 @@ function App() {
   }
   else if (session.nextStep === 'login_required') {
     content = (
-      <MultiStepLoginScreen
-        onGoToRegister={(method) => registerControl.goToRegisterScreen(method)}
+      <SimpleLoginScreen
+        onGoToRegister={() => registerControl.goToRegisterScreen()}
         onGoToForgottenPassword={() => forgotPassControl.switch()}
       />
     );
@@ -213,10 +213,10 @@ function App() {
   }
   // Регистрация перед входом
   if (registerControl.state) {
-    content = <MultiStepRegisterScreen initialMethod={registerControl.initialMethod} />;
+    content = <SimpleRegisterScreen />;
   }
   if (forgotPassControl.state) {
-    content = <ForgottenPasswordScreen />;
+    content = <ForgotPasswordPhoneScreen />;
   }
 
   return (
