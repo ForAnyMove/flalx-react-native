@@ -16,9 +16,10 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 import { useWindowInfo } from '../context/windowContext';
 import CustomTextInput from '../components/ui/CustomTextInput';
+import PhoneOrEmailInput from '../components/ui/PhoneOrEmailInput';
 import Step3_PhoneVerify from './register/Step3_PhoneVerify';
 
-const PHONE_RE = /^\+[1-9]\d{1,14}$/;
+const EMAIL_RE = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@(([^<>()[\]\\.,;:\s@"]+\.)+[^<>()[\]\\.,;:\s@"]{2,})$/i;
 
 function PrimaryOutlineButton({ title, onPress, disabled, theme, isLandscape, height }) {
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -39,7 +40,18 @@ function PrimaryOutlineButton({ title, onPress, disabled, theme, isLandscape, he
       ]}
     >
       {typeof title === 'string' ? (
-        <Text style={[styles.outlineBtnText, { color: theme.primaryColor }]}>{title}</Text>
+        <Text
+          style={[
+            styles.outlineBtnText,
+            {
+              color: theme.primaryColor,
+              fontSize: isWebLandscape ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
+              lineHeight: isWebLandscape ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
+            },
+          ]}
+        >
+          {title}
+        </Text>
       ) : (
         title
       )}
@@ -48,12 +60,15 @@ function PrimaryOutlineButton({ title, onPress, disabled, theme, isLandscape, he
 }
 
 /**
- * Phone-based password reset (new flow): phone -> OTP -> new password.
- * Primary recovery channel now that email verification isn't mandatory at
- * registration (see docs/rework_auth.md simplified-flow notes). Email-based
- * reset (ForgottenPasswordScreen.jsx) stays available but unused from App.js.
+ * Password reset (new flow): phone -> OTP -> new password, OR email -> a
+ * magic link handled entirely on a backend-hosted page (POST
+ * /auth/forgot-password, same as the legacy ForgottenPasswordScreen.jsx's
+ * flow, just reachable from here too now via the mode tabs) — phone is the
+ * primary channel since email verification isn't mandatory at registration
+ * (see docs/rework_auth.md simplified-flow notes), but a user who does have
+ * a confirmed email can reset with it instead of their phone.
  *
- * Steps: phone | otp | new_password | success
+ * Steps: input | otp | new_password | success | email_sent
  */
 export default function ForgotPasswordPhoneScreen() {
   const { t } = useTranslation();
@@ -65,9 +80,12 @@ export default function ForgotPasswordPhoneScreen() {
   const { height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
-  const [step, setStep] = useState('phone'); // 'phone' | 'otp' | 'new_password' | 'success'
+  const [step, setStep] = useState('input'); // 'input' | 'otp' | 'new_password' | 'success' | 'email_sent'
+  const [mode, setMode] = useState('phone'); // 'phone' | 'email'
   const [phone, setPhone] = useState('');
-  const [phoneError, setPhoneError] = useState(null);
+  const [phoneValid, setPhoneValid] = useState(false);
+  const [email, setEmail] = useState('');
+  const [inputError, setInputError] = useState(null);
   const [sending, setSending] = useState(false);
   const [resetToken, setResetToken] = useState(null);
 
@@ -84,34 +102,56 @@ export default function ForgotPasswordPhoneScreen() {
   // one, so Step3_PhoneVerify falls back to its own 60s default otherwise.
   const [otpCooldown, setOtpCooldown] = useState(undefined);
 
-  const isValidPhone = useMemo(() => PHONE_RE.test(phone.trim()), [phone]);
   const isValidPassword = useMemo(() => newPassword.trim().length >= 6, [newPassword]);
   const passwordsMatch = useMemo(
     () => newPassword.trim() !== '' && newPassword.trim() === confirmPassword.trim(),
     [newPassword, confirmPassword]
   );
+  const isValidEmail = useMemo(() => EMAIL_RE.test(email.trim()), [email]);
 
-  const phoneInputRef = useRef(null);
+  const inputRef = useRef(null);
   useEffect(() => {
-    if (step !== 'phone') return;
-    const timer = setTimeout(() => phoneInputRef.current?.focus(), 50);
+    if (step !== 'input') return;
+    const timer = setTimeout(() => inputRef.current?.focus(), 50);
     return () => clearTimeout(timer);
   }, [step]);
 
-  const handleSendCode = async () => {
-    if (!isValidPhone) {
-      setPhoneError(t('register.phone_invalid'));
+  const handleSubmit = async () => {
+    if (mode === 'phone') {
+      if (!phoneValid) {
+        setInputError(t('register.phone_invalid'));
+        return;
+      }
+      setInputError(null);
+      setSending(true);
+      try {
+        // Explicit button click -> manual:true (see authApi.js#forgotPasswordByPhone).
+        const res = await session.forgotPasswordByPhone(phone.trim(), true);
+        if (res.success) {
+          setStep('otp');
+        } else {
+          setInputError(res.error);
+        }
+      } finally {
+        setSending(false);
+      }
       return;
     }
-    setPhoneError(null);
+
+    if (!isValidEmail) {
+      setInputError(t('auth.invalid_email'));
+      return;
+    }
+    setInputError(null);
     setSending(true);
     try {
-      // Explicit button click -> manual:true (see authApi.js#forgotPasswordByPhone).
-      const res = await session.forgotPasswordByPhone(phone.trim(), true);
+      // Confirmation-based magic-link flow, same as the legacy
+      // ForgottenPasswordScreen.jsx — no in-app OTP/reset step for email.
+      const res = await session.forgotPassword(email.trim());
       if (res.success) {
-        setStep('otp');
+        setStep('email_sent');
       } else {
-        setPhoneError(res.error);
+        setInputError(res.error);
       }
     } finally {
       setSending(false);
@@ -194,6 +234,9 @@ export default function ForgotPasswordPhoneScreen() {
       borderRadius: isWebLandscape ? web(8) : mobile(8),
       fieldBlockWidth: isWebLandscape ? web(330) : '100%',
       fieldBlockHeight: isWebLandscape ? web(76) : mobile(75),
+      phoneEmailfieldBlockHeight: isWebLandscape ? web(76 - 20) : mobile(75 - 20),
+      fieldBlockPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
+      fieldBlockPaddingTop: isWebLandscape ? web(14) : mobile(14),
       errorFontSize: isWebLandscape ? web(14) : mobile(14),
       scrollPaddingVertical: isWebLandscape ? web(24) : mobile(80),
       keyboardVerticalOffset: mobile(10),
@@ -213,7 +256,7 @@ export default function ForgotPasswordPhoneScreen() {
           phone={phone}
           onVerify={handleOtpVerify}
           onResend={handleOtpResend}
-          onBack={() => setStep('phone')}
+          onBack={() => setStep('input')}
           backLabel={t('auth.back_to_phone')}
           initialCooldown={otpCooldown}
         />
@@ -236,7 +279,7 @@ export default function ForgotPasswordPhoneScreen() {
         keyboardShouldPersistTaps='handled'
       >
         <View style={[styles.contentBlock, isWebLandscape ? { width: height * 0.5 } : { width: '100%' }]}>
-          {step === 'phone' && (
+          {step === 'input' && (
             <>
               <Text style={[styles.title, { color: theme.unactiveTextColor, fontSize: sizes.titleFontSize }]}>
                 {t('auth.forgot_pass_title')}
@@ -247,55 +290,55 @@ export default function ForgotPasswordPhoneScreen() {
                   { color: theme.unactiveTextColor, fontSize: sizes.subtitleFontSize, marginBottom: sizes.subtitleMarginBottom },
                 ]}
               >
-                {t('auth.forgot_pass_subtitle_sms')}
+                {mode === 'phone' ? t('auth.forgot_pass_subtitle_sms') : t('auth.forgot_pass_subtitle')}
               </Text>
 
-              <View
-                style={[
-                  styles.fieldBlock,
+              <PhoneOrEmailInput
+                ref={inputRef}
+                mode={mode}
+                onModeChange={(m) => {
+                  setMode(m);
+                  setInputError(null);
+                }}
+                phoneValue={phone}
+                onPhoneChange={(val) => {
+                  setPhone(val);
+                  setInputError(null);
+                }}
+                onPhoneValidityChange={setPhoneValid}
+                emailValue={email}
+                onEmailChange={(text) => {
+                  setEmail(text);
+                  setInputError(null);
+                }}
+                containerStyle={{
+                  marginBottom: sizes.fieldBlockMarginBottom,
+                  backgroundColor: theme.formInputBackground,
+                  width: sizes.fieldBlockWidth,
+                  height: sizes.phoneEmailfieldBlockHeight,
+                  borderRadius: sizes.borderRadius,
+                  paddingHorizontal: sizes.fieldBlockPaddingHorizontal,
+                  paddingTop: sizes.fieldBlockPaddingTop,
+                }}
+                inputStyle={[
+                  styles.input,
                   {
-                    marginBottom: sizes.fieldBlockMarginBottom,
-                    backgroundColor: theme.formInputBackground,
-                    width: sizes.fieldBlockWidth,
-                    height: sizes.fieldBlockHeight,
-                    borderRadius: sizes.borderRadius,
+                    fontSize: sizes.inputFontSize,
+                    color: theme.formInputTextColor,
+                    textAlign: isRTL ? 'right' : 'left',
+                    backgroundColor: 'transparent',
+                    borderWidth: 0,
                   },
+                  Platform.OS === 'web' && { outlineStyle: 'none' },
                 ]}
-              >
-                <Text style={[styles.label, { fontSize: sizes.labelFontSize, color: theme.formInputLabelColor, textAlign: isRTL ? 'right' : 'left' }]}>
-                  {t('register.phone_label')}
-                </Text>
-                <CustomTextInput
-                  ref={phoneInputRef}
-                  style={[
-                    styles.input,
-                    {
-                      fontSize: sizes.inputFontSize,
-                      color: theme.formInputTextColor,
-                      textAlign: isRTL ? 'right' : 'left',
-                      backgroundColor: 'transparent',
-                      borderWidth: 0,
-                    },
-                    Platform.OS === 'web' && { outlineStyle: 'none' },
-                  ]}
-                  placeholder='+1234567890'
-                  placeholderTextColor={theme.formInputPlaceholderColor}
-                  keyboardType='phone-pad'
-                  autoCapitalize='none'
-                  autoCorrect={false}
-                  value={phone}
-                  onChangeText={(txt) => {
-                    setPhone(txt);
-                    setPhoneError(null);
-                  }}
-                  returnKeyType='done'
-                  onSubmitEditing={handleSendCode}
-                />
-              </View>
+                onSubmitEditing={handleSubmit}
+                returnKeyType='done'
+                autoFocus
+              />
 
-              {!!phoneError && (
+              {!!inputError && (
                 <Text style={{ color: theme.errorTextColor, fontSize: sizes.errorFontSize, marginBottom: 8 }}>
-                  {phoneError}
+                  {inputError}
                 </Text>
               )}
 
@@ -317,8 +360,31 @@ export default function ForgotPasswordPhoneScreen() {
                 height={height}
                 theme={theme}
                 title={sending ? <ActivityIndicator color={theme.primaryColor} /> : t('auth.send_reset_code')}
-                onPress={handleSendCode}
-                disabled={sending || !isValidPhone}
+                onPress={handleSubmit}
+                disabled={sending || (mode === 'phone' ? !phoneValid : !isValidEmail)}
+              />
+            </>
+          )}
+
+          {step === 'email_sent' && (
+            <>
+              <Text style={[styles.title, { color: theme.unactiveTextColor, fontSize: sizes.titleFontSize * 1.3 }]}>
+                {t('auth.check_email_title')}
+              </Text>
+              <Text
+                style={[
+                  styles.subtitle,
+                  { color: theme.unactiveTextColor, fontSize: sizes.subtitleFontSize, marginBottom: sizes.subtitleMarginBottom },
+                ]}
+              >
+                {t('auth.forgot_pass_check_email_subtitle')}
+              </Text>
+              <PrimaryOutlineButton
+                isLandscape={isLandscape}
+                height={height}
+                theme={theme}
+                title={t('auth.back_to_sign_in')}
+                onPress={() => forgotPassControl.switch()}
               />
             </>
           )}
@@ -347,6 +413,8 @@ export default function ForgotPasswordPhoneScreen() {
                     width: sizes.fieldBlockWidth,
                     height: sizes.fieldBlockHeight,
                     borderRadius: sizes.borderRadius,
+                    paddingHorizontal: sizes.fieldBlockPaddingHorizontal,
+                    paddingTop: sizes.fieldBlockPaddingTop,
                   },
                 ]}
               >
@@ -412,6 +480,8 @@ export default function ForgotPasswordPhoneScreen() {
                     width: sizes.fieldBlockWidth,
                     height: sizes.fieldBlockHeight,
                     borderRadius: sizes.borderRadius,
+                    paddingHorizontal: sizes.fieldBlockPaddingHorizontal,
+                    paddingTop: sizes.fieldBlockPaddingTop,
                   },
                 ]}
               >

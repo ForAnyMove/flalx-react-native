@@ -19,6 +19,7 @@ import { logError, logInfo } from '../../utils/log_util';
 import { useWindowInfo } from '../../context/windowContext';
 import CustomTextInput from '../../components/ui/CustomTextInput';
 import CustomPicker from '../../components/ui/CustomPicker';
+import PhoneField from '../../components/ui/PhoneField';
 import Step3_PhoneVerify from './Step3_PhoneVerify';
 import { getAuthErrorMessage } from '../../src/auth/authErrors';
 
@@ -31,7 +32,6 @@ function PrimaryOutlineButton({ title, onPress, disabled, buttonStyle, textStyle
 }
 
 const EMAIL_RE = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@(([^<>()[\]\\.,;:\s@"]+\.)+[^<>()[\]\\.,;:\s@"]{2,})$/i;
-const PHONE_RE = /^\+[1-9]\d{1,14}$/;
 
 /**
  * Simplified registration (new flow): phone + email + password + confirmPassword
@@ -55,6 +55,7 @@ export default function SimpleRegisterScreen() {
 
   const [step, setStep] = useState('form');
   const [phone, setPhone] = useState('');
+  const [phoneValid, setPhoneValid] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -199,8 +200,12 @@ export default function SimpleRegisterScreen() {
     };
   }, [width, height, isWebLandscape, isRTL, theme]);
 
-  const isValidPhone = useMemo(() => PHONE_RE.test(phone.trim()), [phone]);
-  const isValidEmail = useMemo(() => EMAIL_RE.test(email.trim()), [email]);
+  // Email is optional now — only invalid if something was typed and it
+  // doesn't look like an email; empty is fine.
+  const isValidEmail = useMemo(() => {
+    const trimmed = email.trim();
+    return trimmed === '' || EMAIL_RE.test(trimmed);
+  }, [email]);
   const isValidPassword = useMemo(() => password.trim().length >= 6, [password]);
   const passwordsMatch = useMemo(
     () => password.trim() !== '' && password.trim() === confirmPassword.trim(),
@@ -211,6 +216,11 @@ export default function SimpleRegisterScreen() {
   // backend's real expiresInSeconds; passed to Step3_PhoneVerify so its
   // countdown reflects the actual remaining time instead of a hardcoded 60s.
   const [otpCooldown, setOtpCooldown] = useState(undefined);
+
+  // Set once verifyRegistrationPhone's response carries `emailConfirmationSent`
+  // (only present if an email was given at registration) — drives the
+  // 'email_confirmation' step below.
+  const [emailConfirmationSent, setEmailConfirmationSent] = useState(null);
 
   // On entering the OTP step, auto-check with manual:false — if a previously
   // sent code is still active, the backend just replies with its remaining
@@ -243,10 +253,18 @@ export default function SimpleRegisterScreen() {
       const resp = await session.verifyRegistrationPhone({ phone, code });
       logInfo('[SimpleRegisterScreen] verifyRegistrationPhone response:', resp);
       if (resp?.nextStep && resp.nextStep !== 'login_required') {
-        // Dismiss this overlay so App.js's nextStep routing (e.g.
-        // MfaSetupScreen for 'mfa_setup_required') can take over — it can't
-        // react on its own, registerControl.state is independent of nextStep.
-        registerControl.leaveRegisterScreen();
+        // `emailConfirmationSent` is only present if an email was given at
+        // registration — show the check-your-email step first in that case;
+        // otherwise dismiss this overlay right away so App.js's nextStep
+        // routing (e.g. MfaSetupScreen for 'mfa_setup_required') can take
+        // over — it can't react on its own, registerControl.state is
+        // independent of nextStep.
+        if (resp && 'emailConfirmationSent' in resp) {
+          setEmailConfirmationSent(resp.emailConfirmationSent);
+          setStep('email_confirmation');
+        } else {
+          registerControl.leaveRegisterScreen();
+        }
         return { success: true };
       }
       return { success: false, error: getAuthErrorMessage({ code: 'OTP_INVALID' }) };
@@ -263,7 +281,7 @@ export default function SimpleRegisterScreen() {
     setGeneralError(null);
 
     let isValid = true;
-    if (!isValidPhone) {
+    if (!phoneValid) {
       setPhoneError(t('register.phone_invalid'));
       isValid = false;
     }
@@ -285,7 +303,10 @@ export default function SimpleRegisterScreen() {
     try {
       await session.registerUnified({
         phone: phone.trim(),
-        email: email.trim(),
+        // Omitted entirely (not sent as '') when left blank — email is
+        // optional now, and the backend keys its `emailConfirmationSent`
+        // response field on whether this was present at all.
+        email: email.trim() || undefined,
         password,
         confirmPassword,
       });
@@ -319,6 +340,30 @@ export default function SimpleRegisterScreen() {
     );
   }
 
+  if (step === 'email_confirmation') {
+    const sentOk = emailConfirmationSent === true;
+    return (
+      <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+        <View style={dynamicStyles.contentBlock}>
+          {sentOk && (
+            <Text style={dynamicStyles.title}>{t('register.email_confirmation_sent_title')}</Text>
+          )}
+          <Text style={dynamicStyles.subtitle}>
+            {sentOk
+              ? t('register.email_confirmation_sent_subtitle', { email: email.trim() })
+              : t('register.email_confirmation_failed_subtitle')}
+          </Text>
+          <PrimaryOutlineButton
+            title={t('common.ok')}
+            onPress={() => registerControl.leaveRegisterScreen()}
+            buttonStyle={dynamicStyles.primaryButton}
+            textStyle={dynamicStyles.primaryButtonText}
+          />
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <View style={{ position: 'absolute', top: sizes.skipBtnTop, left: isRTL ? undefined : '5%', right: isRTL ? '5%' : undefined, zIndex: 100 }}>
@@ -346,29 +391,25 @@ export default function SimpleRegisterScreen() {
             <Text style={dynamicStyles.subtitle}>{t('auth.create_user_subtitle')}</Text>
 
             {/* PHONE FIELD */}
-            <View style={dynamicStyles.fieldContainer}>
-              <Text style={dynamicStyles.label}>{t('register.phone_label')}</Text>
-              <CustomTextInput
-                ref={phoneInputRef}
-                style={dynamicStyles.input}
-                placeholder='+1234567890'
-                placeholderTextColor={theme.formInputPlaceholderColor}
-                keyboardType='phone-pad'
-                autoCapitalize='none'
-                autoCorrect={false}
-                value={phone}
-                onChangeText={(text) => {
-                  setPhone(text);
-                  if (phoneError) setPhoneError(null);
-                }}
-                returnKeyType='next'
-              />
-            </View>
+            <PhoneField
+              ref={phoneInputRef}
+              value={phone}
+              onChangeValue={(val) => {
+                setPhone(val);
+                if (phoneError) setPhoneError(null);
+              }}
+              onValidityChange={setPhoneValid}
+              label={t('register.phone_label')}
+              placeholder='50 123 4567'
+              containerStyle={dynamicStyles.fieldContainer}
+              labelStyle={dynamicStyles.label}
+              inputStyle={dynamicStyles.input}
+            />
             {!!phoneError && <Text style={dynamicStyles.fieldError}>{phoneError}</Text>}
 
-            {/* EMAIL FIELD */}
+            {/* EMAIL FIELD (optional) */}
             <View style={dynamicStyles.fieldContainer}>
-              <Text style={dynamicStyles.label}>{t('auth.email_label')}</Text>
+              <Text style={dynamicStyles.label}>{t('register.email_optional_label')}</Text>
               <CustomTextInput
                 style={dynamicStyles.input}
                 placeholder='name@example.com'
@@ -385,7 +426,7 @@ export default function SimpleRegisterScreen() {
               />
             </View>
             {!!emailError && <Text style={dynamicStyles.fieldError}>{emailError}</Text>}
-            <Text style={dynamicStyles.warningText}>{t('register.email_recovery_warning')}</Text>
+            <Text style={dynamicStyles.warningText}>{t('register.email_confirmation_hint')}</Text>
 
             {/* PASSWORD FIELD */}
             <View style={dynamicStyles.fieldContainer}>

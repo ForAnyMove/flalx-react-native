@@ -112,7 +112,11 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
 
         create_account: 'Create account',
         continue: 'Continue',
-        email_recovery_warning: 'Please enter a valid email. It may be used for account notifications and recovery.',
+        email_optional_label: 'Email (optional)',
+        email_confirmation_hint: "After you confirm your phone, we'll send a confirmation email to this address.",
+        email_confirmation_sent_title: 'Check your email',
+        email_confirmation_sent_subtitle: 'We sent an email to {{email}} — confirm it so you can sign in with your email.',
+        email_confirmation_failed_subtitle: "We couldn't send the confirmation email. You can add your email later in settings.",
       },
       login: {
         phone_setup: {
@@ -206,6 +210,9 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         skip_for_now: 'Skip for now',
         select_factor: 'Choose a verification method',
         login_label: 'Phone or email',
+        login_subtitle: 'Enter your phone or email and password to sign in',
+        tab_phone: 'Phone',
+        tab_email: 'Email',
         errors: {
           // Precise slugs returned by the backend in `message` (see server
           // error table). Keys match the backend's message field verbatim.
@@ -301,6 +308,9 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
         change_phone: 'Change Phone Number',
         verify_new_phone: 'Verify New Phone Number',
         email_change_sent: "A confirmation email has been sent to {{email}}. Please check your inbox to complete the update.",
+        email_not_confirmed: 'Email not confirmed',
+        resend_confirmation_email: 'Resend confirmation email',
+        resend_confirmation_in: 'Resend in {{time}}',
         export_success: 'Data exported successfully',
         storage_permission_title: 'Storage Permission',
         storage_permission_message: 'App needs access to your storage to save export data.',
@@ -1009,7 +1019,11 @@ or reject it. Please adhere to the platform rules.`,
 
         create_account: 'צור חשבון',
         continue: 'המשך',
-        email_recovery_warning: 'אנא הזן אימייל תקין. הוא עשוי לשמש להתראות ולשחזור החשבון.',
+        email_optional_label: 'אימייל (לא חובה)',
+        email_confirmation_hint: 'לאחר אימות הטלפון, נשלח אימייל אישור לכתובת זו.',
+        email_confirmation_sent_title: 'בדוק את האימייל שלך',
+        email_confirmation_sent_subtitle: 'שלחנו אימייל אל {{email}} — אשר אותו כדי שתוכל להתחבר באמצעות אימייל.',
+        email_confirmation_failed_subtitle: 'לא הצלחנו לשלוח את אימייל האישור. תוכל להוסיף אימייל מאוחר יותר בהגדרות.',
       },
       login: {
         phone_setup: {
@@ -1100,6 +1114,9 @@ or reject it. Please adhere to the platform rules.`,
         skip_for_now: 'דלג בינתיים',
         select_factor: 'בחר שיטת אימות',
         login_label: 'טלפון או אימייל',
+        login_subtitle: 'הזן טלפון או אימייל וסיסמה כדי להתחבר',
+        tab_phone: 'טלפון',
+        tab_email: 'אימייל',
         errors: {
           invalid_credentials: 'אימייל/טלפון או סיסמה שגויים.',
           email_not_confirmed: 'אנא אשר תחילה את האימייל שלך.',
@@ -1191,6 +1208,9 @@ or reject it. Please adhere to the platform rules.`,
         change_phone: 'שנה מספר טלפון',
         verify_new_phone: 'אמת מספר טלפון חדש',
         email_change_sent: "נשלח אימייל אישור ל-{{email}}. אנא בדוק את תיבת הדואר הנכנס שלך להשלמת העדכון.",
+        email_not_confirmed: 'האימייל לא אושר',
+        resend_confirmation_email: 'שלח שוב אימייל אישור',
+        resend_confirmation_in: 'שלח שוב בעוד {{time}}',
         export_success: 'הנתונים יוצאו בהצלחה',
         storage_permission_title: 'הרשאת אחסון',
         storage_permission_message: 'האפליקציה זקוקה לגישה לאחסון שלך כדי לשמור את נתוני הייצוא.',

@@ -15,6 +15,9 @@ import { useWindowInfo } from '../../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
 import CustomTextInput from '../ui/CustomTextInput';
+import PhoneField from '../ui/PhoneField';
+import { normalizeE164 } from '../../src/phone/phoneUtils';
+import { toE164 } from '../../src/auth/phoneFormat';
 
 const OTP_LENGTH = 6;
 
@@ -33,7 +36,11 @@ const UpdatePhoneModal = ({
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const [step, setStep] = useState('enterPhone'); // 'enterPhone' or 'enterCode'
-  const [phone, setPhone] = useState(currentPhone);
+  // currentPhone may come from Supabase without a leading '+' — normalize
+  // before PhoneField/libphonenumber-js ever see it (same fix as
+  // src/auth/phoneFormat.js#toE164's other call sites).
+  const [phone, setPhone] = useState(toE164(currentPhone));
+  const [phoneValid, setPhoneValid] = useState(false);
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [error, setError] = useState(null);
   const [internalLoading, setInternalLoading] = useState(false);
@@ -42,7 +49,7 @@ const UpdatePhoneModal = ({
   useEffect(() => {
     if (visible) {
       setStep('enterPhone');
-      setPhone(currentPhone);
+      setPhone(toE164(currentPhone));
       setOtp(Array(OTP_LENGTH).fill(''));
       setError(null);
       setInternalLoading(false);
@@ -50,7 +57,11 @@ const UpdatePhoneModal = ({
   }, [visible, currentPhone]);
 
   const handleSendCode = async () => {
-    if (phone === currentPhone) {
+    if (!phoneValid) {
+      setError(t('register.phone_invalid'));
+      return;
+    }
+    if (normalizeE164(phone) === normalizeE164(toE164(currentPhone))) {
       setError(t('errors.phone_not_changed'));
       return;
     }
@@ -116,6 +127,11 @@ const UpdatePhoneModal = ({
       inputHeight: scale(52),
       inputMarginBottom: scale(16),
       inputPaddingHorizontal: scale(16),
+      // Taller than inputHeight above — PhoneField's label sits above the
+      // row in normal flow, not floating over it like the plain text inputs
+      // in this modal, so it needs the extra vertical room.
+      phoneFieldHeight: scale(76),
+      phoneFieldPaddingTop: scale(10),
       labelSize: scale(12),
       inputSize: scale(16),
       saveButtonHeight: scale(52),
@@ -184,6 +200,29 @@ const UpdatePhoneModal = ({
       paddingTop: 15,
       textAlign: isRTL ? 'right' : 'left',
     },
+    // PhoneField renders its label in normal flow (above the row), not as a
+    // floating overlay like `label`/`input` above — separate style set sized
+    // for that layout instead of reusing the floating-label ones.
+    phoneFieldContainer: {
+      width: '100%',
+      height: sizes.phoneFieldHeight,
+      backgroundColor: theme.formInputBackground,
+      borderRadius: sizes.borderRadius,
+      paddingHorizontal: sizes.inputPaddingHorizontal,
+      paddingTop: sizes.phoneFieldPaddingTop,
+      marginBottom: sizes.inputMarginBottom,
+    },
+    phoneFieldLabel: {
+      fontSize: sizes.labelSize,
+      color: theme.formInputLabelColor,
+      marginBottom: 4,
+      textAlign: isRTL ? 'right' : 'left',
+    },
+    phoneFieldInput: {
+      fontSize: sizes.inputSize,
+      color: theme.formInputTextColor,
+      textAlign: isRTL ? 'right' : 'left',
+    },
     saveButton: {
       width: '100%',
       height: sizes.saveButtonHeight,
@@ -236,15 +275,16 @@ const UpdatePhoneModal = ({
   const renderEnterPhone = () => (
     <>
       <Text style={styles.title}>{t('my_profile.change_phone')}</Text>
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>{t('my_profile.phone')}</Text>
-        <CustomTextInput
-          value={phone}
-          onChangeText={setPhone}
-          style={styles.input}
-          keyboardType='phone-pad'
-        />
-      </View>
+      <PhoneField
+        value={phone}
+        onChangeValue={setPhone}
+        onValidityChange={setPhoneValid}
+        label={t('my_profile.phone')}
+        placeholder='50 123 4567'
+        containerStyle={styles.phoneFieldContainer}
+        labelStyle={styles.phoneFieldLabel}
+        inputStyle={styles.phoneFieldInput}
+      />
       {error && <Text style={styles.errorText}>{error}</Text>}
       <TouchableOpacity style={styles.saveButton} onPress={handleSendCode}>
         <Text style={styles.saveButtonText}>{t('common.send_code')}</Text>

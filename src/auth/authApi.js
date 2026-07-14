@@ -134,13 +134,14 @@ export const authApi = {
   },
 
   /**
-   * Simplified registration (new flow): phone + email + password collected
-   * together in one form. Followed by a mandatory phone OTP step — see
+   * Simplified registration (new flow): phone + password mandatory, email +
+   * confirmPassword collected together in one form — `email` is optional
+   * (omit/empty if not given). Followed by a mandatory phone OTP step — see
    * verifyRegistrationPhone below (NOT verifyPhoneRegistration above, which
    * is the legacy phone-first flow's verify endpoint). Rejects with
    * PHONE_ALREADY_REGISTERED / EMAIL_ALREADY_REGISTERED if either is already
    * taken (see src/auth/authErrors.js).
-   * @param {{ phone: string, email: string, password: string, confirmPassword: string }} input
+   * @param {{ phone: string, email?: string, password: string, confirmPassword: string }} input
    * -> { status: 'otp_sent' | 'phone_confirmation_required' }
    */
   register(input) {
@@ -157,7 +158,14 @@ export const authApi = {
    * of a legacy `status` field.
    * @param {{ phone: string, code: string }} input
    * -> { nextStep: 'authenticated' | 'mfa_setup_required' | 'mfa_setup_optional'
-   *    | 'mfa_verification_required', sessionToken?: string }
+   *    | 'mfa_verification_required', sessionToken?: string,
+   *    emailConfirmationSent?: boolean }
+   *
+   * `emailConfirmationSent` is present ONLY if an email was given at
+   * registration (check with `'emailConfirmationSent' in response`, not
+   * truthiness) — true means the confirmation email was actually sent,
+   * false means the send attempt failed (e.g. the email got taken by
+   * someone else while the user was entering the OTP).
    */
   verifyRegistrationPhone(input) {
     return request('/register/verify-phone', {

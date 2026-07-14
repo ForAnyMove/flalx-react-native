@@ -148,10 +148,12 @@ export default function Profile() {
   };
 
   const handleUpdateEmail = (newEmail) => {
-    // Email changes immediately now (session.updateEmailDirect, no
-    // confirmation step) — reflect it in the UI right away, same pattern as
-    // handleUpdatePhone below. The modal closes itself on success.
-    setUserState((prev) => ({ ...prev, email: newEmail }));
+    // Confirmation-based again (session.updateEmail / /change-email/start)
+    // — the address doesn't actually change until the confirmation link is
+    // clicked, so no optimistic local update here. The EMAIL_CHANGED
+    // websocket event (context/webSocketContext.jsx) syncs it once that
+    // actually happens.
+    logInfo(`Email change process initiated for ${newEmail}.`);
   };
 
   const handleUpdatePhone = (newPhone) => {
@@ -629,7 +631,15 @@ export default function Profile() {
           }}
         >
           {[
-            { key: 'email', value: userState?.email, field: 'email' },
+            {
+              key: 'email',
+              value: userState?.email,
+              field: 'email',
+              errorText:
+                userState?.email && session.authUser?.emailVerified === false
+                  ? t('my_profile.email_not_confirmed')
+                  : null,
+            },
             {
               key: 'phone',
               value: userState?.phoneNumber,
@@ -640,6 +650,7 @@ export default function Profile() {
               key={f.key}
               label={t(`my_profile.${f.key}`)}
               value={f.value}
+              errorText={f.errorText}
               onEditPress={() => {
                 if (f.key === 'email') {
                   setUpdateEmailModalVisible(true);
@@ -1338,6 +1349,7 @@ export default function Profile() {
         visible={updateEmailModalVisible}
         onClose={() => setUpdateEmailModalVisible(false)}
         currentEmail={userState?.email}
+        isEmailVerified={session.authUser?.emailVerified}
         onSave={handleUpdateEmail}
         isLoading={isUpdating}
       />
@@ -1355,6 +1367,7 @@ export default function Profile() {
 function InfoField({
   label,
   value,
+  errorText,
   changeInfo,
   onEditPress,
   multiline = false,
@@ -1471,6 +1484,17 @@ function InfoField({
             ]}
           >
             {value}
+          </Text>
+        )}
+        {!editMode && !!errorText && (
+          <Text
+            style={{
+              fontSize: sizes.labelFont,
+              color: themeController.current?.errorTextColor,
+              marginTop: 2,
+            }}
+          >
+            {errorText}
           </Text>
         )}
       </View>

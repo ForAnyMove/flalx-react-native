@@ -19,7 +19,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
 import { logError } from '../../utils/log_util';
 import { useWindowInfo } from '../../context/windowContext';
-import CustomTextInput from '../../components/ui/CustomTextInput';
+import PhoneField from '../../components/ui/PhoneField';
 
 function PrimaryOutlineButton({
   title,
@@ -103,6 +103,7 @@ export default function Step2_PhoneEnroll({
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const [phone, setPhone] = useState('');
+  const [phoneValid, setPhoneValid] = useState(false);
   const [phoneError, setPhoneError] = useState(null);
   const [sending, setSending] = useState(false);
 
@@ -155,15 +156,8 @@ export default function Step2_PhoneEnroll({
     return () => clearTimeout(timer);
   }, []);
 
-  const isValidPhone = useMemo(() => {
-    // Basic validation for E.164 format
-    const phoneRegex = /^\+[1-9]\d{1,14}$/;
-    const phoneRegex2 = /^\[1-9]\d{1,14}$/;
-    return phoneRegex.test(phone.trim()) || phoneRegex2.test(phone.trim());
-  }, [phone]);
-
   const handleSubmit = async () => {
-    if (!isValidPhone) {
+    if (!phoneValid) {
       setPhoneError(t('register.phone_invalid'));
       return;
     }
@@ -252,8 +246,17 @@ export default function Step2_PhoneEnroll({
             {subtitleText}
           </Text>
 
-          <View
-            style={[
+          <PhoneField
+            ref={phoneInputRef}
+            value={phone}
+            onChangeValue={(val) => {
+              setPhone(val);
+              if (phoneError) setPhoneError(null);
+            }}
+            onValidityChange={setPhoneValid}
+            label={t('register.phone_label')}
+            placeholder='50 123 4567'
+            containerStyle={[
               styles.fieldBlock,
               {
                 marginBottom: sizes.fieldBlockMarginBottom,
@@ -265,56 +268,37 @@ export default function Step2_PhoneEnroll({
                 height: sizes.webLandscapeFieldBlockHeight,
               },
             ]}
-          >
-            <Text
-              style={[
-                styles.label,
-                {
-                  fontSize: sizes.labelFontSize,
-                  marginBottom: sizes.labelMarginBottom,
-                  color: theme.formInputLabelColor,
-                  textAlign: isRTL ? 'right' : 'left',
-                },
-                isWebLandscape
-                  ? {
-                    marginBottom: sizes.webLandscapeLabelMarginBottom,
-                  }
-                  : null,
-              ]}
-            >
-              {t('register.phone_label')}
-            </Text>
-            <CustomTextInput
-              ref={phoneInputRef}
-              style={[
-                styles.input,
-                {
-                  fontSize: sizes.inputFontSize,
-                  marginBottom: sizes.inputMarginBottom,
-                  color: theme.formInputTextColor,
-                  textAlign: isRTL ? 'right' : 'left',
-                  backgroundColor: 'transparent',
-                  borderWidth: 0,
-                  marginBottom: sizes.webLandscapeInputMarginBottom,
-                },
-                Platform.OS === 'web' &&
-                isLandscape && {
-                  outlineStyle: 'none',
-                },
-              ]}
-              placeholder='+1234567890'
-              placeholderTextColor={theme.formInputPlaceholderColor}
-              keyboardType='phone-pad'
-              autoCapitalize='none'
-              autoCorrect={false}
-              value={phone}
-              onChangeText={(text) => {
-                setPhone(text);
-                if (phoneError) setPhoneError(null);
-              }}
-              returnKeyType='done'
-            />
-          </View>
+            labelStyle={[
+              styles.label,
+              {
+                fontSize: sizes.labelFontSize,
+                marginBottom: sizes.labelMarginBottom,
+                color: theme.formInputLabelColor,
+                textAlign: isRTL ? 'right' : 'left',
+              },
+              isWebLandscape
+                ? {
+                  marginBottom: sizes.webLandscapeLabelMarginBottom,
+                }
+                : null,
+            ]}
+            inputStyle={[
+              styles.input,
+              {
+                fontSize: sizes.inputFontSize,
+                marginBottom: sizes.inputMarginBottom,
+                color: theme.formInputTextColor,
+                textAlign: isRTL ? 'right' : 'left',
+                backgroundColor: 'transparent',
+                borderWidth: 0,
+                marginBottom: sizes.webLandscapeInputMarginBottom,
+              },
+              Platform.OS === 'web' &&
+              isLandscape && {
+                outlineStyle: 'none',
+              },
+            ]}
+          />
 
           {!!displayError && (
             <Text
@@ -369,7 +353,7 @@ export default function Step2_PhoneEnroll({
               )
             }
             onPress={handleSubmit}
-            disabled={sending || !isValidPhone}
+            disabled={sending || !phoneValid}
           />
         </Animated.View>
       </ScrollView>
