@@ -470,6 +470,14 @@ export default function sessionManager({ setAppLoading } = {}) {
     setUser((prev) => (prev ? { ...prev, ...fields } : prev));
   }
 
+  // Same idea, but for the auth identity object (session.authUser) instead
+  // of the app profile — e.g. EMAIL_CHANGED now carries `emailVerified`
+  // directly, so the Profile "not confirmed" warning can update instantly
+  // without waiting on a full refreshMe() round-trip.
+  function patchLocalAuthUser(fields) {
+    setAuthUser((prev) => (prev ? { ...prev, ...fields } : prev));
+  }
+
   async function deleteUser() {
     try {
       await fetchWithSession({
@@ -644,6 +652,7 @@ export default function sessionManager({ setAppLoading } = {}) {
       mfa,
       authLevel,
       authUser,
+      patchLocalAuthUser,
       serverURL: API_BASE_URL,
 
       // New backend flows

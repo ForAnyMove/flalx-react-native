@@ -337,10 +337,16 @@ export const WebSocketProvider = ({ children }) => {
         // and Supabase applies it right away — both cases land here.
         const email = message.payload?.email;
         if (email) user.patchLocal({ email });
-        // Also refresh authUser.emailVerified (drives the red "not
-        // confirmed" warning in Profile.jsx) — patchLocal only touches the
-        // app profile object, not the auth identity.
-        session.refreshMe();
+        // The payload now carries emailVerified directly (e.g. true once the
+        // confirmation link is clicked) — patch authUser with it instantly
+        // so Profile.jsx's "email not confirmed" warning clears right away,
+        // no need to wait on a full refreshMe() round-trip. Fall back to
+        // refreshMe() only if an event ever omits it.
+        if (typeof message.payload?.emailVerified === 'boolean') {
+          session.patchLocalAuthUser({ emailVerified: message.payload.emailVerified });
+        } else {
+          session.refreshMe();
+        }
         break;
       }
       case 'PROFILE_UPDATED': {

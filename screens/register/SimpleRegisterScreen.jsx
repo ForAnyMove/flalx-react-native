@@ -22,6 +22,7 @@ import CustomPicker from '../../components/ui/CustomPicker';
 import PhoneField from '../../components/ui/PhoneField';
 import Step3_PhoneVerify from './Step3_PhoneVerify';
 import { getAuthErrorMessage } from '../../src/auth/authErrors';
+import { useNotification } from '../../src/render';
 
 function PrimaryOutlineButton({ title, onPress, disabled, buttonStyle, textStyle }) {
   return (
@@ -37,16 +38,22 @@ const EMAIL_RE = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@
  * Simplified registration (new flow): phone + email + password + confirmPassword
  * collected together, followed by a mandatory phone OTP step. Email
  * verification is not mandatory. Once the phone OTP is verified,
- * session.verifyPhoneRegistration already establishes the session and
+ * session.verifyRegistrationPhone already establishes the session and
  * refreshes nextStep — App.js's top-level routing takes over from there
  * (including MfaSetupScreen if the backend requires it), same as
- * MultiStepRegisterScreen.jsx today.
+ * MultiStepRegisterScreen.jsx today. If an email was given, a
+ * "check your email to confirm" (or "confirmation failed") notice is shown
+ * as a non-blocking toast (useNotification#showAlert) at the same moment —
+ * it must never gate leaveRegisterScreen()/nextStep routing behind an "OK"
+ * click, since nextStep (e.g. mfa_setup_required) is what the server
+ * actually requires next.
  *
  * Steps: form | phone_otp
  */
 export default function SimpleRegisterScreen() {
   const { t } = useTranslation();
   const { session, themeController, registerControl, languageController } = useComponentContext();
+  const { showAlert } = useNotification();
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
 
@@ -217,11 +224,6 @@ export default function SimpleRegisterScreen() {
   // countdown reflects the actual remaining time instead of a hardcoded 60s.
   const [otpCooldown, setOtpCooldown] = useState(undefined);
 
-  // Set once verifyRegistrationPhone's response carries `emailConfirmationSent`
-  // (only present if an email was given at registration) — drives the
-  // 'email_confirmation' step below.
-  const [emailConfirmationSent, setEmailConfirmationSent] = useState(null);
-
   // On entering the OTP step, auto-check with manual:false — if a previously
   // sent code is still active, the backend just replies with its remaining
   // expiresInSeconds and does NOT send another SMS (see
@@ -254,24 +256,27 @@ export default function SimpleRegisterScreen() {
       logInfo('[SimpleRegisterScreen] verifyRegistrationPhone response:', resp);
       if (resp?.nextStep && resp.nextStep !== 'login_required') {
         // `emailConfirmationSent` is only present if an email was given at
-        // registration — show the check-your-email step first in that case;
-        // otherwise dismiss this overlay right away so App.js's nextStep
-        // routing (e.g. MfaSetupScreen for 'mfa_setup_required') can take
-        // over — it can't react on its own, registerControl.state is
-        // independent of nextStep.
+        // registration — surface it as a non-blocking toast, never a step
+        // that gates dismissal. nextStep (already applied by
+        // session.verifyRegistrationPhone -> handleAuthResponse -> refreshMe)
+        // is the single source of truth for what happens next — e.g.
+        // MfaSetupScreen for 'mfa_setup_required' — and must not be delayed
+        // behind an "OK" click on an informational notice.
         if (resp && 'emailConfirmationSent' in resp) {
-          setEmailConfirmationSent(resp.emailConfirmationSent);
-          setStep('email_confirmation');
-        } else {
-          registerControl.leaveRegisterScreen();
+          if (resp.emailConfirmationSent) {
+            showAlert(t('register.email_confirmation_sent_subtitle', { email: email.trim() }), 'info');
+          } else {
+            showAlert(t('register.email_confirmation_failed_subtitle'), 'warning');
+          }
         }
+        registerControl.leaveRegisterScreen();
         return { success: true };
       }
       return { success: false, error: getAuthErrorMessage({ code: 'OTP_INVALID' }) };
     } catch (e) {
       return { success: false, error: getAuthErrorMessage(e) };
     }
-  }, [session, phone, registerControl]);
+  }, [session, phone, email, registerControl, showAlert, t]);
 
   const handleSubmit = async () => {
     setPhoneError(null);
@@ -336,30 +341,6 @@ export default function SimpleRegisterScreen() {
           backLabel={t('register.back_to_sign_up')}
           initialCooldown={otpCooldown}
         />
-      </View>
-    );
-  }
-
-  if (step === 'email_confirmation') {
-    const sentOk = emailConfirmationSent === true;
-    return (
-      <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
-        <View style={dynamicStyles.contentBlock}>
-          {sentOk && (
-            <Text style={dynamicStyles.title}>{t('register.email_confirmation_sent_title')}</Text>
-          )}
-          <Text style={dynamicStyles.subtitle}>
-            {sentOk
-              ? t('register.email_confirmation_sent_subtitle', { email: email.trim() })
-              : t('register.email_confirmation_failed_subtitle')}
-          </Text>
-          <PrimaryOutlineButton
-            title={t('common.ok')}
-            onPress={() => registerControl.leaveRegisterScreen()}
-            buttonStyle={dynamicStyles.primaryButton}
-            textStyle={dynamicStyles.primaryButtonText}
-          />
-        </View>
       </View>
     );
   }
