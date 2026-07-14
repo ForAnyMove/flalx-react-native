@@ -324,11 +324,12 @@ export default function sessionManager({ setAppLoading } = {}) {
 
   async function resetPasswordByPhone(input) {
     // input: { resetToken, newPassword, confirmPassword }
-    // -> may carry a sessionToken (auto-login) — route through
-    // handleAuthResponse so that's persisted/refreshed like any other flow.
+    // -> { status: 'password_updated' }. Confirmed: no sessionToken, no
+    // auto-login — the backend revokes ALL of the user's sessions on
+    // success, so this deliberately doesn't touch local auth state; the
+    // caller routes back to sign-in.
     try {
       const resp = await authApi.resetPasswordByPhone(input);
-      await handleAuthResponse(resp);
       return { success: true, ...resp };
     } catch (e) {
       return { success: false, error: getAuthErrorMessage(e) };
@@ -426,6 +427,7 @@ export default function sessionManager({ setAppLoading } = {}) {
   async function verifyPhoneOtp(phone, code) {
     try {
       const resp = await verifyPhoneRegistration({ phone, code });
+      logInfo('verifyPhoneOtp resp:', resp);
       if (
         resp.status === 'authenticated' ||
         resp.status === 'mfa_setup_required' ||

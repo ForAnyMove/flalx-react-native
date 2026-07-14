@@ -405,21 +405,22 @@ export const authApi = {
     });
   },
 
-  /** @param {{ phone: string, code: string }} input -> { status: 'ok', resetToken: string } */
+  /** @param {{ phone: string, code: string }} input -> { status: 'verified', resetToken: string } */
   verifyPasswordResetPhoneOtp(input) {
-    return request('/forgot-password/phone/verify', {
+    return request('/password/verify-phone-reset', {
       method: 'POST',
       body: JSON.stringify(input),
     });
   },
 
   /**
+   * Revokes all of the user's sessions (not just this app_session) — no
+   * auto-login after this, always a fresh, deliberate sign-in.
    * @param {{ resetToken: string, newPassword: string, confirmPassword: string }} input
-   * -> { status: 'ok', sessionToken?: string } (sessionToken only if the backend
-   * auto-logs the user in after reset — treat as optional)
+   * -> { status: 'password_updated' }
    */
   resetPasswordByPhone(input) {
-    return request('/reset-password/phone', {
+    return request('/password/reset-phone', {
       method: 'POST',
       body: JSON.stringify(input),
     });

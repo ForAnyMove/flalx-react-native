@@ -38,6 +38,13 @@ export default function Profile() {
     useComponentContext();
   const [userState, setUserState] = useState(user.current || {});
   const { showError, showInfo } = useNotification();
+  // While unconfirmed, Supabase doesn't actually have the email set on
+  // auth.user yet — the backend surfaces the entered-but-unconfirmed
+  // address separately as authUser.pendingEmail until the confirmation link
+  // is clicked, so display that when there's no confirmed email yet.
+  const displayEmail =
+    userState?.email ||
+    (session.authUser?.emailVerified === false ? session.authUser?.pendingEmail : null);
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
@@ -633,10 +640,10 @@ export default function Profile() {
           {[
             {
               key: 'email',
-              value: userState?.email,
+              value: displayEmail,
               field: 'email',
               errorText:
-                userState?.email && session.authUser?.emailVerified === false
+                displayEmail && session.authUser?.emailVerified === false
                   ? t('my_profile.email_not_confirmed')
                   : null,
             },
@@ -1348,7 +1355,7 @@ export default function Profile() {
       <UpdateEmailModal
         visible={updateEmailModalVisible}
         onClose={() => setUpdateEmailModalVisible(false)}
-        currentEmail={userState?.email}
+        currentEmail={displayEmail}
         isEmailVerified={session.authUser?.emailVerified}
         onSave={handleUpdateEmail}
         isLoading={isUpdating}
