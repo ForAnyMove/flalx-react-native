@@ -156,6 +156,8 @@ export const authApi = {
    * Distinct endpoint from the legacy verifyPhoneRegistration above — this
    * one returns `nextStep` directly (same values as GET /users/me) instead
    * of a legacy `status` field.
+   * `language` (current i18n language) is attached automatically, for the
+   * welcome email the backend sends on success.
    * @param {{ phone: string, code: string }} input
    * -> { nextStep: 'authenticated' | 'mfa_setup_required' | 'mfa_setup_optional'
    *    | 'mfa_verification_required', sessionToken?: string,
@@ -170,7 +172,7 @@ export const authApi = {
   verifyRegistrationPhone(input) {
     return request('/register/verify-phone', {
       method: 'POST',
-      body: JSON.stringify(input),
+      body: JSON.stringify({ ...input, language: currentLanguage() }),
     });
   },
 

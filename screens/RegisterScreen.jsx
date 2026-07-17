@@ -745,6 +745,7 @@ export default function RegisterScreen() {
                     await uploadImage(uris[0]);
                   }
                 }}
+                limitType='avatar'
               />
 
               {/* --- Имя и Фамилия + About--- */}

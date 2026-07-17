@@ -1530,11 +1530,13 @@ export default function ShowJobModal({
                 setAcceptModalVisibleTitle(t('showJob.messages.closeJobTitle'));
                 setAcceptModalVisibleFunc(() => async () => {
                   try {
-                    await jobsController.actions
-                      .deleteJob(currentJobId)
-                      .then(closeModal());
+                    setAppLoading(true);
+                    await jobsController.actions.deleteJob(currentJobId);
+                    closeModal();
                   } catch (err) {
                     logInfo('Ошибка закрытия заявки:', err.message);
+                  } finally {
+                    setAppLoading(false);
                   }
                   setAcceptModalVisible(false);
                 });
@@ -2925,6 +2927,10 @@ export default function ShowJobModal({
         <JobModalWrapper visible={newJobModalVisible} main={false}>
           <NewJobModal
             closeModal={() => setNewJobModalVisible(false)}
+            redirectToWaiting={() => {
+              setNewJobModalVisible(false);
+              closeModal();
+            }}
             editMode={true}
             currentJobId={currentJobId}
             initialJob={currentJobInfo}
@@ -2934,6 +2940,10 @@ export default function ShowJobModal({
         <Modal visible={newJobModalVisible} animationType='slide' transparent>
           <NewJobModal
             closeModal={() => setNewJobModalVisible(false)}
+            redirectToWaiting={() => {
+              setNewJobModalVisible(false);
+              closeModal();
+            }}
             editMode={true}
             currentJobId={currentJobId}
             initialJob={currentJobInfo}

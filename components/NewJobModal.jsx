@@ -467,12 +467,16 @@ export default function NewJobModal({
           .then(() => {
             jobsController.reloadCreator();
             setAppLoading(false);
+            redirectToWaiting?.();
           })
-          .then(() => {
+          .catch((err) => {
             setAppLoading(false);
+            showError(t('errors.unexpected_error'));
           });
+      } else {
+        setAppLoading(false);
+        redirectToWaiting?.();
       }
-      redirectToWaiting?.();
     } else {
       const newJob = {
         type: getTypeIdByKey(type),
@@ -867,6 +871,7 @@ export default function NewJobModal({
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onAdd={handleImageAdd}
+        limitType='jobImages'
       />
     </View>,
     isExperienceRequired ? (
@@ -1421,6 +1426,7 @@ export default function NewJobModal({
                     visible={modalVisible}
                     onClose={() => setModalVisible(false)}
                     onAdd={handleImageAdd}
+                    limitType='jobImages'
                   />
 
                   {isExperienceRequired && (

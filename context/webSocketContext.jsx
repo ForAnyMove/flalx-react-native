@@ -504,6 +504,8 @@ export const WebSocketProvider = ({ children }) => {
       }
       case 'COUPON_EARNED':
       case 'COUPON_USED':
+      case 'COUPON_VOIDED':
+      case 'COUPON_AUTHORIZED':
         couponsManagerController.refreshBalance();
         break;
       default:

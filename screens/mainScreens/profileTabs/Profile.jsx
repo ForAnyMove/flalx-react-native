@@ -22,14 +22,14 @@ import { getUserExportData } from '../../../src/api/dataExport';
 import CouponsModal from '../../../components/CouponsModal';
 import { logError, logInfo } from '../../../utils/log_util';
 import CustomTextInput from '../../../components/ui/CustomTextInput';
-import { ModalContent } from './ModalContent';
 import { Linking } from 'react-native';
 import PaymentMethodsModal from '../../../components/PaymentMethodsModal';
 import UpdateUserDataModal from '../../../components/modals/UpdateUserDataModal';
 import UpdateEmailModal from '../../../components/modals/UpdateEmailModal';
 import UpdatePhoneModal from '../../../components/modals/UpdatePhoneModal';
+import ContactSupportModal from '../../../components/modals/ContactSupportModal';
 import { useNotification } from '../../../src/render';
-import { uploadAvatarForModeration } from '../../../src/api/images';
+import { uploadAvatarForModeration, dismissAvatarRejection } from '../../../src/api/images';
 import { convertImageToBase64 } from '../../../utils/imageToBase64';
 import { exportHtmlToPdf } from '../../../utils/htmlToPdf';
 
@@ -68,8 +68,11 @@ export default function Profile() {
   const [couponsModalVisible, setCouponsModalVisible] = useState(false);
   const [paymentMethodsModalVisible, setPaymentMethodsModalVisible] =
     useState(false);
+  // Feedback used to be its own button/modal — the client pointed out it's
+  // functionally the same as Contact Us, so it's folded in there now as one
+  // of the Category options instead (see ContactSupportModal.jsx). The old
+  // ModalContent `feedback` prop path stays in place, just unreferenced.
   const [contactUsVisible, setContactUsVisible] = useState(false);
-  const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [updateUserDataModalVisible, setUpdateUserDataModalVisible] =
     useState(false);
   const [updateEmailModalVisible, setUpdateEmailModalVisible] = useState(false);
@@ -174,6 +177,7 @@ export default function Profile() {
 
   // Функция загрузки и обновления аватара через сервер
   async function uploadAvatar(uri) {
+    const hadUnreadRejection = userState.rejected_avatar != null;
     try {
       setAppLoading(true);
 
@@ -191,6 +195,13 @@ export default function Profile() {
       user.setPendingAvatar(pending_avatar);
       setUserState((prev) => ({ ...prev, pending_avatar }));
 
+      // Пользователь мог загрузить новый аватар, не обратив внимания на
+      // баджик с rejection — считаем его прочитанным раз он всё равно
+      // перезалил фото.
+      if (hadUnreadRejection) {
+        dismissRejectedAvatar();
+      }
+
       showInfo(t('my_profile.avatar_uploaded_for_moderation'));
     } catch (err) {
       logError('Ошибка загрузки аватара:', err.message);
@@ -198,6 +209,15 @@ export default function Profile() {
     } finally {
       setAppLoading(false);
     }
+  }
+
+  // Помечает текущий rejection как прочитанный (не блокирует UI ожиданием ответа).
+  function dismissRejectedAvatar() {
+    user.patchLocal({ rejected_avatar: null });
+    setUserState((prev) => ({ ...prev, rejected_avatar: null }));
+    dismissAvatarRejection(session).catch((err) => {
+      logError('Ошибка скрытия причины отклонения аватара:', err.message);
+    });
   }
 
   async function downloadExportData() {
@@ -225,7 +245,8 @@ export default function Profile() {
   //   ? ['contact', 'feedback', 'whatsapp']
   //   : ['contact', 'feedback', 'whatsapp'];
   const firstBtnsRow = ['coupons', 'subscription', 'payment'];
-  const secondBtnsRow = ['contact', 'feedback', 'whatsapp'];
+  // 'feedback' dropped — folded into Contact Us as a Category option instead.
+  const secondBtnsRow = ['contact', 'whatsapp'];
 
   const openWhatsApp = async () => {
     const number = await session.getWhatsAppNumber();
@@ -268,11 +289,6 @@ export default function Profile() {
     contact: {
       text: t('my_profile.contact_us'),
       action: () => setContactUsVisible(true),
-      style: 'secondary',
-    },
-    feedback: {
-      text: t('my_profile.feedback'),
-      action: () => setFeedbackVisible(true),
       style: 'secondary',
     },
     whatsapp: {
@@ -451,6 +467,92 @@ export default function Profile() {
                 >
                   {t('my_profile.avatar_pending_subtitle')}
                 </Text>
+              </View>
+            )}
+
+            {/* Баджик с причиной отклонения аватарки */}
+            {userState.rejected_avatar && (
+              <View
+                style={{
+                  marginTop: sizes.infoFieldsGap,
+                  width: '100%',
+                  maxWidth: sizes.avatarSize * 3,
+                  backgroundColor: themeController.current?.formInputBackground,
+                  borderRadius: sizes.infoFieldBorderRadius,
+                  borderWidth: 1,
+                  borderColor: themeController.current?.errorTextColor || '#EF4F6B',
+                  paddingHorizontal: sizes.infoFieldPaddingH,
+                  paddingVertical: sizes.fieldPaddingVertical,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: isRTL ? 'row-reverse' : 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <Text
+                    style={{
+                      flex: 1,
+                      fontSize: sizes.labelFont,
+                      color: themeController.current?.errorTextColor || '#EF4F6B',
+                      fontFamily: 'Rubik-Bold',
+                      textAlign: isRTL ? 'right' : 'left',
+                    }}
+                  >
+                    {userState.rejected_avatar.reason
+                      ? t('my_profile.avatar_rejected_title', {
+                          reason: userState.rejected_avatar.reason,
+                        })
+                      : t('my_profile.avatar_rejected_title_no_reason')}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={dismissRejectedAvatar}
+                    style={{
+                      marginLeft: isRTL ? 0 : sizes.editPanelGap,
+                      marginRight: isRTL ? sizes.editPanelGap : 0,
+                    }}
+                  >
+                    <Image
+                      source={icons.cross}
+                      style={{
+                        width: sizes.iconSize * 0.6,
+                        height: sizes.iconSize * 0.6,
+                        tintColor: themeController.current?.textColor,
+                      }}
+                    />
+                  </TouchableOpacity>
+                </View>
+                {userState.rejected_avatar.comment ? (
+                  <Text
+                    style={{
+                      fontSize: sizes.labelFont * 0.9,
+                      color: themeController.current?.textColorSecondary || '#666',
+                      marginTop: 2,
+                      textAlign: isRTL ? 'right' : 'left',
+                    }}
+                  >
+                    {userState.rejected_avatar.comment}
+                  </Text>
+                ) : null}
+                <TouchableOpacity
+                  onPress={() => {
+                    dismissRejectedAvatar();
+                    setPickerVisible(true);
+                  }}
+                  style={{ marginTop: sizes.editPanelGap, alignSelf: isRTL ? 'flex-end' : 'flex-start' }}
+                >
+                  <Text
+                    style={{
+                      fontSize: sizes.labelFont,
+                      color: themeController.current?.buttonColorPrimaryDefault,
+                      fontFamily: 'Rubik-Medium',
+                    }}
+                  >
+                    {t('my_profile.avatar_rejected_update')}
+                  </Text>
+                </TouchableOpacity>
               </View>
             )}
           </View>
@@ -1298,6 +1400,7 @@ export default function Profile() {
           }
         }}
         theme={themeController.current}
+        limitType='avatar'
       />
 
       {/* Subscriptions */}
@@ -1316,31 +1419,10 @@ export default function Profile() {
         visible={couponsModalVisible}
         onClose={() => setCouponsModalVisible(false)}
       />
-      <Modal
+      <ContactSupportModal
         visible={contactUsVisible}
-        animationType='slide'
-        transparent={isWebLandscape}
-      >
-        <ModalContent
-          title={t('settings.contact_us')}
-          onClose={() => setContactUsVisible(false)}
-          content={''}
-          contactForm={true}
-        />
-      </Modal>
-
-      <Modal
-        visible={feedbackVisible}
-        animationType='slide'
-        transparent={isWebLandscape}
-      >
-        <ModalContent
-          title={t('settings.feedback')}
-          onClose={() => setFeedbackVisible(false)}
-          content={''}
-          feedback={true}
-        />
-      </Modal>
+        onClose={() => setContactUsVisible(false)}
+      />
       <UpdateUserDataModal
         visible={updateUserDataModalVisible}
         onClose={() => setUpdateUserDataModalVisible(false)}

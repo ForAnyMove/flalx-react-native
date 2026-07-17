@@ -318,9 +318,17 @@ export default function SimpleRegisterScreen() {
       setStep('phone_otp');
     } catch (e) {
       const msg = getAuthErrorMessage(e);
-      if (e?.message === 'phone_already_registered' || e?.code === 'PHONE_ALREADY_REGISTERED') {
+      if (
+        e?.message === 'phone_already_registered' ||
+        e?.code === 'PHONE_ALREADY_REGISTERED' ||
+        e?.messageMeaning === 'phone_already_exists'
+      ) {
         setPhoneError(msg);
-      } else if (e?.message === 'email_already_registered' || e?.code === 'EMAIL_ALREADY_REGISTERED') {
+      } else if (
+        e?.message === 'email_already_registered' ||
+        e?.code === 'EMAIL_ALREADY_REGISTERED' ||
+        e?.messageMeaning === 'email_already_exists'
+      ) {
         setEmailError(msg);
       } else {
         setGeneralError(msg);

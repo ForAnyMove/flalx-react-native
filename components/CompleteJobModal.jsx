@@ -458,6 +458,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
               visible={imageModalVisible}
               onClose={() => setImageModalVisible(false)}
               onAdd={handleImageAdd}
+              limitType='jobImages'
             />
           </View>
         </ScrollView>

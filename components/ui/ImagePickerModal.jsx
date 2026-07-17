@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { normalizeImageUri } from '../../utils/supabase/uriHelpers';
 import { useComponentContext } from '../../context/globalAppContext';
@@ -15,12 +16,28 @@ import { logError } from '../../utils/log_util';
 import { useWindowInfo } from '../../context/windowContext';
 import CustomTextInput from './CustomTextInput';
 
-export default function ImagePickerModal({ visible, onClose, onAdd }) {
+export default function ImagePickerModal({ visible, onClose, onAdd, limitType }) {
   const [url, setUrl] = useState('');
-  const { themeController } = useComponentContext();
+  const { themeController, imageLimits } = useComponentContext();
+  const { t } = useTranslation();
   const theme = themeController.current;
   const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  const limits = limitType ? imageLimits?.[limitType] : null;
+  const limitsText = limits
+    ? t('imagePicker.limits', {
+        defaultValue: 'Max size: {{size}} MB. Allowed: {{types}}',
+        size: limits.maxSizeMB,
+        types: (limits.allowedTypes || [])
+          .map((type) => String(type).replace('image/', '').toUpperCase())
+          .join(', '),
+      })
+    : null;
+  const title = t(
+    limitType === 'avatar' ? 'imagePicker.titleAvatar' : 'imagePicker.titleImage',
+    { defaultValue: limitType === 'avatar' ? 'Change avatar' : 'Add image' }
+  );
 
   const sizes = useMemo(() => {
     const scale = isWebLandscape ? scaleByHeight : scaleByHeightMobile;
@@ -133,9 +150,21 @@ export default function ImagePickerModal({ visible, onClose, onAdd }) {
               textAlign: 'center',
             }}
           >
-            {/* Замените на ключ локализации, если он есть */}
-            Change avatar
+            {title}
           </Text>
+
+          {limitsText && (
+            <Text
+              style={{
+                fontSize: sizes.buttonFontSize * 0.8,
+                color: theme.unactiveTextColor,
+                textAlign: 'center',
+                marginBottom: sizes.buttonMarginBottom,
+              }}
+            >
+              {limitsText}
+            </Text>
+          )}
 
           <TouchableOpacity
             onPress={pickImageFromDevice}

@@ -285,7 +285,13 @@ export default function jobsManager({ session, user, geolocation }) {
   async function noticeJobRejectionAsCreator(jobId) {
     try {
       await noticeJobRejection(jobId, session);
-      setCreatorWaiting((prev) => prev.filter((job) => job.status !== 'rejected'));
+      setCreatorWaiting((prev) =>
+        prev
+          .filter((job) => !(job.id === jobId && job.status === 'rejected'))
+          .map((job) =>
+            job.id === jobId ? { ...job, isRejectionNoticedByUser: true } : job
+          )
+      );
     } catch (e) {
       logInfo('Error noticing job rejection as creator:', e);
     }

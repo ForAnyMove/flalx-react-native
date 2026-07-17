@@ -39,6 +39,7 @@ const KNOWN_MESSAGE_KEYS = new Set([
   'email_already_registered',
   'rate_limited',
   'email_already_exists',
+  'phone_already_exists',
 ]);
 
 /**
@@ -63,8 +64,12 @@ const CODE_FALLBACK_KEY = {
   PHONE_ALREADY_REGISTERED: 'phone_already_registered',
   EMAIL_ALREADY_REGISTERED: 'email_already_registered',
   RATE_LIMITED: 'rate_limited',
-  // Coarse — CONFLICT could in principle cover other future conflicts too,
-  // but email_already_exists is the only one seen from the backend so far.
+  // Coarse fallback for CONFLICT — only used if `messageMeaning`/`message`
+  // aren't one of the precise slugs above. The backend has sent CONFLICT for
+  // both email_already_exists and phone_already_exists (each disambiguated
+  // via messageMeaning); default to the email variant since it was seen
+  // first and is the more common case, but this is a guess if messageMeaning
+  // is ever missing on a CONFLICT response.
   CONFLICT: 'email_already_exists',
 };
 

@@ -1,6 +1,18 @@
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 
+// String.fromCharCode.apply(null, bytes) blows the call stack for large
+// arrays (each byte becomes a separate call argument) — reliably crashes on
+// multi-MB images with "Maximum call stack size exceeded". Chunk it instead.
+function bytesToBinaryString(bytes) {
+    const chunkSize = 0x8000; // 32768
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+    }
+    return binary;
+}
+
 /**
  * Конвертирует URI или Blob изображения в base64 строку
  * @param {string|object} input - URI изображения (file://, blob:, data:, http://) или объект {blob, ext} / {uri}
@@ -18,7 +30,7 @@ export async function convertImageToBase64(input) {
             fileType = input.ext || 'jpg';
             const arrayBuffer = await blob.arrayBuffer();
             const bytes = new Uint8Array(arrayBuffer);
-            base64 = btoa(String.fromCharCode.apply(null, bytes));
+            base64 = btoa(bytesToBinaryString(bytes));
             return { base64, fileType };
         } else if (input.uri) {
             // Мобилка: объект с uri из normalizeImageUri
@@ -47,7 +59,7 @@ export async function convertImageToBase64(input) {
             fileType = blob.type.split('/')[1] || 'jpg';
             const arrayBuffer = await blob.arrayBuffer();
             const bytes = new Uint8Array(arrayBuffer);
-            base64 = btoa(String.fromCharCode.apply(null, bytes));
+            base64 = btoa(bytesToBinaryString(bytes));
         }
     } else {
         // Mobile: читать из FileSystem
