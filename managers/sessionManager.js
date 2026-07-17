@@ -54,7 +54,14 @@ export default function sessionManager({ setAppLoading } = {}) {
   const [appSessionToken, setAppSessionToken] = useState(null);
   const [authLevel, setAuthLevel] = useState('aal1');
   // Full mfa object from /users/me: { policy, enabled, required, setupRequired,
-  // verificationRequired, allowedFactors, recommendedFactor?, availableFactors? }
+  // verificationRequired, allowedFactors, recommendedFactor?, availableFactors?,
+  // setupRecommended? }. MFA is now optional (nextStep goes straight to
+  // 'authenticated' even with no MFA set up) — setupRecommended (ASSUMED
+  // present here and on /register/verify-phone + /auth/mfa/verify, not
+  // confirmed against real backend source) signals whether to nudge the user
+  // to set it up anyway via a dismissible in-app popup rather than a
+  // blocking screen. Read as session.mfa?.setupRecommended — see
+  // AppMainScreen.jsx.
   const [mfa, setMfa] = useState(null);
   // Drives app-level routing (see App.js): 'authenticated' | 'mfa_setup_required'
   // | 'mfa_verification_required' | 'login_required'.
@@ -360,7 +367,13 @@ export default function sessionManager({ setAppLoading } = {}) {
 
   async function unenrollMfa(input) {
     // input: { factorId } -> { status: 'ok' }
-    return authApi.unenrollMfa(input);
+    const result = await authApi.unenrollMfa(input);
+    // Unlike verifyMfa, this doesn't go through handleAuthResponse — nothing
+    // else refreshes mfa.enabled/nextStep after a factor is removed, so do
+    // it explicitly here (Profile's Security block reads session.mfa.enabled
+    // reactively and needs this to flip back to "off").
+    await refreshMe();
+    return result;
   }
 
   async function listMfaFactors() {

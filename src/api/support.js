@@ -37,11 +37,11 @@ export async function sendFeedback(session, messageData) {
 
 // Unified Contact Support form (components/modals/ContactSupportModal.jsx),
 // replacing the separate Contact Us / Feedback modals — category folds in
-// what "Feedback" used to be as its own button. ASSUMED endpoint, not yet
-// confirmed against a real backend route — flag/update once given the real
-// contract. email/phone aren't sent explicitly: the backend already knows
-// the account's contact details from the session, `contactMethod` just says
-// which one to reply through.
+// what "Feedback" used to be as its own button. Endpoint confirmed
+// implemented server-side against this contract (2026-07-17). email/phone
+// aren't sent explicitly: the backend already knows the account's contact
+// details from the session, `contactMethod` just says which one to reply
+// through.
 export async function sendSupportRequest(session, requestData) {
     try {
         const { category, subject, message, contactMethod, preferredTime } = requestData;

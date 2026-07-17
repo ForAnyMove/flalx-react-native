@@ -28,6 +28,8 @@ import UpdateUserDataModal from '../../../components/modals/UpdateUserDataModal'
 import UpdateEmailModal from '../../../components/modals/UpdateEmailModal';
 import UpdatePhoneModal from '../../../components/modals/UpdatePhoneModal';
 import ContactSupportModal from '../../../components/modals/ContactSupportModal';
+import MfaSetupModal from '../../../components/modals/MfaSetupModal';
+import MfaDisableModal from '../../../components/modals/MfaDisableModal';
 import { useNotification } from '../../../src/render';
 import { uploadAvatarForModeration, dismissAvatarRejection } from '../../../src/api/images';
 import { convertImageToBase64 } from '../../../utils/imageToBase64';
@@ -77,6 +79,8 @@ export default function Profile() {
     useState(false);
   const [updateEmailModalVisible, setUpdateEmailModalVisible] = useState(false);
   const [updatePhoneModalVisible, setUpdatePhoneModalVisible] = useState(false);
+  const [mfaSetupModalVisible, setMfaSetupModalVisible] = useState(false);
+  const [mfaDisableModalVisible, setMfaDisableModalVisible] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const [baseInfoEditMode, setBaseInfoEditMode] = useState(false);
@@ -731,9 +735,13 @@ export default function Profile() {
         />
         <View
           style={{
-            flexDirection: isWebLandscape ? 'row' : 'column',
-            flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
-            justifyContent: isWebLandscape ? 'space-between' : 'center',
+            // Always side-by-side (not just web-landscape) so the row below
+            // frees up for the Security block — see InfoField's width logic
+            // further down for the matching field==='email'||'phoneNumber'
+            // case.
+            flexDirection: isRTL ? 'row-reverse' : 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
             gap: sizes.infoFieldsGap,
             direction: isRTL ? 'rtl' : 'ltr',
             width: '100%',
@@ -780,6 +788,170 @@ export default function Profile() {
               field={f.field}
             />
           ))}
+        </View>
+        <View
+          style={[
+            styles.breakLine,
+            {
+              backgroundColor: themeController.current?.breakLineColor,
+              marginVertical: sizes.breakLineMarginVertical,
+            },
+          ]}
+        />
+
+        {/* Security */}
+        <View style={{ width: '100%', marginBottom: sizes.infoFieldsGap }}>
+          <Text
+            style={{
+              fontSize: sizes.btnFont,
+              fontFamily: 'Rubik-SemiBold',
+              color: themeController.current?.textColor,
+              textAlign: isRTL ? 'right' : 'left',
+              marginBottom: 2,
+            }}
+          >
+            {t('my_profile.security.title')}
+          </Text>
+          <Text
+            style={{
+              fontSize: sizes.labelFont,
+              color: themeController.current?.unactiveTextColor,
+              textAlign: isRTL ? 'right' : 'left',
+            }}
+          >
+            {t('my_profile.security.subtitle')}
+          </Text>
+        </View>
+        <View
+          style={{
+            width: '100%',
+            backgroundColor: themeController.current?.formInputBackground,
+            borderRadius: sizes.infoFieldBorderRadius,
+            padding: sizes.infoFieldPaddingH,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: sizes.fieldFont,
+              fontFamily: 'Rubik-SemiBold',
+              color: themeController.current?.textColor,
+              textAlign: isRTL ? 'right' : 'left',
+              marginBottom: sizes.labelMarginBottom,
+            }}
+          >
+            {t('my_profile.security.mfa_title')}
+          </Text>
+          <View
+            style={{
+              flexDirection: isRTL ? 'row-reverse' : 'row',
+              alignItems: 'center',
+              alignSelf: isRTL ? 'flex-end' : 'flex-start',
+              backgroundColor: session.mfa?.enabled
+                ? `${themeController.current?.verifiedMarkerColor}26`
+                : `${themeController.current?.unactiveTextColor}26`,
+              paddingHorizontal: sizes.labelMarginBottom * 2,
+              paddingVertical: 4,
+              borderRadius: 20,
+              marginBottom: sizes.labelMarginBottom * 2,
+            }}
+          >
+            <View
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: session.mfa?.enabled
+                  ? themeController.current?.verifiedMarkerColor
+                  : themeController.current?.unactiveTextColor,
+                marginRight: isRTL ? 0 : 6,
+                marginLeft: isRTL ? 6 : 0,
+              }}
+            />
+            <Text
+              style={{
+                fontSize: sizes.labelFont,
+                color: themeController.current?.textColor,
+                fontFamily: 'Rubik-Medium',
+              }}
+            >
+              {t('my_profile.security.status_label')}{' '}
+              {session.mfa?.enabled
+                ? t('my_profile.security.status_on')
+                : t('my_profile.security.status_off')}
+            </Text>
+          </View>
+          <Text
+            style={{
+              fontSize: sizes.labelFont,
+              color: themeController.current?.unactiveTextColor,
+              textAlign: isRTL ? 'right' : 'left',
+              marginBottom: sizes.infoFieldsGap * 2,
+            }}
+          >
+            {session.mfa?.enabled
+              ? t('my_profile.security.description_on')
+              : t('my_profile.security.description_off')}
+          </Text>
+          {session.mfa?.enabled ? (
+            <TouchableOpacity
+              onPress={() => setMfaDisableModalVisible(true)}
+              style={[
+                styles.secondaryReverseBtn,
+                {
+                  backgroundColor: themeController.current?.backgroundColor,
+                  borderColor: themeController.current?.errorTextColor,
+                  height: sizes.btnHeight,
+                  width: isWebLandscape ? undefined : '100%',
+                  minWidth: isWebLandscape ? 160 : undefined,
+                  alignSelf: isWebLandscape
+                    ? isRTL
+                      ? 'flex-end'
+                      : 'flex-start'
+                    : 'stretch',
+                  paddingHorizontal: isWebLandscape ? sizes.infoFieldPaddingH : 0,
+                  borderRadius: sizes.infoFieldBorderRadius,
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  color: themeController.current?.errorTextColor,
+                  fontSize: sizes.btnFont,
+                }}
+              >
+                {t('my_profile.security.disable_button')}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              onPress={() => setMfaSetupModalVisible(true)}
+              style={[
+                styles.primaryBtn,
+                {
+                  backgroundColor: themeController.current?.buttonColorPrimaryDefault,
+                  height: sizes.btnHeight,
+                  width: isWebLandscape ? undefined : '100%',
+                  minWidth: isWebLandscape ? 160 : undefined,
+                  alignSelf: isWebLandscape
+                    ? isRTL
+                      ? 'flex-end'
+                      : 'flex-start'
+                    : 'stretch',
+                  paddingHorizontal: isWebLandscape ? sizes.infoFieldPaddingH : 0,
+                  borderRadius: sizes.infoFieldBorderRadius,
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  color: themeController.current?.buttonTextColorPrimary,
+                  fontSize: sizes.btnFont,
+                }}
+              >
+                {t('my_profile.security.setup_button')}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
         <View
           style={[
@@ -1423,6 +1595,16 @@ export default function Profile() {
         visible={contactUsVisible}
         onClose={() => setContactUsVisible(false)}
       />
+      <MfaSetupModal
+        visible={mfaSetupModalVisible}
+        onClose={() => setMfaSetupModalVisible(false)}
+        onDone={() => setMfaSetupModalVisible(false)}
+      />
+      <MfaDisableModal
+        visible={mfaDisableModalVisible}
+        onClose={() => setMfaDisableModalVisible(false)}
+        onDisabled={() => setMfaDisableModalVisible(false)}
+      />
       <UpdateUserDataModal
         visible={updateUserDataModalVisible}
         onClose={() => setUpdateUserDataModalVisible(false)}
@@ -1492,11 +1674,11 @@ function InfoField({
         styles.profileInfoString,
         {
           width:
-            Platform.OS === 'web' && isLandscape
-              ? multiline || field === 'email' || field === 'phoneNumber'
+            field === 'email' || field === 'phoneNumber'
+              ? '48.5%'
+              : Platform.OS === 'web' && isLandscape && multiline
                 ? '48.5%'
-                : '100%'
-              : '100%',
+                : '100%',
           height: btnHeight,
           marginBottom: fieldMargin,
           backgroundColor: editMode
