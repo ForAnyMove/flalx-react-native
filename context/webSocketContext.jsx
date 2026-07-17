@@ -65,22 +65,21 @@ export const WebSocketProvider = ({ children }) => {
 
   useEffect(() => {
     if (!session || !user.current?.id || !session.serverURL) return;
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
 
-    wsRef.current = connectWebSocket(
-      user.current?.id,
-      session.serverURL,
-      (data) => {
-        handleMessageReceived(data);
-      }
-    );
-
-    wsRef.current.onopen = () => setConnected(true);
-    wsRef.current.onclose = () => setConnected(false);
-    wsRef.current.onerror = () => setConnected(false);
+    // connectWebSocket now owns its own heartbeat + auto-reconnect lifecycle
+    // (see src/services/webSocketService.js) — this effect just needs to
+    // hand it a fresh connection and tear it down on cleanup, no manual
+    // readyState/handler juggling needed here anymore.
+    wsRef.current = connectWebSocket({
+      userId: user.current?.id,
+      serverUrl: session.serverURL,
+      onMessage: (data) => handleMessageReceived(data),
+      onStatusChange: (isConnected) => setConnected(isConnected),
+    });
 
     return () => {
-      wsRef.current && wsRef.current.close();
+      wsRef.current?.disconnect();
+      wsRef.current = null;
     };
   }, [session?.serverURL, user.current?.id]);
 
