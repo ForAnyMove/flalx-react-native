@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useMemo } from 'react';
 import { useComponentContext } from '../context/globalAppContext';
+import { useWebSocket } from '../context/webSocketContext';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useWindowInfo } from '../context/windowContext';
@@ -16,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 
 export default function Header({ switchToProfile }) {
   const { themeController, user, languageController } = useComponentContext();
+  const { connected: wsConnected } = useWebSocket();
   const { width, height, isLandscape } = useWindowInfo();
   const userAvatar = user.current?.pending_avatar || user.current?.avatar;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -32,6 +34,7 @@ export default function Header({ switchToProfile }) {
       logoFontSize: isWebLandscape ? scaleByHeight(24, height) : scaleByHeightMobile(24, height),
       avatarSize: isWebLandscape ? scaleByHeight(32, height) : scaleByHeightMobile(32, height),
       avatarBorderRadius: isWebLandscape ? scaleByHeight(16, height) : scaleByHeightMobile(16, height),
+      wsIndicatorBorderWidth: isWebLandscape ? scaleByHeight(2, height) : scaleByHeightMobile(2, height),
     };
   }, [isWebLandscape, height]);
 
@@ -82,6 +85,13 @@ export default function Header({ switchToProfile }) {
             width: sizes.avatarSize,
             height: sizes.avatarSize,
             borderRadius: sizes.avatarBorderRadius,
+            // TEMP debug indicator (prod WS-drop investigation): green while
+            // the websocket is connected, red once it's dropped. Remove once
+            // the connection-stability issue is confirmed/resolved.
+            borderWidth: sizes.wsIndicatorBorderWidth,
+            borderColor: wsConnected
+              ? themeController.current?.verifiedMarkerColor
+              : themeController.current?.errorTextColor,
           }}
         />
       </TouchableOpacity>

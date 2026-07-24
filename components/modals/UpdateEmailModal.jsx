@@ -15,12 +15,22 @@ import { useWindowInfo } from '../../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
 import CustomTextInput from '../ui/CustomTextInput';
+import { getResendCooldownUntil, setResendCooldownUntil } from '../../src/auth/emailResendCooldown';
+
+const RESEND_COOLDOWN_MS = 2 * 60 * 1000;
+
+function formatMMSS(totalSeconds) {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
 
 const UpdateEmailModal = ({
   visible,
   onClose,
   onSave,
   currentEmail,
+  isEmailVerified,
   isLoading,
 }) => {
   const { t } = useTranslation();
@@ -30,41 +40,99 @@ const UpdateEmailModal = ({
   const isRTL = languageController.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
+  const [step, setStep] = useState('enterEmail'); // 'enterEmail' | 'success'
   const [email, setEmail] = useState('');
   const [error, setError] = useState(null);
   const [internalLoading, setInternalLoading] = useState(false);
+  const [cooldownUntil, setCooldownUntil] = useState(null);
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
 
   useEffect(() => {
-    if (visible) {
-      setEmail(currentEmail || '');
-      setError(null);
-      setInternalLoading(false);
-    }
+    if (!visible) return;
+    setStep('enterEmail');
+    setEmail(currentEmail || '');
+    setError(null);
+    setInternalLoading(false);
+    (async () => {
+      const until = currentEmail ? await getResendCooldownUntil(currentEmail) : null;
+      setCooldownUntil(until);
+    })();
   }, [visible, currentEmail]);
 
+  // Ticking countdown display for the resend cooldown, seeded from the
+  // persisted target timestamp (survives reloads — see emailResendCooldown.js).
+  useEffect(() => {
+    if (!cooldownUntil) {
+      setRemainingSeconds(0);
+      return;
+    }
+    const tick = () => {
+      const secs = Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000));
+      setRemainingSeconds(secs);
+      if (secs <= 0) {
+        setCooldownUntil(null);
+      }
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [cooldownUntil]);
+
+  const trimmedEmail = email.trim();
+  const trimmedCurrentEmail = (currentEmail || '').trim();
+  // The account's current email is unconfirmed and the field still shows
+  // that same address (untouched) — offer to resend instead of "change",
+  // since there's nothing to change yet.
+  const isUnverifiedSameEmail =
+    isEmailVerified === false && !!trimmedCurrentEmail && trimmedEmail === trimmedCurrentEmail;
+  const inCooldown = isUnverifiedSameEmail && remainingSeconds > 0;
+
   const handleSave = async () => {
-    if (email === currentEmail) {
+    if (isUnverifiedSameEmail) {
+      if (inCooldown) return;
+      setError(null);
+      setInternalLoading(true);
+      const result = await user.updateEmail(trimmedCurrentEmail);
+      setInternalLoading(false);
+      if (result.success) {
+        const until = Date.now() + RESEND_COOLDOWN_MS;
+        setCooldownUntil(until);
+        await setResendCooldownUntil(trimmedCurrentEmail, until);
+        setStep('success');
+      } else {
+        setError(result.error || t('errors.unexpected_error'));
+      }
+      return;
+    }
+
+    if (trimmedEmail === trimmedCurrentEmail) {
       setError(t('errors.email_not_changed'));
       return;
     }
     // Basic email validation
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
       setError(t('errors.invalid_email'));
       return;
     }
 
     setError(null);
     setInternalLoading(true);
-    const result = await user.updateEmailDirect(email);
+    const result = await user.updateEmail(trimmedEmail);
     setInternalLoading(false);
 
     if (result.success) {
-      onSave(email);
-      onClose();
+      onSave(trimmedEmail);
+      setStep('success');
     } else {
       setError(result.error || t('errors.unexpected_error'));
     }
   };
+
+  const saveButtonLabel = isUnverifiedSameEmail
+    ? (inCooldown
+      ? t('my_profile.resend_confirmation_in', { time: formatMMSS(remainingSeconds) })
+      : t('my_profile.resend_confirmation_email'))
+    : t('common.save');
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -91,6 +159,9 @@ const UpdateEmailModal = ({
       continueButtonTextSize: scale(20),
       errorTextSize: scale(14),
       errorTextMarginBottom: scale(12),
+      successIconSize: scale(64),
+      successTextSize: scale(16),
+      successTextMarginTop: scale(16),
     };
   }, [height, isWebLandscape]);
 
@@ -160,6 +231,7 @@ const UpdateEmailModal = ({
       borderRadius: sizes.borderRadius,
       justifyContent: 'center',
       alignItems: 'center',
+      opacity: inCooldown ? 0.6 : 1,
     },
     saveButtonText: {
       color: theme.buttonTextColorPrimary,
@@ -183,7 +255,59 @@ const UpdateEmailModal = ({
       marginBottom: sizes.errorTextMarginBottom,
       alignSelf: 'flex-start',
     },
+    successContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    successIcon: {
+      width: sizes.successIconSize,
+      height: sizes.successIconSize,
+      tintColor: theme.primaryColor,
+    },
+    successText: {
+      fontSize: sizes.successTextSize,
+      color: theme.textColor,
+      textAlign: 'center',
+      marginTop: sizes.successTextMarginTop,
+      fontFamily: 'Rubik-Regular',
+    },
   });
+
+  const renderEnterEmail = () => (
+    <>
+      <Text style={styles.title}>{t('my_profile.change_email')}</Text>
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>{t('my_profile.email')}</Text>
+        <CustomTextInput
+          value={email}
+          onChangeText={(text) => {
+            setEmail(text);
+            if (error) setError(null);
+          }}
+          style={styles.input}
+          keyboardType='email-address'
+          autoCapitalize='none'
+        />
+      </View>
+      {error && <Text style={styles.errorText}>{error}</Text>}
+      <TouchableOpacity
+        style={styles.saveButton}
+        onPress={handleSave}
+        disabled={inCooldown}
+      >
+        <Text style={styles.saveButtonText}>{saveButtonLabel}</Text>
+      </TouchableOpacity>
+    </>
+  );
+
+  const renderSuccess = () => (
+    <View style={styles.successContainer}>
+      <Image source={icons.checkDefault} style={styles.successIcon} />
+      <Text style={styles.successText}>
+        {t('my_profile.email_change_sent', { email: trimmedEmail })}
+      </Text>
+    </View>
+  );
 
   return (
     <Modal visible={visible} transparent={true} animationType='fade'>
@@ -198,21 +322,7 @@ const UpdateEmailModal = ({
             <Image source={icons.cross} style={styles.crossIcon} />
           </TouchableOpacity>
 
-          <Text style={styles.title}>{t('my_profile.change_email')}</Text>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>{t('my_profile.email')}</Text>
-            <CustomTextInput
-              value={email}
-              onChangeText={setEmail}
-              style={styles.input}
-              keyboardType='email-address'
-              autoCapitalize='none'
-            />
-          </View>
-          {error && <Text style={styles.errorText}>{error}</Text>}
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-            <Text style={styles.saveButtonText}>{t('common.save')}</Text>
-          </TouchableOpacity>
+          {step === 'enterEmail' ? renderEnterEmail() : renderSuccess()}
         </View>
       </View>
     </Modal>

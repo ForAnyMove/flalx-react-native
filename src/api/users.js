@@ -96,6 +96,7 @@ async function getRevealProduct(session) {
  *     allowedFactors: Array<'totp' | 'phone'>,
  *     recommendedFactor?: 'totp' | 'phone',
  *     availableFactors?: Array<{ id: string, type: 'totp' | 'phone', phone?: string }>,
+ *     setupRecommended?: boolean,
  *   },
  *   nextStep: 'authenticated' | 'mfa_setup_required' | 'mfa_verification_required' | 'login_required',
  * }>}

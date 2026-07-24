@@ -65,22 +65,21 @@ export const WebSocketProvider = ({ children }) => {
 
   useEffect(() => {
     if (!session || !user.current?.id || !session.serverURL) return;
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
 
-    wsRef.current = connectWebSocket(
-      user.current?.id,
-      session.serverURL,
-      (data) => {
-        handleMessageReceived(data);
-      }
-    );
-
-    wsRef.current.onopen = () => setConnected(true);
-    wsRef.current.onclose = () => setConnected(false);
-    wsRef.current.onerror = () => setConnected(false);
+    // connectWebSocket now owns its own heartbeat + auto-reconnect lifecycle
+    // (see src/services/webSocketService.js) — this effect just needs to
+    // hand it a fresh connection and tear it down on cleanup, no manual
+    // readyState/handler juggling needed here anymore.
+    wsRef.current = connectWebSocket({
+      userId: user.current?.id,
+      serverUrl: session.serverURL,
+      onMessage: (data) => handleMessageReceived(data),
+      onStatusChange: (isConnected) => setConnected(isConnected),
+    });
 
     return () => {
-      wsRef.current && wsRef.current.close();
+      wsRef.current?.disconnect();
+      wsRef.current = null;
     };
   }, [session?.serverURL, user.current?.id]);
 
@@ -337,6 +336,16 @@ export const WebSocketProvider = ({ children }) => {
         // and Supabase applies it right away — both cases land here.
         const email = message.payload?.email;
         if (email) user.patchLocal({ email });
+        // The payload now carries emailVerified directly (e.g. true once the
+        // confirmation link is clicked) — patch authUser with it instantly
+        // so Profile.jsx's "email not confirmed" warning clears right away,
+        // no need to wait on a full refreshMe() round-trip. Fall back to
+        // refreshMe() only if an event ever omits it.
+        if (typeof message.payload?.emailVerified === 'boolean') {
+          session.patchLocalAuthUser({ emailVerified: message.payload.emailVerified });
+        } else {
+          session.refreshMe();
+        }
         break;
       }
       case 'AVATAR_APPROVED': {
@@ -525,6 +534,8 @@ export const WebSocketProvider = ({ children }) => {
       }
       case 'COUPON_EARNED':
       case 'COUPON_USED':
+      case 'COUPON_VOIDED':
+      case 'COUPON_AUTHORIZED':
         couponsManagerController.refreshBalance();
         break;
       default:

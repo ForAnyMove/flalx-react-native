@@ -54,7 +54,14 @@ export default function sessionManager({ setAppLoading } = {}) {
   const [appSessionToken, setAppSessionToken] = useState(null);
   const [authLevel, setAuthLevel] = useState('aal1');
   // Full mfa object from /users/me: { policy, enabled, required, setupRequired,
-  // verificationRequired, allowedFactors, recommendedFactor?, availableFactors? }
+  // verificationRequired, allowedFactors, recommendedFactor?, availableFactors?,
+  // setupRecommended? }. MFA is now optional (nextStep goes straight to
+  // 'authenticated' even with no MFA set up) — setupRecommended (ASSUMED
+  // present here and on /register/verify-phone + /auth/mfa/verify, not
+  // confirmed against real backend source) signals whether to nudge the user
+  // to set it up anyway via a dismissible in-app popup rather than a
+  // blocking screen. Read as session.mfa?.setupRecommended — see
+  // AppMainScreen.jsx.
   const [mfa, setMfa] = useState(null);
   // Drives app-level routing (see App.js): 'authenticated' | 'mfa_setup_required'
   // | 'mfa_verification_required' | 'login_required'.
@@ -324,11 +331,12 @@ export default function sessionManager({ setAppLoading } = {}) {
 
   async function resetPasswordByPhone(input) {
     // input: { resetToken, newPassword, confirmPassword }
-    // -> may carry a sessionToken (auto-login) — route through
-    // handleAuthResponse so that's persisted/refreshed like any other flow.
+    // -> { status: 'password_updated' }. Confirmed: no sessionToken, no
+    // auto-login — the backend revokes ALL of the user's sessions on
+    // success, so this deliberately doesn't touch local auth state; the
+    // caller routes back to sign-in.
     try {
       const resp = await authApi.resetPasswordByPhone(input);
-      await handleAuthResponse(resp);
       return { success: true, ...resp };
     } catch (e) {
       return { success: false, error: getAuthErrorMessage(e) };
@@ -359,7 +367,13 @@ export default function sessionManager({ setAppLoading } = {}) {
 
   async function unenrollMfa(input) {
     // input: { factorId } -> { status: 'ok' }
-    return authApi.unenrollMfa(input);
+    const result = await authApi.unenrollMfa(input);
+    // Unlike verifyMfa, this doesn't go through handleAuthResponse — nothing
+    // else refreshes mfa.enabled/nextStep after a factor is removed, so do
+    // it explicitly here (Profile's Security block reads session.mfa.enabled
+    // reactively and needs this to flip back to "off").
+    await refreshMe();
+    return result;
   }
 
   async function listMfaFactors() {
@@ -426,6 +440,7 @@ export default function sessionManager({ setAppLoading } = {}) {
   async function verifyPhoneOtp(phone, code) {
     try {
       const resp = await verifyPhoneRegistration({ phone, code });
+      logInfo('verifyPhoneOtp resp:', resp);
       if (
         resp.status === 'authenticated' ||
         resp.status === 'mfa_setup_required' ||
@@ -468,6 +483,14 @@ export default function sessionManager({ setAppLoading } = {}) {
   // profile record for those fields (see auth change-phone/change-email flows).
   function patchLocalUser(fields) {
     setUser((prev) => (prev ? { ...prev, ...fields } : prev));
+  }
+
+  // Same idea, but for the auth identity object (session.authUser) instead
+  // of the app profile — e.g. EMAIL_CHANGED now carries `emailVerified`
+  // directly, so the Profile "not confirmed" warning can update instantly
+  // without waiting on a full refreshMe() round-trip.
+  function patchLocalAuthUser(fields) {
+    setAuthUser((prev) => (prev ? { ...prev, ...fields } : prev));
   }
 
   async function deleteUser() {
@@ -644,6 +667,7 @@ export default function sessionManager({ setAppLoading } = {}) {
       mfa,
       authLevel,
       authUser,
+      patchLocalAuthUser,
       serverURL: API_BASE_URL,
 
       // New backend flows

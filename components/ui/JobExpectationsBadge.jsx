@@ -4,12 +4,10 @@ import { icons } from '../../constants/icons';
 import { useComponentContext } from '../../context/globalAppContext';
 import { useWindowInfo } from '../../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
-import { formatLocalDateTime, formatTimezoneLabel } from '../../utils/datetimeTimezone';
 
 export default function JobExpectationsBadge({ expectations, isRTL, iconStyle, textStyle, badgeStyle, containerStyle }) {
-  const { themeController, languageController } = useComponentContext();
+  const { themeController } = useComponentContext();
   const theme = themeController.current;
-  const locale = languageController?.current === 'he' ? 'he-IL' : 'en-US';
   const { height, isLandscape } = useWindowInfo();
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -35,30 +33,17 @@ export default function JobExpectationsBadge({ expectations, isRTL, iconStyle, t
     proposed_price,
     proposed_time_from,
     proposed_time_to,
-    proposed_time_from_local,
-    proposed_time_to_local,
-    source_timezone,
   } = expectations;
   if (!proposed_price && !proposed_time_from && !proposed_time_to) return null;
 
-  const formatDateTime = (dateString, localDateTime) => {
-    if (localDateTime) {
-      const formatted = formatLocalDateTime(localDateTime, locale, true);
-      return source_timezone ? `${formatted}, ${formatTimezoneLabel(source_timezone)}` : formatted;
-    }
+  // Always render from the absolute UTC instant and let the device convert
+  // it to the viewer's own local time (like Waiting.jsx's job cards already
+  // do) — never the raw source wall-clock + timezone name, which is
+  // meaningless to whoever's actually looking at the card.
+  const formatDateTime = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return dateString;
-    if (source_timezone) {
-      const formatted = new Intl.DateTimeFormat(locale, {
-        day: '2-digit',
-        month: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: source_timezone,
-      }).format(date);
-      return `${formatted}, ${formatTimezoneLabel(source_timezone)}`;
-    }
 
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -85,14 +70,14 @@ export default function JobExpectationsBadge({ expectations, isRTL, iconStyle, t
   let dateText = '';
   if (proposed_time_from && proposed_time_to) {
     if (proposed_time_from === proposed_time_to) {
-      dateText = formatDateTime(proposed_time_from, proposed_time_from_local);
+      dateText = formatDateTime(proposed_time_from);
     } else {
-      dateText = `${formatDateTime(proposed_time_from, proposed_time_from_local)} - ${formatDateTime(proposed_time_to, proposed_time_to_local)}`;
+      dateText = `${formatDateTime(proposed_time_from)} - ${formatDateTime(proposed_time_to)}`;
     }
   } else if (proposed_time_from) {
-    dateText = formatDateTime(proposed_time_from, proposed_time_from_local);
+    dateText = formatDateTime(proposed_time_from);
   } else if (proposed_time_to) {
-    dateText = formatDateTime(proposed_time_to, proposed_time_to_local);
+    dateText = formatDateTime(proposed_time_to);
   }
 
   const defaultBadgeStyle = {

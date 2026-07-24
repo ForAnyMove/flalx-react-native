@@ -134,13 +134,14 @@ export const authApi = {
   },
 
   /**
-   * Simplified registration (new flow): phone + email + password collected
-   * together in one form. Followed by a mandatory phone OTP step — see
+   * Simplified registration (new flow): phone + password mandatory, email +
+   * confirmPassword collected together in one form — `email` is optional
+   * (omit/empty if not given). Followed by a mandatory phone OTP step — see
    * verifyRegistrationPhone below (NOT verifyPhoneRegistration above, which
    * is the legacy phone-first flow's verify endpoint). Rejects with
    * PHONE_ALREADY_REGISTERED / EMAIL_ALREADY_REGISTERED if either is already
    * taken (see src/auth/authErrors.js).
-   * @param {{ phone: string, email: string, password: string, confirmPassword: string }} input
+   * @param {{ phone: string, email?: string, password: string, confirmPassword: string }} input
    * -> { status: 'otp_sent' | 'phone_confirmation_required' }
    */
   register(input) {
@@ -155,14 +156,23 @@ export const authApi = {
    * Distinct endpoint from the legacy verifyPhoneRegistration above — this
    * one returns `nextStep` directly (same values as GET /users/me) instead
    * of a legacy `status` field.
+   * `language` (current i18n language) is attached automatically, for the
+   * welcome email the backend sends on success.
    * @param {{ phone: string, code: string }} input
    * -> { nextStep: 'authenticated' | 'mfa_setup_required' | 'mfa_setup_optional'
-   *    | 'mfa_verification_required', sessionToken?: string }
+   *    | 'mfa_verification_required', sessionToken?: string,
+   *    emailConfirmationSent?: boolean }
+   *
+   * `emailConfirmationSent` is present ONLY if an email was given at
+   * registration (check with `'emailConfirmationSent' in response`, not
+   * truthiness) — true means the confirmation email was actually sent,
+   * false means the send attempt failed (e.g. the email got taken by
+   * someone else while the user was entering the OTP).
    */
   verifyRegistrationPhone(input) {
     return request('/register/verify-phone', {
       method: 'POST',
-      body: JSON.stringify(input),
+      body: JSON.stringify({ ...input, language: currentLanguage() }),
     });
   },
 
@@ -397,21 +407,22 @@ export const authApi = {
     });
   },
 
-  /** @param {{ phone: string, code: string }} input -> { status: 'ok', resetToken: string } */
+  /** @param {{ phone: string, code: string }} input -> { status: 'verified', resetToken: string } */
   verifyPasswordResetPhoneOtp(input) {
-    return request('/forgot-password/phone/verify', {
+    return request('/password/verify-phone-reset', {
       method: 'POST',
       body: JSON.stringify(input),
     });
   },
 
   /**
+   * Revokes all of the user's sessions (not just this app_session) — no
+   * auto-login after this, always a fresh, deliberate sign-in.
    * @param {{ resetToken: string, newPassword: string, confirmPassword: string }} input
-   * -> { status: 'ok', sessionToken?: string } (sessionToken only if the backend
-   * auto-logs the user in after reset — treat as optional)
+   * -> { status: 'password_updated' }
    */
   resetPasswordByPhone(input) {
-    return request('/reset-password/phone', {
+    return request('/password/reset-phone', {
       method: 'POST',
       body: JSON.stringify(input),
     });

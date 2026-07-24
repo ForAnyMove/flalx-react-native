@@ -7,6 +7,7 @@ import jobsManager from '../managers/jobsManager';
 import providersManager from '../managers/providersManager';
 import { View, ActivityIndicator } from 'react-native';
 import { getSubscriptionPlans } from '../src/api/subscriptions';
+import { getImageLimits } from '../src/api/images';
 import authTabsManager from '../managers/authTabsManager';
 import jobTypeManager from '../managers/jobTypeManager';
 import { useGeolocation } from '../managers/useGeolocation';
@@ -46,6 +47,7 @@ export const ComponentProvider = ({ children }) => {
 
   const providersController = providersManager({ session });
   const [subscriptionPlans, setSubscriptionPlans] = useState(null);
+  const [imageLimits, setImageLimits] = useState(null);
 
   useEffect(() => {
     if (session.token == null || subscriptionPlans != null) return;
@@ -64,6 +66,24 @@ export const ComponentProvider = ({ children }) => {
 
   }, [session.token, subscriptionPlans]);
 
+  useEffect(() => {
+    // Public endpoint, no auth required — fetch once on mount so it's
+    // already available for pre-auth uploaders too (e.g. RegisterScreen's
+    // avatar picker, which runs before session.token exists).
+    if (imageLimits != null) return;
+
+    const fetchImageLimits = async () => {
+      try {
+        const limits = await getImageLimits(session);
+        setImageLimits(limits);
+      } catch (error) {
+        logError('Error fetching image limits:', error);
+      }
+    }
+    fetchImageLimits();
+
+  }, [imageLimits]);
+
   return (
     <ComponentContext.Provider
       value={{
@@ -80,6 +100,7 @@ export const ComponentProvider = ({ children }) => {
         providersController,
         setAppLoading,
         subscriptionPlans,
+        imageLimits,
         isLoader,
         registerControl,
         forgotPassControl,

@@ -18,9 +18,12 @@ import { icons } from '../../constants/icons';
 import { useWindowInfo } from '../../context/windowContext';
 import CustomTextInput from '../../components/ui/CustomTextInput';
 import CustomPicker from '../../components/ui/CustomPicker';
+import PhoneOrEmailInput from '../../components/ui/PhoneOrEmailInput';
 import Step3_PhoneVerify from '../register/Step3_PhoneVerify';
 import { getAuthErrorMessage } from '../../src/auth/authErrors';
 import { toE164 } from '../../src/auth/phoneFormat';
+
+const EMAIL_RE = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@(([^<>()[\]\\.,;:\s@"]+\.)+[^<>()[\]\\.,;:\s@"]{2,})$/i;
 
 function PrimaryOutlineButton({ title, onPress, disabled, buttonStyle, textStyle }) {
   return (
@@ -53,7 +56,10 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   const [step, setStep] = useState('form');
-  const [login, setLogin] = useState('');
+  const [loginMode, setLoginMode] = useState('phone'); // 'phone' | 'email'
+  const [loginPhone, setLoginPhone] = useState('');
+  const [loginPhoneValid, setLoginPhoneValid] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
@@ -70,11 +76,9 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
+  // PhoneOrEmailInput handles its own autoFocus internally (including
+  // refocusing when the tab switches) — see its `autoFocus` prop below.
   const loginInputRef = useRef(null);
-  useEffect(() => {
-    const timer = setTimeout(() => loginInputRef.current?.focus(), 50);
-    return () => clearTimeout(timer);
-  }, []);
 
   const sizes = useMemo(() => ({
     skipBtnTop: isWebLandscape ? scaleByHeight(103) : scaleByHeightMobile(10),
@@ -120,6 +124,15 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
         marginBottom: isWebLandscape ? scaleByHeight(14, h) : scaleByHeightMobile(16, h),
         width: isWebLandscape ? scaleByHeight(330, h) : '100%',
         height: isWebLandscape ? scaleByHeight(76, h) : scaleByHeightMobile(75, h),
+      },
+      phoneEmailFieldContainer: {
+        backgroundColor: theme.formInputBackground,
+        borderRadius: isWebLandscape ? scaleByHeight(8, h) : scaleByHeightMobile(8, h),
+        paddingHorizontal: isWebLandscape ? scaleByHeight(16, h) : scaleByHeightMobile(16, h),
+        paddingTop: isWebLandscape ? scaleByHeight(14, h) : scaleByHeightMobile(14, h),
+        marginBottom: isWebLandscape ? scaleByHeight(14, h) : scaleByHeightMobile(16, h),
+        width: isWebLandscape ? scaleByHeight(330, h) : '100%',
+        height: isWebLandscape ? scaleByHeight(76 - 20, h) : scaleByHeightMobile(75 - 20, h),
       },
       label: {
         fontSize: isWebLandscape ? scaleByHeight(14, h) : scaleByHeightMobile(14, h),
@@ -208,9 +221,19 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
   }, [session]);
 
   const onSubmit = async () => {
-    if (!login.trim()) {
-      setError(t('auth.invalid_email'));
-      return;
+    let loginValue;
+    if (loginMode === 'phone') {
+      if (!loginPhoneValid) {
+        setError(t('register.phone_invalid'));
+        return;
+      }
+      loginValue = loginPhone;
+    } else {
+      if (!EMAIL_RE.test(loginEmail.trim())) {
+        setError(t('auth.invalid_email'));
+        return;
+      }
+      loginValue = loginEmail.trim();
     }
     if (!password) {
       setError(t('auth.invalid_password'));
@@ -219,7 +242,7 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
     setSending(true);
     setError(null);
     try {
-      const resp = await session.loginUnified({ login: login.trim(), password });
+      const resp = await session.loginUnified({ login: loginValue, password });
       if (resp?.status === 'mfa_required') {
         await beginMfa(resp.mfa);
       } else if (resp?.nextStep === 'phone_verification_required') {
@@ -227,7 +250,7 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
         // a leading '+' — normalize to E.164 before it's ever sent back to
         // verify/resend, or the backend rejects it ("Phone must be in E.164
         // format").
-        setVerifyPhone(toE164(resp.phone || login.trim()));
+        setVerifyPhone(toE164(resp.phone || loginValue));
         setStep('phone_verify');
       }
       // authenticated -> App.js re-renders to the app automatically.
@@ -379,26 +402,32 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
           <Animated.View style={[dynamicStyles.contentBlock, { opacity: fadeAnim }]}>
             <Text style={dynamicStyles.brand}>{t('auth.app_name')}</Text>
             <Text style={dynamicStyles.title}>{t('auth.email_title')}</Text>
-            <Text style={dynamicStyles.subtitle}>{t('auth.email_password_subtitle')}</Text>
+            <Text style={dynamicStyles.subtitle}>{t('auth.login_subtitle')}</Text>
 
-            {/* LOGIN FIELD (phone or email) */}
-            <View style={dynamicStyles.fieldContainer}>
-              <Text style={dynamicStyles.label}>{t('auth.login_label')}</Text>
-              <CustomTextInput
-                ref={loginInputRef}
-                style={dynamicStyles.input}
-                placeholder='name@example.com'
-                placeholderTextColor={theme.formInputPlaceholderColor}
-                autoCapitalize='none'
-                autoCorrect={false}
-                value={login}
-                onChangeText={(text) => {
-                  setLogin(text);
-                  if (error) setError(null);
-                }}
-                returnKeyType='next'
-              />
-            </View>
+            {/* LOGIN FIELD (phone or email, tab-selectable) */}
+            <PhoneOrEmailInput
+              ref={loginInputRef}
+              mode={loginMode}
+              onModeChange={(m) => {
+                setLoginMode(m);
+                if (error) setError(null);
+              }}
+              phoneValue={loginPhone}
+              onPhoneChange={(val) => {
+                setLoginPhone(val);
+                if (error) setError(null);
+              }}
+              onPhoneValidityChange={setLoginPhoneValid}
+              emailValue={loginEmail}
+              onEmailChange={(text) => {
+                setLoginEmail(text);
+                if (error) setError(null);
+              }}
+              containerStyle={dynamicStyles.phoneEmailFieldContainer}
+              inputStyle={dynamicStyles.input}
+              autoFocus
+              returnKeyType='next'
+            />
 
             {/* PASSWORD FIELD */}
             <View style={dynamicStyles.fieldContainer}>
