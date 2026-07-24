@@ -133,24 +133,44 @@ export default function JobExpectationsBadge({ expectations, isRTL, iconStyle, t
     ...iconStyle,
   };
 
+  // flexWrap + flexDirection:'row-reverse' together is unreliable across RN/
+  // react-native-web (Yoga doesn't consistently reverse wrapped rows) — that
+  // was why this cluster neither moved to the right side nor swapped
+  // price/date order in RTL. Keep flexDirection fixed at 'row' and instead
+  // reorder the badges themselves in JS, and position the whole cluster via
+  // justifyContent (which IS reliable) instead of direction.
+  const priceBadge = proposed_price ? (
+    <View key='price' style={defaultBadgeStyle}>
+      <Text style={defaultTextStyle}>₪ {proposed_price}</Text>
+    </View>
+  ) : null;
+  const dateBadge = dateText !== '' ? (
+    <View key='date' style={defaultBadgeStyle}>
+      <Image source={icons.calendar} style={dateIconStyle} />
+      <Text style={dateTextStyle}>{dateText}</Text>
+    </View>
+  ) : null;
+  const badges = [priceBadge, dateBadge].filter(Boolean);
+  if (isRTL) badges.reverse();
+
   return (
     <View style={[{
-      flexDirection: isRTL ? 'row-reverse' : 'row',
+      // Forced LTR base direction: several callers (Waiting.jsx's screen
+      // container, ProvidersSection.jsx's web grid) set an *ambient* CSS
+      // `direction: isRTL ? 'rtl' : 'ltr'` on an ancestor, which is
+      // inherited. Combined with this component's own isRTL-driven mirroring
+      // below, that's a double-flip that cancels back out to looking
+      // LTR — which is why the badges didn't visibly move at all. Resetting
+      // direction here makes 'row' + justifyContent/array-order below mean
+      // what they say, regardless of what any ancestor set.
+      direction: 'ltr',
+      flexDirection: 'row',
       flexWrap: 'wrap',
+      justifyContent: isRTL ? 'flex-end' : 'flex-start',
       marginTop: sizes.marginTop,
       gap: sizes.gap
     }, containerStyle]}>
-      {proposed_price && (
-        <View style={defaultBadgeStyle}>
-          <Text style={defaultTextStyle}>₪ {proposed_price}</Text>
-        </View>
-      )}
-      {dateText !== '' && (
-        <View style={defaultBadgeStyle}>
-          <Image source={icons.calendar} style={dateIconStyle} />
-          <Text style={dateTextStyle}>{dateText}</Text>
-        </View>
-      )}
+      {badges}
     </View>
   );
 }

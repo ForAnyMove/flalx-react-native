@@ -24,6 +24,7 @@ import { logError } from '../utils/log_util';
 import { useNotification } from '../src/render';
 import JobExpectationsBadge from './ui/JobExpectationsBadge';
 import ConfirmSelectProviderModal from './ConfirmSelectProviderModal';
+import { formatPhoneDisplay } from '../src/phone/phoneUtils';
 
 const UserSummaryBlock = ({
   user,
@@ -273,6 +274,14 @@ const UserSummaryBlock = ({
           styles.summaryContainer,
           // isRTL && { flexDirection: 'row-reverse' },
           {
+            // Forced LTR base: ProvidersSection.jsx's web grid sets an
+            // *ambient* CSS `direction: isRTL ? 'rtl' : 'ltr'` on the list
+            // container, which is inherited here — combined with this card's
+            // own isRTL-driven row-reverse below, that's a double-flip that
+            // cancels back out (looks unmirrored either way). Resetting
+            // direction locally makes the row-reverse below behave the same
+            // regardless of what ancestor set.
+            direction: 'ltr',
             height: 'auto',
             minHeight: sizes.containerHeight,
             paddingVertical: sizes.padding,
@@ -371,6 +380,7 @@ const UserSummaryBlock = ({
                     fontSize: sizes.font,
                     color: themeController.current?.textColor,
                     fontFamily: 'Rubik-SemiBold',
+                    textAlign: isRTL ? 'right' : 'left',
                   }}
                 >
                   {is_deleted
@@ -385,6 +395,7 @@ const UserSummaryBlock = ({
                       fontSize: sizes.smallFont,
                       color: themeController.current?.unactiveTextColor,
                       marginBottom: 0,
+                      textAlign: isRTL ? 'right' : 'left',
                     }}
                   >
                     {LICENSES[professions?.[0]] || (typeof professions?.[0] === 'string' ? professions?.[0] : '') || ''}
@@ -409,7 +420,7 @@ const UserSummaryBlock = ({
                 source_timezone,
               }}
               isRTL={isRTL}
-              containerStyle={{ marginTop: 6, justifyContent: 'flex-start' }}
+              containerStyle={{ marginTop: 6, justifyContent: isRTL ? 'flex-end' : 'flex-start' }}
               badgeStyle={{ paddingVertical: 2, paddingHorizontal: 6 }}
               textStyle={{ fontSize: sizes.smallFont - 2 }}
             />
@@ -434,8 +445,14 @@ const UserSummaryBlock = ({
                   styles.panel,
                   {
                     backgroundColor: themeController.current?.backgroundColor,
-                    borderTopLeftRadius: sizes.borderRadius,
-                    borderBottomLeftRadius: sizes.borderRadius,
+                    // Panel slides in from the side opposite alignSelf below —
+                    // the rounded corners belong on the inner edge (facing the
+                    // backdrop), which flips with it. Was hardcoded to the
+                    // left, so in RTL (panel on the left) the rounding ended
+                    // up on the outer edge instead.
+                    ...(isRTL
+                      ? { borderTopRightRadius: sizes.borderRadius, borderBottomRightRadius: sizes.borderRadius }
+                      : { borderTopLeftRadius: sizes.borderRadius, borderBottomLeftRadius: sizes.borderRadius }),
                     paddingBottom: sizes.padding,
                     paddingHorizontal: sizes.pagePaddingHorizontal,
                     // Веб-альбомная: узкая панель справа, с пустой кликабельной зоной слева
@@ -745,6 +762,7 @@ const UserSummaryBlock = ({
                             fontSize: sizes.sectionTitleSize,
                             color: themeController.current?.textColor,
                             marginBottom: sizes.infoSectionMarginBottom / 2,
+                            textAlign: isRTL ? 'right' : 'left',
                           },
                         ]}
                       >
@@ -757,6 +775,7 @@ const UserSummaryBlock = ({
                             color: themeController.current?.unactiveTextColor,
                             maxHeight: sizes.aboutMaxHeight,
                             overflow: 'auto',
+                            textAlign: isRTL ? 'right' : 'left',
                           },
                         ]}
                       >
@@ -877,7 +896,7 @@ const UserSummaryBlock = ({
                                   },
                                 ]}
                               >
-                                {phoneNumber}
+                                {formatPhoneDisplay(phoneNumber)}
                               </Text>
                             </View>
                           )}

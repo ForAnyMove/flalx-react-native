@@ -2,6 +2,7 @@ import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 import { filesApi } from './filesApi';
 import { logInfo } from '../../utils/log_util';
+import i18n from '../../utils/i18n/i18n';
 
 const MAX_FILE_MB = 5;
 
@@ -81,10 +82,16 @@ async function toLocalUploadFile(source, fallbackName = 'file') {
   return { uri, name, type, size };
 }
 
+// Defensive backstop — ImagePickerModal.jsx already validates size against
+// imageLimits before a file ever gets here, but fileSize isn't always
+// reported by the picker (notably on web), so this is what actually catches
+// an oversized file in that case. Was a hardcoded Russian message
+// regardless of app locale — real bug, since it's what callers show via
+// showError(e.message).
 function assertSizeWithinLimit(file, maxMB = MAX_FILE_MB) {
   const sizeMB = file.size / (1024 * 1024);
   if (sizeMB > maxMB) {
-    throw new Error(`Файл слишком большой (${sizeMB.toFixed(2)}MB). Лимит: ${maxMB}MB`);
+    throw new Error(i18n.t('imagePicker.fileTooLarge', { size: maxMB }));
   }
 }
 

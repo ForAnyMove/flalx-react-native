@@ -339,6 +339,37 @@ export const WebSocketProvider = ({ children }) => {
         if (email) user.patchLocal({ email });
         break;
       }
+      case 'AVATAR_APPROVED': {
+        // The pending avatar the user uploaded just got approved — it's now
+        // the real avatar, same shape as the pending_avatar/rejected_avatar
+        // pair from GET /users/me (see about-field-moderation memory).
+        const avatarUrl = message.payload?.avatarUrl;
+        if (avatarUrl) {
+          user.patchLocal({ avatar: avatarUrl, pending_avatar: null, rejected_avatar: null });
+        }
+        break;
+      }
+      case 'AVATAR_REJECTED': {
+        const { reason, comment } = message.payload ?? {};
+        user.patchLocal({
+          pending_avatar: null,
+          rejected_avatar: { reason, comment, rejectedAt: new Date().toISOString() },
+        });
+        break;
+      }
+      case 'ABOUT_APPROVED': {
+        const about = message.payload?.about;
+        user.patchLocal({ about, pending_about: null, rejected_about: null });
+        break;
+      }
+      case 'ABOUT_REJECTED': {
+        const { reason, comment } = message.payload ?? {};
+        user.patchLocal({
+          pending_about: null,
+          rejected_about: { reason, comment, rejectedAt: new Date().toISOString() },
+        });
+        break;
+      }
       case 'PROFILE_UPDATED': {
         const userId = message.payload?.userId;
         const updatedFields = message.payload?.updatedFields; // array of field names

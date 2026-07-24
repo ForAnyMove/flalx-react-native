@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { fetchWithSession } from './apiBase';
-import { logError } from '../../utils/log_util';
+import { logError, logInfo, logWarn } from '../../utils/log_util';
 import i18n from '../../utils/i18n/i18n';
 
 const getCurrentLanguage = (language) => language ?? i18n.language ?? 'en';
@@ -41,6 +41,10 @@ async function payForJob(jobDataId, session, paymentOptions = {}) {
             data,
             method: 'POST'
         });
+        // Raw payload, unconditionally — lets us tell a backend omission (link
+        // never in the response) from a frontend extraction bug (link present
+        // under a field we're not reading) when a redirect goes missing.
+        logInfo('payForJob response:', response.data);
         // Coupon / subscription bypass — job already moved to pending_moderation
         if (response.data?.success === true) {
             return {
@@ -50,9 +54,15 @@ async function payForJob(jobDataId, session, paymentOptions = {}) {
             };
         }
 
+        const paymentUrl = response.data?.redirectUrl ?? response.data?.payment?.paymentMetadata?.approval?.href;
+        const directAuth = response.data?.directAuth === true;
+        if (!paymentUrl && !directAuth) {
+            logWarn('payForJob: response has no success/directAuth/paymentUrl — caller will silently skip the redirect:', response.data);
+        }
+
         return {
-            paymentUrl: response.data?.redirectUrl ?? response.data?.payment?.paymentMetadata?.approval?.href,
-            directAuth: response.data?.directAuth === true,
+            paymentUrl,
+            directAuth,
             payment: response.data?.payment,
             job: response.data?.job,
             paymentMethodsSnapshot: response.data?.paymentMethodsSnapshot ?? null,
@@ -140,6 +150,9 @@ async function addSelfToJobProviders(jobId, session, options = {}) {
             data,
             method: 'POST'
         });
+        // Raw payload, unconditionally — same reasoning as payForJob's log:
+        // tells a backend omission apart from a frontend extraction bug.
+        logInfo('addSelfToJobProviders response:', response.data);
 
         if (response.data?.couponUsed === true) {
             return { success: true, remainingCoupons: response.data?.remainingCoupons ?? null };
@@ -147,8 +160,20 @@ async function addSelfToJobProviders(jobId, session, options = {}) {
         if (response.data?.directAuth === true) {
             return { directAuth: true, payment: response.data?.payment };
         }
+        // Was previously reading only `redirectUrl`, unlike payForJob's identical
+        // flow which also falls back to `payment.paymentMetadata.approval.href` —
+        // when the backend put the link there instead, this returned `paymentUrl:
+        // undefined`, every ShowJobModal call site silently treated that as "no
+        // redirect needed" and moved on, and PurchaseModal (which independently
+        // checks `payment.paymentMetadata.approval.href` too) then closed itself
+        // believing the caller had already opened the redirect — losing the
+        // payment link with no error anywhere. Matches the fallback below.
+        const paymentUrl = response.data?.redirectUrl ?? response.data?.payment?.paymentMetadata?.approval?.href;
+        if (!paymentUrl) {
+            logWarn('addSelfToJobProviders: response has no couponUsed/directAuth/paymentUrl — caller will silently skip the redirect:', response.data);
+        }
         return {
-            paymentUrl: response.data?.redirectUrl,
+            paymentUrl,
             payment: response.data?.payment,
         };
     } catch (error) {

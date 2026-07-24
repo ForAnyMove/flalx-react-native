@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Modal, View, Text, Pressable, Animated, Dimensions, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
+import { useComponentContext } from '../../../context/globalAppContext';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -43,8 +44,14 @@ export const NotificationModal = ({
 }) => {
     const slideAnim = useRef(new Animated.Value(-200)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
+    const { languageController } = useComponentContext();
+    const isRTL = languageController?.isRTL;
 
     const typeConfig = getTypeConfig(type);
+    const markdownStyle = {
+        body: { textAlign: isRTL ? 'right' : 'left', writingDirection: isRTL ? 'rtl' : 'ltr' },
+        paragraph: { textAlign: isRTL ? 'right' : 'left', writingDirection: isRTL ? 'rtl' : 'ltr' },
+    };
 
     useEffect(() => {
         if (visible) {
@@ -92,7 +99,8 @@ export const NotificationModal = ({
                     paddingHorizontal: 20,
                     paddingVertical: 12,
                     borderRadius: 8,
-                    marginLeft: index > 0 ? 10 : 0,
+                    marginLeft: !isRTL && index > 0 ? 10 : 0,
+                    marginRight: isRTL && index > 0 ? 10 : 0,
                     minWidth: 80,
                     alignItems: 'center',
                 }
@@ -105,7 +113,8 @@ export const NotificationModal = ({
             <Text style={{
                 color: button.textColor || '#374151',
                 fontWeight: '400',
-                fontSize: 16
+                fontSize: 16,
+                textAlign: isRTL ? 'right' : 'left',
             }}>
                 {button.title}
             </Text>
@@ -155,7 +164,7 @@ export const NotificationModal = ({
                             shadowOffset: { width: 0, height: 4 },
                             shadowOpacity: 0.25,
                             shadowRadius: 8,
-                            flexDirection: 'row',
+                            flexDirection: isRTL ? 'row-reverse' : 'row',
                             overflow: 'hidden',
                             zIndex: 999999,
                         },
@@ -165,7 +174,7 @@ export const NotificationModal = ({
                     ]}
                     onStartShouldSetResponder={() => true}
                 >
-                    {/* Левая область с иконкой */}
+                    {/* Icon side (mirrors with flexDirection above) */}
                     <View
                         style={{
                             backgroundColor: typeConfig.backgroundColor,
@@ -182,7 +191,7 @@ export const NotificationModal = ({
                         />
                     </View>
 
-                    {/* Правая область с контентом */}
+                    {/* Content side */}
                     <View
                         style={{
                             flex: 1,
@@ -192,7 +201,7 @@ export const NotificationModal = ({
                     >
                         {/* Сообщение */}
                         <View style={{ marginBottom: buttons.length > 0 ? 20 : 0 }}>
-                            <Markdown>
+                            <Markdown style={markdownStyle}>
                                 {message}
                             </Markdown>
                         </View>
@@ -201,8 +210,8 @@ export const NotificationModal = ({
                         {buttons.length > 0 && (
                             <View
                                 style={{
-                                    flexDirection: 'row',
-                                    justifyContent: 'flex-end',
+                                    flexDirection: isRTL ? 'row-reverse' : 'row',
+                                    justifyContent: isRTL ? 'flex-start' : 'flex-end',
                                     flexWrap: 'wrap',
                                 }}
                             >
@@ -256,7 +265,7 @@ export const NotificationModal = ({
                                 shadowOpacity: 0.25,
                                 shadowRadius: 8,
                                 elevation: 999,
-                                flexDirection: 'row',
+                                flexDirection: isRTL ? 'row-reverse' : 'row',
                                 overflow: 'hidden',
                                 elevation: 999,
                             },
@@ -266,7 +275,7 @@ export const NotificationModal = ({
                         ]}
                         onStartShouldSetResponder={() => true}
                     >
-                        {/* Левая область с иконкой */}
+                        {/* Icon side (mirrors with flexDirection above) */}
                         <View
                             style={{
                                 backgroundColor: typeConfig.backgroundColor,
@@ -283,7 +292,7 @@ export const NotificationModal = ({
                             />
                         </View>
 
-                        {/* Правая область с контентом */}
+                        {/* Content side */}
                         <View
                             style={{
                                 flex: 1,
@@ -293,7 +302,7 @@ export const NotificationModal = ({
                         >
                             {/* Сообщение */}
                             <View style={{ marginBottom: buttons.length > 0 ? 20 : 0 }}>
-                                <Markdown>
+                                <Markdown style={markdownStyle}>
                                     {message}
                                 </Markdown>
                             </View>
@@ -302,8 +311,8 @@ export const NotificationModal = ({
                             {buttons.length > 0 && (
                                 <View
                                     style={{
-                                        flexDirection: 'row',
-                                        justifyContent: 'flex-end',
+                                        flexDirection: isRTL ? 'row-reverse' : 'row',
+                                        justifyContent: isRTL ? 'flex-start' : 'flex-end',
                                         flexWrap: 'wrap',
                                     }}
                                 >

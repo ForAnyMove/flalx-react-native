@@ -17,6 +17,7 @@ import CustomFlatList from './ui/CustomFlatList';
 import DateTimeInput from './ui/DateTimeInput';
 import DateTimeInputDouble from './ui/DateTimeInputDouble';
 import ImagePickerModal from './ui/ImagePickerModal';
+import ConfirmModal from './ui/ConfirmModal';
 import { icons } from '../constants/icons';
 import { uploadImageAsset } from '../src/files/uploadFile';
 import { useWindowInfo } from '../context/windowContext';
@@ -33,7 +34,7 @@ import { useLocalization } from '../src/services/useLocalization';
 import CustomPicker from './ui/CustomPicker';
 import CustomExperiencePicker from './ui/CustomExperiencePicker';
 import { formatCurrency } from '../utils/currency_formatter';
-import { logError } from '../utils/log_util';
+import { logError, logWarn } from '../utils/log_util';
 import CustomTextInput from './ui/CustomTextInput';
 import { getDeviceTimezone } from '../utils/datetimeTimezone';
 import ImageViewerModal from './ui/ImageViewerModal';
@@ -85,6 +86,7 @@ async function createNewJob(jobData, session, openWebView, updateJobsList, payme
       // Standard PayPal redirect
       openWebView(payResult.paymentUrl, () => { });
     } else {
+      logWarn('createNewJob: no success/directAuth/paymentUrl in payResult, no redirect opened:', payResult);
       updateJobsList?.();
     }
   } catch (error) {
@@ -467,12 +469,16 @@ export default function NewJobModal({
           .then(() => {
             jobsController.reloadCreator();
             setAppLoading(false);
+            redirectToWaiting?.();
           })
-          .then(() => {
+          .catch((err) => {
             setAppLoading(false);
+            showError(t('errors.unexpected_error'));
           });
+      } else {
+        setAppLoading(false);
+        redirectToWaiting?.();
       }
-      redirectToWaiting?.();
     } else {
       const newJob = {
         type: getTypeIdByKey(type),
@@ -561,10 +567,15 @@ export default function NewJobModal({
   };
 
   // Функция удаления картинки по индексу
+  const [pendingRemoveIndex, setPendingRemoveIndex] = useState(null);
   const removeImage = (indexToRemove) => {
     setImages((prevImages) =>
       prevImages.filter((_, index) => index !== indexToRemove)
     );
+  };
+  const confirmRemoveImage = () => {
+    if (pendingRemoveIndex !== null) removeImage(pendingRemoveIndex);
+    setPendingRemoveIndex(null);
   };
 
   const filterOptions = (text, options, setter, targetSetter) => {
@@ -808,7 +819,12 @@ export default function NewJobModal({
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.imageScrollContainer}
         >
-          {images.map((uri, index) => (
+          {/* flexDirection:'row-reverse' on a ScrollView's contentContainerStyle
+              isn't reliable (same family of issue as flexWrap+row-reverse
+              elsewhere) — reverse the array itself instead, keeping each
+              item's original index for removal/preview so those still target
+              the right image regardless of display order. */}
+          {(isRTL ? images.map((uri, i) => ({ uri, i })).reverse() : images.map((uri, i) => ({ uri, i }))).map(({ uri, i: index }) => (
             <TouchableOpacity
               key={index}
               activeOpacity={0.85}
@@ -846,7 +862,7 @@ export default function NewJobModal({
                     height: sizes.removeIconSize,
                   },
                 ]}
-                onPress={() => removeImage(index)}
+                onPress={() => setPendingRemoveIndex(index)}
               >
                 <Image
                   source={icons.cross}
@@ -867,6 +883,16 @@ export default function NewJobModal({
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onAdd={handleImageAdd}
+        limitType='jobImages'
+        multiple
+      />
+      <ConfirmModal
+        visible={pendingRemoveIndex !== null}
+        title={t('common.confirm_remove_image')}
+        onCancel={() => setPendingRemoveIndex(null)}
+        onConfirm={confirmRemoveImage}
+        confirmText={t('common.remove')}
+        destructive
       />
     </View>,
     isExperienceRequired ? (
@@ -1357,12 +1383,9 @@ export default function NewJobModal({
                       <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={[
-                          styles.imageScrollContainer,
-                          isRTL && { flexDirection: 'row-reverse' },
-                        ]}
+                        contentContainerStyle={styles.imageScrollContainer}
                       >
-                        {images.map((uri, index) => (
+                        {(isRTL ? images.map((uri, i) => ({ uri, i })).reverse() : images.map((uri, i) => ({ uri, i }))).map(({ uri, i: index }) => (
                           <TouchableOpacity
                             key={index}
                             activeOpacity={0.85}
@@ -1399,7 +1422,7 @@ export default function NewJobModal({
                                   height: sizes.removeIconSize,
                                 },
                               ]}
-                              onPress={() => removeImage(index)}
+                              onPress={() => setPendingRemoveIndex(index)}
                             >
                               <Image
                                 source={icons.cross}
@@ -1421,6 +1444,16 @@ export default function NewJobModal({
                     visible={modalVisible}
                     onClose={() => setModalVisible(false)}
                     onAdd={handleImageAdd}
+                    limitType='jobImages'
+                    multiple
+                  />
+                  <ConfirmModal
+                    visible={pendingRemoveIndex !== null}
+                    title={t('common.confirm_remove_image')}
+                    onCancel={() => setPendingRemoveIndex(null)}
+                    onConfirm={confirmRemoveImage}
+                    confirmText={t('common.remove')}
+                    destructive
                   />
 
                   {isExperienceRequired && (

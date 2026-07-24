@@ -25,6 +25,7 @@ import SubscriptionsModal from './SubscriptionsModal';
 import { useNotification } from '../src/render';
 import PurchaseModal from './PurchaseModal';
 import { formatCurrency } from '../utils/currency_formatter';
+import { formatPhoneDisplay } from '../src/phone/phoneUtils';
 
 const ProviderSummaryBlock = ({ user, chooseUser }) => {
   const { t } = useTranslation();
@@ -214,6 +215,10 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
     () =>
       StyleSheet.create({
         summaryContainer: {
+          // See the same note in UserSummaryBlock.jsx — resets any inherited
+          // ambient `direction` so this card's own isRTL-driven row-reverse
+          // isn't double-flipped back to looking unmirrored.
+          direction: 'ltr',
           justifyContent: 'space-between',
           alignItems: 'center',
           width: '100%',
@@ -249,10 +254,12 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
           fontSize: sizes.font,
           color: themeController.current?.textColor,
           fontFamily: 'Rubik-SemiBold',
+          textAlign: isRTL ? 'right' : 'left',
         },
         professionText: {
           fontSize: sizes.smallFont,
           color: themeController.current?.unactiveTextColor,
+          textAlign: isRTL ? 'right' : 'left',
         },
         visitButton: {
           height: sizes.containerHeight,
@@ -280,6 +287,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
           marginBottom: sizes.infoSectionMarginBottom / 2,
           fontSize: sizes.sectionTitleSize,
           color: themeController.current?.textColor,
+          textAlign: isRTL ? 'right' : 'left',
         },
         typeBadge: {
           borderWidth: 1,
@@ -411,8 +419,12 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
               <View
                 style={{
                   backgroundColor: themeController.current?.backgroundColor,
-                  borderTopLeftRadius: sizes.borderRadius,
-                  borderBottomLeftRadius: sizes.borderRadius,
+                  // Panel slides in from the side opposite alignSelf below —
+                  // rounded corners belong on the inner edge, which flips
+                  // with it (was hardcoded left, wrong in RTL).
+                  ...(isRTL
+                    ? { borderTopRightRadius: sizes.borderRadius, borderBottomRightRadius: sizes.borderRadius }
+                    : { borderTopLeftRadius: sizes.borderRadius, borderBottomLeftRadius: sizes.borderRadius }),
                   paddingBottom: sizes.padding,
                   paddingHorizontal: sizes.pagePaddingHorizontal,
                   // Веб-альбомная: узкая панель справа, с пустой кликабельной зоной слева
@@ -683,6 +695,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                           color: themeController.current?.unactiveTextColor,
                           maxHeight: sizes.aboutMaxHeight,
                           overflow: 'auto',
+                          textAlign: isRTL ? 'right' : 'left',
                         }}
                       >
                         {about}
@@ -765,7 +778,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                                     themeController.current?.unactiveTextColor,
                                 }}
                               >
-                                {phoneNumber}
+                                {formatPhoneDisplay(phoneNumber)}
                               </Text>
                             </View>
                           )}

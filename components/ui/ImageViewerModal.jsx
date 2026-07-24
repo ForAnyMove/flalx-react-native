@@ -298,7 +298,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: Platform.OS === 'android' ? 44 : 56,
     paddingBottom: 12,
-    zIndex: 10,
+    // Above navBtn (zIndex 10) — the nav strips span the full height
+    // (top:0, bottom:0) and are rendered after this in JSX, so without a
+    // higher z-index the right-side "next" strip sits on top of the close
+    // button/counter and swallows taps meant for them.
+    zIndex: 20,
   },
   counter: {
     color: 'rgba(255,255,255,0.7)',

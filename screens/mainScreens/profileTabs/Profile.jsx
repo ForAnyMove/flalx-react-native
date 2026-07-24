@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   Image,
   ImageBackground,
   ScrollView,
@@ -22,14 +23,18 @@ import { getUserExportData } from '../../../src/api/dataExport';
 import CouponsModal from '../../../components/CouponsModal';
 import { logError, logInfo } from '../../../utils/log_util';
 import CustomTextInput from '../../../components/ui/CustomTextInput';
-import { ModalContent } from './ModalContent';
 import { Linking } from 'react-native';
 import PaymentMethodsModal from '../../../components/PaymentMethodsModal';
 import UpdateUserDataModal from '../../../components/modals/UpdateUserDataModal';
 import UpdateEmailModal from '../../../components/modals/UpdateEmailModal';
 import UpdatePhoneModal from '../../../components/modals/UpdatePhoneModal';
+import ContactSupportModal from '../../../components/modals/ContactSupportModal';
+import { formatPhoneDisplay } from '../../../src/phone/phoneUtils';
+import MfaSetupModal from '../../../components/modals/MfaSetupModal';
+import MfaDisableModal from '../../../components/modals/MfaDisableModal';
 import { useNotification } from '../../../src/render';
-import { uploadAvatarForModeration } from '../../../src/api/images';
+import { uploadAvatarForModeration, dismissAvatarRejection } from '../../../src/api/images';
+import { dismissAboutRejection } from '../../../src/api/users';
 import { convertImageToBase64 } from '../../../utils/imageToBase64';
 import { exportHtmlToPdf } from '../../../utils/htmlToPdf';
 
@@ -38,6 +43,13 @@ export default function Profile() {
     useComponentContext();
   const [userState, setUserState] = useState(user.current || {});
   const { showError, showInfo } = useNotification();
+  // While unconfirmed, Supabase doesn't actually have the email set on
+  // auth.user yet — the backend surfaces the entered-but-unconfirmed
+  // address separately as authUser.pendingEmail until the confirmation link
+  // is clicked, so display that when there's no confirmed email yet.
+  const displayEmail =
+    userState?.email ||
+    (session.authUser?.emailVerified === false ? session.authUser?.pendingEmail : null);
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [acceptModalVisibleTitle, setAcceptModalVisibleTitle] = useState('');
   const [acceptModalVisibleFunc, setAcceptModalVisibleFunc] = useState(
@@ -61,12 +73,17 @@ export default function Profile() {
   const [couponsModalVisible, setCouponsModalVisible] = useState(false);
   const [paymentMethodsModalVisible, setPaymentMethodsModalVisible] =
     useState(false);
+  // Feedback used to be its own button/modal — the client pointed out it's
+  // functionally the same as Contact Us, so it's folded in there now as one
+  // of the Category options instead (see ContactSupportModal.jsx). The old
+  // ModalContent `feedback` prop path stays in place, just unreferenced.
   const [contactUsVisible, setContactUsVisible] = useState(false);
-  const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [updateUserDataModalVisible, setUpdateUserDataModalVisible] =
     useState(false);
   const [updateEmailModalVisible, setUpdateEmailModalVisible] = useState(false);
   const [updatePhoneModalVisible, setUpdatePhoneModalVisible] = useState(false);
+  const [mfaSetupModalVisible, setMfaSetupModalVisible] = useState(false);
+  const [mfaDisableModalVisible, setMfaDisableModalVisible] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const [baseInfoEditMode, setBaseInfoEditMode] = useState(false);
@@ -132,11 +149,18 @@ export default function Profile() {
   }, [height, isWebLandscape]);
 
   const handleUpdateUserData = async (data) => {
+    // Same "resubmitting clears an unread rejection" behavior as
+    // uploadAvatar's hadUnreadRejection below — about moderation works
+    // exactly the same way.
+    const hadUnreadAboutRejection = 'about' in data && userState.rejected_about != null;
     setIsUpdating(true);
     try {
       const updatedUser = await user.update(data);
       if (updatedUser) {
         setUserState(updatedUser);
+      }
+      if (hadUnreadAboutRejection) {
+        dismissRejectedAbout();
       }
       setUpdateUserDataModalVisible(false);
     } catch (error) {
@@ -147,11 +171,22 @@ export default function Profile() {
     }
   };
 
+  // Помечает текущий rejection "about" как прочитанный (не блокирует UI ожиданием ответа).
+  function dismissRejectedAbout() {
+    user.patchLocal({ rejected_about: null });
+    setUserState((prev) => ({ ...prev, rejected_about: null }));
+    dismissAboutRejection(session).catch((err) => {
+      logError('Ошибка скрытия причины отклонения about:', err.message);
+    });
+  }
+
   const handleUpdateEmail = (newEmail) => {
-    // Email changes immediately now (session.updateEmailDirect, no
-    // confirmation step) — reflect it in the UI right away, same pattern as
-    // handleUpdatePhone below. The modal closes itself on success.
-    setUserState((prev) => ({ ...prev, email: newEmail }));
+    // Confirmation-based again (session.updateEmail / /change-email/start)
+    // — the address doesn't actually change until the confirmation link is
+    // clicked, so no optimistic local update here. The EMAIL_CHANGED
+    // websocket event (context/webSocketContext.jsx) syncs it once that
+    // actually happens.
+    logInfo(`Email change process initiated for ${newEmail}.`);
   };
 
   const handleUpdatePhone = (newPhone) => {
@@ -165,6 +200,7 @@ export default function Profile() {
 
   // Функция загрузки и обновления аватара через сервер
   async function uploadAvatar(uri) {
+    const hadUnreadRejection = userState.rejected_avatar != null;
     try {
       setAppLoading(true);
 
@@ -182,6 +218,13 @@ export default function Profile() {
       user.setPendingAvatar(pending_avatar);
       setUserState((prev) => ({ ...prev, pending_avatar }));
 
+      // Пользователь мог загрузить новый аватар, не обратив внимания на
+      // баджик с rejection — считаем его прочитанным раз он всё равно
+      // перезалил фото.
+      if (hadUnreadRejection) {
+        dismissRejectedAvatar();
+      }
+
       showInfo(t('my_profile.avatar_uploaded_for_moderation'));
     } catch (err) {
       logError('Ошибка загрузки аватара:', err.message);
@@ -189,6 +232,15 @@ export default function Profile() {
     } finally {
       setAppLoading(false);
     }
+  }
+
+  // Помечает текущий rejection как прочитанный (не блокирует UI ожиданием ответа).
+  function dismissRejectedAvatar() {
+    user.patchLocal({ rejected_avatar: null });
+    setUserState((prev) => ({ ...prev, rejected_avatar: null }));
+    dismissAvatarRejection(session).catch((err) => {
+      logError('Ошибка скрытия причины отклонения аватара:', err.message);
+    });
   }
 
   async function downloadExportData() {
@@ -216,7 +268,8 @@ export default function Profile() {
   //   ? ['contact', 'feedback', 'whatsapp']
   //   : ['contact', 'feedback', 'whatsapp'];
   const firstBtnsRow = ['coupons', 'subscription', 'payment'];
-  const secondBtnsRow = ['contact', 'feedback', 'whatsapp'];
+  // 'feedback' dropped — folded into Contact Us as a Category option instead.
+  const secondBtnsRow = ['contact', 'whatsapp'];
 
   const openWhatsApp = async () => {
     const number = await session.getWhatsAppNumber();
@@ -259,11 +312,6 @@ export default function Profile() {
     contact: {
       text: t('my_profile.contact_us'),
       action: () => setContactUsVisible(true),
-      style: 'secondary',
-    },
-    feedback: {
-      text: t('my_profile.feedback'),
-      action: () => setFeedbackVisible(true),
       style: 'secondary',
     },
     whatsapp: {
@@ -444,6 +492,92 @@ export default function Profile() {
                 </Text>
               </View>
             )}
+
+            {/* Баджик с причиной отклонения аватарки */}
+            {userState.rejected_avatar && (
+              <View
+                style={{
+                  marginTop: sizes.infoFieldsGap,
+                  width: '100%',
+                  maxWidth: sizes.avatarSize * 3,
+                  backgroundColor: themeController.current?.formInputBackground,
+                  borderRadius: sizes.infoFieldBorderRadius,
+                  borderWidth: 1,
+                  borderColor: themeController.current?.errorTextColor || '#EF4F6B',
+                  paddingHorizontal: sizes.infoFieldPaddingH,
+                  paddingVertical: sizes.fieldPaddingVertical,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: isRTL ? 'row-reverse' : 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <Text
+                    style={{
+                      flex: 1,
+                      fontSize: sizes.labelFont,
+                      color: themeController.current?.errorTextColor || '#EF4F6B',
+                      fontFamily: 'Rubik-Bold',
+                      textAlign: isRTL ? 'right' : 'left',
+                    }}
+                  >
+                    {userState.rejected_avatar.reason
+                      ? t('my_profile.avatar_rejected_title', {
+                          reason: userState.rejected_avatar.reason,
+                        })
+                      : t('my_profile.avatar_rejected_title_no_reason')}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={dismissRejectedAvatar}
+                    style={{
+                      marginLeft: isRTL ? 0 : sizes.editPanelGap,
+                      marginRight: isRTL ? sizes.editPanelGap : 0,
+                    }}
+                  >
+                    <Image
+                      source={icons.cross}
+                      style={{
+                        width: sizes.iconSize * 0.6,
+                        height: sizes.iconSize * 0.6,
+                        tintColor: themeController.current?.textColor,
+                      }}
+                    />
+                  </TouchableOpacity>
+                </View>
+                {userState.rejected_avatar.comment ? (
+                  <Text
+                    style={{
+                      fontSize: sizes.labelFont * 0.9,
+                      color: themeController.current?.textColorSecondary || '#666',
+                      marginTop: 2,
+                      textAlign: isRTL ? 'right' : 'left',
+                    }}
+                  >
+                    {userState.rejected_avatar.comment}
+                  </Text>
+                ) : null}
+                <TouchableOpacity
+                  onPress={() => {
+                    dismissRejectedAvatar();
+                    setPickerVisible(true);
+                  }}
+                  style={{ marginTop: sizes.editPanelGap, alignSelf: isRTL ? 'flex-end' : 'flex-start' }}
+                >
+                  <Text
+                    style={{
+                      fontSize: sizes.labelFont,
+                      color: themeController.current?.buttonColorPrimaryDefault,
+                      fontFamily: 'Rubik-Medium',
+                    }}
+                  >
+                    {t('my_profile.avatar_rejected_update')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </ImageBackground>
 
@@ -457,7 +591,8 @@ export default function Profile() {
           <TouchableOpacity
             // onPress={() => setUpdateUserDataModalVisible(true)}
             onPress={() => setBaseInfoEditMode(true)}
-            style={{ visibility: baseInfoEditMode ? 'hidden' : 'visible' }}
+            disabled={isUpdating}
+            style={{ visibility: baseInfoEditMode || isUpdating ? 'hidden' : 'visible' }}
           >
             <Image
               source={icons.edit}
@@ -522,11 +657,13 @@ export default function Profile() {
           <InfoField
             key='about'
             label={t(`my_profile.about`)}
-            value={userState?.about}
+            // Same priority as avatar: an unapproved pending edit takes over
+            // the display until it's approved/rejected.
+            value={userState?.pending_about || userState?.about}
             onEditPress={() => setUpdateUserDataModalVisible(true)}
             baseFont={sizes.fieldFont}
             fieldPadding={sizes.fieldPadding}
-            btnHeight={sizes.btnHeight * 2 + sizes.infoFieldsGap}
+            btnHeight={sizes.btnHeight * 2 + sizes.infoFieldsGap + sizes.btnHeight * 0.5}
             fieldMargin={sizes.fieldMargin}
             iconSize={sizes.iconSize}
             isLandscape={isLandscape}
@@ -536,7 +673,79 @@ export default function Profile() {
             isRTL={isRTL}
             field='about'
             editMode={baseInfoEditMode}
+            loading={isUpdating}
             setEditingFields={setEditingFields}
+            footer={
+              userState?.rejected_about ? (
+                <View
+                  style={{
+                    flexDirection: isRTL ? 'row-reverse' : 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    backgroundColor: `${themeController.current?.errorTextColor}14`,
+                    borderRadius: sizes.infoFieldBorderRadius / 1.5,
+                    paddingHorizontal: sizes.labelMarginBottom * 2,
+                    paddingVertical: sizes.labelMarginBottom,
+                    marginTop: sizes.labelMarginBottom,
+                    width: '100%',
+                  }}
+                >
+                  <Text
+                    numberOfLines={2}
+                    style={{
+                      flex: 1,
+                      fontSize: sizes.labelFont,
+                      color: themeController.current?.errorTextColor,
+                      textAlign: isRTL ? 'right' : 'left',
+                    }}
+                  >
+                    {userState.rejected_about.reason
+                      ? t('my_profile.about_rejected_title', {
+                          reason: userState.rejected_about.reason,
+                        })
+                      : t('my_profile.about_rejected_title_no_reason')}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={dismissRejectedAbout}
+                    style={{
+                      marginLeft: isRTL ? 0 : sizes.labelMarginBottom,
+                      marginRight: isRTL ? sizes.labelMarginBottom : 0,
+                    }}
+                  >
+                    <Image
+                      source={icons.cross}
+                      style={{
+                        width: sizes.iconSize * 0.5,
+                        height: sizes.iconSize * 0.5,
+                        tintColor: themeController.current?.errorTextColor,
+                      }}
+                    />
+                  </TouchableOpacity>
+                </View>
+              ) : userState?.pending_about ? (
+                <Text
+                  style={{
+                    fontSize: sizes.labelFont * 0.9,
+                    color: themeController.current?.warningTextColor,
+                    marginTop: sizes.labelMarginBottom,
+                    textAlign: isRTL ? 'right' : 'left',
+                  }}
+                >
+                  {t('my_profile.about_pending_note')}
+                </Text>
+              ) : (
+                <Text
+                  style={{
+                    fontSize: sizes.labelFont * 0.9,
+                    color: themeController.current?.unactiveTextColor,
+                    marginTop: sizes.labelMarginBottom,
+                    textAlign: isRTL ? 'right' : 'left',
+                  }}
+                >
+                  {t('my_profile.about_moderation_note')}
+                </Text>
+              )
+            }
           />
         </View>
         {baseInfoEditMode && (
@@ -620,16 +829,28 @@ export default function Profile() {
         />
         <View
           style={{
-            flexDirection: isWebLandscape ? 'row' : 'column',
-            flexWrap: isWebLandscape ? 'wrap' : 'nowrap',
-            justifyContent: isWebLandscape ? 'space-between' : 'center',
+            // Always side-by-side (not just web-landscape) so the row below
+            // frees up for the Security block — see InfoField's width logic
+            // further down for the matching field==='email'||'phoneNumber'
+            // case.
+            flexDirection: isRTL ? 'row-reverse' : 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
             gap: sizes.infoFieldsGap,
             direction: isRTL ? 'rtl' : 'ltr',
             width: '100%',
           }}
         >
           {[
-            { key: 'email', value: userState?.email, field: 'email' },
+            {
+              key: 'email',
+              value: displayEmail,
+              field: 'email',
+              errorText:
+                displayEmail && session.authUser?.emailVerified === false
+                  ? t('my_profile.email_not_confirmed')
+                  : null,
+            },
             {
               key: 'phone',
               value: userState?.phoneNumber,
@@ -640,6 +861,7 @@ export default function Profile() {
               key={f.key}
               label={t(`my_profile.${f.key}`)}
               value={f.value}
+              errorText={f.errorText}
               onEditPress={() => {
                 if (f.key === 'email') {
                   setUpdateEmailModalVisible(true);
@@ -660,6 +882,170 @@ export default function Profile() {
               field={f.field}
             />
           ))}
+        </View>
+        <View
+          style={[
+            styles.breakLine,
+            {
+              backgroundColor: themeController.current?.breakLineColor,
+              marginVertical: sizes.breakLineMarginVertical,
+            },
+          ]}
+        />
+
+        {/* Security */}
+        <View style={{ width: '100%', marginBottom: sizes.infoFieldsGap }}>
+          <Text
+            style={{
+              fontSize: sizes.btnFont,
+              fontFamily: 'Rubik-SemiBold',
+              color: themeController.current?.textColor,
+              textAlign: isRTL ? 'right' : 'left',
+              marginBottom: 2,
+            }}
+          >
+            {t('my_profile.security.title')}
+          </Text>
+          <Text
+            style={{
+              fontSize: sizes.labelFont,
+              color: themeController.current?.unactiveTextColor,
+              textAlign: isRTL ? 'right' : 'left',
+            }}
+          >
+            {t('my_profile.security.subtitle')}
+          </Text>
+        </View>
+        <View
+          style={{
+            width: '100%',
+            backgroundColor: themeController.current?.formInputBackground,
+            borderRadius: sizes.infoFieldBorderRadius,
+            padding: sizes.infoFieldPaddingH,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: sizes.fieldFont,
+              fontFamily: 'Rubik-SemiBold',
+              color: themeController.current?.textColor,
+              textAlign: isRTL ? 'right' : 'left',
+              marginBottom: sizes.labelMarginBottom,
+            }}
+          >
+            {t('my_profile.security.mfa_title')}
+          </Text>
+          <View
+            style={{
+              flexDirection: isRTL ? 'row-reverse' : 'row',
+              alignItems: 'center',
+              alignSelf: isRTL ? 'flex-end' : 'flex-start',
+              backgroundColor: session.mfa?.enabled
+                ? `${themeController.current?.verifiedMarkerColor}26`
+                : `${themeController.current?.unactiveTextColor}26`,
+              paddingHorizontal: sizes.labelMarginBottom * 2,
+              paddingVertical: 4,
+              borderRadius: 20,
+              marginBottom: sizes.labelMarginBottom * 2,
+            }}
+          >
+            <View
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: session.mfa?.enabled
+                  ? themeController.current?.verifiedMarkerColor
+                  : themeController.current?.unactiveTextColor,
+                marginRight: isRTL ? 0 : 6,
+                marginLeft: isRTL ? 6 : 0,
+              }}
+            />
+            <Text
+              style={{
+                fontSize: sizes.labelFont,
+                color: themeController.current?.textColor,
+                fontFamily: 'Rubik-Medium',
+              }}
+            >
+              {t('my_profile.security.status_label')}{' '}
+              {session.mfa?.enabled
+                ? t('my_profile.security.status_on')
+                : t('my_profile.security.status_off')}
+            </Text>
+          </View>
+          <Text
+            style={{
+              fontSize: sizes.labelFont,
+              color: themeController.current?.unactiveTextColor,
+              textAlign: isRTL ? 'right' : 'left',
+              marginBottom: sizes.infoFieldsGap * 2,
+            }}
+          >
+            {session.mfa?.enabled
+              ? t('my_profile.security.description_on')
+              : t('my_profile.security.description_off')}
+          </Text>
+          {session.mfa?.enabled ? (
+            <TouchableOpacity
+              onPress={() => setMfaDisableModalVisible(true)}
+              style={[
+                styles.secondaryReverseBtn,
+                {
+                  backgroundColor: themeController.current?.backgroundColor,
+                  borderColor: themeController.current?.errorTextColor,
+                  height: sizes.btnHeight,
+                  width: isWebLandscape ? undefined : '100%',
+                  minWidth: isWebLandscape ? 160 : undefined,
+                  alignSelf: isWebLandscape
+                    ? isRTL
+                      ? 'flex-end'
+                      : 'flex-start'
+                    : 'stretch',
+                  paddingHorizontal: isWebLandscape ? sizes.infoFieldPaddingH : 0,
+                  borderRadius: sizes.infoFieldBorderRadius,
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  color: themeController.current?.errorTextColor,
+                  fontSize: sizes.btnFont,
+                }}
+              >
+                {t('my_profile.security.disable_button')}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              onPress={() => setMfaSetupModalVisible(true)}
+              style={[
+                styles.primaryBtn,
+                {
+                  backgroundColor: themeController.current?.buttonColorPrimaryDefault,
+                  height: sizes.btnHeight,
+                  width: isWebLandscape ? undefined : '100%',
+                  minWidth: isWebLandscape ? 160 : undefined,
+                  alignSelf: isWebLandscape
+                    ? isRTL
+                      ? 'flex-end'
+                      : 'flex-start'
+                    : 'stretch',
+                  paddingHorizontal: isWebLandscape ? sizes.infoFieldPaddingH : 0,
+                  borderRadius: sizes.infoFieldBorderRadius,
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  color: themeController.current?.buttonTextColorPrimary,
+                  fontSize: sizes.btnFont,
+                }}
+              >
+                {t('my_profile.security.setup_button')}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
         <View
           style={[
@@ -1280,6 +1666,7 @@ export default function Profile() {
           }
         }}
         theme={themeController.current}
+        limitType='avatar'
       />
 
       {/* Subscriptions */}
@@ -1298,38 +1685,30 @@ export default function Profile() {
         visible={couponsModalVisible}
         onClose={() => setCouponsModalVisible(false)}
       />
-      <Modal
+      <ContactSupportModal
         visible={contactUsVisible}
-        animationType='slide'
-        transparent={isWebLandscape}
-      >
-        <ModalContent
-          title={t('settings.contact_us')}
-          onClose={() => setContactUsVisible(false)}
-          content={''}
-          contactForm={true}
-        />
-      </Modal>
-
-      <Modal
-        visible={feedbackVisible}
-        animationType='slide'
-        transparent={isWebLandscape}
-      >
-        <ModalContent
-          title={t('settings.feedback')}
-          onClose={() => setFeedbackVisible(false)}
-          content={''}
-          feedback={true}
-        />
-      </Modal>
+        onClose={() => setContactUsVisible(false)}
+      />
+      <MfaSetupModal
+        visible={mfaSetupModalVisible}
+        onClose={() => setMfaSetupModalVisible(false)}
+        onDone={() => setMfaSetupModalVisible(false)}
+      />
+      <MfaDisableModal
+        visible={mfaDisableModalVisible}
+        onClose={() => setMfaDisableModalVisible(false)}
+        onDisabled={() => setMfaDisableModalVisible(false)}
+      />
       <UpdateUserDataModal
         visible={updateUserDataModalVisible}
         onClose={() => setUpdateUserDataModalVisible(false)}
         userData={{
           name: userState?.name,
           surname: userState?.surname,
-          about: userState?.about,
+          // Continue editing from the pending (unapproved) text if there is
+          // one, not the last-published value — same reasoning as
+          // displayAbout below.
+          about: userState?.pending_about || userState?.about,
         }}
         onSave={handleUpdateUserData}
         isLoading={isUpdating}
@@ -1337,7 +1716,8 @@ export default function Profile() {
       <UpdateEmailModal
         visible={updateEmailModalVisible}
         onClose={() => setUpdateEmailModalVisible(false)}
-        currentEmail={userState?.email}
+        currentEmail={displayEmail}
+        isEmailVerified={session.authUser?.emailVerified}
         onSave={handleUpdateEmail}
         isLoading={isUpdating}
       />
@@ -1355,6 +1735,7 @@ export default function Profile() {
 function InfoField({
   label,
   value,
+  errorText,
   changeInfo,
   onEditPress,
   multiline = false,
@@ -1370,6 +1751,8 @@ function InfoField({
   field,
   editMode = false,
   setEditingFields,
+  footer,
+  loading = false,
 }) {
   const { themeController } = useComponentContext();
   const [currentValue, setCurrentValue] = useState(value);
@@ -1390,11 +1773,11 @@ function InfoField({
         styles.profileInfoString,
         {
           width:
-            Platform.OS === 'web' && isLandscape
-              ? multiline || field === 'email' || field === 'phoneNumber'
+            field === 'email' || field === 'phoneNumber'
+              ? '48.5%'
+              : Platform.OS === 'web' && isLandscape && multiline
                 ? '48.5%'
-                : '100%'
-              : '100%',
+                : '100%',
           height: btnHeight,
           marginBottom: fieldMargin,
           backgroundColor: editMode
@@ -1420,59 +1803,85 @@ function InfoField({
               alignItems: 'flex-start',
               flex: 1,
               height: '100%',
+              justifyContent: !editMode && footer ? 'space-between' : 'flex-start',
             }
             : { flex: 1 }
         }
       >
-        <Text
+        <View
           style={[
-            styles.profileInfoLabel,
-            {
-              fontSize: sizes.labelFont,
-              color: themeController.current?.formInputLabelColor,
-              marginBottom: sizes.labelMarginBottom,
-            },
-            multiline && isRTL && { alignSelf: 'flex-end' },
+            multiline && { width: '100%' },
+            multiline && editMode && { flex: 1 },
           ]}
         >
-          {label}
-        </Text>
-        {editMode ? (
-          <CustomTextInput
-            style={[
-              styles.profileInfoText,
-              {
-                fontSize: baseFont,
-                color: themeController.current?.formInputTextColor,
-                minHeight: baseFont * 0.9,
-              },
-              multiline && { flex: 1 },
-            ]}
-            value={currentValue}
-            onChangeText={(text) => {
-              setEditingFields((prev) => ({ ...prev, [field]: text }));
-              setCurrentValue(text);
-            }}
-            multiline={multiline}
-            autoFocus={true}
-          />
-        ) : (
           <Text
             style={[
-              styles.profileInfoText,
+              styles.profileInfoLabel,
               {
-                fontSize: baseFont,
-                color: themeController.current?.formInputTextColor,
-                minHeight: baseFont * 0.9,
+                fontSize: sizes.labelFont,
+                color: themeController.current?.formInputLabelColor,
+                marginBottom: sizes.labelMarginBottom,
               },
-              multiline
-                ? { overflow: 'auto' }
-                : { overflow: 'hidden', maxHeight: sizes.oneLineInputHeight },
+              multiline && isRTL && { alignSelf: 'flex-end' },
             ]}
           >
-            {value}
+            {label}
           </Text>
-        )}
+          {editMode ? (
+            <CustomTextInput
+              style={[
+                styles.profileInfoText,
+                {
+                  fontSize: baseFont,
+                  color: themeController.current?.formInputTextColor,
+                  minHeight: baseFont * 0.9,
+                },
+                multiline && { flex: 1 },
+              ]}
+              value={currentValue}
+              onChangeText={(text) => {
+                setEditingFields((prev) => ({ ...prev, [field]: text }));
+                setCurrentValue(text);
+              }}
+              multiline={multiline}
+              autoFocus={true}
+            />
+          ) : loading ? (
+            <ActivityIndicator
+              size='small'
+              color={themeController.current?.formInputTextColor}
+              style={{ alignSelf: isRTL ? 'flex-end' : 'flex-start', marginTop: sizes.labelMarginBottom }}
+            />
+          ) : (
+            <Text
+              style={[
+                styles.profileInfoText,
+                {
+                  fontSize: baseFont,
+                  color: themeController.current?.formInputTextColor,
+                  minHeight: baseFont * 0.9,
+                },
+                multiline
+                  ? { overflow: 'auto' }
+                  : { overflow: 'hidden', maxHeight: sizes.oneLineInputHeight },
+              ]}
+            >
+              {field === 'phoneNumber' ? formatPhoneDisplay(value) : value}
+            </Text>
+          )}
+          {!editMode && !loading && !!errorText && (
+            <Text
+              style={{
+                fontSize: sizes.labelFont,
+                color: themeController.current?.errorTextColor,
+                marginTop: 2,
+              }}
+            >
+              {errorText}
+            </Text>
+          )}
+        </View>
+        {!editMode && !loading && footer}
       </View>
 
       {!editMode && (field === 'email' || field === 'phoneNumber') && (

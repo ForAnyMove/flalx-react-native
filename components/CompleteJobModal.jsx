@@ -25,6 +25,7 @@ import { useWebView } from '../context/webViewContext';
 import { useNotification } from '../src/render';
 import { useMemo, useState } from 'react';
 import ImagePickerModal from './ui/ImagePickerModal';
+import ConfirmModal from './ui/ConfirmModal';
 import { uploadImageAsset } from '../src/files/uploadFile';
 import { scaleByHeightMobile } from '../utils/resizeFuncs';
 import { logError } from '../utils/log_util';
@@ -289,10 +290,15 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
   };
 
   // Функция удаления картинки по индексу
+  const [pendingRemoveIndex, setPendingRemoveIndex] = useState(null);
   const removeImage = (indexToRemove) => {
     setImages((prevImages) =>
       prevImages.filter((_, index) => index !== indexToRemove)
     );
+  };
+  const confirmRemoveImage = () => {
+    if (pendingRemoveIndex !== null) removeImage(pendingRemoveIndex);
+    setPendingRemoveIndex(null);
   };
 
   return (
@@ -391,17 +397,14 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={[
-                    styles.imageScrollContainer,
-                    isRTL && { flexDirection: 'row-reverse' },
-                  ]}
+                  contentContainerStyle={styles.imageScrollContainer}
                 >
-                  {images.map((uri, index) => (
+                  {(isRTL ? images.map((uri, i) => ({ uri, i })).reverse() : images.map((uri, i) => ({ uri, i }))).map(({ uri, i: index }) => (
                     <View key={index} style={dynamicStyles.imageWrapper}>
                       <Image source={{ uri }} style={dynamicStyles.image} />
                       <TouchableOpacity
                         style={dynamicStyles.removeIconContainer}
-                        onPress={() => removeImage(index)}
+                        onPress={() => setPendingRemoveIndex(index)}
                       >
                         <Image
                           source={icons.cross}
@@ -458,6 +461,16 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
               visible={imageModalVisible}
               onClose={() => setImageModalVisible(false)}
               onAdd={handleImageAdd}
+              limitType='jobImages'
+              multiple
+            />
+            <ConfirmModal
+              visible={pendingRemoveIndex !== null}
+              title={t('common.confirm_remove_image')}
+              onCancel={() => setPendingRemoveIndex(null)}
+              onConfirm={confirmRemoveImage}
+              confirmText={t('common.remove')}
+              destructive
             />
           </View>
         </ScrollView>

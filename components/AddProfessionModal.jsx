@@ -214,6 +214,9 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
       marginHorizontal: sizes.textMarginH,
     },
     imageGrid: {
+      // Order is handled in JS (renderImageGrid reverses the array for RTL)
+      // instead of here — row-reverse on a ScrollView's contentContainerStyle
+      // isn't reliable, and combining both would double-reverse back to LTR.
       flexDirection: 'row',
       // flexWrap: 'wrap',
       gap: sizes.imageGridGap,
@@ -282,7 +285,10 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
 
   const renderImageGrid = (photos, type) => (
     <ScrollView contentContainerStyle={styles.imageGrid} horizontal={true}>
-      {photos.map((photo, index) => (
+      {/* row-reverse on a ScrollView's contentContainerStyle isn't reliable —
+          reverse the array itself, keeping each item's original index so
+          removal still targets the right photo regardless of display order. */}
+      {(isRTL ? photos.map((photo, i) => ({ photo, i })).reverse() : photos.map((photo, i) => ({ photo, i }))).map(({ photo, i: index }) => (
         <View key={index} style={styles.imageContainer}>
           <Image source={{ uri: photo }} style={styles.image} />
           <TouchableOpacity
@@ -432,6 +438,7 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
         visible={pickerVisible}
         onClose={() => setPickerVisible(false)}
         onAdd={handleAddImages}
+        multiple
       />
     </Modal>
   );

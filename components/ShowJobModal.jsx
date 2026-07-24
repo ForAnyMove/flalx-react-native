@@ -29,6 +29,7 @@ import { useWindowInfo } from '../context/windowContext';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import JobModalWrapper from './JobModalWrapper';
+import { logWarn } from '../utils/log_util';
 import {
   addSelfToJobProviders,
   completeJob,
@@ -751,6 +752,7 @@ export default function ShowJobModal({
           setInterestedRequest(true);
         });
       } else {
+        logWarn('handleAddingSelfToJobProviders: no success/directAuth/paymentUrl in result, no redirect opened:', result);
         jobsController.reloadAll();
       }
 
@@ -786,6 +788,13 @@ export default function ShowJobModal({
     } else if (result.directAuth || result.success) {
       jobsController.reloadAll();
       setInterestedRequest(true);
+    } else {
+      // Response matched none of the expected shapes — PurchaseModal's own
+      // check (payment.paymentMetadata.approval.href / paymentUrl / redirectUrl)
+      // may still see a link in `result.payment` and close itself believing we
+      // already opened a redirect, so this case must not stay silent.
+      logWarn('handlePurchaseInterest: no paymentUrl/directAuth/success in result, no redirect opened:', result);
+      jobsController.reloadAll();
     }
     return result;
   };
@@ -1820,6 +1829,7 @@ export default function ShowJobModal({
       } else if (data.paymentUrl) {
         openWebView(data.paymentUrl, () => { });
       } else {
+        logWarn('payToPublish: no success/directAuth/paymentUrl in data, no redirect opened:', data);
         jobsController.reloadCreator();
       }
       if (paymentOptions.useCoupon) {
@@ -1847,6 +1857,7 @@ export default function ShowJobModal({
     } else if (data.paymentUrl) {
       openWebView(data.paymentUrl, () => { });
     } else {
+      logWarn('handlePurchasePublish: no success/directAuth/paymentUrl in data, no redirect opened:', data);
       jobsController.reloadCreator();
     }
     return data;
@@ -2065,7 +2076,6 @@ export default function ShowJobModal({
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}
           contentContainerStyle={[
             styles.imageScrollContainer,
             dynamicStyles.imageScrollContainer,
@@ -2074,14 +2084,21 @@ export default function ShowJobModal({
         >
           {currentJobInfo?.images.length > 0 ? (
             <>
-              {currentJobInfo?.images.map((uri, index) => (
+              {/* row-reverse on the ScrollView's contentContainerStyle isn't
+                  reliable — reverse the array itself, keeping each item's
+                  original index so the fullscreen preview still opens the
+                  right image regardless of display order. */}
+              {(isRTL
+                ? currentJobInfo.images.map((uri, i) => ({ uri, i })).reverse()
+                : currentJobInfo.images.map((uri, i) => ({ uri, i }))
+              ).map(({ uri, i: index }) => (
                 <TouchableOpacity
                   key={index}
                   activeOpacity={0.85}
                   style={[
                     styles.imageWrapper,
                     dynamicStyles.imageWrapper,
-                    isRTL && { transform: [{ scaleX: -1 }] },
+                    isRTL && { marginRight: 0, marginLeft: sizes.margin / 2 },
                   ]}
                   onPress={() => {
                     setImagePreviewIndex(index);
@@ -2633,17 +2650,19 @@ export default function ShowJobModal({
                       })}
                     </Text>
                     <View
-                      style={styles.imageRow}
+                      style={[styles.imageRow, isRTL && { flexDirection: 'row-reverse' }]}
                     >
                       <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
-                        style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}
                         contentContainerStyle={styles.imageScrollContainer}
                       >
                         {currentJobInfo?.images.length > 0 ? (
                           <>
-                            {currentJobInfo?.images.map((uri, index) => (
+                            {(isRTL
+                              ? currentJobInfo.images.map((uri, i) => ({ uri, i })).reverse()
+                              : currentJobInfo.images.map((uri, i) => ({ uri, i }))
+                            ).map(({ uri, i: index }) => (
                               <TouchableOpacity
                                 key={index}
                                 activeOpacity={0.85}
@@ -2653,8 +2672,8 @@ export default function ShowJobModal({
                                     backgroundColor:
                                       themeController.current
                                         ?.formInputBackground,
-                                    marginRight: sizes.margin / 2,
-                                    transform: isRTL ? [{ scaleX: -1 }] : undefined,
+                                    marginRight: isRTL ? 0 : sizes.margin / 2,
+                                    marginLeft: isRTL ? sizes.margin / 2 : 0,
                                   },
                                 ]}
                                 onPress={() => {

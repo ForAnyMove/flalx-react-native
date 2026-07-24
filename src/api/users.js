@@ -111,6 +111,27 @@ async function me(session) {
     return response.data;
 }
 
+/**
+ * Marks the current unread "about" rejection as acknowledged —
+ * `rejected_about` in GET /users/me goes back to null until the next
+ * rejection happens. Mirrors dismissAvatarRejection in src/api/images.js —
+ * "about" moderation works exactly the same way as avatar moderation
+ * (pending_about/rejected_about instead of pending_avatar/rejected_avatar).
+ * @param {object} session
+ */
+async function dismissAboutRejection(session) {
+    try {
+        await fetchWithSession({
+            session,
+            endpoint: '/users/about/rejection/dismiss',
+            method: 'POST',
+        });
+    } catch (error) {
+        logError('Error dismissing about rejection:', error);
+        throw error;
+    }
+}
+
 async function addCommentToUserByJob(userId, jobId, comment, rating, session) {
     try {
         const response = await fetchWithSession({
@@ -130,4 +151,4 @@ async function addCommentToUserByJob(userId, jobId, comment, rating, session) {
     }
 }
 
-export { getRevealedUsers, revealUser, addCommentToUserByJob, getRevealProduct, me };
+export { getRevealedUsers, revealUser, addCommentToUserByJob, getRevealProduct, me, dismissAboutRejection };
