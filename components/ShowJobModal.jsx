@@ -29,7 +29,7 @@ import { useWindowInfo } from '../context/windowContext';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import JobModalWrapper from './JobModalWrapper';
-import { logWarn } from '../utils/log_util';
+import { logWarn, logInfo } from '../utils/log_util';
 import {
   addSelfToJobProviders,
   completeJob,
@@ -38,6 +38,7 @@ import {
   respondToJobAgreement,
   confirmProviderSelection,
   rejectProviderSelection,
+  discardPendingEdit,
 } from '../src/api/jobs';
 import { useWebView } from '../context/webViewContext';
 import { useWebSocket } from '../context/webSocketContext';
@@ -163,6 +164,10 @@ function formatFieldValue(field, value, jobTypesController, t) {
       return typeof value === 'object' ? (value?.address || String(value)) : String(value);
     case 'experience':
       return typeof value === 'object' ? `${value.min || 0}-${value.max || 0}` : String(value);
+    case 'images':
+      return Array.isArray(value)
+        ? t('showJob.messages.photosCount', { count: value.length, defaultValue: `${value.length} photo(s)` })
+        : String(value);
     default:
       return String(value);
   }
@@ -225,6 +230,11 @@ export default function ShowJobModal({
   closeModal,
   status: initialStatus,
   currentJobId,
+  // From useJobDetailNavigation's GET /jobs/:id/status pre-check — carries
+  // { isCreator, isProvider, providerStatus } (or null if that check failed
+  // and navigation fell back to cached data). Used instead of this component
+  // making its own separate is-provider call for the same job.
+  jobStatusInfo,
 }) {
   const {
     themeController,
@@ -622,6 +632,9 @@ export default function ShowJobModal({
   const [agreementModalVisible, setAgreementModalVisible] = useState(false);
   const [agreementChanges, setAgreementChanges] = useState(null);
 
+  const [discardEditModalVisible, setDiscardEditModalVisible] = useState(false);
+  const [discardEditRows, setDiscardEditRows] = useState([]);
+
   const [currentJobInfo, setCurrentJobInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showChosenUserModal, setShowChosenUserModal] = useState(false);
@@ -658,12 +671,28 @@ export default function ShowJobModal({
     }
   }, [currentJobInfo?.provider_status, currentJobInfo?.status, status]);
 
-  const location = currentJobInfo?.location;
+  // Only the creator resumes their own rejected/pending draft in this
+  // read-only detail view — providers must keep seeing the live
+  // (last-approved) data per spec, with only a moderation badge in the list
+  // (jobsTabs/Waiting.jsx) to go on until it's approved. Generic over
+  // whatever fields unsubmitted_edits actually carries, same reasoning as
+  // NewJobModal's editDraft — not hardcoded to just description/images.
+  const creatorDraft = status?.startsWith('store') ? currentJobInfo?.unsubmitted_edits : null;
+  const displayDescription = creatorDraft?.description ?? currentJobInfo?.description;
+  const displayImages = creatorDraft?.images ?? currentJobInfo?.images ?? [];
+  const displayPrice = creatorDraft?.price ?? currentJobInfo?.price;
+  const displayExperience = creatorDraft?.experience ?? currentJobInfo?.experience;
+  const displayStartDateTime = creatorDraft?.startDateTime ?? currentJobInfo?.startDateTime;
+  const displayEndDateTime = creatorDraft?.endDateTime ?? currentJobInfo?.endDateTime;
+  const displayStartLocal = creatorDraft?.startLocal ?? currentJobInfo?.startLocal ?? currentJobInfo?.start_local;
+  const displayEndLocal = creatorDraft?.endLocal ?? currentJobInfo?.endLocal ?? currentJobInfo?.end_local;
+  const displaySourceTimezone = creatorDraft?.source_timezone ?? currentJobInfo?.source_timezone ?? currentJobInfo?.sourceTimezone;
+
+  const location = creatorDraft?.location ?? currentJobInfo?.location;
 
   // Подгружаем job из уже загруженных списков (list-эндпоинты возвращают полные данные)
   useEffect(() => {
     if (!currentJobId) return;
-    let cancelled = false;
 
     if (!currentJobInfo) setLoading(true);
 
@@ -689,8 +718,13 @@ export default function ShowJobModal({
       setEditableCommentValue(job?.job_comment?.comment);
     }
 
-    // Auto-show agreement modal if provider hasn't agreed to current job version
-    if (status.startsWith('jobs') && user.current?.id) {
+    // Auto-show agreement modal if provider hasn't agreed to current job version.
+    // Gated on status === 'waiting': while an edit is pending_moderation /
+    // update_requires_editing the live job fields haven't actually changed
+    // yet (the draft is a separate unsubmitted_edits), so there's nothing to
+    // agree to — only the moderation badge should show until it's approved
+    // and merged back into waiting.
+    if (status.startsWith('jobs') && user.current?.id && job?.status === 'waiting') {
       const myEntry = job?.providers?.find((p) => (p?.id || p) === user.current.id);
       if (myEntry && myEntry.job_agreement != null && myEntry.job_agreement !== 'agreed') {
         const diff = computeAgreementDiff(
@@ -702,22 +736,15 @@ export default function ShowJobModal({
       }
     }
 
-    (async () => {
-      try {
-        const isProvider = await jobsController.actions.checkIsProviderInJob(currentJobId);
-        if (!cancelled) setInterestedRequest(isProvider);
-      } catch (e) {
-        logInfo('Failed to check provider status:', e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
+    // jobStatusInfo comes from useJobDetailNavigation's GET /jobs/:id/status
+    // pre-check, done once right before this modal was opened — reused here
+    // instead of making a second, redundant is-provider call for the same
+    // job (the whole point of merging that into one endpoint response).
+    setInterestedRequest(jobStatusInfo?.isProvider === true);
+    setLoading(false);
   }, [
     currentJobId,
+    jobStatusInfo,
     session?.status,
     jobsController.creator.waiting,
     jobsController.creator.inProgress,
@@ -899,7 +926,10 @@ export default function ShowJobModal({
     if (!lastMessage) return;
     if (lastMessage.type === 'JOB_UPDATED_REQUIRES_AGREEMENT' &&
       lastMessage.payload?.jobId === currentJobId &&
-      status.startsWith('jobs')) {
+      status.startsWith('jobs') &&
+      // Same reasoning as the auto-show check above — nothing to agree to
+      // while the job is still mid-moderation.
+      currentJobInfo?.status === 'waiting') {
       const diff = computeAgreementDiff(
         currentJobInfo?.changes_history,
         lastMessage.payload?.changeDate
@@ -934,6 +964,48 @@ export default function ShowJobModal({
     } finally {
       setAppLoading(false);
     }
+  };
+
+  // Builds the discard-confirm popup's diff rows — same {field, was, will}
+  // shape as computeAgreementDiff/agreementChanges, so the popup can reuse
+  // that modal's row rendering instead of cramming everything into one bold
+  // title Text. The diff data is already on the job object (unsubmitted_edits
+  // vs the live, still-approved description/images), no separate endpoint
+  // needed for it. "was" = the draft value (being discarded), "will" = the
+  // live value (what stays).
+  function buildDiscardEditRows() {
+    const draft = currentJobInfo?.unsubmitted_edits;
+    if (!draft) return [];
+
+    const rows = [];
+    if (draft.description !== undefined && draft.description !== currentJobInfo?.description) {
+      rows.push({ field: 'description', was: draft.description, will: currentJobInfo?.description });
+    }
+    if (
+      draft.images !== undefined &&
+      JSON.stringify(draft.images) !== JSON.stringify(currentJobInfo?.images)
+    ) {
+      rows.push({ field: 'images', was: draft.images, will: currentJobInfo?.images });
+    }
+    return rows;
+  }
+
+  const handleDiscardPendingEdit = () => {
+    setDiscardEditRows(buildDiscardEditRows());
+    setDiscardEditModalVisible(true);
+  };
+
+  const confirmDiscardPendingEdit = async () => {
+    try {
+      setAppLoading(true);
+      await discardPendingEdit(currentJobId, session);
+      jobsController.reloadCreator();
+    } catch (err) {
+      logInfo('Ошибка отмены правки job:', err.message);
+    } finally {
+      setAppLoading(false);
+    }
+    setDiscardEditModalVisible(false);
   };
 
   function extraUiByStatus(status) {
@@ -1006,6 +1078,54 @@ export default function ShowJobModal({
                   {currentJobInfo.moderation_comment}
                 </Text>
               ) : null}
+            </View>]
+          case 'update_requires_editing':
+            return [<View key='update-requires-editing-block' style={{ marginBottom: sizes.margin / 2 }}>
+              <Text style={{
+                alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                color: '#EF4F6B',
+                fontFamily: 'Rubik-Bold',
+                fontSize: sizes.font,
+                marginBottom: sizes.margin / 4,
+              }}>
+                {t('showJob.messages.updateRequiresEditing', { defaultValue: 'Your edit to this job was rejected by moderation and requires editing. The published version is still visible to providers.' })}
+              </Text>
+              {currentJobInfo?.rejection_reason ? (
+                <Text style={{
+                  alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                  color: themeController.current?.textColor,
+                  fontSize: sizes.font,
+                  marginBottom: sizes.margin / 4,
+                }}>
+                  <Text style={{ fontFamily: 'Rubik-Bold' }}>
+                    {t('showJob.messages.rejectionReason', { defaultValue: 'Rejection reason' })}{': '}
+                  </Text>
+                  {currentJobInfo.rejection_reason}
+                </Text>
+              ) : null}
+              {currentJobInfo?.moderation_comment ? (
+                <Text style={{
+                  alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                  color: themeController.current?.textColor,
+                  fontSize: sizes.font,
+                  marginBottom: sizes.margin / 4,
+                }}>
+                  <Text style={{ fontFamily: 'Rubik-Bold' }}>
+                    {t('showJob.messages.moderationComment', { defaultValue: 'Moderator comment' })}{': '}
+                  </Text>
+                  {currentJobInfo.moderation_comment}
+                </Text>
+              ) : null}
+              <TouchableOpacity onPress={handleDiscardPendingEdit}>
+                <Text style={{
+                  alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                  color: themeController.current?.buttonColorPrimaryDefault,
+                  fontFamily: 'Rubik-Medium',
+                  fontSize: sizes.font,
+                }}>
+                  {t('showJob.buttons.discardPendingEdit', { defaultValue: 'Discard this edit' })}
+                </Text>
+              </TouchableOpacity>
             </View>]
           default:
             return [<ProvidersSection
@@ -2009,7 +2129,7 @@ export default function ShowJobModal({
         {t('showJob.fields.description', { defaultValue: 'Description' })}
       </Text>
       <CustomTextInput
-        value={currentJobInfo?.description || ''}
+        value={displayDescription || ''}
         style={[
           styles.input,
           dynamicStyles.input,
@@ -2038,7 +2158,7 @@ export default function ShowJobModal({
         {t('showJob.fields.price', { defaultValue: 'Price' })}
       </Text>
       <CustomTextInput
-        value={currentJobInfo?.price || '-'}
+        value={displayPrice || '-'}
         style={[
           styles.input,
           dynamicStyles.input,
@@ -2084,15 +2204,15 @@ export default function ShowJobModal({
             !isWebLandscape && { width: '100%' },
           ]}
         >
-          {currentJobInfo?.images.length > 0 ? (
+          {displayImages.length > 0 ? (
             <>
               {/* row-reverse on the ScrollView's contentContainerStyle isn't
                   reliable — reverse the array itself, keeping each item's
                   original index so the fullscreen preview still opens the
                   right image regardless of display order. */}
               {(isRTL
-                ? currentJobInfo.images.map((uri, i) => ({ uri, i })).reverse()
-                : currentJobInfo.images.map((uri, i) => ({ uri, i }))
+                ? displayImages.map((uri, i) => ({ uri, i })).reverse()
+                : displayImages.map((uri, i) => ({ uri, i }))
               ).map(({ uri, i: index }) => (
                 <TouchableOpacity
                   key={index}
@@ -2141,7 +2261,7 @@ export default function ShowJobModal({
         </ScrollView>
       </View>
     </View>,
-    currentJobInfo?.experience ? (
+    displayExperience ? (
       <View
         style={[
           styles.inputBlock,
@@ -2160,7 +2280,7 @@ export default function ShowJobModal({
           {t('showJob.fields.experience', { defaultValue: 'Experience' })}
         </Text>
         <CustomTextInput
-          value={formatExperience(currentJobInfo?.experience, t)}
+          value={formatExperience(displayExperience, t)}
           style={[
             styles.input,
             dynamicStyles.input,
@@ -2185,17 +2305,17 @@ export default function ShowJobModal({
         <DateTimeInput
           key='startDateTime'
           label={t('showJob.fields.start', { defaultValue: 'Start' })}
-          value={currentJobInfo?.startDateTime}
-          localValue={currentJobInfo?.startLocal || currentJobInfo?.start_local}
-          timezone={currentJobInfo?.source_timezone || currentJobInfo?.sourceTimezone}
+          value={displayStartDateTime}
+          localValue={displayStartLocal}
+          timezone={displaySourceTimezone}
           readOnly={true}
         />
       ) : (
         <DateTimeInputDouble
           label={t('showJob.fields.start', { defaultValue: 'Start' })}
-          value={currentJobInfo?.startDateTime}
-          localValue={currentJobInfo?.startLocal || currentJobInfo?.start_local}
-          timezone={currentJobInfo?.source_timezone || currentJobInfo?.sourceTimezone}
+          value={displayStartDateTime}
+          localValue={displayStartLocal}
+          timezone={displaySourceTimezone}
           readOnly={true}
         />
       )}
@@ -2203,17 +2323,17 @@ export default function ShowJobModal({
         <DateTimeInput
           key='endDateTime'
           label={t('showJob.fields.end', { defaultValue: 'End' })}
-          value={currentJobInfo?.endDateTime}
-          localValue={currentJobInfo?.endLocal || currentJobInfo?.end_local}
-          timezone={currentJobInfo?.source_timezone || currentJobInfo?.sourceTimezone}
+          value={displayEndDateTime}
+          localValue={displayEndLocal}
+          timezone={displaySourceTimezone}
           readOnly={true}
         />
       ) : (
         <DateTimeInputDouble
           label={t('showJob.fields.end', { defaultValue: 'End' })}
-          value={currentJobInfo?.endDateTime}
-          localValue={currentJobInfo?.endLocal || currentJobInfo?.end_local}
-          timezone={currentJobInfo?.source_timezone || currentJobInfo?.sourceTimezone}
+          value={displayEndDateTime}
+          localValue={displayEndLocal}
+          timezone={displaySourceTimezone}
           readOnly={true}
         />
       )}
@@ -2320,7 +2440,7 @@ export default function ShowJobModal({
                         ${scaleByHeight(64, height)}px 
                         ${scaleByHeight(75, height)}px 
                         ${scaleByHeight(75, height)}px 
-                        ${currentJobInfo?.experience
+                        ${displayExperience
                           ? `${scaleByHeight(64, height)}px`
                           : ''
                         }
@@ -2414,7 +2534,7 @@ export default function ShowJobModal({
                         })}
                       </Text>
                       <CustomTextInput
-                        value={currentJobInfo?.description || ''}
+                        value={displayDescription || ''}
                         style={{
                           // fontWeight: '500',
                           fontFamily: 'Rubik-Medium',
@@ -2616,7 +2736,7 @@ export default function ShowJobModal({
                         {t('showJob.fields.price', { defaultValue: 'Price' })}
                       </Text>
                       <CustomTextInput
-                        value={currentJobInfo?.price || '-'}
+                        value={displayPrice || '-'}
                         style={{
                           // fontWeight: '500',
                           fontFamily: 'Rubik-Medium',
@@ -2659,7 +2779,7 @@ export default function ShowJobModal({
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={styles.imageScrollContainer}
                       >
-                        {currentJobInfo?.images.length > 0 ? (
+                        {displayImages.length > 0 ? (
                           <>
                             {(isRTL
                               ? currentJobInfo.images.map((uri, i) => ({ uri, i })).reverse()
@@ -2721,7 +2841,7 @@ export default function ShowJobModal({
                   </View>
 
                   {/* Experience */}
-                  {currentJobInfo?.experience && (
+                  {displayExperience && (
                     <View
                       style={{
                         gridArea: isRTL ? '6 / 2 / 7 / 3' : '6 / 1 / 7 / 2',
@@ -2758,7 +2878,7 @@ export default function ShowJobModal({
                         </Text>
                         <CustomTextInput
                           value={formatExperience(
-                            currentJobInfo?.experience,
+                            displayExperience,
                             t
                           )}
                           style={{
@@ -2783,10 +2903,10 @@ export default function ShowJobModal({
                   {currentJobInfo?.created_by_account_type === 'business' && <View
                     style={{
                       gridArea: isRTL
-                        ? currentJobInfo?.experience
+                        ? displayExperience
                           ? '7 / 2 / 8 / 3'
                           : '6 / 2 / 7 / 3'
-                        : currentJobInfo?.experience
+                        : displayExperience
                           ? '7 / 1 / 8 / 2'
                           : '6 / 1 / 7 / 2',
                     }}
@@ -2800,9 +2920,9 @@ export default function ShowJobModal({
                           label={t('showJob.fields.start', {
                             defaultValue: 'Start',
                           })}
-                          value={currentJobInfo?.startDateTime}
-                          localValue={currentJobInfo?.startLocal || currentJobInfo?.start_local}
-                          timezone={currentJobInfo?.source_timezone || currentJobInfo?.sourceTimezone}
+                          value={displayStartDateTime}
+                          localValue={displayStartLocal}
+                          timezone={displaySourceTimezone}
                           readOnly={true}
                         />
                       ) : (
@@ -2810,9 +2930,9 @@ export default function ShowJobModal({
                           label={t('showJob.fields.start', {
                             defaultValue: 'Start',
                           })}
-                          value={currentJobInfo?.startDateTime}
-                          localValue={currentJobInfo?.startLocal || currentJobInfo?.start_local}
-                          timezone={currentJobInfo?.source_timezone || currentJobInfo?.sourceTimezone}
+                          value={displayStartDateTime}
+                          localValue={displayStartLocal}
+                          timezone={displaySourceTimezone}
                           readOnly={true}
                         />
                       )}
@@ -2823,10 +2943,10 @@ export default function ShowJobModal({
                   {currentJobInfo?.created_by_account_type === 'business' && <View
                     style={{
                       gridArea: isRTL
-                        ? currentJobInfo?.experience
+                        ? displayExperience
                           ? '7 / 1 / 8 / 2'
                           : '6 / 1 / 7 / 2'
-                        : currentJobInfo?.experience
+                        : displayExperience
                           ? '7 / 2 / 8 / 3'
                           : '6 / 2 / 7 / 3',
                     }}
@@ -2840,9 +2960,9 @@ export default function ShowJobModal({
                           label={t('showJob.fields.end', {
                             defaultValue: 'End',
                           })}
-                          value={currentJobInfo?.endDateTime}
-                          localValue={currentJobInfo?.endLocal || currentJobInfo?.end_local}
-                          timezone={currentJobInfo?.source_timezone || currentJobInfo?.sourceTimezone}
+                          value={displayEndDateTime}
+                          localValue={displayEndLocal}
+                          timezone={displaySourceTimezone}
                           readOnly={true}
                         />
                       ) : (
@@ -2850,9 +2970,9 @@ export default function ShowJobModal({
                           label={t('showJob.fields.end', {
                             defaultValue: 'End',
                           })}
-                          value={currentJobInfo?.endDateTime}
-                          localValue={currentJobInfo?.endLocal || currentJobInfo?.end_local}
-                          timezone={currentJobInfo?.source_timezone || currentJobInfo?.sourceTimezone}
+                          value={displayEndDateTime}
+                          localValue={displayEndLocal}
+                          timezone={displaySourceTimezone}
                           readOnly={true}
                         />
                       )}
@@ -3145,7 +3265,7 @@ export default function ShowJobModal({
       />
       <ImageViewerModal
         visible={imagePreviewVisible}
-        images={currentJobInfo?.images ?? []}
+        images={displayImages}
         initialIndex={imagePreviewIndex}
         onClose={() => setImagePreviewVisible(false)}
       />
@@ -3498,6 +3618,177 @@ export default function ShowJobModal({
                   }}
                 >
                   {t('showJob.agreement.agree', { defaultValue: 'Agree' })}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Discard-pending-edit confirmation — same title+diff-rows+buttons
+          structure as the agreement modal above, so the diff reads as plain
+          text rows instead of being crammed into one bold heading. */}
+      <Modal visible={discardEditModalVisible} transparent animationType='fade'>
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalCard,
+              {
+                backgroundColor: themeController.current?.backgroundColor,
+                width: sizes.modalWidth,
+                padding: sizes.modalPadding,
+                borderRadius: sizes.modalBtnBorderRadius,
+              },
+            ]}
+          >
+            <TouchableOpacity
+              style={[
+                {
+                  position: 'absolute',
+                  top: sizes.modalCloseBtnTopRightPosition,
+                  right: sizes.modalCloseBtnTopRightPosition,
+                },
+              ]}
+              onPress={() => setDiscardEditModalVisible(false)}
+            >
+              <Image
+                source={icons.cross}
+                style={{
+                  width: sizes.iconSize,
+                  height: sizes.iconSize,
+                  tintColor: themeController.current?.textColor,
+                }}
+              />
+            </TouchableOpacity>
+            <Text
+              style={[
+                styles.modalText,
+                {
+                  fontSize: sizes.modalFont,
+                  marginBottom: sizes.modalTextMarginBottom,
+                  textAlign: 'center',
+                  color: themeController.current?.textColor,
+                  lineHeight: sizes.modalLineHeight,
+                },
+              ]}
+            >
+              {t('showJob.messages.discardEditConfirm', {
+                defaultValue: 'These changes will be discarded:',
+              })}
+            </Text>
+            {discardEditRows.length > 0 && (
+              <View style={{ marginBottom: sizes.modalTextMarginBottom, alignSelf: 'stretch', alignItems: 'center' }}>
+                {discardEditRows.map(({ field, was, will }, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      {
+                        flexDirection: isRTL ? 'row-reverse' : 'row',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 4,
+                        marginBottom: 6,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        fontSize: sizes.inputFont,
+                        fontFamily: 'Rubik-SemiBold',
+                        color: themeController.current?.textColor,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {t(`showJob.fields.${field}`, { defaultValue: field })}:
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: sizes.inputFont,
+                        color: themeController.current?.unactiveTextColor,
+                        textDecorationLine: 'line-through',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {formatFieldValue(field, was, jobTypesController, t)}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: sizes.inputFont,
+                        color: themeController.current?.unactiveTextColor,
+                        textAlign: 'center',
+                      }}
+                    >
+                      →
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: sizes.inputFont,
+                        fontFamily: 'Rubik-SemiBold',
+                        color: themeController.current?.primaryColor,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {formatFieldValue(field, will, jobTypesController, t)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            <View
+              style={[
+                styles.modalButtonsRow,
+                {
+                  flexDirection: isRTL ? 'row-reverse' : 'row',
+                  gap: sizes.modalBtnsGap,
+                },
+              ]}
+            >
+              <TouchableOpacity
+                style={[
+                  styles.modalBtn,
+                  {
+                    backgroundColor:
+                      themeController.current?.buttonTextColorSecondary,
+                    borderColor:
+                      themeController.current?.buttonColorPrimaryDefault,
+                    height: sizes.modalBtnHeight,
+                    width: sizes.modalBtnWidth,
+                    borderRadius: sizes.modalBtnBorderRadius,
+                    borderWidth: 1,
+                  },
+                ]}
+                onPress={() => setDiscardEditModalVisible(false)}
+              >
+                <Text
+                  style={{
+                    color: themeController.current?.buttonColorPrimaryDefault,
+                    fontSize: sizes.modalBtnFont,
+                  }}
+                >
+                  {t('common.no')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.modalBtn,
+                  {
+                    backgroundColor:
+                      themeController.current?.buttonColorPrimaryDefault,
+                    height: sizes.modalBtnHeight,
+                    width: sizes.modalBtnWidth,
+                    borderRadius: sizes.modalBtnBorderRadius,
+                  },
+                ]}
+                onPress={confirmDiscardPendingEdit}
+              >
+                <Text
+                  style={{
+                    color: themeController.current?.buttonTextColorPrimary || 'white',
+                    fontSize: sizes.modalBtnFont,
+                  }}
+                >
+                  {t('common.yes')}
                 </Text>
               </TouchableOpacity>
             </View>

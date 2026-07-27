@@ -584,7 +584,7 @@ const PurchaseModal = ({
                   <Text
                     style={[styles.buttonText, styles.outlineSecondaryButtonText]}
                   >
-                    {t('payment_modal.pay_coupons', { count: couponsCount })}
+                    {t('payment_modal.pay_coupons', { count: 1, balance: couponsCount })}
                   </Text>
                 </TouchableOpacity>
               )

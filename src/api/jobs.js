@@ -341,6 +341,59 @@ async function rejectProviderSelection(jobId, session) {
     }
 }
 
+/**
+ * Discards the unsubmitted (rejected) edit draft on a job that's in
+ * `update_requires_editing` — clears `unsubmitted_edits` and returns the
+ * status straight to `waiting` without going through moderation again (the
+ * live description/images were never touched by the rejected draft in the
+ * first place). Creator-only; 400 NO_PENDING_EDIT if the job isn't currently
+ * in `update_requires_editing`.
+ * @param {string} jobId
+ * @param {object} session
+ * @returns {Promise<object>} the updated job
+ */
+async function discardPendingEdit(jobId, session) {
+    try {
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/jobs/${jobId}/discard-pending-edit`,
+            method: 'POST',
+        });
+        return response.data;
+    } catch (error) {
+        logError('Error discarding pending job edit:', error);
+        throw error;
+    }
+}
+
+/**
+ * Lightweight status-only check, meant to be called right before navigating
+ * from a (possibly stale, non-realtime) cached job list into the job detail
+ * screen — confirms the job still exists and what its current status is, so
+ * the caller can bail out with an explanation instead of opening a detail
+ * view for a job that moved out from under the list (e.g. into
+ * pending_moderation) or was deleted. Also reports the caller's own
+ * relationship to the job (isCreator/isProvider/providerStatus), replacing
+ * the separate isProviderInJob() call for that purpose — see
+ * ShowJobModal.jsx, which uses this instead of a dedicated is-provider check.
+ * @param {string} jobId
+ * @param {object} session
+ * @returns {Promise<{ exists: boolean, status?: string, isCreator?: boolean, isProvider?: boolean, providerStatus?: string|null }>}
+ */
+async function getJobStatus(jobId, session) {
+    try {
+        const response = await fetchWithSession({
+            session,
+            endpoint: `/jobs/${jobId}/status`,
+            method: 'GET',
+        });
+        return response.data;
+    } catch (error) {
+        logError('Error checking job status:', error);
+        throw error;
+    }
+}
+
 async function getArchivedRefs(session) {
     try {
         const response = await fetchWithSession({
@@ -388,4 +441,6 @@ export {
     rejectProviderSelection,
     getArchivedRefs,
     markArchivedRefSeen,
+    discardPendingEdit,
+    getJobStatus,
 };

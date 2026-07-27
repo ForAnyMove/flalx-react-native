@@ -16,14 +16,17 @@ import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import { useLocalization } from '../../../src/services/useLocalization';
+import { useJobDetailNavigation } from '../../../src/services/useJobDetailNavigation';
 
 export default function InProgressScreen({
   setShowJobModalVisible,
   setCurrentJobId,
   setJobModalStatus,
+  setJobStatusInfo,
 }) {
   const { themeController, jobsController, languageController } =
     useComponentContext();
+  const openJobDetail = useJobDetailNavigation({ setCurrentJobId, setShowJobModalVisible, setJobModalStatus, setJobStatusInfo });
   const { tField } = useLocalization(languageController.current);
   const { height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
@@ -114,11 +117,7 @@ export default function InProgressScreen({
                   styles.cardContainer,
                   { marginBottom: sizes.cardMarginBottom },
                 ]}
-                onPress={() => {
-                  setCurrentJobId(job.id);
-                  setShowJobModalVisible(true);
-                  setJobModalStatus('jobs-in-progress');
-                }}
+                onPress={() => openJobDetail(job, 'jobs-in-progress')}
               >
                 <View
                   style={[

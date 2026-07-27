@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import { useLocalization } from '../../../src/services/useLocalization';
 import JobExpectationsBadge from '../../../components/ui/JobExpectationsBadge';
+import { useJobDetailNavigation } from '../../../src/services/useJobDetailNavigation';
 // const mock = [
 //   {
 //     "id": "bb54ba45-f4ba-411c-ab4c-688db3d0a956",
@@ -162,9 +163,11 @@ export default function WaitingScreen({
   setShowJobModalVisible,
   setCurrentJobId,
   setJobModalStatus,
+  setJobStatusInfo,
 }) {
   const { themeController, jobsController, languageController, user } =
     useComponentContext();
+  const openJobDetail = useJobDetailNavigation({ setCurrentJobId, setShowJobModalVisible, setJobModalStatus, setJobStatusInfo });
   const { tField } = useLocalization(languageController.current);
   const { height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
@@ -270,9 +273,28 @@ export default function WaitingScreen({
             const myEntry = user.current?.id
               ? job?.providers?.find((p) => (p?.id || p) === user.current.id)
               : null;
-            const needsAgreement = myEntry && myEntry.job_agreement != null && myEntry.job_agreement !== 'agreed';
+            // Job status field itself is a separate dimension from
+            // provider_status (this provider's selection state) — a job the
+            // creator is currently editing shows this badge regardless of
+            // provider_status.
+            const isOnModerationForUpdate = job?.status === 'pending_moderation' || job?.status === 'update_requires_editing';
+            // While mid-moderation the live job fields haven't changed yet
+            // (the edit sits in unsubmitted_edits until approved), so there's
+            // nothing to agree to — only show the moderation badge above
+            // until the job is back to 'waiting'.
+            const needsAgreement = myEntry && myEntry.job_agreement != null && myEntry.job_agreement !== 'agreed' && job?.status === 'waiting';
 
             function checkIsBadgeExist() {
+              // Checked before provider_status: that switch's `default` case
+              // returns false/'' unconditionally for any provider_status
+              // value other than 'obsolete'/'pending_supplier_approval' (e.g.
+              // a perfectly normal "applied, waiting to hear back" status),
+              // which was silently short-circuiting past this check for the
+              // vast majority of applicants — the moderation badge never had
+              // a chance to render for them.
+              if (isOnModerationForUpdate) {
+                return true;
+              }
               if (job?.provider_status) {
                 switch (job.provider_status) {
                   case 'obsolete':
@@ -295,6 +317,9 @@ export default function WaitingScreen({
             }
 
             function getBadgeText() {
+              if (isOnModerationForUpdate) {
+                return t('extra_markers.onModerationForUpdate', { defaultValue: 'On moderation for update' });
+              }
               if (job?.provider_status) {
                 switch (job.provider_status) {
                   case 'obsolete':
@@ -315,6 +340,9 @@ export default function WaitingScreen({
               return '';
             }
             function getBadgeBackgroundColor() {
+              if (isOnModerationForUpdate) {
+                return themeController.current?.warningTextColor;
+              }
               if (job?.provider_status) {
                 switch (job.provider_status) {
                   case 'obsolete':
@@ -341,11 +369,7 @@ export default function WaitingScreen({
                   styles.cardContainer,
                   { marginBottom: sizes.cardMarginBottom },
                 ]}
-                onPress={() => {
-                  setCurrentJobId(job.id);
-                  setShowJobModalVisible(true);
-                  setJobModalStatus('jobs-waiting');
-                }}
+                onPress={() => openJobDetail(job, 'jobs-waiting')}
               >
                 <View
                   style={[

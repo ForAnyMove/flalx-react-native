@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import { Divider } from 'react-native-paper';
 import { useLocalization } from '../../../src/services/useLocalization';
+import { useJobDetailNavigation } from '../../../src/services/useJobDetailNavigation';
 import JobNotificationsComponent from '../../../components/JobNotificationsComponent';
 
 
@@ -24,9 +25,11 @@ export default function WaitingScreen({
   setShowJobModalVisible,
   setCurrentJobId,
   setJobModalStatus,
+  setJobStatusInfo,
 }) {
   const { themeController, jobsController, languageController } =
     useComponentContext();
+  const openJobDetail = useJobDetailNavigation({ setCurrentJobId, setShowJobModalVisible, setJobModalStatus, setJobStatusInfo });
   const { tField } = useLocalization(languageController.current);
   const { height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
@@ -151,7 +154,13 @@ export default function WaitingScreen({
   ];
 
   const drawJobCard = (job, index) => {
-    const hasImage = job.images && job.images.length > 0;
+    // While pending_moderation/update_requires_editing, the live
+    // description/images are the last *approved* version, not what the
+    // creator actually submitted — show the draft instead, same precedence
+    // as the About-field moderation pattern (pending_about || about).
+    const draftDescription = job.unsubmitted_edits?.description ?? job.description;
+    const draftImages = job.unsubmitted_edits?.images ?? job.images;
+    const hasImage = draftImages && draftImages.length > 0;
 
     const getStatusText = (status) => {
       switch (status) {
@@ -162,6 +171,7 @@ export default function WaitingScreen({
         case 'pending_moderation':
           return t('common.pending_moderation');
         case 'requires_editing':
+        case 'update_requires_editing':
           return t('common.requires_editing');
         default:
           return t('common.waiting_payment');
@@ -171,11 +181,7 @@ export default function WaitingScreen({
       <TouchableOpacity
         key={index}
         style={[styles.cardContainer, { marginBottom: sizes.cardMarginBottom }]}
-        onPress={() => {
-          setCurrentJobId(job.id);
-          setShowJobModalVisible(true);
-          setJobModalStatus('store-waiting');
-        }}
+        onPress={() => openJobDetail(job, 'store-waiting')}
       >
         <View
           style={[
@@ -217,7 +223,7 @@ export default function WaitingScreen({
           >
             {hasImage ? (
               <Image
-                source={{ uri: job.images[0] }}
+                source={{ uri: draftImages[0] }}
                 style={styles.image}
                 resizeMode='cover'
               />
@@ -243,7 +249,7 @@ export default function WaitingScreen({
             >
               {tField(job.type, 'name')}
             </Text>
-            {job.description ? (
+            {draftDescription ? (
               <Text
                 style={[
                   styles.description,
@@ -256,7 +262,7 @@ export default function WaitingScreen({
                   },
                 ]}
               >
-                {job.description}
+                {draftDescription}
               </Text>
             ) : null}
           </View>
@@ -293,14 +299,15 @@ export default function WaitingScreen({
             </View>
           )}
           {(job.status === 'pending' || job.status === 'expired' ||
-            job.status === 'pending_moderation' || job.status === 'requires_editing') && (
+            job.status === 'pending_moderation' || job.status === 'requires_editing' ||
+            job.status === 'update_requires_editing') && (
               <View
                 style={[
                   styles.badge,
                   {
                     backgroundColor: job.status === 'expired'
                       ? themeController.current?.expiredBadgeBackground
-                      : job.status === 'requires_editing'
+                      : job.status === 'requires_editing' || job.status === 'update_requires_editing'
                         ? themeController.current?.expiredBadgeBackground
                         : themeController.current?.mainBadgeBackground,
                     minWidth: sizes.badgeSize,

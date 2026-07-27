@@ -67,6 +67,10 @@ export default function Store() {
   const [showJobModalVisible, setShowJobModalVisible] = useState(false);
   const [currentJobId, setCurrentJobId] = useState(null);
   const [jobModalStatus, setJobModalStatus] = useState(null);
+  // Set by useJobDetailNavigation from its GET /jobs/:id/status pre-check —
+  // ShowJobModal reads this instead of making its own separate is-provider
+  // call for the same job.
+  const [jobStatusInfo, setJobStatusInfo] = useState(null);
 
   const [badgeCounts, setBadgeCounts] = useState(badgeCountsExample);
 
@@ -424,6 +428,7 @@ export default function Store() {
                 setShowJobModalVisible={setShowJobModalVisible}
                 setCurrentJobId={setCurrentJobId}
                 setJobModalStatus={setJobModalStatus}
+                setJobStatusInfo={setJobStatusInfo}
               />
             </View>
           ))}
@@ -536,6 +541,7 @@ export default function Store() {
             closeModal={() => setShowJobModalVisible(false)}
             status={jobModalStatus}
             currentJobId={currentJobId}
+            jobStatusInfo={jobStatusInfo}
           />
         </JobModalWrapper>
       ) : (
@@ -544,6 +550,7 @@ export default function Store() {
             closeModal={() => setShowJobModalVisible(false)}
             status={jobModalStatus}
             currentJobId={currentJobId}
+            jobStatusInfo={jobStatusInfo}
           />
         </Modal>
       )}

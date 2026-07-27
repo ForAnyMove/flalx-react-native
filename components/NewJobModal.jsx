@@ -156,15 +156,23 @@ export default function NewJobModal({
   const isClient = user.current?.account_type === 'client';
   const isBusiness = user.current?.account_type === 'business';
 
+  // Any field the job shows in the UI can potentially be a moderation draft,
+  // not just description/images — unsubmitted_edits is read generically here
+  // (per-field, since draft values are PATCH-shaped, e.g. plain IDs, not the
+  // resolved {id,key,name,...} objects initialJob itself carries) rather than
+  // hardcoding which fields go through moderation, so the edit form always
+  // resumes whatever was actually rejected instead of the stale-but-live value.
+  const editDraft = initialJob?.unsubmitted_edits || {};
+
   // Объявляем состояния сначала, чтобы они были доступны в useMemo
   const [type, setType] = useState(
     initialJob
-      ? initialJob.type.key || ''
+      ? (editDraft.type?.key ?? initialJob.type.key) || ''
       : activeKey?.typeKey || activeKey || ''
   );
 
   const [subType, setSubType] = useState(
-    initialJob?.subType.key || activeKey?.subTypeKey || ''
+    (editDraft.subType?.key ?? initialJob?.subType.key) || activeKey?.subTypeKey || ''
   );
 
   // Преобразуем данные из jobTypesController в нужный формат
@@ -311,20 +319,28 @@ export default function NewJobModal({
   }, [type]);
 
   // Остальные локальные стейты
-  const [description, setDescription] = useState(initialJob?.description || '');
-  const [price, setPrice] = useState(initialJob?.price || '');
-  const [images, setImages] = useState(initialJob?.images || []); // тут будут уже public URLs
-  const [location, setLocation] = useState(initialJob?.location || null);
+  const [description, setDescription] = useState(
+    editDraft.description ?? initialJob?.description ?? ''
+  );
+  const [price, setPrice] = useState(editDraft.price ?? initialJob?.price ?? '');
+  const [images, setImages] = useState(
+    editDraft.images ?? initialJob?.images ?? []
+  ); // тут будут уже public URLs
+  const [location, setLocation] = useState(editDraft.location ?? initialJob?.location ?? null);
   const [startDateTime, setStartDateTime] = useState(
-    initialJob?.startDateTime || null
+    editDraft.startDateTime ?? initialJob?.startDateTime ?? null
   );
   const [endDateTime, setEndDateTime] = useState(
-    initialJob?.endDateTime || null
+    editDraft.endDateTime ?? initialJob?.endDateTime ?? null
   );
-  const [startLocal, setStartLocal] = useState(initialJob?.startLocal || initialJob?.start_local || null);
-  const [endLocal, setEndLocal] = useState(initialJob?.endLocal || initialJob?.end_local || null);
+  const [startLocal, setStartLocal] = useState(
+    editDraft.startLocal ?? initialJob?.startLocal ?? initialJob?.start_local ?? null
+  );
+  const [endLocal, setEndLocal] = useState(
+    editDraft.endLocal ?? initialJob?.endLocal ?? initialJob?.end_local ?? null
+  );
   const [sourceTimezone, setSourceTimezone] = useState(
-    initialJob?.source_timezone || initialJob?.sourceTimezone || getDeviceTimezone()
+    editDraft.source_timezone ?? initialJob?.source_timezone ?? initialJob?.sourceTimezone ?? getDeviceTimezone()
   );
   const [jobType, setJobType] = useState('normal');
   const selectedOption =
@@ -332,7 +348,7 @@ export default function NewJobModal({
     jobsController.products[0];
 
   const [isExperienceRequired, setIsExperienceRequired] = useState(false);
-  const [experience, setExperience] = useState(initialJob?.experience || null);
+  const [experience, setExperience] = useState(editDraft.experience ?? initialJob?.experience ?? null);
 
   // Хук для отслеюивания смены type или subType и отображения поля ввода опыта, если она требует опыта
   useEffect(() => {

@@ -15,14 +15,17 @@ import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import { useLocalization } from '../../../src/services/useLocalization';
+import { useJobDetailNavigation } from '../../../src/services/useJobDetailNavigation';
 
 export default function DoneScreen({
   setShowJobModalVisible,
   setCurrentJobId,
   setJobModalStatus,
+  setJobStatusInfo,
 }) {
   const { themeController, jobsController, languageController } =
     useComponentContext();
+  const openJobDetail = useJobDetailNavigation({ setCurrentJobId, setShowJobModalVisible, setJobModalStatus, setJobStatusInfo });
   const { tField } = useLocalization(languageController.current);
   const { t } = useTranslation();
   const { height, isLandscape } = useWindowInfo();
@@ -124,11 +127,7 @@ export default function DoneScreen({
               <TouchableOpacity
                 key={index}
                 style={[styles.cardContainer, { marginBottom: sizes.cardMarginBottom }]}
-                onPress={() => {
-                  setCurrentJobId(job.id);
-                  setShowJobModalVisible(true);
-                  setJobModalStatus('store-done');
-                }}
+                onPress={() => openJobDetail(job, 'store-done')}
               >
                 <View
                   style={[
