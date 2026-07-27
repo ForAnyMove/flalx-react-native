@@ -3098,12 +3098,13 @@ export default function ShowJobModal({
       {currentJobInfo && <PurchaseModal
         visible={publishModalVisible}
         onClose={() => setPublishModalVisible(false)}
+        title={t('payment_modal.select_title_publish', { defaultValue: 'Select a payment method to publish this job' })}
         price={formatCurrency(
           jobsController.products?.find((p) => p.type === currentJobInfo.jobType)?.price,
           jobsController.products?.find((p) => p.type === currentJobInfo.jobType)?.currency,
         )}
         onPurchase={handlePurchasePublish}
-        onPayWithCoupons={user.current?.account_type === 'client' ? handlePayCouponsPublish : undefined}
+        onPayWithCoupons={handlePayCouponsPublish}
         legalNoticeType="creator"
         onOpenSubscriptions={() => {
           setPlansModalVisible(true);
@@ -3235,6 +3236,7 @@ export default function ShowJobModal({
       <PurchaseModal
         visible={showConfirmInterestModal}
         onClose={() => setConfirmInterestModal(false)}
+        title={t('payment_modal.select_title_interest', { defaultValue: 'Select a payment method to apply for this job' })}
         price={formatCurrency(
           jobsController.providerProduct?.price,
           jobsController.providerProduct?.currency,

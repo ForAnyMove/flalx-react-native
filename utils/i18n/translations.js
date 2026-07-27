@@ -371,6 +371,8 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
       },
       payment_modal: {
         select_title: 'Select a method for receiving information about this contact',
+        select_title_publish: 'Select a payment method to publish this job',
+        select_title_interest: 'Select a payment method to apply for this job',
         subscription_title: 'Select a payment method for subscription',
         price_label: 'Price:',
         pay: 'Pay',
@@ -1389,6 +1391,8 @@ or reject it. Please adhere to the platform rules.`,
       },
       payment_modal: {
         select_title: 'בחר שיטה לקבלת מידע על איש קשר זה',
+        select_title_publish: 'בחר אמצעי תשלום לפרסום העבודה',
+        select_title_interest: 'בחר אמצעי תשלום להגשת בקשה לעבודה',
         subscription_title: 'בחר שיטת תשלום למנוי',
         price_label: 'מחיר:',
         pay: 'שלם',

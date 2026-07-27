@@ -24,6 +24,12 @@ import PaymentLegalNotice from './PaymentLegalNotice';
  *   visible           {boolean}
  *   onClose           {function}
  *   type              {'regular' | 'subscribtion'} — default 'regular'
+ *   title             {string?}      — overrides the 'select' screen's title
+ *                                      (default: payment_modal.select_title,
+ *                                      written for the contact-reveal flow —
+ *                                      pass an explicit title for any other
+ *                                      purchase context, e.g. publishing or
+ *                                      applying to a job)
  *   price             {string}       — e.g. "$1.50"
  *   onPurchase        {async function} — called when user confirms payment
  *   onPayWithCoupons  {function?}    — called when "Pay with coupons" is pressed
@@ -48,6 +54,7 @@ const PurchaseModal = ({
   visible,
   onClose,
   type = 'regular',
+  title,
   price,
   onPurchase,
   onPayWithCoupons,
@@ -528,7 +535,7 @@ const PurchaseModal = ({
         <Text style={[styles.title, { fontSize: sizes.firstTitleSize }]}>
           {isSubscription
             ? t('payment_modal.subscription_title')
-            : t('payment_modal.select_title')}
+            : title ?? t('payment_modal.select_title')}
         </Text>
 
         {price != null && (
