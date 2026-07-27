@@ -40,6 +40,7 @@ const KNOWN_MESSAGE_KEYS = new Set([
   'rate_limited',
   'email_already_exists',
   'phone_already_exists',
+  'account_banned',
 ]);
 
 /**

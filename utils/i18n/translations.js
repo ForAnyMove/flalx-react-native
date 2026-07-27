@@ -265,6 +265,7 @@ The one who sits sits on a tailor's bed - a man of three and a half years, and c
           rate_limited: 'Too many requests. Please wait and try again.',
           email_already_exists: 'This email address is already in use.',
           phone_already_exists: 'This phone number is already in use.',
+          account_banned: 'This account has been suspended.',
           // Generic fallbacks keyed by the coarse `code`, used when `message`
           // isn't one of the precise slugs above (e.g. MFA_REQUIRED/
           // VALIDATION_ERROR cover several distinct meanings).
@@ -1289,6 +1290,7 @@ or reject it. Please adhere to the platform rules.`,
           rate_limited: 'יותר מדי בקשות. אנא המתן ונסה שוב.',
           email_already_exists: 'כתובת אימייל זו כבר בשימוש.',
           phone_already_exists: 'מספר טלפון זה כבר בשימוש.',
+          account_banned: 'חשבון זה הושעה.',
           mfa_required: 'אנא השלם את האימות הדו-שלבי.',
           validation_error: 'אנא בדוק את הנתונים שהזנת ונסה שוב.',
           AUTH_ERROR: 'משהו השתבש. אנא נסה שוב.',
