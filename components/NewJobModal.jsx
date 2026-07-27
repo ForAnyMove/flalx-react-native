@@ -67,7 +67,7 @@ async function editJobById(jobId, updates, session) {
   }
 }
 
-async function createNewJob(jobData, session, openWebView, updateJobsList, paymentOptions = {}) {
+async function createNewJob(jobData, session, openWebView, updateJobsList, paymentOptions = {}, cancelWebViewTab) {
   try {
     // Step 1 — create job record
     const data = await createJob(jobData, session);
@@ -76,20 +76,25 @@ async function createNewJob(jobData, session, openWebView, updateJobsList, payme
     // Step 2 — authorize payment immediately after creation
     const payResult = await payForJob(data.job.id, session, paymentOptions);
 
-    if (payResult.success) {
+    if (payResult.paymentUrl) {
+      // A real redirect link always wins, even if success/directAuth also
+      // came back true — never silently drop a link the backend gave us.
+      openWebView(payResult.paymentUrl, () => { });
+    } else if (payResult.success) {
       // Coupon / subscription bypass — job already pending_moderation
+      cancelWebViewTab?.();
       updateJobsList?.();
     } else if (payResult.directAuth) {
       // Saved payment method — direct auth, no redirect needed
+      cancelWebViewTab?.();
       updateJobsList?.();
-    } else if (payResult.paymentUrl) {
-      // Standard PayPal redirect
-      openWebView(payResult.paymentUrl, () => { });
     } else {
       logWarn('createNewJob: no success/directAuth/paymentUrl in payResult, no redirect opened:', payResult);
+      cancelWebViewTab?.();
       updateJobsList?.();
     }
   } catch (error) {
+    cancelWebViewTab?.();
     logError('Ошибка создания job:', error.message);
     throw error;
   }
@@ -396,7 +401,7 @@ export default function NewJobModal({
     // 'description',
   ];
 
-  const { openWebView } = useWebView();
+  const { openWebView, prepareWebViewTab, cancelWebViewTab } = useWebView();
 
   // Функция для получения ID типа по ключу
   const getTypeIdByKey = (typeKey) => {
@@ -521,6 +526,9 @@ export default function NewJobModal({
       }
 
       setAppLoading(true);
+      // Must happen synchronously here, before any await inside createNewJob
+      // — see webViewContext.jsx's comment on prepareWebViewTab for why.
+      prepareWebViewTab();
 
       createNewJob(
         newJob,
@@ -530,7 +538,8 @@ export default function NewJobModal({
           jobsController.reloadCreator();
           setAppLoading(false);
         },
-        paymentOptions
+        paymentOptions,
+        cancelWebViewTab
       ).then(() => {
         setAppLoading(false);
         redirectToWaiting?.();

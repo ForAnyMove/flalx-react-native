@@ -45,22 +45,25 @@ async function payForJob(jobDataId, session, paymentOptions = {}) {
         // never in the response) from a frontend extraction bug (link present
         // under a field we're not reading) when a redirect goes missing.
         logInfo('payForJob response:', response.data);
-        // Coupon / subscription bypass — job already moved to pending_moderation
-        if (response.data?.success === true) {
-            return {
-                success: true,
-                remainingCoupons: response.data?.remainingCoupons ?? null,
-                job: response.data?.job ?? null,
-            };
-        }
 
+        // success:true is documented as "coupon/subscription bypass, job
+        // already moved to pending_moderation, no redirect needed" — but
+        // that's an assumption about the backend contract, not a confirmed
+        // guarantee it's mutually exclusive with a real paymentUrl. Always
+        // extract paymentUrl/directAuth alongside success/remainingCoupons
+        // (instead of returning early the moment success is true) so a
+        // redirect link can never be silently dropped at this layer even if
+        // that assumption turns out wrong — callers decide precedence.
         const paymentUrl = response.data?.redirectUrl ?? response.data?.payment?.paymentMetadata?.approval?.href;
         const directAuth = response.data?.directAuth === true;
-        if (!paymentUrl && !directAuth) {
+        const success = response.data?.success === true;
+        if (!success && !paymentUrl && !directAuth) {
             logWarn('payForJob: response has no success/directAuth/paymentUrl — caller will silently skip the redirect:', response.data);
         }
 
         return {
+            success,
+            remainingCoupons: response.data?.remainingCoupons ?? null,
             paymentUrl,
             directAuth,
             payment: response.data?.payment,
@@ -154,25 +157,23 @@ async function addSelfToJobProviders(jobId, session, options = {}) {
         // tells a backend omission apart from a frontend extraction bug.
         logInfo('addSelfToJobProviders response:', response.data);
 
-        if (response.data?.couponUsed === true) {
-            return { success: true, remainingCoupons: response.data?.remainingCoupons ?? null };
-        }
-        if (response.data?.directAuth === true) {
-            return { directAuth: true, payment: response.data?.payment };
-        }
-        // Was previously reading only `redirectUrl`, unlike payForJob's identical
-        // flow which also falls back to `payment.paymentMetadata.approval.href` —
-        // when the backend put the link there instead, this returned `paymentUrl:
-        // undefined`, every ShowJobModal call site silently treated that as "no
-        // redirect needed" and moved on, and PurchaseModal (which independently
-        // checks `payment.paymentMetadata.approval.href` too) then closed itself
-        // believing the caller had already opened the redirect — losing the
-        // payment link with no error anywhere. Matches the fallback below.
+        // Same reasoning as payForJob: couponUsed/directAuth used to return
+        // early before paymentUrl was ever extracted, on the assumption
+        // they're mutually exclusive with a real redirect — not a confirmed
+        // guarantee. Always extract paymentUrl (with the same
+        // redirectUrl / payment.paymentMetadata.approval.href fallback) so a
+        // link can never be silently dropped here even if that assumption is
+        // wrong; callers decide precedence.
         const paymentUrl = response.data?.redirectUrl ?? response.data?.payment?.paymentMetadata?.approval?.href;
-        if (!paymentUrl) {
+        const directAuth = response.data?.directAuth === true;
+        const success = response.data?.couponUsed === true;
+        if (!success && !directAuth && !paymentUrl) {
             logWarn('addSelfToJobProviders: response has no couponUsed/directAuth/paymentUrl — caller will silently skip the redirect:', response.data);
         }
         return {
+            success,
+            remainingCoupons: response.data?.remainingCoupons ?? null,
+            directAuth,
             paymentUrl,
             payment: response.data?.payment,
         };

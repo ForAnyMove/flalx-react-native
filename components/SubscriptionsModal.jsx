@@ -44,7 +44,7 @@ function SubscriptionsModalContent({ closeModal }) {
   } = useComponentContext();
   const { tField } = useLocalization(languageController?.current);
   const { showWarning, showInfo, showError } = useNotification();
-  const { openWebView } = useWebView();
+  const { openWebView, prepareWebViewTab, cancelWebViewTab } = useWebView();
   const { width, height, isLandscape, effectiveSidebarWidth } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController?.isRTL;
@@ -66,35 +66,50 @@ function SubscriptionsModalContent({ closeModal }) {
     setSubPurchaseModal((s) => ({ ...s, visible: false }));
 
   const handleSubPurchaseModalPurchase = async (payload) => {
-    const { action, planId, subscriptionId } = subPurchaseModal;
-    if (action === 'new') {
-      const result = await createSubscription(session, planId, payload);
-      if (result.redirectUrl) openWebView(result.redirectUrl);
-      return result;
-    } else if (action === 'update') {
-      // Update subscription payment method: saved method or new method (redirect)
-      if (payload.savedPaymentMethodId) {
-        // Change to existing saved payment method (no charge)
-        const result = await updateSubscriptionPaymentMethod(
-          session,
-          subscriptionId,
-          payload.savedPaymentMethodId,
-        );
-        showInfo(t('subscriptions.messages.paymentMethodUpdated'));
-        return result ?? { success: true };
-      } else {
-        // Add new payment method via redirect (1 ILS charge)
-        const result = await addPaymentMethodToSubscription(
-          session,
-          subscriptionId,
-          payload.paymentMethod,
-        );
+    // Must happen synchronously, before the first await below — see
+    // webViewContext.jsx's comment on prepareWebViewTab for why. Harmless
+    // for the branches below that never redirect (reactivate, saved-method
+    // update) — cancelWebViewTab() closes the unused blank tab there.
+    prepareWebViewTab();
+    try {
+      const { action, planId, subscriptionId } = subPurchaseModal;
+      if (action === 'new') {
+        const result = await createSubscription(session, planId, payload);
         if (result.redirectUrl) openWebView(result.redirectUrl);
+        else cancelWebViewTab();
         return result;
+      } else if (action === 'update') {
+        // Update subscription payment method: saved method or new method (redirect)
+        if (payload.savedPaymentMethodId) {
+          // Change to existing saved payment method (no charge)
+          cancelWebViewTab();
+          const result = await updateSubscriptionPaymentMethod(
+            session,
+            subscriptionId,
+            payload.savedPaymentMethodId,
+          );
+          showInfo(t('subscriptions.messages.paymentMethodUpdated'));
+          return result ?? { success: true };
+        } else {
+          // Add new payment method via redirect (1 ILS charge)
+          const result = await addPaymentMethodToSubscription(
+            session,
+            subscriptionId,
+            payload.paymentMethod,
+          );
+          if (result.redirectUrl) openWebView(result.redirectUrl);
+          else cancelWebViewTab();
+          return result;
+        }
+      } else if (action === 'reactivate') {
+        cancelWebViewTab();
+        const result = await reactivateSubscription(session, subscriptionId, payload.savedPaymentMethodId);
+        return result ?? { success: true };
       }
-    } else if (action === 'reactivate') {
-      const result = await reactivateSubscription(session, subscriptionId, payload.savedPaymentMethodId);
-      return result ?? { success: true };
+      cancelWebViewTab();
+    } catch (e) {
+      cancelWebViewTab();
+      throw e;
     }
   };
 
@@ -113,17 +128,24 @@ function SubscriptionsModalContent({ closeModal }) {
             backgroundColor: '#45bb33ff',
             textColor: '#FFFFFF',
             onPress: async () => {
+              // Must happen synchronously, before the first await below —
+              // see webViewContext.jsx's comment on prepareWebViewTab for why.
+              prepareWebViewTab();
               setAppLoading(true);
               try {
                 const result = await downgradeSubscription(session, subscription.current.id, planId);
                 if (result.success && result.approval_url) {
                   openWebView(result.approval_url);
                 }
-                else if (result.success) {
-                  const message = t('subscriptions.messages.downgradeSuccess');
-                  showInfo(message);
+                else {
+                  cancelWebViewTab();
+                  if (result.success) {
+                    const message = t('subscriptions.messages.downgradeSuccess');
+                    showInfo(message);
+                  }
                 }
               } catch (error) {
+                cancelWebViewTab();
                 logError("Error during upgradeSubscription:", error);
                 if (error.response && error.response.data && error.response.data.error) {
                   showError(`### ${error.response.data.error}`);
@@ -143,14 +165,20 @@ function SubscriptionsModalContent({ closeModal }) {
             backgroundColor: '#45bb33ff',
             textColor: '#FFFFFF',
             onPress: async () => {
+              // Must happen synchronously, before the first await below —
+              // see webViewContext.jsx's comment on prepareWebViewTab for why.
+              prepareWebViewTab();
               setAppLoading(true);
               try {
                 const result = await upgradeSubscription(session, subscription.current.id, planId);
 
                 if (result.success && result.payment_url) {
                   openWebView(result.payment_url);
+                } else {
+                  cancelWebViewTab();
                 }
               } catch (error) {
+                cancelWebViewTab();
                 logError("Error during upgradeSubscription:", error);
                 if (error.response && error.response.data && error.response.data.error) {
                   showError(`### ${error.response.data.error}`);
@@ -184,13 +212,19 @@ function SubscriptionsModalContent({ closeModal }) {
   };
 
   const tryUpgradeSubscription = async (subscription) => {
+    // Must happen synchronously, before the first await below — see
+    // webViewContext.jsx's comment on prepareWebViewTab for why.
+    prepareWebViewTab();
     try {
       setAppLoading(true);
       const result = await payForPlanUpgrade(session, subscription.id);
       if (result.success && result.approval_url) {
         openWebView(result.approval_url);
+      } else {
+        cancelWebViewTab();
       }
     } catch (error) {
+      cancelWebViewTab();
       setAppLoading(false);
       logError("Error upgrading subscription:", error);
     } finally {

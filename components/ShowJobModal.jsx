@@ -251,7 +251,7 @@ export default function ShowJobModal({
   const { showError, showWarning } = useNotification();
   const { t } = useTranslation();
   const { width, height, isLandscape } = useWindowInfo();
-  const { openWebView } = useWebView();
+  const { openWebView, prepareWebViewTab, cancelWebViewTab } = useWebView();
   const { lastMessage } = useWebSocket();
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -762,29 +762,38 @@ export default function ShowJobModal({
 
   // Direct call (no paywall) — used when user already has a subscription
   const handleAddingSelfToJobProviders = async (paymentOptions = {}) => {
+    // Must happen synchronously, before the first await below — see
+    // webViewContext.jsx's comment on prepareWebViewTab for why.
+    prepareWebViewTab();
     try {
       setAppLoading(true);
       const result = await addSelfToJobProviders(currentJobId, session, paymentOptions);
 
-      if (result.success === true) {
-        couponsManagerController?.refreshBalance();
-        jobsController.reloadAll();
-        setInterestedRequest(true);
-      } else if (result.directAuth === true) {
-        jobsController.reloadAll();
-        setInterestedRequest(true);
-      } else if (result.paymentUrl) {
+      if (result.paymentUrl) {
+        // A real redirect link always wins, even if success/directAuth also
+        // came back true — never silently drop a link the backend gave us.
         openWebView(result.paymentUrl, () => {
           jobsController.reloadAll();
           setInterestedRequest(true);
         });
+      } else if (result.success === true) {
+        cancelWebViewTab();
+        couponsManagerController?.refreshBalance();
+        jobsController.reloadAll();
+        setInterestedRequest(true);
+      } else if (result.directAuth === true) {
+        cancelWebViewTab();
+        jobsController.reloadAll();
+        setInterestedRequest(true);
       } else {
+        cancelWebViewTab();
         logWarn('handleAddingSelfToJobProviders: no success/directAuth/paymentUrl in result, no redirect opened:', result);
         jobsController.reloadAll();
       }
 
       return result;
     } catch (e) {
+      cancelWebViewTab();
       if (e.response?.status === 400 && e.response.data?.code === 'NO_COUPONS_AVAILABLE') {
         showWarning(t('errors.no_coupons', {
           defaultValue: 'You have no coupons available',
@@ -798,32 +807,42 @@ export default function ShowJobModal({
 
   // PurchaseModal: onPurchase handler for the interest/provider paywall
   const handlePurchaseInterest = async (payload) => {
-    const finalPayload = {
-      ...payload,
-      ...(interestFormData && {
-        proposed_price: interestFormData.price,
-        proposed_time_from: interestFormData.startDate,
-        proposed_time_to: interestFormData.endDate,
-        proposed_time_from_local: interestFormData.startLocal,
-        proposed_time_to_local: interestFormData.endLocal,
-        source_timezone: interestFormData.sourceTimezone,
-      }),
-    };
-    const result = await addSelfToJobProviders(currentJobId, session, finalPayload);
-    if (result.paymentUrl) {
-      openWebView(result.paymentUrl, () => { jobsController.reloadAll(); setInterestedRequest(true); });
-    } else if (result.directAuth || result.success) {
-      jobsController.reloadAll();
-      setInterestedRequest(true);
-    } else {
-      // Response matched none of the expected shapes — PurchaseModal's own
-      // check (payment.paymentMetadata.approval.href / paymentUrl / redirectUrl)
-      // may still see a link in `result.payment` and close itself believing we
-      // already opened a redirect, so this case must not stay silent.
-      logWarn('handlePurchaseInterest: no paymentUrl/directAuth/success in result, no redirect opened:', result);
-      jobsController.reloadAll();
+    // Must happen synchronously, before the first await below — see
+    // webViewContext.jsx's comment on prepareWebViewTab for why.
+    prepareWebViewTab();
+    try {
+      const finalPayload = {
+        ...payload,
+        ...(interestFormData && {
+          proposed_price: interestFormData.price,
+          proposed_time_from: interestFormData.startDate,
+          proposed_time_to: interestFormData.endDate,
+          proposed_time_from_local: interestFormData.startLocal,
+          proposed_time_to_local: interestFormData.endLocal,
+          source_timezone: interestFormData.sourceTimezone,
+        }),
+      };
+      const result = await addSelfToJobProviders(currentJobId, session, finalPayload);
+      if (result.paymentUrl) {
+        openWebView(result.paymentUrl, () => { jobsController.reloadAll(); setInterestedRequest(true); });
+      } else if (result.directAuth || result.success) {
+        cancelWebViewTab();
+        jobsController.reloadAll();
+        setInterestedRequest(true);
+      } else {
+        // Response matched none of the expected shapes — PurchaseModal's own
+        // check (payment.paymentMetadata.approval.href / paymentUrl / redirectUrl)
+        // may still see a link in `result.payment` and close itself believing we
+        // already opened a redirect, so this case must not stay silent.
+        cancelWebViewTab();
+        logWarn('handlePurchaseInterest: no paymentUrl/directAuth/success in result, no redirect opened:', result);
+        jobsController.reloadAll();
+      }
+      return result;
+    } catch (e) {
+      cancelWebViewTab();
+      throw e;
     }
-    return result;
   };
 
   // PurchaseModal: coupon-only handler for business-created job interest paywall.
@@ -1942,15 +1961,22 @@ export default function ShowJobModal({
 
   // Direct publish (no paywall modal) — used when user has subscription
   async function payToPublish(paymentOptions = {}) {
+    // Must happen synchronously, before the first await below — see
+    // webViewContext.jsx's comment on prepareWebViewTab for why.
+    prepareWebViewTab();
     try {
       setAppLoading(true);
       const data = await payForJob(currentJobInfo.id, session, paymentOptions);
-      if (data.success || data.directAuth) {
-        // Coupon / subscription bypass or direct auth — already pending_moderation
-        jobsController.reloadCreator();
-      } else if (data.paymentUrl) {
+      if (data.paymentUrl) {
+        // A real redirect link always wins, even if success/directAuth also
+        // came back true — never silently drop a link the backend gave us.
         openWebView(data.paymentUrl, () => { });
+      } else if (data.success || data.directAuth) {
+        // Coupon / subscription bypass or direct auth — already pending_moderation
+        cancelWebViewTab();
+        jobsController.reloadCreator();
       } else {
+        cancelWebViewTab();
         logWarn('payToPublish: no success/directAuth/paymentUrl in data, no redirect opened:', data);
         jobsController.reloadCreator();
       }
@@ -1960,6 +1986,7 @@ export default function ShowJobModal({
       setAppLoading(false);
       setPublishModalVisible(false);
     } catch (e) {
+      cancelWebViewTab();
       setAppLoading(false);
       if (e.response && e.response.status === 400 && e.response.data.code == 'NO_COUPONS_AVAILABLE') {
         showWarning(t('errors.no_coupons', {
@@ -1973,16 +2000,28 @@ export default function ShowJobModal({
 
   // PurchaseModal: onPurchase handler for the publish paywall
   const handlePurchasePublish = async (payload) => {
-    const data = await payForJob(currentJobInfo.id, session, payload);
-    if (data.success || data.directAuth) {
-      jobsController.reloadCreator();
-    } else if (data.paymentUrl) {
-      openWebView(data.paymentUrl, () => { });
-    } else {
-      logWarn('handlePurchasePublish: no success/directAuth/paymentUrl in data, no redirect opened:', data);
-      jobsController.reloadCreator();
+    // Must happen synchronously, before the first await below — see
+    // webViewContext.jsx's comment on prepareWebViewTab for why.
+    prepareWebViewTab();
+    try {
+      const data = await payForJob(currentJobInfo.id, session, payload);
+      if (data.paymentUrl) {
+        // A real redirect link always wins, even if success/directAuth also
+        // came back true — never silently drop a link the backend gave us.
+        openWebView(data.paymentUrl, () => { });
+      } else if (data.success || data.directAuth) {
+        cancelWebViewTab();
+        jobsController.reloadCreator();
+      } else {
+        cancelWebViewTab();
+        logWarn('handlePurchasePublish: no success/directAuth/paymentUrl in data, no redirect opened:', data);
+        jobsController.reloadCreator();
+      }
+      return data;
+    } catch (e) {
+      cancelWebViewTab();
+      throw e;
     }
-    return data;
   };
 
   // PurchaseModal: onPayWithCoupons handler for the publish paywall
