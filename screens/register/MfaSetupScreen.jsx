@@ -160,6 +160,8 @@ export default function MfaSetupScreen({ optional = false, onDone, onSkip }) {
       titleFontSize: isWebLandscape ? scaleByHeight(18, height) : scaleByHeightMobile(18, height),
       subtitleFontSize: isWebLandscape ? scaleByHeight(16, height) : scaleByHeightMobile(15, height),
       qrSize: isWebLandscape ? scaleByHeight(180, height) : scaleByHeightMobile(180, height),
+      qrContainerPadding: isWebLandscape ? scaleByHeight(16, height) : scaleByHeightMobile(16, height),
+      qrContainerRadius: isWebLandscape ? scaleByHeight(16, height) : scaleByHeightMobile(16, height),
       otpCellHeight: isWebLandscape ? scaleByHeight(64, height) : scaleByHeightMobile(64, height),
       otpCellFontSize: isWebLandscape ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
       btnHeight: isWebLandscape ? scaleByHeight(62, height) : scaleByHeightMobile(62, height),
@@ -200,17 +202,33 @@ export default function MfaSetupScreen({ optional = false, onDone, onSkip }) {
           ) : (
             <>
               {!!qr && (
-                qr.kind === 'svg' ? (
-                  <View style={{ width: sizes.qrSize, height: sizes.qrSize, alignSelf: 'center' }}>
-                    <SvgXml xml={qr.xml} width='100%' height='100%' />
-                  </View>
-                ) : (
-                  <Image
-                    source={{ uri: qr.uri }}
-                    style={{ width: sizes.qrSize, height: sizes.qrSize, alignSelf: 'center' }}
-                    resizeMode='contain'
-                  />
-                )
+                // The QR itself is server-rendered (SVG or raster) with no
+                // guaranteed opaque background — on the dark theme it was
+                // rendering against the dark page background with no light
+                // quiet zone around it, which most scanner apps require to
+                // even detect a QR code, not just decode it. Always wrap it
+                // in an explicit white, padded, rounded card regardless of
+                // theme so there's a real quiet zone either way.
+                <View
+                  style={{
+                    alignSelf: 'center',
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: sizes.qrContainerRadius,
+                    padding: sizes.qrContainerPadding,
+                  }}
+                >
+                  {qr.kind === 'svg' ? (
+                    <View style={{ width: sizes.qrSize, height: sizes.qrSize }}>
+                      <SvgXml xml={qr.xml} width='100%' height='100%' />
+                    </View>
+                  ) : (
+                    <Image
+                      source={{ uri: qr.uri }}
+                      style={{ width: sizes.qrSize, height: sizes.qrSize }}
+                      resizeMode='contain'
+                    />
+                  )}
+                </View>
               )}
 
               {!!totp?.secret && (
