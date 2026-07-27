@@ -385,9 +385,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
             )}
             <View>
               <Text style={dynamicStyles.nameText}>
-                {usersReveal.contains(userId)
-                  ? `${name} ${surname}`
-                  : `${name?.[0] || ''}. ${surname?.[0] || ''}.`}
+                {`${name} ${surname}`}
               </Text>
               <Text style={dynamicStyles.professionText}>
                 {LICENSES[professions?.[0]]}
@@ -500,9 +498,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                         : sizes.professionMarginBottom,
                     }}
                   >
-                    {usersReveal.contains(userId)
-                      ? `${name} ${surname}`
-                      : `${name?.[0] || ''}. ${surname?.[0] || ''}.`}
+                    {`${name} ${surname}`}
                   </Text>
                   {professions?.[0] && (
                     <Text

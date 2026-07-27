@@ -385,9 +385,7 @@ const UserSummaryBlock = ({
                 >
                   {is_deleted
                     ? t('profile.deleted_user')
-                    : usersReveal.contains(userId)
-                      ? `${name} ${surname}`
-                      : `${name} ${surname?.[0] ? surname?.[0] + '.' : ''}`}
+                    : `${name} ${surname}`}
                 </Text>
                 {!is_deleted && (
                   <Text
@@ -583,10 +581,7 @@ const UserSummaryBlock = ({
                     >
                       {is_deleted
                         ? t('profile.user_deleted')
-                        : usersReveal.contains(userId)
-                          ? `${name} ${surname}`
-                          : `${name?.[0] ? name?.[0] + '.' : ''} ${surname?.[0] ? surname?.[0] + '.' : ''
-                          }`}
+                        : `${name} ${surname}`}
                     </Text>
                   </View>
                   {professions?.[0] && !is_deleted && (
@@ -1146,9 +1141,7 @@ const UserSummaryBlock = ({
         providerName={
           is_deleted
             ? t('profile.deleted_user')
-            : usersReveal.contains(userId)
-              ? `${name} ${surname}`
-              : `${name} ${surname?.[0] ? surname?.[0] + '.' : ''}`
+            : `${name} ${surname}`
         }
         onSuccessClose={() => {
           setConfirmModalVisible(false);

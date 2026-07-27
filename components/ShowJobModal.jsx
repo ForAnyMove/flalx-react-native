@@ -1931,7 +1931,11 @@ export default function ShowJobModal({
           <CommentsSection
             key='commentsSection'
             jobId={currentJobInfo?.id}
-            userId={currentJobInfo?.creator}
+            // job.creator is now the embedded creator object, not a plain id
+            // (was: `userId={currentJobInfo?.creator}`) — CommentsSection
+            // needs the id specifically for its own API calls
+            // (getCommentsReceived/setComment), not the whole object.
+            userId={currentJobInfo?.creator?.id ?? currentJobInfo?.creator}
             allowAdd={currentJobInfo?.comments?.length == 0}
             allowAddOnly={true}
             onRated={() => jobsController.reloadAll()}

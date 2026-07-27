@@ -72,7 +72,14 @@ function UserSummaryBlockWrapper({
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    if (preloadedUser && (preloadedUser.name || preloadedUser.name_i18n) && preloadedUser.professions !== undefined) {
+    // job.creator now comes embedded in the job response (was previously
+    // just an id, requiring this separate GET /users/:id fetch below) — a
+    // real object with a name is enough to trust as-is, regardless of which
+    // other fields it happens to carry. Not requiring `professions` here
+    // specifically: the embedded creator payload isn't guaranteed to include
+    // it (creators aren't providers), so requiring it would keep forcing the
+    // redundant fetch this change is meant to avoid.
+    if (preloadedUser && typeof preloadedUser === 'object' && (preloadedUser.name || preloadedUser.name_i18n)) {
       setUser(preloadedUser);
       return;
     }
