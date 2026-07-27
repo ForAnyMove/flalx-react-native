@@ -46,7 +46,7 @@ const UserSummaryBlock = ({
     couponsManagerController,
   } = useComponentContext();
   const { t } = useTranslation();
-  const { openWebView, prepareWebViewTab, cancelWebViewTab } = useWebView();
+  const { openWebView } = useWebView();
   const { showWarning } = useNotification();
   const { tField } = useLocalization(languageController.current);
   const isRTL = languageController?.isRTL;
@@ -162,23 +162,17 @@ const UserSummaryBlock = ({
   const source_timezone = _userData.source_timezone ?? jobExpectations?.source_timezone;
 
   const handleUserRevealTry = async (payload = {}) => {
-    // Must happen synchronously, before the first await below — see
-    // webViewContext.jsx's comment on prepareWebViewTab for why.
-    prepareWebViewTab();
     try {
       setAppLoading(true);
 
       const result = await usersReveal.tryReveal(user.id, payload);
       if (result?.paymentUrl) {
         openWebView(result.paymentUrl);
-      } else {
-        cancelWebViewTab();
       }
 
       setAppLoading(false);
       return result;
     } catch (error) {
-      cancelWebViewTab();
       logError('Error revealing user:', error);
       setAppLoading(false);
       throw error;

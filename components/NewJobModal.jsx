@@ -67,7 +67,7 @@ async function editJobById(jobId, updates, session) {
   }
 }
 
-async function createNewJob(jobData, session, openWebView, updateJobsList, paymentOptions = {}, cancelWebViewTab) {
+async function createNewJob(jobData, session, openWebView, updateJobsList, paymentOptions = {}) {
   try {
     // Step 1 — create job record
     const data = await createJob(jobData, session);
@@ -82,19 +82,15 @@ async function createNewJob(jobData, session, openWebView, updateJobsList, payme
       openWebView(payResult.paymentUrl, () => { });
     } else if (payResult.success) {
       // Coupon / subscription bypass — job already pending_moderation
-      cancelWebViewTab?.();
       updateJobsList?.();
     } else if (payResult.directAuth) {
       // Saved payment method — direct auth, no redirect needed
-      cancelWebViewTab?.();
       updateJobsList?.();
     } else {
       logWarn('createNewJob: no success/directAuth/paymentUrl in payResult, no redirect opened:', payResult);
-      cancelWebViewTab?.();
       updateJobsList?.();
     }
   } catch (error) {
-    cancelWebViewTab?.();
     logError('Ошибка создания job:', error.message);
     throw error;
   }
@@ -401,7 +397,7 @@ export default function NewJobModal({
     // 'description',
   ];
 
-  const { openWebView, prepareWebViewTab, cancelWebViewTab } = useWebView();
+  const { openWebView } = useWebView();
 
   // Функция для получения ID типа по ключу
   const getTypeIdByKey = (typeKey) => {
@@ -526,9 +522,6 @@ export default function NewJobModal({
       }
 
       setAppLoading(true);
-      // Must happen synchronously here, before any await inside createNewJob
-      // — see webViewContext.jsx's comment on prepareWebViewTab for why.
-      prepareWebViewTab();
 
       createNewJob(
         newJob,
@@ -538,8 +531,7 @@ export default function NewJobModal({
           jobsController.reloadCreator();
           setAppLoading(false);
         },
-        paymentOptions,
-        cancelWebViewTab
+        paymentOptions
       ).then(() => {
         setAppLoading(false);
         redirectToWaiting?.();

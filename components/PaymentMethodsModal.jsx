@@ -28,7 +28,7 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
   const { height, width, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
   const { t } = useTranslation();
-  const { openWebView, prepareWebViewTab, cancelWebViewTab } = useWebView();
+  const { openWebView } = useWebView();
   const isRTL = languageController.isRTL;
 
   const [step, setStep] = useState('list'); // 'list', 'addMethod', 'confirmDelete', 'success', 'error', 'cantDelete'
@@ -80,9 +80,6 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
   };
 
   const handleSetupPaymentMethod = async () => {
-    // Must happen synchronously, before the first await below — see
-    // webViewContext.jsx's comment on prepareWebViewTab for why.
-    prepareWebViewTab();
     setIsLoading(true);
     try {
       const result = await paymentsManagerController.setupNewPaymentMethod(
@@ -104,11 +101,9 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
           paymentsManagerController.refreshSavedMethods?.();
         });
       } else {
-        cancelWebViewTab();
         await paymentsManagerController.refreshSavedMethods?.();
       }
     } catch (e) {
-      cancelWebViewTab();
       setError(e?.response?.data?.error || e?.message || t('errors.unexpected_error'));
       setStep('error');
     } finally {
