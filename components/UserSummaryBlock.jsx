@@ -962,6 +962,18 @@ const UserSummaryBlock = ({
                       )}
                     </View>
                   </View>
+                  {jobExpectations != null && <View
+                    style={{
+                      flexDirection: isRTL ? 'row-reverse' : 'row',
+                      height: sizes.contactInfoHeight,
+                      gap: sizes.padding,
+                    }}
+                  >
+                    <JobExpectationsBadge
+                      expectations={jobExpectations}
+                      isRTL={isRTL}
+                    />
+                  </View>}
                   <CommentsSection userId={user.id} />
                 </ScrollView>
 
