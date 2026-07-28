@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useWindowInfo } from '../context/windowContext';
 import {
   FlatList,
@@ -56,48 +56,30 @@ function showTitleByStatus(status, t) {
 }
 
 function UserSummaryBlockWrapper({
-  userId,
   jobAgreement,
   providerStatus,
   hasPendingProvider,
   status,
   currentJobId,
   closeAllModal,
-  providersController,
   isFullScreen = false,
   preloadedUser = null,
   isClientCreator = false,
   jobExpectations = null,
 }) {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    // job.creator now comes embedded in the job response (was previously
-    // just an id, requiring this separate GET /users/:id fetch below) — a
-    // real object with a name is enough to trust as-is, regardless of which
-    // other fields it happens to carry. Not requiring `professions` here
-    // specifically: the embedded creator payload isn't guaranteed to include
-    // it (creators aren't providers), so requiring it would keep forcing the
-    // redundant fetch this change is meant to avoid.
-    if (preloadedUser && typeof preloadedUser === 'object' && (preloadedUser.name || preloadedUser.name_i18n)) {
-      setUser(preloadedUser);
-      return;
-    }
-    let active = true;
-    providersController.getUserById(userId).then((u) => {
-      if (active) setUser(u);
-    });
-    return () => {
-      active = false;
-    };
-  }, [userId, preloadedUser]);
-
-  if (!user) return null; // или можно <Loader />
+  // preloadedUser is job.creator (jobs-* statuses) or a job.providers[]
+  // entry (store-* statuses) — the job response already embeds it, so the
+  // compact card here renders straight from that, no fetch on mount/render.
+  // UserSummaryBlock itself fetches the full participant record (including
+  // any contact info the backend decides to reveal) via
+  // GET /jobs/:jobId/participant/:userId, but only once its fullscreen
+  // profile is actually opened — not eagerly for every item in a list.
+  if (!preloadedUser) return null;
 
   return (
     <UserSummaryBlock
       status={status}
-      user={user}
+      user={preloadedUser}
       currentJobId={currentJobId}
       closeAllModal={closeAllModal}
       isFullScreen={isFullScreen}

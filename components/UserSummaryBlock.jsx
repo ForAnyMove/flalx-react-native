@@ -44,6 +44,7 @@ const UserSummaryBlock = ({
     usersReveal,
     setAppLoading,
     couponsManagerController,
+    providersController,
   } = useComponentContext();
   const { t } = useTranslation();
   const { openWebView } = useWebView();
@@ -54,6 +55,8 @@ const UserSummaryBlock = ({
   const [showContactInfo, setShowContactInfo] = useState(false);
   const [purchaseModalVisible, setPurchaseModalVisible] = useState(false);
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  // Full participant record, fetched lazily — see effect below.
+  const [fullUser, setFullUser] = useState(null);
 
   const { width, height, isLandscape, effectiveSidebarWidth } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -140,7 +143,33 @@ const UserSummaryBlock = ({
 
   const userId = user.id || user?._j?.id;
 
-  const _userData = user.id ? user : user._j;
+  // `user` here is only the lean data embedded in the job response
+  // (job.creator, or a job.providers[] entry) — enough for the compact card
+  // below, but not necessarily the full profile (about, all professions,
+  // revealed contact info, ...). Same pattern as opening a job detail screen
+  // (useJobDetailNavigation.js): fetch the real thing first, behind the
+  // global loading spinner, and only open the fullscreen panel once it's
+  // actually ready — no flash of lean data replaced by full data after open.
+  const openDetails = async () => {
+    if (!currentJobId || !userId) {
+      setModalVisible(true);
+      return;
+    }
+    setAppLoading(true);
+    try {
+      const full = await providersController.getJobParticipant(currentJobId, userId);
+      if (full) setFullUser(full);
+    } catch (error) {
+      logError('Error fetching job participant:', error);
+      // Fall through and open with whatever lean data we already have
+      // rather than leaving the user stuck on a spinner.
+    } finally {
+      setAppLoading(false);
+      setModalVisible(true);
+    }
+  };
+
+  const _userData = fullUser ?? (user.id ? user : user._j);
   const {
     avatar,
     name,
@@ -154,12 +183,18 @@ const UserSummaryBlock = ({
     phoneNumber,
     is_deleted,
   } = _userData;
-  const proposed_price = _userData.proposed_price ?? jobExpectations?.proposed_price;
-  const proposed_time_from = _userData.proposed_time_from ?? jobExpectations?.proposed_time_from;
-  const proposed_time_to = _userData.proposed_time_to ?? jobExpectations?.proposed_time_to;
-  const proposed_time_from_local = _userData.proposed_time_from_local ?? jobExpectations?.proposed_time_from_local;
-  const proposed_time_to_local = _userData.proposed_time_to_local ?? jobExpectations?.proposed_time_to_local;
-  const source_timezone = _userData.source_timezone ?? jobExpectations?.source_timezone;
+  // Deliberately read the proposal fields off the original preloaded `user`
+  // (job.providers[] entry), not `_userData` — the participant fetch above
+  // is a general profile lookup, not scoped to this specific application,
+  // so it has no reason to carry proposed_price/proposed_time_*. Falling
+  // back to `_userData` here would make the price/date badge disappear the
+  // moment the fullscreen panel finishes loading the full profile.
+  const proposed_price = user.proposed_price ?? jobExpectations?.proposed_price;
+  const proposed_time_from = user.proposed_time_from ?? jobExpectations?.proposed_time_from;
+  const proposed_time_to = user.proposed_time_to ?? jobExpectations?.proposed_time_to;
+  const proposed_time_from_local = user.proposed_time_from_local ?? jobExpectations?.proposed_time_from_local;
+  const proposed_time_to_local = user.proposed_time_to_local ?? jobExpectations?.proposed_time_to_local;
+  const source_timezone = user.source_timezone ?? jobExpectations?.source_timezone;
 
   const handleUserRevealTry = async (payload = {}) => {
     try {
@@ -269,7 +304,7 @@ const UserSummaryBlock = ({
       {/* Summary Block */}
       <TouchableOpacity
         activeOpacity={0.7}
-        onPress={() => setModalVisible(true)}
+        onPress={openDetails}
         style={[
           styles.summaryContainer,
           // isRTL && { flexDirection: 'row-reverse' },

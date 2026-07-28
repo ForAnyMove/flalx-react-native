@@ -105,21 +105,21 @@ export default function jobTypeManager({ session }) {
 
     const approvedProfessions = useMemo(() => {
         const approved = new Set();
-        
+
         userProfessionRequests.professionsRequestedBySystem.forEach(req => {
             if (req.status === 'approved') {
-                if(req.job_type_id) approved.add(`type_${req.job_type_id}`);
-                if(req.job_subtype_id) approved.add(`subtype_${req.job_subtype_id}`);
+                if (req.job_type_id) approved.add(`type_${req.job_type_id}`);
+                if (req.job_subtype_id) approved.add(`subtype_${req.job_subtype_id}`);
             }
         });
 
         userProfessionRequests.professionsRequestedToSystem.forEach(req => {
             if (req.status === 'approved') {
-                if(req.final_type_id) approved.add(`type_${req.final_type_id}`);
-                if(req.final_subtype_id) approved.add(`subtype_${req.final_subtype_id}`);
+                if (req.final_type_id) approved.add(`type_${req.final_type_id}`);
+                if (req.final_subtype_id) approved.add(`subtype_${req.final_subtype_id}`);
             }
         });
-        
+
         return Array.from(approved);
     }, [userProfessionRequests.professionsRequestedBySystem, userProfessionRequests.professionsRequestedToSystem]);
 

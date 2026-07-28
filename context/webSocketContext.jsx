@@ -94,8 +94,6 @@ export const WebSocketProvider = ({ children }) => {
       case 'USER_INFO_PAYMENT_SUCCESS': {
         if (message.userId) usersReveal.appendRevealed(message.userId);
         else usersReveal.refresh();
-
-        providersController.reload();
         break;
       }
       case 'JOB_PROVIDER_ACCESS_GRANTED': {

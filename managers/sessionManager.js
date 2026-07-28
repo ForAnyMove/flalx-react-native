@@ -158,7 +158,7 @@ export default function sessionManager({ setAppLoading } = {}) {
       // Best-effort side data; failures shouldn't block auth.
       await Promise.allSettled([
         refreshRevealedUsers(),
-        refreshRevealProduct(),
+        // refreshRevealProduct(),
       ]);
     } catch (e) {
       if (e?.status === 401 || e?.nextStep === 'login_required') {

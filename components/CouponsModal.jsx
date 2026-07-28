@@ -27,24 +27,24 @@ const CouponsModal = ({ visible, onClose }) => {
 
   const isClient = user?.current?.account_type === 'client';
 
-  const [linkCopied, setLinkCopied] = useState(false);
-  const referralLink = couponsManagerController.referralLink;
+  // const [linkCopied, setLinkCopied] = useState(false);
+  // const referralLink = couponsManagerController.referralLink;
   const couponsCount = couponsManagerController.balance;
   const monthlyAllowance = couponsManagerController.monthlyAllowance;
 
-  useEffect(() => {
-    if (!visible) {
-      // Reset state when modal is closed
-      setTimeout(() => {
-        setLinkCopied(false);
-      }, 500);
-    }
-  }, [visible]);
+  // useEffect(() => {
+  //   if (!visible) {
+  //     // Reset state when modal is closed
+  //     setTimeout(() => {
+  //       setLinkCopied(false);
+  //     }, 500);
+  //   }
+  // }, [visible]);
 
-  const copyToClipboard = () => {
-    Clipboard.setStringAsync(referralLink);
-    setLinkCopied(true);
-  };
+  // const copyToClipboard = () => {
+  //   Clipboard.setStringAsync(referralLink);
+  //   setLinkCopied(true);
+  // };
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);

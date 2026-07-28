@@ -4,8 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
  * providersManager — агрегирует список провайдеров и доступ к профилям:
  * {
  *   providers: [],           // список всех "других" пользователей
- *   getUserById: fn,         // (id) => Promise<User>
- *   reload: fn,              // перезагрузить список
+ *   getJobParticipant: fn,   // (jobId, userId) => Promise<User> — GET /jobs/:jobId/participant/:userId
  *   getCommentsWritten: fn,  // (id?) => Promise<Comment[]>
  *   getCommentsReceived: fn, // (id?) => Promise<Comment[]>
  *   setComment: fn,          // (userId, { text, status }) => Promise<Comment>
@@ -52,50 +51,29 @@ export default function providersManager({ session }) {
     return res.json();
   }
 
-  // загрузка списка "других" пользователей
-  async function reload() {
-    if (!serverURL || !session?.status) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await safeFetch(`${serverURL}/users/others`, {
-        headers: authHeaders,
-      });
-      if (!alive.current) return;
+  // Получить полные данные участника конкретной работы (с кэшем).
+  // GET /users/:id был снят с сервера как слишком общий — теперь профиль
+  // участника отдаёт сам jobId-scoped эндпоинт, который сам решает, отдавать
+  // ли личные данные (email/телефон), в зависимости от статуса раскрытия
+  // именно для этой работы. Кэш ключуется парой (jobId, userId) — один и тот
+  // же пользователь может быть раскрыт в одной работе и не раскрыт в другой.
+  async function getJobParticipant(jobId, userId) {
+    if (!jobId || !userId) return null;
 
-      setProviders(data);
-      // обновляем кэш
-      setCache((prev) => {
-        const newCache = { ...prev };
-        data.forEach((u) => {
-          newCache[u.id] = u;
-        });
-        return newCache;
-      });
-    } catch (e) {
-      if (!alive.current) return;
-      setError(e.message || "Providers load error");
-    } finally {
-      if (alive.current) setLoading(false);
-    }
-  }
-
-  // получить пользователя по id (с кэшем)
-  async function getUserById(userId) {
-    if (!userId) return null;
+    const cacheKey = `${jobId}:${userId}`;
 
     // 1. проверить кэш
-    if (cache[userId]) {
-      return cache[userId];
+    if (cache[cacheKey]) {
+      return cache[cacheKey];
     }
 
     // 2. запросить с сервера
-    const user = await safeFetch(`${serverURL}/users/${userId}`, {
+    const user = await safeFetch(`${serverURL}/jobs/${jobId}/participant/${userId}`, {
       headers: authHeaders,
     });
 
     // 3. сохранить в кэш
-    setCache((prev) => ({ ...prev, [userId]: user }));
+    setCache((prev) => ({ ...prev, [cacheKey]: user }));
 
     return user;
   }
@@ -166,18 +144,9 @@ export default function providersManager({ session }) {
     });
   }
 
-  // авто-загрузка, как только есть сессия
-  useEffect(() => {
-    if (serverURL && session?.status) {
-      reload();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serverURL, session?.status]);
-
   return {
     providers,
-    getUserById,
-    reload,
+    getJobParticipant,
     loading,
     error,
     setComment,

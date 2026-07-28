@@ -33,6 +33,7 @@ export const ComponentProvider = ({ children }) => {
   };
 
   const { session, user, subscription, usersReveal, isLoader } = sessionManager({ setAppLoading });
+  const token = session?.status;
   const languageController = languageManager();
   const appTabController = tabsManager({ name: 'app', defaultTab: appTabsList[0], list: appTabsList });
   const profileTabController = tabsManager({ name: 'profile', defaultTab: profileTabsList[0], list: profileTabsList });
@@ -52,7 +53,6 @@ export const ComponentProvider = ({ children }) => {
   useEffect(() => {
     if (session.token == null || subscriptionPlans != null) return;
 
-
     const fetchPlans = async () => {
       try {
         const { plans } = await getSubscriptionPlans(session);
@@ -64,7 +64,7 @@ export const ComponentProvider = ({ children }) => {
     }
     fetchPlans();
 
-  }, [session.token, subscriptionPlans]);
+  }, [token]);
 
   useEffect(() => {
     // Public endpoint, no auth required — fetch once on mount so it's
