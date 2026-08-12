@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -154,6 +154,7 @@ export default function NewJobModal({
   const { showError } = useNotification();
   const isRTL = languageController.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const isAndroid = Platform.OS === 'android';
   const isClient = user.current?.account_type === 'client';
   const isBusiness = user.current?.account_type === 'business';
 
@@ -228,6 +229,9 @@ export default function NewJobModal({
     return {
       font: isWebLandscape ? webLandscapeScale(12) : mobileScale(12),
       inputFont: isWebLandscape ? webLandscapeScale(16) : mobileScale(16),
+      baseFont: isWebLandscape ? webLandscapeScale(16) : mobileScale(16),
+      labelMarginBottom: isWebLandscape ? webLandscapeScale(4) : mobileScale(4),
+      androidInputHeight: isWebLandscape ? webLandscapeScale(20) : mobileScale(20),
       padding: isWebLandscape ? webLandscapeScale(4) : mobileScale(8),
       inputContainerPaddingHorizontal: isWebLandscape
         ? webLandscapeScale(16)
@@ -425,13 +429,11 @@ export default function NewJobModal({
     requiredFields.forEach((field) => {
       // Проверяем, заполнено ли поле. Для location нужна особая проверка.
       if (field === 'location') {
-        newErrors[field] = !location || !location?.address;
-      } else {
-        // Для других полей (type, subType, description и т.д.)
-        // используется преобразование в булев тип.
-        // Пустая строка, null или undefined дадут false, что после "!" станет true (ошибка).
-        newErrors[field] = !eval(field);
-      }
+          newErrors[field] = !location || !location?.address;
+        } else {
+          const fieldValues = { type, subType, price, startDateTime, endDateTime, description };
+          newErrors[field] = !fieldValues[field];
+        }
     });
 
     setFieldErrors(newErrors);
@@ -693,6 +695,9 @@ export default function NewJobModal({
           marginBottom: sizes.margin,
         },
         fieldErrors.description && styles.errorBorder,
+        isAndroid && {
+          justifyContent: 'center',
+        },
       ]}
       key='description'
     >
@@ -700,6 +705,7 @@ export default function NewJobModal({
         style={[
           styles.label,
           {
+            marginBottom: sizes.labelMarginBottom,
             color: fieldErrors.description
               ? 'red'
               : themeController.current?.unactiveTextColor,
@@ -707,6 +713,7 @@ export default function NewJobModal({
           },
           isRTL && { textAlign: 'right' },
           isWebLandscape && { fontSize: sizes.font },
+          Platform.OS === 'android' && !isWebLandscape && { marginBottom: 0 },
         ]}
       >
         {t('newJob.description', { defaultValue: 'Description' })}
@@ -731,6 +738,10 @@ export default function NewJobModal({
           isWebLandscape && {
             height: height * 0.12,
           },
+          isAndroid && {
+            padding: 0,
+            margin: 0,
+          },
         ]}
         multiline
       />
@@ -742,12 +753,15 @@ export default function NewJobModal({
           {
             padding: 0,
             paddingHorizontal: sizes.inputContainerPaddingHorizontal,
-            paddingVertical: sizes.inputContainerPaddingVertical,
+            justifyContent: 'center',
             borderRadius: sizes.borderRadius,
             height: sizes.inputHeight,
             backgroundColor: themeController.current?.formInputBackground,
           },
           fieldErrors.price && styles.errorBorder,
+          isAndroid && {
+            justifyContent: 'center',
+          },
         ]}
         key='price'
       >
@@ -755,6 +769,7 @@ export default function NewJobModal({
           style={[
             styles.label,
             {
+              marginBottom: sizes.labelMarginBottom,
               color: fieldErrors.price
                 ? 'red'
                 : themeController.current?.unactiveTextColor,
@@ -781,6 +796,11 @@ export default function NewJobModal({
               fontFamily: 'Rubik-Regular',
             },
             isRTL && { textAlign: 'right' },
+            isAndroid && {
+              padding: 0,
+              margin: 0,
+              height: sizes.androidInputHeight,
+            },
           ]}
           keyboardType='numeric'
         />
@@ -1159,12 +1179,16 @@ export default function NewJobModal({
                           height: '100%',
                         },
                         fieldErrors.description && styles.errorBorder,
+                        isAndroid && {
+                          justifyContent: 'center',
+                        },
                       ]}
                     >
                       <Text
                         style={[
                           styles.label,
                           {
+                            marginBottom: sizes.labelMarginBottom,
                             color: fieldErrors.description
                               ? 'red'
                               : themeController.current?.unactiveTextColor,
@@ -1186,15 +1210,20 @@ export default function NewJobModal({
                         placeholderTextColor={
                           themeController.current?.formInputLabelColor
                         }
-                        style={{
-                          padding: 0,
-                          paddingVertical: sizes.padding,
-                          color: themeController.current?.textColor,
-                          fontSize: sizes.inputFont,
-                          borderRadius: sizes.borderRadius,
-                          backgroundColor: 'transparent',
-                          textAlign: isRTL ? 'right' : 'left',
-                        }}
+                        style={[
+                          {
+                            padding: 0,
+                            color: themeController.current?.textColor,
+                            fontSize: sizes.inputFont,
+                            borderRadius: sizes.borderRadius,
+                            backgroundColor: 'transparent',
+                            textAlign: isRTL ? 'right' : 'left',
+                          },
+                          isAndroid && {
+                            padding: 0,
+                            margin: 0,
+                          },
+                        ]}
                         multiline
                       />
                     </View>
@@ -1287,12 +1316,15 @@ export default function NewJobModal({
                             padding: 0,
                             paddingHorizontal:
                               sizes.inputContainerPaddingHorizontal,
-                            paddingVertical: sizes.inputContainerPaddingVertical,
+                            justifyContent: 'center',
                             borderRadius: sizes.borderRadius,
                             marginBottom: 0,
                             height: sizes.inputHeight,
                           },
                           fieldErrors.price && styles.errorBorder,
+                          isAndroid && {
+                            justifyContent: 'center',
+                          },
                         ]}
                       >
                         <Text
@@ -1300,6 +1332,7 @@ export default function NewJobModal({
                             styles.label,
                             isRTL && { textAlign: 'right' },
                             {
+                              marginBottom: sizes.labelMarginBottom,
                               fontSize: sizes.font,
                               color: fieldErrors.price
                                 ? 'red'
@@ -1321,17 +1354,22 @@ export default function NewJobModal({
                           placeholderTextColor={
                             themeController.current?.formInputPlaceholderColor
                           }
-                          style={{
-                            padding: 0,
-                            paddingVertical: sizes.padding,
-                            color: fieldErrors.price
-                              ? 'red'
-                              : themeController.current?.textColor,
-                            fontSize: sizes.inputFont,
-                            borderRadius: sizes.borderRadius,
-                            backgroundColor: 'transparent',
-                            textAlign: isRTL ? 'right' : 'left',
-                          }}
+                          style={[
+                            {
+                              padding: 0,
+                              color: fieldErrors.price
+                                ? 'red'
+                                : themeController.current?.textColor,
+                              fontSize: sizes.inputFont,
+                              borderRadius: sizes.borderRadius,
+                              backgroundColor: 'transparent',
+                              textAlign: isRTL ? 'right' : 'left',
+                            },
+                            isAndroid && {
+                              padding: 0,
+                              margin: 0,
+                            },
+                          ]}
                           keyboardType='numeric'
                         />
                       </View>
@@ -1668,7 +1706,7 @@ export default function NewJobModal({
             )}
           </>
         ) : (
-          <FlatList
+          <CustomFlatList
             data={formContent}
             keyExtractor={(_, index) => index.toString()}
             renderItem={({ item }) => item}
@@ -1852,7 +1890,7 @@ export default function NewJobModal({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
   },
   header: {
     flexDirection: 'row',
@@ -1983,3 +2021,4 @@ const styles = StyleSheet.create({
     boxSizing: 'border-box',
   },
 });
+

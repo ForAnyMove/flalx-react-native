@@ -29,7 +29,7 @@ export default function JobTypeSelector({
   const isRTL = languageController?.isRTL;
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
-  const [containerWidth, setContainerWidth] = useState(null);
+
 
   const sizes = useMemo(
     () => ({
@@ -66,16 +66,6 @@ export default function JobTypeSelector({
     [isWebLandscape, height]
   );
 
-  const wrapperHeight =
-    numberOfRows * sizes.height + (numberOfRows - 1) * sizes.rowGap;
-
-  const handleContainerLayout = (event) => {
-    if (containerWidth === null && numberOfRows > 1) {
-      const fullWidth = event.nativeEvent.layout.width;
-      const calculatedWidth = fullWidth / numberOfRows;
-      setContainerWidth(calculatedWidth);
-    }
-  };
 
   const colors = {
     tagBg: themeController.current?.formInputBackground,
@@ -122,6 +112,11 @@ export default function JobTypeSelector({
     return options;
   }, [jobTypesController.jobTypesWithSubtypes, jobTypesController.approvedProfessions, languageController.current, subtypesOnly]);
 
+  const optionsCount = Object.keys(jobSubTypesOptions || {}).length;
+  const actualNumberOfRows = optionsCount <= 2 ? 1 : numberOfRows;
+  const wrapperHeight =
+    actualNumberOfRows * sizes.height + (actualNumberOfRows - 1) * sizes.rowGap;
+
   useEffect(() => {
     const scrollElement = scrollRef.current;
     if (Platform.OS === 'web' && scrollElement) {
@@ -162,7 +157,6 @@ export default function JobTypeSelector({
           rowGap: sizes.rowGap,
           columnGap: sizes.colGap,
           height: wrapperHeight,
-          width: containerWidth || undefined,
         },
         tag: {
           paddingHorizontal: sizes.padH,
@@ -189,8 +183,12 @@ export default function JobTypeSelector({
           fontFamily: 'Rubik-Medium',
         },
       }),
-    [sizes, isRTL, wrapperHeight, containerWidth]
+    [sizes, isRTL, wrapperHeight]
   );
+
+  if (optionsCount === 0) {
+    return null;
+  }
 
   return (
     <View style={[styles.container, dynamicStyles.container]}>
@@ -202,7 +200,6 @@ export default function JobTypeSelector({
         contentContainerStyle={styles.scrollContent}
       >
         <View
-          onLayout={handleContainerLayout}
           style={[styles.tagWrapper, dynamicStyles.tagWrapper]}
         >
           {Object.entries(jobSubTypesOptions || {})?.map(([key, label]) => {
@@ -230,8 +227,10 @@ export default function JobTypeSelector({
                     dynamicStyles.tagText,
                     {
                       color: active ? colors.tagSelectedText : colors.tagText,
+                      ...(Platform.OS === 'web' ? { whiteSpace: 'nowrap' } : {}),
                     },
                   ]}
+                  numberOfLines={1}
                 >
                   {label}
                 </Text>
@@ -263,7 +262,12 @@ const styles = StyleSheet.create({
   },
   trashButton: {},
   scrollContent: { flexGrow: 1 },
-  tagWrapper: { flexDirection: 'row', flexWrap: 'wrap' },
+  tagWrapper: { 
+    flexDirection: 'column', 
+    flexWrap: 'wrap',
+    alignContent: 'flex-start',
+    alignItems: 'flex-start'
+  },
   tag: { alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   tagText: {},
 });

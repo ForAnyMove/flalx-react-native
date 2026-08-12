@@ -185,7 +185,7 @@ function App() {
   // 2. Авторизация — session.nextStep (from GET /users/me) is the single
   // source of truth for which auth/MFA screen to show.
   else if (session.nextStep === 'mfa_setup_required') {
-    content = <MfaSetupScreen optional={false} onDone={() => {}} />;
+    content = <MfaSetupScreen optional={false} onDone={() => { }} />;
   }
   else if (session.nextStep === 'mfa_verification_required') {
     content = <MfaVerifyScreen />;
@@ -219,6 +219,11 @@ function App() {
     content = <ForgotPasswordPhoneScreen />;
   }
 
+  content = (
+    <WebSocketProvider>
+      <AppScreen />
+    </WebSocketProvider>
+  );
   return (
     <SafeAreaProvider>
       <SafeAreaView

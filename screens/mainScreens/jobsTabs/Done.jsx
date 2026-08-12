@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import {
   Image,
   Platform,
@@ -49,8 +49,8 @@ export default function DoneScreen({
       fontDescription: isWebLandscape ? web(16) : mobile(16),
       scrollContainerWidth: isWebLandscape ? '60%' : '100%',
       containerPaddingHorizontal: isWebLandscape ? web(10) : mobile(10),
-      containerPaddingVertical: isWebLandscape ? web(14) : mobile(14),
-      cardMarginBottom: isWebLandscape ? web(8) : mobile(8),
+      containerPaddingVertical: isWebLandscape ? web(14) : (Platform.OS !== 'web' ? mobile(6) : mobile(14)),
+      cardMarginBottom: isWebLandscape ? web(8) : (Platform.OS !== 'web' ? mobile(4) : mobile(8)),
       imageMargin: isWebLandscape ? web(10) : mobile(10),
       descriptionMarginTop: isWebLandscape ? web(2) : mobile(2),
       personalMarkerVP: isWebLandscape ? web(3) : mobile(3),
@@ -313,7 +313,7 @@ const styles = {
   },
   textContent: {
     flex: 1,
-    height: '80%',
+    height: Platform.OS === 'web' ? '80%' : undefined,
     justifyContent: 'center',
   },
   title: {
@@ -334,3 +334,5 @@ const styles = {
     top: 0,
   },
 };
+
+

@@ -128,7 +128,7 @@ export default function Profile() {
       modalBtnWidth: isWebLandscape ? web(153) : '40%',
       modalBtnFont: isWebLandscape ? web(20) : mobile(20),
       modalBtnBorderRadius: isWebLandscape ? web(8) : mobile(8),
-      modalBtnsGap: isWebLandscape ? web(24) : mobile(24),
+      modalBtnsGap: isWebLandscape ? web(24) : mobile(16),
       modalPadding: isWebLandscape ? web(32) : mobile(32),
       modalLineHeight: isWebLandscape ? web(32) : mobile(32),
       modalCloseBtnTopRightPosition: isWebLandscape ? web(7) : mobile(7),
@@ -526,8 +526,8 @@ export default function Profile() {
                   >
                     {userState.rejected_avatar.reason
                       ? t('my_profile.avatar_rejected_title', {
-                          reason: userState.rejected_avatar.reason,
-                        })
+                        reason: userState.rejected_avatar.reason,
+                      })
                       : t('my_profile.avatar_rejected_title_no_reason')}
                   </Text>
                   <TouchableOpacity
@@ -701,8 +701,8 @@ export default function Profile() {
                   >
                     {userState.rejected_about.reason
                       ? t('my_profile.about_rejected_title', {
-                          reason: userState.rejected_about.reason,
-                        })
+                        reason: userState.rejected_about.reason,
+                      })
                       : t('my_profile.about_rejected_title_no_reason')}
                   </Text>
                   <TouchableOpacity
@@ -757,10 +757,10 @@ export default function Profile() {
           >
             <View
               style={{
-                width: '48.5%',
+                width: isLandscape ? '48.5%' : '63.5%',
                 flexDirection: 'row',
                 justifyContent: 'flex-end',
-                gap: '5%',
+                gap: sizes.infoFieldsGap,
               }}
             >
               <TouchableOpacity
@@ -1576,7 +1576,8 @@ export default function Profile() {
                     backgroundColor:
                       themeController.current?.buttonColorPrimaryDefault,
                     height: sizes.modalBtnHeight,
-                    width: sizes.modalBtnWidth,
+                    width: isLandscape ? sizes.modalBtnWidth : undefined,
+                    flex: isLandscape ? undefined : 1,
                     borderRadius: sizes.modalBtnBorderRadius,
                   },
                 ]}
@@ -1598,7 +1599,8 @@ export default function Profile() {
                     backgroundColor:
                       themeController.current?.buttonTextColorPrimary,
                     height: sizes.modalBtnHeight,
-                    width: sizes.modalBtnWidth,
+                    width: isLandscape ? sizes.modalBtnWidth : undefined,
+                    flex: isLandscape ? undefined : 1,
                     borderRadius: sizes.modalBtnBorderRadius,
                     borderWidth: 1,
                     borderColor:
@@ -2005,6 +2007,7 @@ const styles = StyleSheet.create({
     width: '100%',
     fontFamily: 'Rubik-Medium',
     fontWeight: '500',
+    paddingVertical: 0,
   },
   editPanel: { flexDirection: 'row' },
   modalOverlay: {

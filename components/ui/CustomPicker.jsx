@@ -9,6 +9,7 @@ import {
   FlatList,
   Platform,
   Animated,
+  StatusBar,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { icons } from '../../constants/icons';
@@ -28,6 +29,7 @@ const CustomPicker = ({
   bottomDropdown = true,
   headerStyle = false,
   iconOnly = false, // compact mode: globe icon only, content-width dropdown
+  insideModal = false,
 }) => {
   const { themeController } = useComponentContext();
   const { width, height, isLandscape } = useWindowInfo();
@@ -75,7 +77,7 @@ const CustomPicker = ({
       setModalVisible(true);
     } else if (iconOnly) {
       pickerRef.current.measure((fx, fy, btnW, btnH, px, py) => {
-        const dropdownW = 170;
+        const dropdownW = btnW;
         // measure() returns physical coords regardless of RTL.
         // If the button center is in the right half of the screen, right-align
         // the dropdown (dropdown's right edge = button's right edge).
@@ -92,8 +94,9 @@ const CustomPicker = ({
     } else {
       pickerRef.current.measure((fx, fy, btnW, btnH, px, py) => {
         const left = Math.max(0, Math.min(px, width - btnW));
+        const pyAdjusted = Platform.OS === 'android' && insideModal ? py + (StatusBar.currentHeight || 0) : py;
         setPickerLayout({
-          top: bottomDropdown ? py + btnH : py - dropdownHeight,
+          top: bottomDropdown ? pyAdjusted + btnH : pyAdjusted - dropdownHeight,
           left,
           width: btnW,
         });
@@ -180,7 +183,9 @@ const CustomPicker = ({
                 : themeController.current?.formInputPlaceholderColor,
               fontSize: sizes.baseFont,
               textAlign: headerStyle ? 'center' : isRTL ? 'right' : 'left',
-              paddingHorizontal: sizes.inputContainerPaddingHorizontal,
+              paddingHorizontal: iconOnly ? 0 : sizes.inputContainerPaddingHorizontal,
+              includeFontPadding: false,
+              textAlignVertical: 'center',
             },
           ]}
         >
@@ -195,6 +200,7 @@ const CustomPicker = ({
       visible={modalVisible}
       transparent={true}
       animationType='fade'
+      statusBarTranslucent={true}
       onRequestClose={() => setModalVisible(false)}
     >
       <TouchableOpacity
@@ -231,6 +237,7 @@ const CustomPicker = ({
       visible={modalVisible}
       transparent={true}
       animationType='fade'
+      statusBarTranslucent={true}
       onRequestClose={() => setModalVisible(false)}
     >
       <TouchableOpacity
@@ -246,7 +253,7 @@ const CustomPicker = ({
                 top: pickerLayout.top,
                 left: pickerLayout.left,
                 width: pickerLayout.width,
-                height: dropdownHeight,
+                height: dropdownHeight + (headerStyle ? 2 : 0), // Компенсируем рамку (border), чтобы не появлялся скролл
                 backgroundColor: headerStyle
                   ? themeController.current?.backgroundColor
                   : themeController.current?.formInputBackground,
@@ -266,6 +273,10 @@ const CustomPicker = ({
                   : {
                       borderTopLeftRadius: sizes.borderRadius,
                       borderTopRightRadius: sizes.borderRadius,
+                      elevation: 0,
+                      shadowOpacity: 0,
+                      borderWidth: 1,
+                      borderColor: themeController.current?.borderColor || 'rgba(0,0,0,0.1)',
                     }),
               },
             ]}
@@ -300,17 +311,23 @@ const CustomPicker = ({
               justifyContent: iconOnly ? 'center' : 'space-between',
               flexDirection: isRTL ? 'row-reverse' : 'row',
             },
-            iconOnly
-              ? {
-                  width: sizes.headerPickerHeight,
-                  borderRadius: sizes.borderRadius,
-                }
-              : modalVisible
-              ? {
-                  borderTopLeftRadius: sizes.borderRadius,
-                  borderTopRightRadius: sizes.borderRadius,
-                  borderBottomWidth: 0,
-                }
+            iconOnly && { width: sizes.headerPickerHeight },
+            modalVisible
+              ? bottomDropdown
+                ? {
+                    borderTopLeftRadius: sizes.borderRadius,
+                    borderTopRightRadius: sizes.borderRadius,
+                    borderBottomLeftRadius: 0,
+                    borderBottomRightRadius: 0,
+                    borderBottomWidth: 0,
+                  }
+                : {
+                    borderTopLeftRadius: 0,
+                    borderTopRightRadius: 0,
+                    borderBottomLeftRadius: sizes.borderRadius,
+                    borderBottomRightRadius: sizes.borderRadius,
+                    borderTopWidth: 0,
+                  }
               : {
                   borderRadius: sizes.borderRadius,
                 },
@@ -341,6 +358,9 @@ const CustomPicker = ({
                 style={{
                   color: themeController.current?.primaryColor,
                   fontSize: sizes.headerFont,
+                  lineHeight: sizes.headerFont * 1.2,
+                  includeFontPadding: false,
+                  textAlignVertical: 'center',
                 }}
               >
                 {selectedLabel}
@@ -381,10 +401,19 @@ const CustomPicker = ({
             flexDirection: isRTL ? 'row-reverse' : 'row',
           },
           modalVisible
-            ? {
-                borderTopLeftRadius: sizes.borderRadius,
-                borderTopRightRadius: sizes.borderRadius,
-              }
+              ? bottomDropdown
+                ? {
+                    borderTopLeftRadius: sizes.borderRadius,
+                    borderTopRightRadius: sizes.borderRadius,
+                    borderBottomLeftRadius: 0,
+                    borderBottomRightRadius: 0,
+                  }
+                : {
+                    borderTopLeftRadius: 0,
+                    borderTopRightRadius: 0,
+                    borderBottomLeftRadius: sizes.borderRadius,
+                    borderBottomRightRadius: sizes.borderRadius,
+                  }
             : {
                 borderRadius: sizes.borderRadius,
               },
@@ -395,18 +424,23 @@ const CustomPicker = ({
         <View
           style={{ flex: 1, justifyContent: 'center', gap: sizes.labelGap }}
         >
-          <Text
-            style={[
-              // styles.label,
-              {
-                color: themeController.current?.unactiveTextColor,
-                fontSize: sizes.font,
-                textAlign: isRTL ? 'right' : 'left',
-              },
-            ]}
-          >
-            {label}
-          </Text>
+          {!!label && (
+            <Text
+              style={[
+                // styles.label,
+                {
+                  color: themeController.current?.unactiveTextColor,
+                  fontSize: sizes.font,
+                  lineHeight: sizes.font * 1.2,
+                  textAlign: isRTL ? 'right' : 'left',
+                  includeFontPadding: false,
+                  textAlignVertical: 'center',
+                },
+              ]}
+            >
+              {label}
+            </Text>
+          )}
           <Text
             style={[
               // styles.value,
@@ -415,7 +449,10 @@ const CustomPicker = ({
                   ? themeController.current?.textColor
                   : placeholderColor,
                 fontSize: sizes.baseFont,
+                lineHeight: sizes.baseFont * 1.2,
                 textAlign: isRTL ? 'right' : 'left',
+                includeFontPadding: false,
+                textAlignVertical: 'center',
               },
             ]}
           >

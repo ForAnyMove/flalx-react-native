@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+﻿import { useEffect, useState, useMemo } from 'react';
 import {
   Image,
   Modal,
@@ -57,8 +57,8 @@ export default function DoneScreen({
       containerMarginTop: isWebLandscape ? web(24) : mobile(24),
       imageMargin: isWebLandscape ? web(10) : mobile(10),
       containerPaddingH: isWebLandscape ? web(10) : mobile(10),
-      containerPaddingV: isWebLandscape ? web(14) : mobile(14),
-      cardMarginBottom: isWebLandscape ? web(8) : mobile(8),
+      containerPaddingV: isWebLandscape ? web(14) : (Platform.OS !== 'web' ? mobile(6) : mobile(14)),
+      cardMarginBottom: isWebLandscape ? web(8) : (Platform.OS !== 'web' ? mobile(4) : mobile(8)),
       descriptionMarginTop: isWebLandscape ? web(2) : mobile(2),
       badgePadding: isWebLandscape ? web(2) : mobile(2),
     };
@@ -296,7 +296,7 @@ const styles = {
   },
   textContent: {
     flex: 1,
-    height: '80%',
+    height: Platform.OS === 'web' ? '80%' : undefined,
     justifyContent: 'center',
   },
   title: {
@@ -317,3 +317,4 @@ const styles = {
     top: 0,
   },
 };
+

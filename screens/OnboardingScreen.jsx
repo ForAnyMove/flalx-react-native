@@ -113,8 +113,8 @@ export default function OnboardingScreen({ onFinish }) {
       <View style={[styles.topControlsContainer, { top: sizes.skipBtnTop, justifyContent: isRTL ? 'flex-end' : 'flex-start', }]}>
         <CustomPicker
           options={[
-            { label: t('settings.lang_en', 'English'), value: 'en' },
-            { label: t('settings.lang_he', 'עברית'), value: 'he' },
+            { label: 'EN', value: 'en' },
+            { label: 'עב', value: 'he' },
           ]}
           selectedValue={languageController.current}
           onValueChange={(itemValue) => languageController.setLang(itemValue)}
@@ -308,8 +308,9 @@ const styles = StyleSheet.create({
     flex: 1.5,
     justifyContent: 'flex-end',
     alignItems: 'center',
+    width: '100%',
   },
-  image: { width: '90%', maxHeight: '90%', aspectRatio: 344 / 316 },
+  image: { width: '90%', height: '90%' },
   textContainer: {
     flex: 1,
     justifyContent: 'space-between',

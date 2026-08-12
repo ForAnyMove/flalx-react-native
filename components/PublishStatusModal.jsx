@@ -757,13 +757,15 @@ const PublishStatusModal = ({
                   flexDirection: isRTL ? 'row-reverse' : 'row',
                   alignItems: 'center',
                   gap: sizes.couponButtonGap,
-                }}
-              >
-                <Text style={[styles.buttonText, styles.outlineSecondaryButtonText]}>
-                  {t('payment_modal.pay_with_coupon_balance', {
-                    balance: couponsCount,
-                  })}
-                </Text>
+                    width: '100%',
+                    paddingHorizontal: sizes.buttonMarginHorizontal,
+                  }}
+                >
+                  <Text style={[styles.buttonText, styles.outlineSecondaryButtonText, { flexShrink: 1, maxWidth: undefined }]} numberOfLines={1} ellipsizeMode="tail">
+                    {t('payment_modal.pay_with_coupon_balance', {
+                      balance: couponsCount,
+                    })}
+                  </Text>
                 <Image
                   source={icons.coupon}
                   style={{
@@ -1034,11 +1036,13 @@ const PublishStatusModal = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: sizes.compoundButtonGap,
-              }}
-            >
-              <Text style={[styles.buttonText, styles.outlinePrimaryButtonText, { marginHorizontal: sizes.compoundTextMarginHorizontal }]}>
-                {getPayButtonConfirmBaseLabel()}
-              </Text>
+                  width: '100%',
+                  paddingHorizontal: sizes.buttonMarginHorizontal,
+                }}
+              >
+                <Text style={[styles.buttonText, styles.outlinePrimaryButtonText, { fontSize: sizes.buttonTextSize, marginHorizontal: sizes.compoundTextMarginHorizontal, flexShrink: 1, maxWidth: undefined }]} numberOfLines={1} ellipsizeMode="tail">
+                  {getPayButtonConfirmBaseLabel()}
+                </Text>
               <Text style={{ color: theme.formInputPlaceholderColor, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>+</Text>
               <Text style={{ color: theme.buttonColorSecondaryDefault, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>1</Text>
               <Text style={{ color: theme.buttonColorSecondaryDefault, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>
@@ -1128,3 +1132,4 @@ const PublishStatusModal = ({
 };
 
 export default PublishStatusModal;
+

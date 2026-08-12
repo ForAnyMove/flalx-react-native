@@ -52,6 +52,8 @@ const AddressPicker = ({
       pickerHeight: isWebLandscape ? web(64) : mobile(64),
       borderRadius: isWebLandscape ? web(8) : mobile(8),
       inputContainerPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
+      labelMarginBottom: isWebLandscape ? web(4) : mobile(4),
+      androidInputHeight: scale(20),
       labelGap: scale(3),
       suggestionItemWidth: isWebLandscape ? web(330) : '100%',
       suggestionItemLeft: scale(16),
@@ -94,19 +96,25 @@ const AddressPicker = ({
 
   const customStyles = {
     container: {
-      width: '100%',
-      marginHorizontal: 0,
+      marginHorizontal: Platform.OS === 'web' ? 0 : -15, // Offset the hardcoded 15px padding inside the library on native
     },
     input: {
+      padding: 0,
       paddingVertical: 0,
       paddingLeft: 0,
       paddingRight: 0,
       borderWidth: 0,
       borderRadius: sizes.borderRadius,
       fontSize: sizes.baseFont,
+      fontFamily: 'Rubik-Regular',
       backgroundColor: 'transparent',
       width: '100%',
       color: themeController.current?.textColor,
+      includeFontPadding: false,
+      textAlignVertical: 'center',
+      flex: 0,
+      margin: Platform.OS === 'android' ? 0 : undefined,
+      height: Platform.OS === 'android' ? sizes.androidInputHeight : undefined,
     },
     suggestionsContainer: {
       backgroundColor: themeController.current?.formInputBackground,
@@ -174,11 +182,12 @@ const AddressPicker = ({
         containerStyle,
       ]}
     >
-      <View style={{ flex: 1, justifyContent: 'center', gap: sizes.labelGap }}>
+      <View style={{ flex: 1, justifyContent: 'center' }}>
         <Text
           style={[
             styles.label,
             {
+              marginBottom: sizes.labelMarginBottom || 0,
               color: error ? 'red' : themeController.current?.unactiveTextColor,
               fontSize: sizes.font,
               textAlign: isRTL ? 'right' : 'left',

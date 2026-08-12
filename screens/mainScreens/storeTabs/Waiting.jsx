@@ -1,4 +1,4 @@
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+﻿import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useMemo, useState } from 'react';
 import {
   Image,
@@ -63,7 +63,6 @@ export default function WaitingScreen({
 
     return {
       cardRadius: isWebLandscape ? web(8) : mobile(8),
-      cardShadow: isWebLandscape ? web(1) : mobile(3),
       imageHeight: isWebLandscape ? web(120) : mobile(90),
       imageWidth: isWebLandscape ? web(153) : '25%',
       fontTitle: isWebLandscape ? web(18) : mobile(18),
@@ -75,8 +74,8 @@ export default function WaitingScreen({
       badgePosition: isWebLandscape ? web(5) : mobile(5),
       imageMargin: isWebLandscape ? web(10) : mobile(10),
       containerPaddingH: isWebLandscape ? web(10) : mobile(10),
-      containerPaddingV: isWebLandscape ? web(14) : mobile(14),
-      cardMarginBottom: isWebLandscape ? web(8) : mobile(8),
+      containerPaddingV: isWebLandscape ? web(14) : (Platform.OS !== 'web' ? mobile(6) : mobile(14)),
+      cardMarginBottom: isWebLandscape ? web(8) : (Platform.OS !== 'web' ? mobile(4) : mobile(8)),
       descriptionMarginTop: isWebLandscape ? web(2) : mobile(2),
       badgePadding: isWebLandscape ? web(2) : mobile(2),
     };
@@ -97,7 +96,7 @@ export default function WaitingScreen({
       name: 'Cleaner',
       name_i18n: {
         en: 'Cleaner',
-        he: 'מנקה',
+        he: 'ЧћЧ Ч§Ч”',
       },
     },
     subType: {
@@ -106,7 +105,7 @@ export default function WaitingScreen({
       name: 'House Cleaning',
       name_i18n: {
         en: 'House Cleaning',
-        he: 'ניקיון בית',
+        he: 'Ч Ч™Ч§Ч™Ч•Чџ Ч‘Ч™ЧЄ',
       },
     },
     description: 'Mock Job for Testing',
@@ -156,7 +155,7 @@ export default function WaitingScreen({
   const drawJobCard = (job, index) => {
     // While pending_moderation/update_requires_editing, the live
     // description/images are the last *approved* version, not what the
-    // creator actually submitted — show the draft instead, same precedence
+    // creator actually submitted вЂ” show the draft instead, same precedence
     // as the About-field moderation pattern (pending_about || about).
     const draftDescription = job.unsubmitted_edits?.description ?? job.description;
     const draftImages = job.unsubmitted_edits?.images ?? job.images;
@@ -544,7 +543,7 @@ const styles = {
   },
   textContent: {
     flex: 1,
-    height: '80%',
+    height: Platform.OS === 'web' ? '80%' : undefined,
     justifyContent: 'center',
   },
   title: {
@@ -560,3 +559,4 @@ const styles = {
     // fontWeight: 'bold',
   },
 };
+

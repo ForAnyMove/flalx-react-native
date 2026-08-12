@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+﻿import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   Modal,
@@ -51,7 +51,7 @@ export default function NewScreen({
 
     return {
       containerPaddingH: isWebLandscape ? web(10) : mobile(10),
-      containerPaddingV: isWebLandscape ? web(14) : mobile(14),
+      containerPaddingV: isWebLandscape ? web(14) : (Platform.OS !== 'web' ? mobile(6) : mobile(14)),
       scrollContainerPaddingBottom: isWebLandscape ? web(20) : mobile(20),
     };
   }, [height, isWebLandscape]);
@@ -182,3 +182,4 @@ const styles = {
     justifyContent: 'center',
   },
 };
+

@@ -68,7 +68,7 @@ export default function CustomDateTimeInput({
   showTimezone = true,
 }) {
   const { themeController, languageController } = useComponentContext();
-  const { height, isLandscape } = useWindowInfo();
+  const { height, width, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
@@ -108,8 +108,9 @@ export default function CustomDateTimeInput({
       timeTextSize: scale(28),
       buttonHeight: scale(44),
       gap: scale(10),
+      androidDayCellHeight: isWebLandscape ? undefined : (width * 0.92 - 2 * scale(16)) / 7,
     };
-  }, [height, isWebLandscape]);
+  }, [width, height, isWebLandscape]);
 
   const timezoneOptions = useMemo(() => getTimezoneOptions(), []);
   const filteredTimezones = useMemo(
@@ -321,198 +322,212 @@ export default function CustomDateTimeInput({
               </TouchableOpacity>
             </View>
 
-            {showTimezone && (
-              <View style={[styles.timezoneBlock, timezoneListOpen && styles.timezoneBlockOpen]}>
-                <View
-                  style={[styles.timezoneRow, isRTL && { flexDirection: 'row-reverse' }]}
-                  onLayout={(e) => setTimezoneRowHeight(e.nativeEvent.layout.height)}
-                >
-                  <Text style={[styles.timezoneText, { color: theme?.formInputLabelColor }]}>
-                    {t('dateTimePicker.timezone')}: {formatTimezoneLabel(selectedTimezone)}
-                  </Text>
-                  {onTimezoneChange && (
-                    <TouchableOpacity onPress={() => setTimezoneListOpen((v) => !v)}>
-                      <Text style={[styles.timezoneChangeText, { color: theme?.primaryColor }]}>
-                        {t('dateTimePicker.change')}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
+            <ScrollView
+              style={{ flexShrink: 1 }}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
 
-                {timezoneListOpen && (
+              {showTimezone && (
+                <View style={[styles.timezoneBlock, timezoneListOpen && styles.timezoneBlockOpen]}>
                   <View
-                    style={[
-                      styles.timezoneDropdown,
-                      {
-                        top: timezoneRowHeight + 4,
-                        backgroundColor: theme?.backgroundColor,
-                        borderColor: theme?.defaultBlocksMockBackground || '#ccc',
-                      },
-                    ]}
+                    style={[styles.timezoneRow, isRTL && { flexDirection: 'row-reverse' }]}
+                    onLayout={(e) => setTimezoneRowHeight(e.nativeEvent.layout.height)}
                   >
-                    <TextInput
-                      ref={timezoneSearchRef}
-                      value={timezoneSearch}
-                      onChangeText={setTimezoneSearch}
-                      placeholder={t('dateTimePicker.search')}
-                      placeholderTextColor={theme?.formInputPlaceholderColor}
-                      style={[
-                        styles.timezoneSearchInput,
-                        {
-                          color: theme?.textColor,
-                          borderBottomColor: theme?.defaultBlocksMockBackground || '#ccc',
-                          textAlign: isRTL ? 'right' : 'left',
-                        },
-                      ]}
-                    />
-                    <ScrollView style={styles.timezoneDropdownList} keyboardShouldPersistTaps="handled">
-                      {filteredTimezones.map((option) => {
-                        const isSelected = option === selectedTimezone;
-                        return (
-                          <TouchableOpacity
-                            key={option}
-                            style={[
-                              styles.timezoneOption,
-                              isSelected && { backgroundColor: `${theme?.primaryColor || '#000'}14` },
-                            ]}
-                            onPress={() => {
-                              onTimezoneChange?.(option);
-                              setTimezoneListOpen(false);
-                              setValidationError('');
-                            }}
-                          >
-                            <Text
-                              style={[
-                                styles.timezoneOptionText,
-                                {
-                                  color: isSelected ? theme?.primaryColor : theme?.textColor,
-                                  textAlign: isRTL ? 'right' : 'left',
-                                },
-                              ]}
-                            >
-                              {formatTimezoneLabel(option)}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </ScrollView>
+                    <Text style={[styles.timezoneText, { color: theme?.formInputLabelColor }]}>
+                      {t('dateTimePicker.timezone')}: {formatTimezoneLabel(selectedTimezone)}
+                    </Text>
+                    {onTimezoneChange && (
+                      <TouchableOpacity onPress={() => setTimezoneListOpen((v) => !v)}>
+                        <Text style={[styles.timezoneChangeText, { color: theme?.primaryColor }]}>
+                          {t('dateTimePicker.change')}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
-                )}
-              </View>
-            )}
 
-            <View style={styles.grid}>
-              {weekdayLabels.map((dayLabel) => (
-                <Text
-                  key={dayLabel}
-                  style={[styles.weekday, { color: theme?.formInputLabelColor, fontSize: sizes.weekdaySize }]}
-                >
-                  {dayLabel}
-                </Text>
-              ))}
-              {cells.map((day, index) => {
-                const isSelected =
-                  day &&
-                  draftDate.getFullYear() === year &&
-                  draftDate.getMonth() === month &&
-                  draftDate.getDate() === day;
-                const isToday =
-                  day &&
-                  today.getFullYear() === year &&
-                  today.getMonth() === month &&
-                  today.getDate() === day;
-                return (
-                  <TouchableOpacity
-                    key={`${index}-${day || 'blank'}`}
-                    disabled={!day}
-                    onPress={() => day && selectDate(day)}
-                    style={[
-                      styles.dayCell,
-                      isToday && !isSelected && {
-                        backgroundColor: `${theme?.primaryColor || '#000'}14`,
-                        borderColor: theme?.primaryColor,
-                        borderWidth: 1,
-                      },
-                      isSelected && { backgroundColor: theme?.primaryColor },
-                    ]}
-                  >
-                    <Text
+                  {timezoneListOpen && (
+                    <View
                       style={[
-                        styles.dayText,
+                        styles.timezoneDropdown,
                         {
-                          color: isSelected ? theme?.buttonTextColorPrimary : theme?.textColor,
-                          fontSize: sizes.daySize,
+                          top: timezoneRowHeight + 4,
+                          backgroundColor: theme?.backgroundColor,
+                          borderColor: theme?.defaultBlocksMockBackground || '#ccc',
                         },
                       ]}
                     >
-                      {day || ''}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {mode === 'datetime' && (
-              <>
-                <Text style={[styles.selectedTimeText, { color: theme?.textColor, fontSize: sizes.timeTextSize }]}>
-                  {pad(draftDate.getHours())}:{pad(draftDate.getMinutes())}
-                </Text>
-
-                <View style={[styles.timeSection, isRTL && { flexDirection: 'row-reverse' }]}>
-                  <ScrollView
-                    ref={hourScrollRef}
-                    style={styles.timeColumn}
-                    contentContainerStyle={styles.timeColumnContent}
-                  >
-                    {Array.from({ length: 24 }, (_, hour) => (
-                      <TouchableOpacity
-                        key={hour}
+                      <TextInput
+                        ref={timezoneSearchRef}
+                        value={timezoneSearch}
+                        onChangeText={setTimezoneSearch}
+                        placeholder={t('dateTimePicker.search')}
+                        placeholderTextColor={theme?.formInputPlaceholderColor}
                         style={[
-                          styles.timeOption,
-                          draftDate.getHours() === hour && { backgroundColor: theme?.primaryColor },
+                          styles.timezoneSearchInput,
+                          {
+                            color: theme?.textColor,
+                            borderBottomColor: theme?.defaultBlocksMockBackground || '#ccc',
+                            textAlign: isRTL ? 'right' : 'left',
+                          },
                         ]}
-                        onPress={() => setTimePart('hour', hour)}
-                      >
-                        <Text
-                          style={[
-                            styles.timeOptionText,
-                            { color: draftDate.getHours() === hour ? theme?.buttonTextColorPrimary : theme?.textColor },
-                          ]}
-                        >
-                          {pad(hour)}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                  <Text style={[styles.timeSeparator, { color: theme?.textColor, fontSize: sizes.timeTextSize }]}>:</Text>
-                  <ScrollView
-                    ref={minuteScrollRef}
-                    style={styles.timeColumn}
-                    contentContainerStyle={styles.timeColumnContent}
-                  >
-                    {Array.from({ length: 60 }, (_, minute) => minute).map((minute) => (
-                      <TouchableOpacity
-                        key={minute}
-                        style={[
-                          styles.timeOption,
-                          draftDate.getMinutes() === minute && { backgroundColor: theme?.primaryColor },
-                        ]}
-                        onPress={() => setTimePart('minute', minute)}
-                      >
-                        <Text
-                          style={[
-                            styles.timeOptionText,
-                            { color: draftDate.getMinutes() === minute ? theme?.buttonTextColorPrimary : theme?.textColor },
-                          ]}
-                        >
-                          {pad(minute)}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
+                      />
+                      <ScrollView style={styles.timezoneDropdownList} keyboardShouldPersistTaps="handled" nestedScrollEnabled={true}>
+                        {filteredTimezones.map((option) => {
+                          const isSelected = option === selectedTimezone;
+                          return (
+                            <TouchableOpacity
+                              key={option}
+                              style={[
+                                styles.timezoneOption,
+                                isSelected && { backgroundColor: `${theme?.primaryColor || '#000'}14` },
+                              ]}
+                              onPress={() => {
+                                onTimezoneChange?.(option);
+                                setTimezoneListOpen(false);
+                                setValidationError('');
+                              }}
+                            >
+                              <Text
+                                style={[
+                                  styles.timezoneOptionText,
+                                  {
+                                    color: isSelected ? theme?.primaryColor : theme?.textColor,
+                                    textAlign: isRTL ? 'right' : 'left',
+                                  },
+                                ]}
+                              >
+                                {formatTimezoneLabel(option)}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </ScrollView>
+                    </View>
+                  )}
                 </View>
-              </>
-            )}
+              )}
+
+              <View style={styles.grid}>
+                {weekdayLabels.map((dayLabel) => (
+                  <Text
+                    key={dayLabel}
+                    style={[styles.weekday, { color: theme?.formInputLabelColor, fontSize: sizes.weekdaySize }]}
+                  >
+                    {dayLabel}
+                  </Text>
+                ))}
+                {cells.map((day, index) => {
+                  const isSelected =
+                    day &&
+                    draftDate.getFullYear() === year &&
+                    draftDate.getMonth() === month &&
+                    draftDate.getDate() === day;
+                  const isToday =
+                    day &&
+                    today.getFullYear() === year &&
+                    today.getMonth() === month &&
+                    today.getDate() === day;
+                  return (
+                    <TouchableOpacity
+                      key={`${index}-${day || 'blank'}`}
+                      disabled={!day}
+                      onPress={() => day && selectDate(day)}
+                      style={[
+                        styles.dayCell,
+                        Platform.OS === 'android' && !isWebLandscape && { height: sizes.androidDayCellHeight },
+                        isToday && !isSelected && {
+                          backgroundColor: `${theme?.primaryColor || '#000'}14`,
+                          borderColor: theme?.primaryColor,
+                          borderWidth: 1,
+                        },
+                        isSelected && { backgroundColor: theme?.primaryColor },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.dayText,
+                          {
+                            color: isSelected ? theme?.buttonTextColorPrimary : theme?.textColor,
+                            fontSize: sizes.daySize,
+                            textAlign: 'center',
+                          },
+                        ]}
+                      >
+                        {day || ''}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {mode === 'datetime' && (
+                <>
+                  <Text style={[styles.selectedTimeText, { color: theme?.textColor, fontSize: sizes.timeTextSize }]}>
+                    {pad(draftDate.getHours())}:{pad(draftDate.getMinutes())}
+                  </Text>
+
+                  <View style={[styles.timeSection, isRTL && { flexDirection: 'row-reverse' }]}>
+                    <ScrollView
+                      ref={hourScrollRef}
+                      style={styles.timeColumn}
+                      contentContainerStyle={styles.timeColumnContent}
+                      nestedScrollEnabled={true}
+                      showsVerticalScrollIndicator={false}
+                    >
+                      {Array.from({ length: 24 }, (_, hour) => (
+                        <TouchableOpacity
+                          key={hour}
+                          style={[
+                            styles.timeOption,
+                            draftDate.getHours() === hour && { backgroundColor: theme?.primaryColor },
+                          ]}
+                          onPress={() => setTimePart('hour', hour)}
+                        >
+                          <Text
+                            style={[
+                              styles.timeOptionText,
+                              { color: draftDate.getHours() === hour ? theme?.buttonTextColorPrimary : theme?.textColor },
+                            ]}
+                          >
+                            {pad(hour)}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                    <Text style={[styles.timeSeparator, { color: theme?.textColor, fontSize: sizes.timeTextSize }]}>:</Text>
+                    <ScrollView
+                      ref={minuteScrollRef}
+                      style={styles.timeColumn}
+                      contentContainerStyle={styles.timeColumnContent}
+                      nestedScrollEnabled={true}
+                      showsVerticalScrollIndicator={false}
+                    >
+                      {Array.from({ length: 60 }, (_, minute) => minute).map((minute) => (
+                        <TouchableOpacity
+                          key={minute}
+                          style={[
+                            styles.timeOption,
+                            draftDate.getMinutes() === minute && { backgroundColor: theme?.primaryColor },
+                          ]}
+                          onPress={() => setTimePart('minute', minute)}
+                        >
+                          <Text
+                            style={[
+                              styles.timeOptionText,
+                              { color: draftDate.getMinutes() === minute ? theme?.buttonTextColorPrimary : theme?.textColor },
+                            ]}
+                          >
+                            {pad(minute)}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                </>
+              )}
+
+            </ScrollView>
 
             <View style={[styles.actions, isRTL && { flexDirection: 'row-reverse' }]}>
               <TouchableOpacity

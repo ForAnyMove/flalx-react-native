@@ -50,6 +50,10 @@ const CustomTextInput = forwardRef((props, ref) => {
   return (
     <TextInput
       {...props}
+      style={[
+        Platform.OS === 'android' ? { padding: 0, textAlignVertical: props.multiline ? 'top' : 'center' } : {},
+        props.style
+      ]}
       ref={ref}
       onFocus={handleFocus}
       onBlur={handleBlur}

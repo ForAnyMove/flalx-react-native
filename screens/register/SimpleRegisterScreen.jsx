@@ -358,8 +358,8 @@ export default function SimpleRegisterScreen() {
       <View style={{ position: 'absolute', top: sizes.skipBtnTop, left: isRTL ? undefined : '5%', right: isRTL ? '5%' : undefined, zIndex: 100 }}>
         <CustomPicker
           options={[
-            { label: t('settings.lang_en', 'English'), value: 'en' },
-            { label: t('settings.lang_he', 'עברית'), value: 'he' },
+            { label: 'EN', value: 'en' },
+            { label: 'עב', value: 'he' },
           ]}
           selectedValue={languageController.current}
           onValueChange={(val) => languageController.setLang(val)}

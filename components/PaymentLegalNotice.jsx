@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Pressable, View, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Pressable, View, Text, StyleSheet, Platform, Dimensions } from 'react-native';
+import { useWindowInfo } from '../context/windowContext';
 
 const PaymentLegalNotice = ({
   title,
@@ -9,10 +10,24 @@ const PaymentLegalNotice = ({
   fontSize = 12,
   style,
 }) => {
+  const { width: screenWidth, isLandscape } = useWindowInfo();
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const noticeColor = theme?.buttonColorSecondaryDefault || '#FE8A01';
   const textColor = theme?.textColor || noticeColor;
   const visibleTexts = texts.filter(Boolean);
+
+  useEffect(() => {
+    if (Platform.OS === 'web' && isTooltipVisible) {
+      const handleClick = () => setIsTooltipVisible(false);
+      const timer = setTimeout(() => {
+        document.addEventListener('click', handleClick);
+      }, 0);
+      return () => {
+        clearTimeout(timer);
+        document.removeEventListener('click', handleClick);
+      };
+    }
+  }, [isTooltipVisible]);
 
   if (!title && visibleTexts.length === 0) return null;
 
@@ -60,33 +75,49 @@ const PaymentLegalNotice = ({
           <Text style={[styles.infoText, { color: noticeColor, fontSize }]}>i</Text>
 
           {isTooltipVisible && (
-            <View
-              style={[
-                styles.tooltip,
-                {
-                  borderColor: noticeColor,
-                  backgroundColor: theme?.backgroundColor || '#fff',
-                  [isRTL ? 'left' : 'right']: 0,
-                },
-              ]}
-            >
-              {visibleTexts.map((text, index) => (
-                <Text
-                  key={`${index}-${text.slice(0, 12)}`}
-                  style={[
-                    styles.tooltipText,
-                    {
-                      color: textColor,
-                      fontSize,
-                      textAlign: isRTL ? 'right' : 'left',
-                      marginTop: index > 0 ? 6 : 0,
-                    },
-                  ]}
-                >
-                  {text}
-                </Text>
-              ))}
-            </View>
+            <>
+              {Platform.OS !== 'web' && (
+                <Pressable
+                  style={{
+                    position: 'absolute',
+                    top: -Dimensions.get('window').height,
+                    bottom: -Dimensions.get('window').height,
+                    left: -Dimensions.get('window').width,
+                    right: -Dimensions.get('window').width,
+                    zIndex: -1,
+                  }}
+                  onPress={() => setIsTooltipVisible(false)}
+                />
+              )}
+              <View
+                style={[
+                  styles.tooltip,
+                  {
+                    width: isLandscape ? 280 : (screenWidth * 0.68),
+                    borderColor: noticeColor,
+                    backgroundColor: theme?.backgroundColor || '#fff',
+                    [isRTL ? 'left' : 'right']: 0,
+                  },
+                ]}
+              >
+                {visibleTexts.map((text, index) => (
+                  <Text
+                    key={`${index}-${text.slice(0, 12)}`}
+                    style={[
+                      styles.tooltipText,
+                      {
+                        color: textColor,
+                        fontSize,
+                        textAlign: isRTL ? 'right' : 'left',
+                        marginTop: index > 0 ? 6 : 0,
+                      },
+                    ]}
+                  >
+                    {text}
+                  </Text>
+                ))}
+              </View>
+            </>
           )}
         </Pressable>
       )}

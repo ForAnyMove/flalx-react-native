@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -18,37 +18,37 @@ import { icons } from '../constants/icons';
 import PaymentLegalNotice from './PaymentLegalNotice';
 
 /**
- * PurchaseModal — modal for selecting a payment method and completing a purchase.
+ * PurchaseModal вЂ” modal for selecting a payment method and completing a purchase.
  *
  * Props:
  *   visible           {boolean}
  *   onClose           {function}
- *   type              {'regular' | 'subscribtion'} — default 'regular'
- *   title             {string?}      — overrides the 'select' screen's title
+ *   type              {'regular' | 'subscribtion'} вЂ” default 'regular'
+ *   title             {string?}      вЂ” overrides the 'select' screen's title
  *                                      (default: payment_modal.select_title,
- *                                      written for the contact-reveal flow —
+ *                                      written for the contact-reveal flow вЂ”
  *                                      pass an explicit title for any other
  *                                      purchase context, e.g. publishing or
  *                                      applying to a job)
- *   price             {string}       — e.g. "$1.50"
- *   onPurchase        {async function} — called when user confirms payment
- *   onPayWithCoupons  {function?}    — called when "Pay with coupons" is pressed
- *   onOpenSubscriptions {function?}  — called when "Get a subscription" is pressed
- *   mode              {'purchase' | 'subscription'} — default 'purchase'
- *   startStep         {'select' | 'method'} — initial screen, default 'select'
- *   skipBackOnMethod  {boolean} — if true, Close button on 'method' screen closes modal instead of going back
+ *   price             {string}       вЂ” e.g. "$1.50"
+ *   onPurchase        {async function} вЂ” called when user confirms payment
+ *   onPayWithCoupons  {function?}    вЂ” called when "Pay with coupons" is pressed
+ *   onOpenSubscriptions {function?}  вЂ” called when "Get a subscription" is pressed
+ *   mode              {'purchase' | 'subscription'} вЂ” default 'purchase'
+ *   startStep         {'select' | 'method'} вЂ” initial screen, default 'select'
+ *   skipBackOnMethod  {boolean} вЂ” if true, Close button on 'method' screen closes modal instead of going back
  *
  * Screens (step state):
- *   'select'  — first screen: choose payment approach
- *   'method'  — select specific payment method from available / saved lists
- *   'success' — payment completed successfully
- *   'error'   — payment failed
+ *   'select'  вЂ” first screen: choose payment approach
+ *   'method'  вЂ” select specific payment method from available / saved lists
+ *   'success' вЂ” payment completed successfully
+ *   'error'   вЂ” payment failed
  *
  * Cross-button behaviour:
- *   select  → onClose()
- *   method  → skipBackOnMethod ? onClose() : setStep('select')
- *   success → onClose()
- *   error   → setStep('method')
+ *   select  в†’ onClose()
+ *   method  в†’ skipBackOnMethod ? onClose() : setStep('select')
+ *   success в†’ onClose()
+ *   error   в†’ setStep('method')
  */
 const PurchaseModal = ({
   visible,
@@ -77,7 +77,7 @@ const PurchaseModal = ({
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 
-  // ─── State ───────────────────────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ State в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   const [step, setStep] = useState('select'); // 'select' | 'method' | 'success' | 'error'
   const [selectedMethodId, setSelectedMethodId] = useState(null);
   const [selectedSource, setSelectedSource] = useState('available'); // 'saved' | 'available'
@@ -85,7 +85,7 @@ const PurchaseModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // ─── Data ────────────────────────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ Data в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   const savedMethods = paymentsManagerController?.savedMethods ?? [];
   const availableMethods = [...(paymentsManagerController?.availableMethods ?? [])];
   const couponsCount = couponsManagerController?.balance ?? 0;
@@ -95,7 +95,7 @@ const PurchaseModal = ({
       ? (savedMethods.find((m) => m.isSubscription) ?? null)
       : (savedMethods.find((m) => m.default) ?? savedMethods[0]);
 
-  // ─── Reset on open ───────────────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ Reset on open в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   useEffect(() => {
     if (!visible) return;
     couponsManagerController?.refreshBalance?.();
@@ -113,7 +113,7 @@ const PurchaseModal = ({
     }
   }, [visible, startStep]);
 
-  // ─── Handlers ────────────────────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ Handlers в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   const handleCrossPress = () => {
     if (step === 'select' || step === 'success') {
       onClose();
@@ -153,7 +153,7 @@ const PurchaseModal = ({
         paymentsManagerController?.updateFromSnapshot(response.paymentMethodsSnapshot);
       }
 
-      // Direct charge: payment completed instantly — show success
+      // Direct charge: payment completed instantly вЂ” show success
       if (response?.directCharge || response?.payment?.paymentMetadata?.directCharge) {
         setStep('success');
       }
@@ -171,7 +171,7 @@ const PurchaseModal = ({
         setStep('success');
       }
     } catch (e) {
-      // Saved payment method was deleted/deactivated — refresh list and show specific message
+      // Saved payment method was deleted/deactivated вЂ” refresh list and show specific message
       if (e?.response?.status === 404 && e?.response?.data?.message?.includes('Payment method not found')) {
         await paymentsManagerController?.refreshSavedMethods?.();
         setError(t('payment_modal.error_method_not_found'));
@@ -184,8 +184,8 @@ const PurchaseModal = ({
     }
   };
 
-  // First screen pay button: if there is a relevant default method → pay immediately,
-  // otherwise → go to method selection screen.
+  // First screen pay button: if there is a relevant default method в†’ pay immediately,
+  // otherwise в†’ go to method selection screen.
   // In subscription mode only a subscription-default method qualifies; if none exists
   // the user must go through method selection even if they have other saved methods.
   const handlePayButtonPress = () => {
@@ -196,7 +196,7 @@ const PurchaseModal = ({
     }
   };
 
-  // ─── Helpers ─────────────────────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ Helpers в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   const getPayButtonLabel = () => {
     if (savedMethods.length > 0 && defaultSavedMethod) {
       const methodName = t(`payment_modal.method_${defaultSavedMethod.type === 'hyp' ? 'card' : defaultSavedMethod.type}`);
@@ -212,7 +212,7 @@ const PurchaseModal = ({
     return `${methodName} (${methodTitle})`;
   };
 
-  // ─── Sizes ───────────────────────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ Sizes в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
     const mobile = (size) => scaleByHeightMobile(size, height);
@@ -222,7 +222,7 @@ const PurchaseModal = ({
       modalWidth: isWebLandscape ? scale(434) : '90%',
       borderRadius: scale(8),
       containerPaddingVertical: scale(32),
-      containerPaddingHorizontal: isWebLandscape ? scale(52) : scale(32),
+      containerPaddingHorizontal: isWebLandscape ? scale(52) : scale(16),
       // Text
       titleSize: scale(24),
       firstTitleSize: scale(20),
@@ -315,7 +315,7 @@ const PurchaseModal = ({
     );
   };
 
-  // ─── Styles ──────────────────────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ Styles в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   const styles = StyleSheet.create({
     modalOverlay: {
       flex: 1,
@@ -331,6 +331,7 @@ const PurchaseModal = ({
       paddingHorizontal: sizes.containerPaddingHorizontal,
       alignItems: 'center',
       position: 'relative',
+      maxHeight: '90%',
     },
     crossButton: {
       position: 'absolute',
@@ -382,7 +383,7 @@ const PurchaseModal = ({
       color: theme.primaryColor,
       fontFamily: 'Rubik-Bold',
     },
-    // ─── Buttons ───────────────────────────────────────────────────────────────
+    // в”Ђв”Ђв”Ђ Buttons в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     button: {
       width: '100%',
       height: sizes.buttonHeight,
@@ -419,7 +420,7 @@ const PurchaseModal = ({
     outlineSecondaryButtonText: {
       color: theme.buttonColorSecondaryDefault,
     },
-    // ─── Change method link ────────────────────────────────────────────────────
+    // в”Ђв”Ђв”Ђ Change method link в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     changeMethodLink: {
       marginTop: sizes.changeLinkMarginTop,
       alignSelf: 'center',
@@ -429,7 +430,7 @@ const PurchaseModal = ({
       color: theme.formInputLabelColor,
       textAlign: 'center',
     },
-    // ─── Method selection screen ───────────────────────────────────────────────
+    // в”Ђв”Ђв”Ђ Method selection screen в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     methodScroll: {
       width: '100%',
       maxHeight: sizes.methodScrollMaxHeight,
@@ -468,7 +469,7 @@ const PurchaseModal = ({
       color: theme.textColor,
       fontFamily: 'Rubik-Medium',
     },
-    // ─── Save for future checkbox ──────────────────────────────────────────────
+    // в”Ђв”Ђв”Ђ Save for future checkbox в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     checkboxRow: {
       alignItems: 'center',
       width: '100%',
@@ -494,7 +495,7 @@ const PurchaseModal = ({
       color: theme.unactiveTextColor,
       fontFamily: 'Rubik-Medium',
     },
-    // ─── Status screens ────────────────────────────────────────────────────────
+    // в”Ђв”Ђв”Ђ Status screens в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     statusContainer: {
       alignItems: 'center',
       justifyContent: 'center',
@@ -526,7 +527,7 @@ const PurchaseModal = ({
     },
   });
 
-  // ─── Screen: Select ──────────────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ Screen: Select в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   const renderSelect = () => {
     const isSubscription = type === 'subscribtion';
 
@@ -567,7 +568,7 @@ const PurchaseModal = ({
           </Text>
         </TouchableOpacity>
 
-        {/* Change method link — only when saved methods exist */}
+        {/* Change method link вЂ” only when saved methods exist */}
         {savedMethods.length > 0 && (
           <TouchableOpacity
             style={styles.changeMethodLink}
@@ -579,7 +580,7 @@ const PurchaseModal = ({
           </TouchableOpacity>
         )}
 
-        {/* Coupon + Subscription buttons — regular type only */}
+        {/* Coupon + Subscription buttons вЂ” regular type only */}
         {!isSubscription && (
           <>
             {
@@ -617,7 +618,7 @@ const PurchaseModal = ({
     );
   };
 
-  // ─── Screen: Method selection ────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ Screen: Method selection в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   const renderMethod = () => {
     const hasSaved = savedMethods.length > 0;
 
@@ -629,7 +630,7 @@ const PurchaseModal = ({
 
         {renderLegalNotice()}
 
-        {/* ── Available methods (не прокручиваются — всегда видны целиком) ── */}
+        {/* в”Ђв”Ђ Available methods (РЅРµ РїСЂРѕРєСЂСѓС‡РёРІР°СЋС‚СЃСЏ вЂ” РІСЃРµРіРґР° РІРёРґРЅС‹ С†РµР»РёРєРѕРј) в”Ђв”Ђ */}
         {hasSaved && (
           <Text style={styles.sectionHeader}>
             {t('payment_modal.create_new')}
@@ -671,7 +672,7 @@ const PurchaseModal = ({
           );
         })}
 
-        {/* ── Saved methods — только этот список прокручивается ── */}
+        {/* в”Ђв”Ђ Saved methods вЂ” С‚РѕР»СЊРєРѕ СЌС‚РѕС‚ СЃРїРёСЃРѕРє РїСЂРѕРєСЂСѓС‡РёРІР°РµС‚СЃСЏ в”Ђв”Ђ */}
         {hasSaved && (
           <>
             <Text style={[styles.sectionHeader, styles.sectionHeaderSpaced]}>
@@ -732,7 +733,7 @@ const PurchaseModal = ({
           </>
         )}
 
-        {/* ── Subscription: info label / Regular: save-for-future checkbox ── */}
+        {/* в”Ђв”Ђ Subscription: info label / Regular: save-for-future checkbox в”Ђв”Ђ */}
         {mode === 'subscription' ? (
           <View style={[styles.checkboxRow, { opacity: selectedSource === 'available' ? 1 : 0 }]}>
             <Text style={[styles.checkboxText, { textAlign: isRTL ? 'right' : 'left' }]}>
@@ -782,7 +783,7 @@ const PurchaseModal = ({
     );
   };
 
-  // ─── Screen: Success ─────────────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ Screen: Success в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   const renderSuccess = () => (
     <View style={styles.statusContainer}>
       <Image source={icons.checkDefault} style={styles.statusIcon} />
@@ -801,7 +802,7 @@ const PurchaseModal = ({
     </View>
   );
 
-  // ─── Screen: Error ───────────────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ Screen: Error в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   const renderError = () => (
     <View style={styles.statusContainer}>
       <Image source={icons.attention} style={styles.errorIcon} />
@@ -822,7 +823,7 @@ const PurchaseModal = ({
     </View>
   );
 
-  // ─── Content router ──────────────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ Content router в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   const renderContent = () => {
     switch (step) {
       case 'select':
@@ -838,7 +839,7 @@ const PurchaseModal = ({
     }
   };
 
-  // ─── Render ──────────────────────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ Render в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   return (
     <Modal visible={visible} transparent animationType='fade'>
       <View style={styles.modalOverlay}>
@@ -854,7 +855,9 @@ const PurchaseModal = ({
           >
             <Image source={icons.cross} style={styles.crossIcon} />
           </TouchableOpacity>
-          {renderContent()}
+          <ScrollView style={{ width: '100%' }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            {renderContent()}
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -862,3 +865,5 @@ const PurchaseModal = ({
 };
 
 export default PurchaseModal;
+
+

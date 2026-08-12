@@ -116,7 +116,7 @@ export default function RegisterScreen() {
       checkboxRadius: isWebLandscape ? web(3) : mobile(3),
       checkboxTextSize: isWebLandscape ? web(10) : mobile(10),
       inputMarginBottom: isWebLandscape ? web(3) : mobile(4),
-      containerGap: isWebLandscape ? web(25) : mobile(25),
+      containerGap: isWebLandscape ? web(25) : mobile(16),
       containerPaddingHorizontal: isWebLandscape ? web(10) : mobile(10),
       primaryButtonWidth: isWebLandscape ? web(153) : null,
       step3Gap: isWebLandscape ? web(108) : 0,
@@ -788,6 +788,17 @@ export default function RegisterScreen() {
                     onChangeText={(txt) => setForm({ ...form, name: txt })}
                     style={[
                       styles.input,
+                      Platform.OS === 'android' ? {
+                        flex: 1,
+                        padding: 0,
+                        margin: 0,
+                        paddingVertical: 0,
+                        paddingHorizontal: 0,
+                        paddingTop: 0,
+                        paddingBottom: 0,
+                        includeFontPadding: false,
+                        textAlignVertical: 'center',
+                      } : null,
                       {
                         textAlign: isRTL ? 'right' : 'left',
                         color: theme.textColor,
@@ -849,6 +860,17 @@ export default function RegisterScreen() {
                     onChangeText={(txt) => setForm({ ...form, surname: txt })}
                     style={[
                       styles.input,
+                      Platform.OS === 'android' ? {
+                        flex: 1,
+                        padding: 0,
+                        margin: 0,
+                        paddingVertical: 0,
+                        paddingHorizontal: 0,
+                        paddingTop: 0,
+                        paddingBottom: 0,
+                        includeFontPadding: false,
+                        textAlignVertical: 'center',
+                      } : null,
                       {
                         textAlign: isRTL ? 'right' : 'left',
                         color: theme.textColor,
@@ -912,6 +934,13 @@ export default function RegisterScreen() {
                     multiline
                     style={[
                       styles.input,
+                      Platform.OS === 'android' ? {
+                        textAlignVertical: 'top',
+                        paddingTop: 0,
+                        paddingBottom: 0,
+                        paddingVertical: 0,
+                        includeFontPadding: false
+                      } : null,
                       {
                         height: sizes.multilineInputHeight,
                         textAlign: isRTL ? 'right' : 'left',
@@ -1400,6 +1429,7 @@ const styles = StyleSheet.create({
 //               {
 //                 height: sizes.multilineInputHeight,
 //                 textAlign: isRTL ? 'right' : 'left',
+//                 textAlignVertical: 'top',
 //                 color: theme.textColor,
 //                 backgroundColor: theme.defaultBlocksBackground,
 //                 borderColor: theme.borderColor,

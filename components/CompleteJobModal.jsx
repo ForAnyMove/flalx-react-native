@@ -64,7 +64,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
         : scaleByHeightMobile(24, height),
       logoFont: isWebLandscape
         ? scaleByHeight(24, height)
-        : scaleByHeightMobile(20, height),
+        : scaleByHeightMobile(18, height),
       modalHeaderPadding: isWebLandscape
         ? scaleByHeight(7, height)
         : scaleByHeightMobile(10, height),
@@ -76,46 +76,42 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
         : scaleByHeightMobile(15, height),
       borderRadius: isWebLandscape
         ? scaleByHeight(8, height)
-        : scaleByHeightMobile(5, height),
+        : scaleByHeightMobile(8, height),
       saveBtnWidth: isWebLandscape
         ? scaleByHeight(380, height)
-        : scaleByHeightMobile(120, height),
+        : '100%',
       saveBtnHeight: isWebLandscape
         ? scaleByHeight(62, height)
-        : scaleByHeightMobile(40, height),
+        : scaleByHeightMobile(62, height),
       saveBtnFont: isWebLandscape
         ? scaleByHeight(20, height)
-        : scaleByHeightMobile(14, height),
+        : scaleByHeightMobile(20, height),
       padding: isWebLandscape
         ? scaleByHeight(4, height)
         : scaleByHeightMobile(8, height),
-      descriptionHeight: isWebLandscape
-        ? scaleByHeight(120, height)
-        : scaleByHeightMobile(120, height),
+      descriptionHeight: isWebLandscape ? scaleByHeight(120, height) : scaleByHeightMobile(70, height),
       inputContainerPaddingHorizontal: isWebLandscape
         ? scaleByHeight(16, height)
-        : scaleByHeightMobile(8, height),
+        : scaleByHeightMobile(16, height),
       inputContainerPaddingVertical: isWebLandscape
         ? scaleByHeight(10, height)
-        : scaleByHeightMobile(6, height),
+        : scaleByHeightMobile(10, height),
       font: isWebLandscape
         ? scaleByHeight(12, height)
         : scaleByHeightMobile(12, height),
       inputFont: isWebLandscape
         ? scaleByHeight(16, height)
-        : scaleByHeightMobile(14, height),
+        : scaleByHeightMobile(16, height),
       photosLabelSize: isWebLandscape
         ? scaleByHeight(18, height)
-        : scaleByHeightMobile(16, height),
-      photosLabelMarginBottom: isWebLandscape
-        ? scaleByHeight(14, height)
-        : scaleByHeightMobile(6, height),
+        : scaleByHeightMobile(18, height),
+      photosLabelMarginBottom: isWebLandscape ? scaleByHeight(14, height) : scaleByHeightMobile(16, height),
       thumb: isWebLandscape
         ? scaleByHeight(128, height)
-        : scaleByHeightMobile(80, height),
+        : scaleByHeightMobile(128, height),
       imageSize: isWebLandscape
         ? scaleByHeight(32, height)
-        : scaleByHeightMobile(30, height),
+        : height * 0.03,
       margin: isWebLandscape
         ? scaleByHeight(18, height)
         : scaleByHeightMobile(10, height),
@@ -128,15 +124,11 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
       crossIconSize: isWebLandscape
         ? scaleByHeight(16, height)
         : scaleByHeightMobile(16, height),
-      titleMarginBottom: isWebLandscape
-        ? scaleByHeight(8, height)
-        : scaleByHeightMobile(8, height),
-      subtitleMarginBottom: isWebLandscape
-        ? scaleByHeight(24, height)
-        : scaleByHeightMobile(16, height),
-      fieldMarginBottom: isWebLandscape
-        ? scaleByHeight(16, height)
-        : scaleByHeightMobile(8, height),
+      titleMarginTop: isWebLandscape ? 0 : scaleByHeightMobile(16, height),
+      titleMarginBottom: isWebLandscape ? scaleByHeight(8, height) : scaleByHeightMobile(8, height),
+      subtitleMarginBottom: isWebLandscape ? scaleByHeight(24, height) : scaleByHeightMobile(16, height),
+      labelMarginBottom: isWebLandscape ? scaleByHeight(4, height) : scaleByHeightMobile(4, height),
+      fieldMarginBottom: isWebLandscape ? scaleByHeight(16, height) : scaleByHeightMobile(16, height),
     }),
     [isWebLandscape, height]
   );
@@ -147,7 +139,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
         modalHeader: {
           flexDirection: isRTL ? 'row-reverse' : 'row',
           paddingHorizontal: sizes.modalHeaderPadding,
-          paddingVertical: sizes.modalHeaderPaddingTop,
+          paddingVertical: Platform.OS === 'android' ? 0 : sizes.modalHeaderPaddingTop,
           backgroundColor: themeController.current?.backgroundColor,
           borderBottomColor: themeController.current?.profileDefaultBackground,
           height: sizes.headerHeight,
@@ -169,6 +161,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
         },
         titleText: {
           textAlign: 'center',
+          marginTop: sizes.titleMarginTop,
           fontSize: sizes.photosLabelSize,
           color: themeController?.current.textColor,
           marginBottom: sizes.titleMarginBottom,
@@ -228,40 +221,44 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
           tintColor: themeController.current?.textColor,
         },
         descriptionInputContainer: {
+          width: isWebLandscape ? undefined : '100%',
           backgroundColor: themeController.current?.formInputBackground,
           paddingVertical: sizes.inputContainerPaddingVertical,
           paddingHorizontal: sizes.inputContainerPaddingHorizontal,
           borderRadius: sizes.borderRadius,
-          marginBottom: sizes.fieldMarginBottom * 2,
-          height: sizes.descriptionHeight,
+          marginBottom: sizes.fieldMarginBottom,
+          ...(Platform.OS === 'android' && !isWebLandscape ? { justifyContent: 'center' } : {}),
         },
         descriptionLabel: {
           color: themeController.current?.unactiveTextColor,
           fontSize: sizes.font,
+          marginBottom: Platform.OS === 'android' && !isWebLandscape ? 0 : sizes.labelMarginBottom,
         },
         descriptionInput: {
+          width: isWebLandscape ? undefined : '100%',
           fontWeight: '500',
           padding: 0,
-          paddingVertical: sizes.padding,
+          margin: Platform.OS === 'android' ? 0 : undefined,
           color: themeController.current?.textColor,
           fontSize: sizes.inputFont,
           borderRadius: sizes.borderRadius,
           backgroundColor: 'transparent',
           textAlign: isRTL ? 'right' : 'left',
+          height: isWebLandscape ? height * 0.12 : sizes.descriptionHeight,
         },
         completeButton: {
           backgroundColor: themeController.current?.buttonColorPrimaryDefault,
           borderRadius: sizes.borderRadius,
           paddingVertical: isWebLandscape ? sizes.padding * 1.2 : null,
-          width: isWebLandscape ? sizes.saveBtnWidth : null,
-          height: isWebLandscape ? sizes.saveBtnHeight : null,
+          width: sizes.saveBtnWidth,
+          height: sizes.saveBtnHeight,
           alignItems: 'center',
           justifyContent: 'center',
         },
         completeButtonText: {
           color: 'white',
           textAlign: 'center',
-          fontSize: isWebLandscape ? sizes.saveBtnFont : null,
+          fontSize: sizes.saveBtnFont,
         },
       }),
     [isRTL, sizes, themeController, isWebLandscape]
@@ -272,7 +269,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
     try {
       const uploadedUrls = await Promise.all(
         uris.map(async (uri) => {
-          // если хочешь лимит размера для локальных файлов:
+          // Р ВµРЎРѓР В»Р С‘ РЎвЂ¦Р С•РЎвЂЎР ВµРЎв‚¬РЎРЉ Р В»Р С‘Р СР С‘РЎвЂљ РЎР‚Р В°Р В·Р СР ВµРЎР‚Р В° Р Т‘Р В»РЎРЏ Р В»Р С•Р С”Р В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ РЎвЂћР В°Р в„–Р В»Р С•Р Р†:
           // if (uri.startsWith('file://')) await checkFileSize(uri, 5);
 
           const res = await uploadImageAsset(uri, { purpose: 'attachment', fileName: 'job' });
@@ -282,14 +279,14 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
 
       setImages((prev) => [...prev, ...uploadedUrls.filter(Boolean)]);
     } catch (e) {
-      logError('Ошибка загрузки изображений:', e);
+      logError('Р С›РЎв‚¬Р С‘Р В±Р С”Р В° Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”Р С‘ Р С‘Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘Р в„–:', e);
       showError(e?.message || t('errors.unexpected_error'));
     } finally {
       setAppLoading(false);
     }
   };
 
-  // Функция удаления картинки по индексу
+  // Р В¤РЎС“Р Р…Р С”РЎвЂ Р С‘РЎРЏ РЎС“Р Т‘Р В°Р В»Р ВµР Р…Р С‘РЎРЏ Р С”Р В°РЎР‚РЎвЂљР С‘Р Р…Р С”Р С‘ Р С—Р С• Р С‘Р Р…Р Т‘Р ВµР С”РЎРѓРЎС“
   const [pendingRemoveIndex, setPendingRemoveIndex] = useState(null);
   const removeImage = (indexToRemove) => {
     setImages((prevImages) =>
@@ -339,7 +336,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
           <Text style={dynamicStyles.modalTitle}>FLALX</Text>
         </View>
 
-        <ScrollView contentContainerStyle={{}}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}>
           <View
             style={{
               alignSelf: 'center',
@@ -355,6 +352,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
           <View
             style={{
               alignSelf: isRTL ? 'flex-end' : 'flex-start',
+              width: isWebLandscape ? undefined : '100%',
             }}
           >
             <View
@@ -553,3 +551,13 @@ const styles = StyleSheet.create({
     // zIndex: 10,
   },
 });
+
+
+
+
+
+
+
+
+
+

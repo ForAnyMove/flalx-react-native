@@ -21,7 +21,7 @@ import PaymentFlowStep from './PaymentFlowStep';
 import PaymentLegalNotice from './PaymentLegalNotice';
 import CustomDateTimeInput from './ui/CustomDateTimeInput';
 
-// ─── Internal Helper Components (Defined outside to prevent focus loss) ───
+// в”Ђв”Ђв”Ђ Internal Helper Components (Defined outside to prevent focus loss) в”Ђв”Ђв”Ђ
 
 const PaginationDots = ({ activeStep, sizes, theme, t, isRTL }) => (
   <View style={[styles.paginationContainer, { marginBottom: sizes.paginationMarginBottom }]}>
@@ -167,7 +167,7 @@ const InterestRequestModal = ({
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 
-  // ─── State ───────────────────────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ State в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   const [selectedMethodId, setSelectedMethodId] = useState(null);
   const [saveForFuture, setSaveForFuture] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({ price: false, date: false });
@@ -178,7 +178,7 @@ const InterestRequestModal = ({
   const availableMethods = paymentsManagerController?.availableMethods ?? [];
   const couponsCount = couponsManagerController?.balance ?? 0;
 
-  // ─── Effect: Reset/Initialize ────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ Effect: Reset/Initialize в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   useEffect(() => {
     if (visible) {
       couponsManagerController?.refreshBalance?.();
@@ -196,7 +196,7 @@ const InterestRequestModal = ({
     }
   }, [visible, isBusinessJob, hasSubscription]);
 
-  // ─── Sizes (Synchronized with Design Requirements) ───────────────────────────
+  // в”Ђв”Ђв”Ђ Sizes (Synchronized with Design Requirements) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
     const mobile = (size) => scaleByHeightMobile(size, height);
@@ -206,7 +206,7 @@ const InterestRequestModal = ({
       modalWidth: isWebLandscape ? scale(450) : '90%',
       borderRadius: scale(8),
       containerPaddingVertical: scale(32),
-      containerPaddingHorizontal: scale(75),
+      containerPaddingHorizontal: isWebLandscape ? scale(75) : scale(16),
       inputPaddingHorizontal: scale(16),
       // Text
       titleSize: scale(24),
@@ -295,7 +295,7 @@ const InterestRequestModal = ({
     };
   }, [height, width, isWebLandscape]);
 
-  // ─── Handlers ────────────────────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ Handlers в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   const handleContinue = () => {
     const hasPrice = formData.price.trim() !== '';
     const hasDate = formData.startDate !== null;
@@ -378,7 +378,7 @@ const InterestRequestModal = ({
     </TouchableOpacity>
   );
 
-  // ─── Render Content ──────────────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ Render Content в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   const renderForm = () => {
     const showHeader = hasSubscription;
     return (
@@ -404,7 +404,7 @@ const InterestRequestModal = ({
             setFormData(p => ({ ...p, price: v }));
             setFieldErrors(p => ({ ...p, price: false }));
           }}
-          placeholder={isRTL ? "0₪" : "₪0"}
+          placeholder={isRTL ? "0в‚Є" : "в‚Є0"}
           hint={t('interestRequest.price_hint', { defaultValue: 'Enter the amount you are willing to work for' })}
           sizes={sizes}
           theme={theme}
@@ -446,7 +446,7 @@ const InterestRequestModal = ({
             />
           </View>
           <Text style={[styles.hintText, { color: theme.unactiveTextColor, fontSize: sizes.hintSize, textAlign: isRTL ? 'right' : 'left' }]}>
-            {t('interestRequest.time_hint', { defaultValue: 'If exact — pick same date for both' })}
+            {t('interestRequest.time_hint', { defaultValue: 'If exact вЂ” pick same date for both' })}
           </Text>
         </View>
 
@@ -631,7 +631,7 @@ const InterestRequestModal = ({
     </View>
   );
 
-  // ─── Main Content Selector ───────────────────────────────────────────────────
+  // в”Ђв”Ђв”Ђ Main Content Selector в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   let content;
   if (isBusinessJob && hasSubscription) {
     content = renderBusinessSubscribed();
@@ -657,8 +657,12 @@ const InterestRequestModal = ({
         isRTL={isRTL}
         overlayColor="rgba(59, 70, 99, 0.6)"
       >
-        {content}
-        {step === 2 && !showAddMethod && !isBusinessJob && !hasSubscription && renderStepBackButton()}
+        <ScrollView style={{ width: '100%' }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <View style={{ width: '100%' }}>
+            {content}
+            {step === 2 && !showAddMethod && !isBusinessJob && !hasSubscription && renderStepBackButton()}
+          </View>
+        </ScrollView>
       </BaseActionModal>
     </>
   );
@@ -833,3 +837,4 @@ const styles = StyleSheet.create({
 });
 
 export default InterestRequestModal;
+

@@ -58,7 +58,7 @@ export default function CommentsSection({
       btnTextSize: scale(20, height),
       btnMarginVertical: scale(8, height),
       modalWidth: isWebLandscape ? scaleByHeight(405, height) : '90%',
-      modalHeight: isWebLandscape ? scaleByHeight(450, height) : '90%',
+      modalHeight: isWebLandscape ? scaleByHeight(450, height) : scaleByHeightMobile(450, height),
       modalPadding: scale(32, height),
       modalCrossTop: scale(8, height),
       modalCrossRight: scale(8, height),

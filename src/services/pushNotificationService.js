@@ -58,7 +58,7 @@ export async function getExpoPushToken(projectId) {
         logInfo('Expo push token obtained:', tokenData.data);
         return tokenData.data;
     } catch (e) {
-        logError('Error obtaining Expo push token:', e);
+        logWarn('Error obtaining Expo push token (is Firebase configured?):', e.message || e);
         return null;
     }
 }

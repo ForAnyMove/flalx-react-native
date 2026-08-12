@@ -110,7 +110,6 @@ export default function NewJobTemplateButton({
 
 const styles = StyleSheet.create({
     card: {
-        elevation: 3,
         overflow: 'hidden',
         alignItems: 'center',
     },

@@ -305,7 +305,7 @@ export default function jobsManager({ session, user, geolocation }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serverURL, session?.status, userId]);
 
-  return {
+  const stateToReturn = {
     creator: {
       pending: creatorPending,
       waiting: creatorWaiting,
@@ -343,4 +343,6 @@ export default function jobsManager({ session, user, geolocation }) {
     products: jobProducts,
     providerProduct: providerProducts.length > 0 ? providerProducts[0] : null,
   };
+
+  return stateToReturn;
 }

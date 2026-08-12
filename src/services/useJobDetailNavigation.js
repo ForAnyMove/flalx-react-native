@@ -41,6 +41,14 @@ export function useJobDetailNavigation({ setCurrentJobId, setShowJobModalVisible
 
     setAppLoading?.(true);
     try {
+      // --- TEST MOCKS START ---
+      if (__DEV__ && job.id?.startsWith('mock-')) {
+        setAppLoading?.(false);
+        openCached({ isCreator: true, isProvider: false });
+        return;
+      }
+      // --- TEST MOCKS END ---
+
       const result = await getJobStatus(job.id, session);
 
       if (!result?.exists) {

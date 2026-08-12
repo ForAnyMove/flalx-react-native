@@ -24,7 +24,7 @@ export default function CustomFlatList({
         return (
           <View
             key={key}
-            style={isWeb ? { position: 'relative', zIndex: 10-index } : undefined} // Важно: для web, чтобы убрать класс css-view-g5y9jx влияющий на z-index
+            style={{ position: 'relative', zIndex: 100 - index, ...(isWeb ? {} : { elevation: 100 - index, shadowColor: 'transparent' }) }} // Важно: для правильного отображения выпадающих списков
           >
             {content}
           </View>

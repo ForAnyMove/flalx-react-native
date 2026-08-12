@@ -168,7 +168,7 @@ export default function ImagePickerModal({ visible, onClose, onAdd, limitType, m
         allowsMultipleSelection: multiple,
         selectionLimit: multiple ? 0 : 1,
         quality: 0.8,
-        base64: null,
+        base64: false,
       });
 
       if (!result.canceled && result.assets?.length) {
@@ -205,7 +205,7 @@ export default function ImagePickerModal({ visible, onClose, onAdd, limitType, m
         allowsEditing: !multiple,
         aspect: multiple ? undefined : [1, 1],
         quality: 0.8,
-        base64: null,
+        base64: false,
       });
 
       if (!result.canceled && result.assets?.[0]) {

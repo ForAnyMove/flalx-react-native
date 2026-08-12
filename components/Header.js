@@ -56,8 +56,8 @@ export default function Header({ switchToProfile }) {
     >
       <CustomPicker
         options={[
-          { label: t('settings.lang_en', 'English'), value: 'en' },
-          { label: t('settings.lang_he', 'עברית'), value: 'he' },
+          { label: 'EN', value: 'en' },
+          { label: 'עב', value: 'he' },
         ]}
         selectedValue={languageController.current}
         onValueChange={(itemValue) => languageController.setLang(itemValue)}

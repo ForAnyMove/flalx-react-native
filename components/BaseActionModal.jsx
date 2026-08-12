@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import {
   Modal,
   View,
@@ -38,6 +38,7 @@ const BaseActionModal = ({
       paddingHorizontal: sizes.containerPaddingHorizontal,
       alignItems: 'center',
       position: 'relative',
+      maxHeight: '90%',
     },
     crossButton: {
       position: 'absolute',
@@ -91,3 +92,4 @@ const BaseActionModal = ({
 };
 
 export default BaseActionModal;
+

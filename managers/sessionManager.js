@@ -145,7 +145,7 @@ export default function sessionManager({ setAppLoading } = {}) {
 
       if (!data) {
         await clearAuthState();
-        return;
+        return false;
       }
 
       setAuthUser(data.user ?? null);
@@ -160,12 +160,14 @@ export default function sessionManager({ setAppLoading } = {}) {
         refreshRevealedUsers(),
         // refreshRevealProduct(),
       ]);
+      return true;
     } catch (e) {
       if (e?.status === 401 || e?.nextStep === 'login_required') {
         await clearAuthState();
-        return;
+        return false;
       }
       logError('refreshMe error:', e.message || e);
+      return false;
     }
   }
 
@@ -202,7 +204,8 @@ export default function sessionManager({ setAppLoading } = {}) {
     // case below, which has always been left to the caller).
     if (resp.nextStep) {
       if (SESSION_ESTABLISHED_NEXT_STEPS.has(resp.nextStep)) {
-        await refreshMe();
+        const success = await refreshMe();
+        if (!success) return { status: 'error', error: 'Failed to fetch user profile' };
       }
       return resp;
     }
@@ -211,7 +214,8 @@ export default function sessionManager({ setAppLoading } = {}) {
       case 'authenticated':
       case 'mfa_setup_required':
       case 'mfa_setup_optional': {
-        await refreshMe();
+        const success = await refreshMe();
+        if (!success) return { status: 'error', error: 'Failed to fetch user profile' };
         return resp;
       }
       case 'mfa_required': {

@@ -9,6 +9,7 @@ import {
   Platform,
   Keyboard,
   Image,
+  ScrollView,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
@@ -45,6 +46,8 @@ const AutocompletePicker = ({
       pickerHeight: isWebLandscape ? web(64) : mobile(64),
       borderRadius: isWebLandscape ? web(8) : mobile(8),
       inputContainerPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
+      labelMarginBottom: isWebLandscape ? web(4) : mobile(4),
+      androidInputHeight: scale(20),
       labelGap: scale(3),
       iconSize: scale(24),
     };
@@ -84,37 +87,7 @@ const AutocompletePicker = ({
         containerRef.current &&
         !containerRef.current.contains(event.target)
       ) {
-        setIsFocused(false);
-
-        // Проверяем, является ли текущий текст в поле одним из действительных значений
-        const isValidOption = Object.values(optionsRef.current).includes(
-          inputText
-        );
-
-        if (!isValidOption) {
-          if (allowCustomText) {
-            // Если разрешен кастомный текст и значение изменилось, передаем его
-            if (inputText !== valueRef.current) {
-              setValue(inputText);
-            }
-          } else {
-            if (inputText === '') {
-              setValue(null); // Сбрасываем значение, если поле пустое
-              setInputText(''); // Очищаем текстовое поле
-            } else {
-              // Если кастомный текст не разрешен, сбрасываем к последнему выбранному значению
-              setInputText(optionsRef.current[valueRef.current] || '');
-            }
-          }
-        } else {
-          // Если текст валиден из опций, проверяем нужно ли обновить значение
-          const foundKey = Object.keys(optionsRef.current).find(
-            (key) => optionsRef.current[key] === inputText
-          );
-          if (foundKey && foundKey !== valueRef.current) {
-            setValue(foundKey);
-          }
-        }
+        closeAndValidate();
       }
     };
 
@@ -155,8 +128,43 @@ const AutocompletePicker = ({
   }, [inputText, options]);
 
   // --- Обработчики ---
+  const closeAndValidate = () => {
+    setIsFocused(false);
+    const isValidOption = Object.values(optionsRef.current).includes(inputText);
+
+    if (!isValidOption) {
+      if (allowCustomText) {
+        if (inputText !== valueRef.current) {
+          setValue(inputText);
+        }
+      } else {
+        if (inputText === '') {
+          setValue(null);
+          setInputText('');
+        } else {
+          setInputText(optionsRef.current[valueRef.current] || '');
+        }
+      }
+    } else {
+      const foundKey = Object.keys(optionsRef.current).find(
+        (key) => optionsRef.current[key] === inputText
+      );
+      if (foundKey && foundKey !== valueRef.current) {
+        setValue(foundKey);
+      }
+    }
+  };
+
   const handleFocus = () => {
     setIsFocused(true);
+  };
+
+  const handleBlur = () => {
+    if (Platform.OS !== 'web') {
+      setTimeout(() => {
+        closeAndValidate();
+      }, 150);
+    }
   };
 
   const handleSelectOption = (value) => {
@@ -183,9 +191,9 @@ const AutocompletePicker = ({
     const webHoverProps =
       Platform.OS === 'web'
         ? {
-            onMouseEnter: () => setHoveredValue(value),
-            onMouseLeave: () => setHoveredValue(null),
-          }
+          onMouseEnter: () => setHoveredValue(value),
+          onMouseLeave: () => setHoveredValue(null),
+        }
         : {};
 
     return (
@@ -197,8 +205,8 @@ const AutocompletePicker = ({
             backgroundColor: isSelected
               ? themeController.current?.selectedItemBackground
               : isHovered
-              ? themeController.current?.profileDefaultBackground
-              : 'transparent',
+                ? themeController.current?.profileDefaultBackground
+                : 'transparent',
             height: sizes.pickerHeight * 0.9,
             justifyContent: 'center',
           },
@@ -237,17 +245,24 @@ const AutocompletePicker = ({
           backgroundColor: themeController.current?.formInputBackground,
           height: sizes.pickerHeight,
           paddingHorizontal: sizes.inputContainerPaddingHorizontal,
-          borderRadius: sizes.borderRadius,
+          borderTopLeftRadius: sizes.borderRadius,
+          borderTopRightRadius: sizes.borderRadius,
+          borderBottomLeftRadius: (isFocused && filteredEntries.length > 0) ? 0 : sizes.borderRadius,
+          borderBottomRightRadius: (isFocused && filteredEntries.length > 0) ? 0 : sizes.borderRadius,
+          zIndex: isFocused ? 999 : 1,
+          elevation: isFocused ? 999 : 0, // Android needs elevation to reliably render above later siblings
+          shadowColor: 'transparent', // Prevent massive shadow from elevation
         },
         error && { borderColor: 'red', borderWidth: 1 },
         containerStyle,
       ]}
     >
-      <View style={{ flex: 1, justifyContent: 'center', gap: sizes.labelGap }}>
+      <View style={{ flex: 1, justifyContent: 'center' }}>
         <Text
           style={[
             styles.label,
             {
+              marginBottom: sizes.labelMarginBottom || 0,
               color: error ? 'red' : themeController.current?.unactiveTextColor,
               fontSize: sizes.font,
               textAlign: isRTL ? 'right' : 'left',
@@ -267,8 +282,8 @@ const AutocompletePicker = ({
             value={inputText}
             onChangeText={setInputText}
             onFocus={handleFocus}
+            onBlur={handleBlur}
             onSubmitEditing={handleSubmitEditing}
-            // onBlur больше не используется для закрытия, т.к. это делает слушатель кликов
             placeholder={placeholder}
             placeholderTextColor={themeController.current?.formInputLabelColor}
             style={[
@@ -276,7 +291,11 @@ const AutocompletePicker = ({
               {
                 color: themeController.current?.textColor,
                 fontSize: sizes.baseFont,
+                fontFamily: 'Rubik-Regular',
                 textAlign: isRTL ? 'right' : 'left',
+              },
+              Platform.OS === 'android' && {
+                height: sizes.androidInputHeight,
               },
             ]}
           />
@@ -314,30 +333,34 @@ const AutocompletePicker = ({
 
       {/* Выпадающий список без Modal */}
       {isFocused && filteredEntries.length > 0 && (
-          <View
-            style={[
-              styles.dropdownContent,
-              {
-                top: sizes.pickerHeight, // Позиционируем относительно родителя
-                left: 0,
-                right: 0,
-                backgroundColor: themeController.current?.formInputBackground,
-                borderBottomLeftRadius: sizes.borderRadius,
-                borderBottomRightRadius: sizes.borderRadius,
-                borderColor: themeController.current?.dropdownBorderColor,
-              },
-            ]}
+        <View
+          style={[
+            styles.dropdownContent,
+            {
+              top: sizes.pickerHeight, // Позиционируем относительно родителя
+              left: 0,
+              right: 0,
+              backgroundColor: themeController.current?.formInputBackground,
+              borderBottomLeftRadius: sizes.borderRadius,
+              borderBottomRightRadius: sizes.borderRadius,
+              borderColor: themeController.current?.dropdownBorderColor,
+            },
+          ]}
+        >
+          <ScrollView
+            style={{ maxHeight: dropdownHeight }}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+            keyboardShouldPersistTaps='handled'
           >
-            <FlatList
-              data={filteredEntries}
-              keyExtractor={([value]) => value}
-              renderItem={renderOption}
-              style={{ maxHeight: dropdownHeight }}
-              showsVerticalScrollIndicator={false}
-              nestedScrollEnabled={true}
-            />
-          </View>
-        )}
+            {filteredEntries.map((item) => (
+              <React.Fragment key={item[0]}>
+                {renderOption({ item })}
+              </React.Fragment>
+            ))}
+          </ScrollView>
+        </View>
+      )}
     </View>
   );
 };
@@ -352,7 +375,6 @@ const styles = StyleSheet.create({
   },
   input: {
     padding: 0, // Убираем внутренние отступы TextInput
-    width: '100%',
   },
   dropdownContent: {
     position: 'absolute',

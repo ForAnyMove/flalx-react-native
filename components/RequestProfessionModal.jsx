@@ -202,10 +202,10 @@ const RequestProfessionModal = ({
     },
     title: {
       fontSize: sizes.titleSize,
-      fontWeight: 'bold',
+      fontFamily: 'Rubik-Bold',
       color: themeController.current?.textColor,
       flex: 1,
-      textAlign: isRTL ? 'right' : 'left',
+      textAlign: 'center',
     },
     crossIcon: {
       width: sizes.iconSize,

@@ -1,4 +1,4 @@
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+﻿import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -75,8 +75,8 @@ export default function NewScreen({
       personalMarkerFontSize: isWebLandscape ? web(12) : mobile(12),
       containerMarginTop: isWebLandscape ? web(24) : mobile(14),
       containerPaddingHorizontal: isWebLandscape ? web(10) : mobile(10),
-      containerPaddingVertical: isWebLandscape ? web(14) : mobile(14),
-      cardMarginBottom: isWebLandscape ? web(8) : mobile(8),
+      containerPaddingVertical: isWebLandscape ? web(14) : (Platform.OS !== 'web' ? mobile(6) : mobile(14)),
+      cardMarginBottom: isWebLandscape ? web(8) : (Platform.OS !== 'web' ? mobile(4) : mobile(8)),
       imageMargin: isWebLandscape ? web(10) : mobile(10),
       descriptionMarginTop: isWebLandscape ? web(2) : mobile(2),
       refreshBtnHeight: isWebLandscape ? web(48) : mobile(48),
@@ -449,7 +449,7 @@ const styles = {
   },
   textContent: {
     flex: 1,
-    height: '80%',
+    height: Platform.OS === 'web' ? '80%' : undefined,
     justifyContent: 'center',
   },
   title: {
@@ -474,3 +474,5 @@ const styles = {
     top: 0,
   },
 };
+
+

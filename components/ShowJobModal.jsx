@@ -1596,7 +1596,7 @@ export default function ShowJobModal({
                   backgroundColor:
                     themeController.current?.buttonColorPrimaryDefault,
                   borderRadius: sizes.borderRadius,
-                  width: sizes.saveBtnWidthHalf * 1.2,
+                  width: isWebLandscape ? sizes.saveBtnWidthHalf * 1.2 : sizes.saveBtnWidthHalf,
                   height: sizes.saveBtnHeight,
                 },
               ]}
@@ -3014,7 +3014,7 @@ export default function ShowJobModal({
                   // ...styles.container,
                   ...{
                     gap: sizes.mobileGap,
-                    height: '90%',
+                    paddingBottom: scaleByHeightMobile(150, height),
                     width: '100%',
                     overflow: 'auto',
                   },
@@ -3031,7 +3031,7 @@ export default function ShowJobModal({
                 // ...styles.container,
                 ...{
                   gap: sizes.mobileGap,
-                  height: '90%',
+                  paddingBottom: scaleByHeightMobile(150, height),
                   width: '100%',
                   overflow: 'auto',
                 },

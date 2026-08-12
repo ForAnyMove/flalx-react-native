@@ -409,6 +409,7 @@ export default function ContactSupportModal({ visible, onClose }) {
             selectedValue={category}
             onValueChange={setCategory}
             isRTL={isRTL}
+            insideModal={true}
             containerStyle={{ width: '100%', marginBottom: sizes.smallGap / 2, height: sizes.inputHeight }}
           />
           <HelpText style={{ marginBottom: sizes.gap }}>
@@ -475,6 +476,7 @@ export default function ContactSupportModal({ visible, onClose }) {
                 backgroundColor: 'transparent',
                 borderWidth: 0,
                 height: '100%',
+                textAlignVertical: 'top',
                 ...Platform.select({ web: { outlineStyle: 'none' } }),
               }}
             />
@@ -625,6 +627,7 @@ export default function ContactSupportModal({ visible, onClose }) {
             onValueChange={setPreferredTime}
             isRTL={isRTL}
             bottomDropdown={false}
+            insideModal={true}
             containerStyle={{ width: '100%', marginBottom: sizes.gap, height: sizes.inputHeight }}
           />
 

@@ -243,6 +243,9 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
     setError(null);
     try {
       const resp = await session.loginUnified({ login: loginValue, password });
+      if (resp?.status === 'error') {
+        throw new Error(resp.error || 'Login failed');
+      }
       if (resp?.status === 'mfa_required') {
         await beginMfa(resp.mfa);
       } else if (resp?.nextStep === 'phone_verification_required') {
@@ -489,8 +492,8 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
       <View style={{ position: 'absolute', top: sizes.skipBtnTop, left: isRTL ? undefined : '5%', right: isRTL ? '5%' : undefined, zIndex: 100 }}>
         <CustomPicker
           options={[
-            { label: t('settings.lang_en', 'English'), value: 'en' },
-            { label: t('settings.lang_he', 'עברית'), value: 'he' },
+            { label: 'EN', value: 'en' },
+            { label: 'עב', value: 'he' },
           ]}
           selectedValue={languageController.current}
           onValueChange={(val) => languageController.setLang(val)}
