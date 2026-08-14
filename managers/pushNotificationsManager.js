@@ -1,23 +1,84 @@
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
-import Constants from 'expo-constants';
-import { registerDevice } from '../src/api/devices';
 import {
-    getExpoPushToken,
-    requestWebPermission,
+    getDevicePushToken,
+    getWebPushToken,
     addForegroundNotificationListener,
     addNotificationResponseListener,
+    onWebMessage,
 } from '../src/services/pushNotificationService';
 import { logError, logInfo, logWarn } from '../utils/log_util';
 
+// ─── Notification tap handler ────────────────────────────────────────────────
 /**
- * usePushNotifications — registers for push notifications and keeps the
- * device token in sync with the backend.
+ * Called when the user taps a push notification (foreground or background).
+ * Routes to the appropriate screen based on the `data.type` field that the
+ * server includes in the FCM payload.
+ *
+ * To add navigation for a new notification type:
+ *   1. Add a `case 'YOUR_NEW_TYPE':` entry below.
+ *   2. Call the appropriate navigation action.
+ */
+function handleNotificationTap(response) {
+    const data = response?.notification?.request?.content?.data;
+    if (!data?.type) return;
+
+    logInfo('Notification tapped:', data.type, data);
+
+    switch (data.type) {
+        // ─── Job-related ─────────────────────────────────────────────────
+        case 'JOB_PROVIDER_ADDED':
+        case 'JOB_EXECUTOR_ASSIGNED':
+        case 'JOB_STATUS_CHANGED':
+        case 'JOB_COMPLETED':
+        case 'JOB_PROVIDER_SELECTED':
+        case 'JOB_PROVIDER_CONFIRMED':
+        case 'JOB_PROVIDER_REJECTED':
+        case 'JOB_CONFIRMATION_EXPIRED':
+        case 'JOB_CHARGE_COMPLETED':
+        case 'JOB_CHARGE_FINAL_FAILED':
+        case 'JOB_DELETED':
+        case 'JOB_PAYMENT_SUCCESS':
+            // TODO Phase 2: navigationRef.navigate('JobDetails', { jobId: data.jobId });
+            break;
+
+        // ─── Comments ────────────────────────────────────────────────────
+        case 'COMMENT_CREATED':
+        case 'COMMENT_REPLIED':
+            // TODO Phase 2: navigate to comments section
+            break;
+
+        // ─── Subscriptions ───────────────────────────────────────────────
+        case 'SUBSCRIPTION_CREATED':
+        case 'SUBSCRIPTION_EXPIRED':
+        case 'SUBSCRIPTION_RENEWAL_FAILED':
+            // TODO Phase 2: navigate to subscription screen
+            break;
+
+        // ─── Security ────────────────────────────────────────────────────
+        case 'SECURITY_ALERT':
+            // TODO Phase 2: navigate to security settings
+            break;
+
+        default:
+            break;
+    }
+}
+
+/**
+ * usePushNotifications — obtains the FCM token for the current platform
+ * (Android native or Web) and sets up notification listeners.
+ *
+ * ┌─────────────────────────────────────────────────────────────────────┐
+ * │ Phase 1 (current): get FCM token, log it, listen for pushes.      │
+ * │ Phase 2 (later):   uncomment registerDevice() calls to send the   │
+ * │                     token to the backend for server-side pushes.   │
+ * └─────────────────────────────────────────────────────────────────────┘
  *
  * Should be mounted once per session (i.e. only when the user is logged in).
  *
- * @param {object} session      — session object from sessionManager
- * @param {function} [onNotification]        — called when a notification arrives in foreground
+ * @param {object} session                    — session object from sessionManager
+ * @param {function} [onNotification]         — called when a notification arrives in foreground
  * @param {function} [onNotificationResponse] — called when the user taps a notification
  */
 export default function usePushNotifications({
@@ -31,50 +92,74 @@ export default function usePushNotifications({
         // Only run when authenticated
         if (!session?.status) return;
 
-        let unsubForeground = () => { };
-        let unsubResponse = () => { };
+        let unsubForeground = () => {};
+        let unsubResponse = () => {};
+        let unsubTokenRefresh = () => {};
 
         async function init() {
             try {
+                let token;
+
                 if (Platform.OS === 'web') {
-                    // ─── Web: browser Notifications API ──────────────────────────────
-                    const permission = await requestWebPermission();
-                    if (permission !== 'granted') {
-                        logWarn('usePushNotifications: web permission not granted');
-                    } else {
-                        logInfo('usePushNotifications: web notifications permitted');
-                        // FCM integration would go here in the future.
-                        // For now, the backend falls back to email for web users.
+                    // ─── Web: Firebase JS SDK ────────────────────────────────────
+                    // Register the Service Worker for background push delivery
+                    if ('serviceWorker' in navigator) {
+                        try {
+                            await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+                            logInfo('Firebase messaging SW registered');
+                        } catch (e) {
+                            logError('SW registration failed:', e);
+                        }
                     }
-                    return;
+
+                    token = await getWebPushToken();
+                    if (!token) {
+                        logWarn('usePushNotifications: web FCM token not obtained');
+                        return;
+                    }
+
+                    // Listen for foreground messages on web
+                    unsubForeground = onWebMessage((payload) => {
+                        logInfo('Web foreground push received:', payload);
+                        if (onNotification) onNotification(payload);
+                    });
+                } else {
+                    // ─── Native (Android / iOS): expo-notifications + FCM ────────
+                    token = await getDevicePushToken();
+
+                    if (!token) {
+                        logWarn('usePushNotifications: no FCM token obtained');
+                        return;
+                    }
+
+                    // Native foreground listener
+                    if (onNotification) {
+                        unsubForeground = addForegroundNotificationListener(onNotification);
+                    }
+
+                    // Tap handler — always active
+                    unsubResponse = addNotificationResponseListener(handleNotificationTap);
+
+                    // Token refresh listener — re-register when the FCM token changes
+                    const Notifications = require('expo-notifications');
+                    const tokenSub = Notifications.addPushTokenListener(({ data }) => {
+                        logInfo('usePushNotifications: token refreshed:', data);
+                        registeredTokenRef.current = data;
+                        // Phase 2: registerDevice(session, data, Platform.OS, 'fcm');
+                    });
+                    unsubTokenRefresh = () => tokenSub.remove();
                 }
 
-                // ─── Native: expo-notifications ──────────────────────────────────
-                const projectId =
-                    Constants.expoConfig?.extra?.eas?.projectId ??
-                    Constants.easConfig?.projectId;
-
-                const token = await getExpoPushToken(projectId);
-
-                if (!token) {
-                    logWarn('usePushNotifications: no token obtained');
-                    return;
-                }
-
-                // Avoid re-registering the same token on every render/re-mount
+                // Avoid redundant work if the token hasn't changed
                 if (registeredTokenRef.current === token) return;
                 registeredTokenRef.current = token;
 
-                await registerDevice(session, token, Platform.OS);
-                logInfo('usePushNotifications: device registered with token', token);
+                logInfo('usePushNotifications: FCM token ready:', token);
 
-                // ─── Listeners ────────────────────────────────────────────────────
-                if (onNotification) {
-                    unsubForeground = addForegroundNotificationListener(onNotification);
-                }
-                if (onNotificationResponse) {
-                    unsubResponse = addNotificationResponseListener(onNotificationResponse);
-                }
+                // Phase 2: uncomment when the server endpoint is ready
+                // await registerDevice(session, token, Platform.OS, 'fcm');
+                // logInfo('usePushNotifications: device registered on server');
+
             } catch (e) {
                 logError('usePushNotifications: init error', e);
             }
@@ -85,6 +170,7 @@ export default function usePushNotifications({
         return () => {
             unsubForeground();
             unsubResponse();
+            unsubTokenRefresh();
         };
     }, [session?.status]);
 }

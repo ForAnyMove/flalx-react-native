@@ -4,10 +4,11 @@ import { logError } from '../../utils/log_util';
 /**
  * Register a device push token with the backend.
  * @param {object} session
- * @param {string} pushToken  — Expo push token
+ * @param {string} pushToken  — Expo push token or FCM token
  * @param {string} platform   — 'ios' | 'android' | 'web'
+ * @param {string} provider   — 'expo' | 'fcm' (default 'expo')
  */
-export async function registerDevice(session, pushToken, platform) {
+export async function registerDevice(session, pushToken, platform, provider = 'expo') {
     try {
         await fetchWithSession({
             session,
@@ -16,7 +17,7 @@ export async function registerDevice(session, pushToken, platform) {
             data: {
                 pushToken,
                 platform,
-                provider: 'expo',
+                provider,
             },
         });
     } catch (error) {

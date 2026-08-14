@@ -1,4 +1,4 @@
-import { logError, logInfo } from "../../utils/log_util";
+import { logError, logInfo, logWarn } from "../../utils/log_util";
 
 // Must comfortably undercut typical proxy/load-balancer idle timeouts (AWS
 // ALB/nginx/Heroku router defaults are commonly 60s) — this is the likely
@@ -122,7 +122,7 @@ export function connectWebSocket({ userId, serverUrl, onMessage, onStatusChange 
     ws.onerror = (error) => {
       // onclose always follows onerror here — reconnect is scheduled there
       // only, to avoid double-scheduling.
-      logError('WebSocket error:', error);
+      logWarn('WebSocket error (will reconnect):', error?.message || 'connection aborted');
     };
   };
 
