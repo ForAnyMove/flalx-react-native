@@ -22,20 +22,18 @@ import { logInfo, logError, logWarn } from '../../utils/log_util';
 let messaging = null;
 
 // ─── Firebase Web App config ─────────────────────────────────────────
-// TODO: вставить реальные значения из Firebase Console
 const firebaseConfig = {
-    apiKey: "AIzaSyD5ZWdZBfZ2w7oW9xqh1zYDO2x_2RZIGUw",
-    authDomain: "flalx-ec11a.firebaseapp.com",
-    projectId: "flalx-ec11a",
-    storageBucket: "flalx-ec11a.firebasestorage.app",
-    messagingSenderId: "433988900835",
-    appId: "1:433988900835:web:47b2b57fd71ef1d9a9f2d6",
-    measurementId: "G-3N8XGE6Q7N"
+    apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+    measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// VAPID key for Web Push — Firebase Console → Cloud Messaging → Web Push certificates
-// TODO: вставить реальный VAPID key из Firebase Console
-const VAPID_KEY = 'BIUFJbLlpBWOVmMXdqxoOb0fzhua04oX3FK8WS8l-uiVobHVHsEBm5DQ4by3UapinvUFU5DL0TW6D7CGcqpJtYc';
+// VAPID key for Web Push
+const VAPID_KEY = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY;
 
 /**
  * Initialise Firebase Messaging for the web platform.

@@ -12,13 +12,16 @@
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
+// Retrieve config passed dynamically via query parameters from pushNotificationsManager
+const params = new URLSearchParams(self.location.search);
+
 firebase.initializeApp({
-    apiKey: 'AIzaSyD5ZWdZBfZ2w7oW9xqh1zYDO2x_2RZIGUw',
-    authDomain: 'flalx-ec11a.firebaseapp.com',
-    projectId: 'flalx-ec11a',
-    storageBucket: 'flalx-ec11a.firebasestorage.app',
-    messagingSenderId: '433988900835',
-    appId: '1:433988900835:web:47b2b57fd71ef1d9a9f2d6',
+    apiKey: params.get('apiKey'),
+    authDomain: params.get('authDomain'),
+    projectId: params.get('projectId'),
+    storageBucket: params.get('storageBucket'),
+    messagingSenderId: params.get('messagingSenderId'),
+    appId: params.get('appId'),
 });
 
 const messaging = firebase.messaging();
