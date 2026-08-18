@@ -26,6 +26,16 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// Activate a new SW version immediately instead of waiting for every open tab
+// to close first (the browser-default lifecycle) — otherwise users who keep a
+// tab open indefinitely would keep running a stale SW until they close it.
+self.addEventListener('install', () => {
+    self.skipWaiting();
+});
+self.addEventListener('activate', (event) => {
+    event.waitUntil(self.clients.claim());
+});
+
 // Background message handler — fires when the page is not focused or closed.
 //
 // The server intentionally omits `webpush.notification` from the FCM payload
