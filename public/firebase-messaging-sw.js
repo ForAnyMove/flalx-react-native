@@ -27,11 +27,21 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 // Background message handler — fires when the page is not focused or closed.
+//
+// The server intentionally omits `webpush.notification` from the FCM payload
+// (see backend) so the browser never auto-displays anything — this handler is
+// the ONLY place a notification gets shown on web. Auto-display + this manual
+// call together would produce two notifications per message. title/body come
+// from `data` (plain strings, already localized server-side for the
+// recipient's language) rather than `payload.notification`, which native
+// (android.notification / apns) still use for their own guaranteed OS-level
+// display. The `payload.notification` fallback below is defensive only.
 messaging.onBackgroundMessage((payload) => {
-    const { title, body } = payload.notification || {};
+    const title = payload.notification?.title || payload.data?.title || 'Flalx';
+    const body = payload.notification?.body || payload.data?.body || '';
 
-    self.registration.showNotification(title || 'Flalx', {
-        body: body || '',
+    self.registration.showNotification(title, {
+        body,
         icon: '/assets/logo/flalx-logo-large.png',
         data: payload.data,
     });
