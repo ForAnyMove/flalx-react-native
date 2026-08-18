@@ -1578,7 +1578,19 @@ export default function ShowJobModal({
 
   function bottomButtonByStatus(status) {
     switch (status) {
-      case 'store-waiting':
+      case 'store-waiting': {
+        // Update/Close - действия, доступные только создателю работы. Раньше
+        // это решалось только тем, из какого таба открыли модалку (store-*),
+        // а не реальной проверкой личности — если в списке "creator.waiting"
+        // на экране на миг оставалась чужая работа (например, кэш прошлого
+        // аккаунта на телефоне сразу после смены сессии), кнопки всё равно
+        // рендерились. jobStatusInfo приходит из серверного GET
+        // /jobs/:id/status (useJobDetailNavigation) и отражает реальную
+        // принадлежность работы ТЕКУЩЕЙ сессии — если сервер явно сказал, что
+        // мы не создатель, кнопок быть не должно, независимо от таба.
+        if (jobStatusInfo != null && jobStatusInfo.isCreator === false) {
+          return [];
+        }
         return [
           <View
             style={{
@@ -1685,6 +1697,7 @@ export default function ShowJobModal({
             </TouchableOpacity>
           </View>,
         ];
+      }
       // case 'store-in-progress':
       //   return [
       //     <ProvidersSection
