@@ -149,14 +149,17 @@ export async function getDevicePushToken() {
  * Obtain an FCM token for the web platform via the Firebase JS SDK.
  * Returns the token string or null.
  *
+ * @param {ServiceWorkerRegistration} [swRegistration] — registration for
+ *   public/firebase-messaging-sw.js, so getToken() reuses it instead of
+ *   registering its own default (misconfigured) service worker.
  * @returns {Promise<string|null>}
  */
-export async function getWebPushToken() {
+export async function getWebPushToken(swRegistration) {
     if (Platform.OS !== 'web') return null;
 
     // Lazy-import to avoid bundling firebase on native builds
     const { getWebFCMToken } = require('./firebaseWebConfig');
-    return await getWebFCMToken();
+    return await getWebFCMToken(swRegistration);
 }
 
 // Re-export web foreground message listener for convenience

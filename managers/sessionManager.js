@@ -11,6 +11,8 @@ import {
 import { fetchWithSession } from '../src/api/apiBase';
 import { getRevealedUsers, getRevealProduct, revealUser, me as fetchUsersMe } from '../src/api/users';
 import { getUserSubscription } from '../src/api/subscriptions';
+import { unregisterDevice } from '../src/api/devices';
+import { getRegisteredPushToken } from './pushNotificationsManager';
 import { getAuthErrorMessage } from '../src/auth/authErrors';
 import { logError, logInfo, logWarn } from '../utils/log_util';
 
@@ -232,6 +234,16 @@ export default function sessionManager({ setAppLoading } = {}) {
   async function logout() {
     setAppLoading?.(true);
     try {
+      // Unregister the push token while the session (and its auth header) is
+      // still valid — best-effort, must not block logout if it fails.
+      const pushToken = getRegisteredPushToken();
+      if (pushToken) {
+        try {
+          await unregisterDevice(apiSession, pushToken);
+        } catch (e) {
+          logWarn('Device push token unregister failed:', e.message || e);
+        }
+      }
       await authApi.logout();
     } catch (e) {
       logWarn('Backend logout failed (clearing local state anyway):', e.message || e);

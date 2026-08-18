@@ -7,7 +7,18 @@ import {
     addNotificationResponseListener,
     onWebMessage,
 } from '../src/services/pushNotificationService';
+import { registerDevice } from '../src/api/devices';
 import { logError, logInfo, logWarn } from '../utils/log_util';
+
+// Module-level (not per-hook-instance) so sessionManager.logout() can read the
+// last-registered token to unregister it from the backend before the session
+// (and its auth header) is torn down. Safe because usePushNotifications is
+// mounted exactly once per app (see App.js).
+let lastRegisteredToken = null;
+
+export function getRegisteredPushToken() {
+    return lastRegisteredToken;
+}
 
 // ─── Notification tap handler ────────────────────────────────────────────────
 /**
@@ -103,18 +114,22 @@ export default function usePushNotifications({
                 if (Platform.OS === 'web') {
                     // ─── Web: Firebase JS SDK ────────────────────────────────────
                     // Register the Service Worker for background push delivery
+                    let swRegistration;
                     if ('serviceWorker' in navigator) {
                         try {
                             // Build the query string with process.env values to pass config securely to the static Service Worker
                             const swUrl = `/firebase-messaging-sw.js?apiKey=${process.env.EXPO_PUBLIC_FIREBASE_API_KEY}&authDomain=${process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN}&projectId=${process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID}&storageBucket=${process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET}&messagingSenderId=${process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID}&appId=${process.env.EXPO_PUBLIC_FIREBASE_APP_ID}`;
-                            await navigator.serviceWorker.register(swUrl);
+                            swRegistration = await navigator.serviceWorker.register(swUrl);
                             logInfo('Firebase messaging SW registered');
                         } catch (e) {
                             logError('SW registration failed:', e);
                         }
                     }
 
-                    token = await getWebPushToken();
+                    // Pass the registration through so getToken() reuses our SW
+                    // (with the config baked into its query string) instead of
+                    // trying to register its own default, unconfigured one.
+                    token = await getWebPushToken(swRegistration);
                     if (!token) {
                         logWarn('usePushNotifications: web FCM token not obtained');
                         return;
@@ -147,7 +162,10 @@ export default function usePushNotifications({
                     const tokenSub = Notifications.addPushTokenListener(({ data }) => {
                         logInfo('usePushNotifications: token refreshed:', data);
                         registeredTokenRef.current = data;
-                        // Phase 2: registerDevice(session, data, Platform.OS, 'fcm');
+                        lastRegisteredToken = data;
+                        registerDevice(session, data, Platform.OS, 'fcm').catch((e) =>
+                            logError('usePushNotifications: token refresh registration failed', e)
+                        );
                     });
                     unsubTokenRefresh = () => tokenSub.remove();
                 }
@@ -155,12 +173,12 @@ export default function usePushNotifications({
                 // Avoid redundant work if the token hasn't changed
                 if (registeredTokenRef.current === token) return;
                 registeredTokenRef.current = token;
+                lastRegisteredToken = token;
 
                 logInfo('usePushNotifications: FCM token ready:', token);
 
-                // Phase 2: uncomment when the server endpoint is ready
-                // await registerDevice(session, token, Platform.OS, 'fcm');
-                // logInfo('usePushNotifications: device registered on server');
+                await registerDevice(session, token, Platform.OS, 'fcm');
+                logInfo('usePushNotifications: device registered on server');
 
             } catch (e) {
                 logError('usePushNotifications: init error', e);

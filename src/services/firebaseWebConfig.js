@@ -60,9 +60,15 @@ export function initWebMessaging() {
  * Obtain an FCM token for the web platform.
  * Requests browser notification permission if not yet granted.
  *
+ * @param {ServiceWorkerRegistration} [swRegistration] — the registration for
+ *   public/firebase-messaging-sw.js, already obtained by the caller. Without
+ *   this, getToken() registers its OWN default service worker (plain
+ *   '/firebase-messaging-sw.js', no query params) under the
+ *   'firebase-cloud-messaging-push-scope' scope — which evaluates with an
+ *   empty Firebase config and fails (messaging/failed-service-worker-registration).
  * @returns {Promise<string|null>}
  */
-export async function getWebFCMToken() {
+export async function getWebFCMToken(swRegistration) {
     if (Platform.OS !== 'web') return null;
 
     if (!messaging) initWebMessaging();
@@ -80,7 +86,10 @@ export async function getWebFCMToken() {
             return null;
         }
 
-        const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+        const token = await getToken(messaging, {
+            vapidKey: VAPID_KEY,
+            ...(swRegistration ? { serviceWorkerRegistration: swRegistration } : {}),
+        });
         logInfo('Web FCM token obtained:', token);
         return token;
     } catch (error) {
