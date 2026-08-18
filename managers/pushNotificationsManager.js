@@ -7,7 +7,8 @@ import {
     addNotificationResponseListener,
     onWebMessage,
 } from '../src/services/pushNotificationService';
-import { registerDevice } from '../src/api/devices';
+import { registerDevice, updateDeviceLanguage } from '../src/api/devices';
+import i18n from '../utils/i18n/i18n';
 import { logError, logInfo, logWarn } from '../utils/log_util';
 
 // Module-level (not per-hook-instance) so sessionManager.logout() can read the
@@ -99,6 +100,30 @@ export default function usePushNotifications({
 } = {}) {
     const registeredTokenRef = useRef(null);
 
+    // Kept fresh every render (no effect dependency needed) so the
+    // languageChanged subscription below always sees the current session
+    // without having to re-subscribe every time the session object is
+    // recreated (sessionManager builds a new `apiSession` object each render).
+    const sessionRef = useRef(session);
+    sessionRef.current = session;
+
+    // Language is device-local (see managers/languageManager.js), so a switch
+    // mid-session must update the already-registered device row — otherwise
+    // push text stays stuck on whatever language was active at registration.
+    useEffect(() => {
+        function handleLanguageChanged(lng) {
+            const currentSession = sessionRef.current;
+            if (!currentSession?.status) return;
+            const token = getRegisteredPushToken();
+            if (!token) return;
+            updateDeviceLanguage(currentSession, token, lng).catch((e) =>
+                logError('usePushNotifications: device language update failed', e)
+            );
+        }
+        i18n.on('languageChanged', handleLanguageChanged);
+        return () => i18n.off('languageChanged', handleLanguageChanged);
+    }, []);
+
     useEffect(() => {
         // Only run when authenticated
         if (!session?.status) return;
@@ -163,7 +188,7 @@ export default function usePushNotifications({
                         logInfo('usePushNotifications: token refreshed:', data);
                         registeredTokenRef.current = data;
                         lastRegisteredToken = data;
-                        registerDevice(session, data, Platform.OS, 'fcm').catch((e) =>
+                        registerDevice(session, data, Platform.OS, 'fcm', i18n.language).catch((e) =>
                             logError('usePushNotifications: token refresh registration failed', e)
                         );
                     });
@@ -177,7 +202,7 @@ export default function usePushNotifications({
 
                 logInfo('usePushNotifications: FCM token ready:', token);
 
-                await registerDevice(session, token, Platform.OS, 'fcm');
+                await registerDevice(session, token, Platform.OS, 'fcm', i18n.language);
                 logInfo('usePushNotifications: device registered on server');
 
             } catch (e) {
