@@ -36,3 +36,26 @@ messaging.onBackgroundMessage((payload) => {
         data: payload.data,
     });
 });
+
+// Notification click handler — focuses an already-open tab on this site if
+// one exists, otherwise opens a new one. `data.type` is available here for
+// per-notification-type deep linking later (mirrors handleNotificationTap in
+// managers/pushNotificationsManager.js on native), not wired yet.
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+
+    const targetUrl = self.location.origin + '/';
+
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+            for (const client of clientList) {
+                if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            if (clients.openWindow) {
+                return clients.openWindow(targetUrl);
+            }
+        })
+    );
+});

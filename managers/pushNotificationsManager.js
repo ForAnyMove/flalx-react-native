@@ -191,6 +191,12 @@ export default function usePushNotifications({
             unsubForeground();
             unsubResponse();
             unsubTokenRefresh();
+            // Reset dedup state on session change (e.g. logout) — sessionManager
+            // already unregistered lastRegisteredToken on the server by this
+            // point, so the next login must be free to re-register the same
+            // FCM token instead of skipping it as "unchanged".
+            registeredTokenRef.current = null;
+            lastRegisteredToken = null;
         };
     }, [session?.status]);
 }
