@@ -243,6 +243,7 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
     // Success view styles
     successContainer: {
       alignItems: 'center',
+      width: '100%',
     },
     successIconContainer: {
       width: sizes.successIconContainerSize,

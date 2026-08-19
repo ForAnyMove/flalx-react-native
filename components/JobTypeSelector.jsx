@@ -155,8 +155,10 @@ export default function JobTypeSelector({
         },
         tagWrapper: {
           rowGap: sizes.rowGap,
+        },
+        tagRow: {
+          flexDirection: 'row',
           columnGap: sizes.colGap,
-          height: wrapperHeight,
         },
         tag: {
           paddingHorizontal: sizes.padH,
@@ -202,39 +204,51 @@ export default function JobTypeSelector({
         <View
           style={[styles.tagWrapper, dynamicStyles.tagWrapper]}
         >
-          {Object.entries(jobSubTypesOptions || {})?.map(([key, label]) => {
-            const active = isSelected(key);
+          {Array.from({ length: actualNumberOfRows }).map((_, rowIndex) => {
+            const rowItems = Object.entries(jobSubTypesOptions || {}).filter(
+              (_, index) => index % actualNumberOfRows === rowIndex
+            );
+            
+            if (rowItems.length === 0) return null;
+
             return (
-              <TouchableOpacity
-                key={key}
-                onPress={() => toggleType(key)}
-                style={[
-                  styles.tag,
-                  dynamicStyles.tag,
-                  {
-                    backgroundColor: active
-                      ? colors.tagSelectedBg
-                      : 'transparent',
-                    borderColor: active
-                      ? colors.tagSelectedBg
-                      : colors.tagBgBorder,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.tagText,
-                    dynamicStyles.tagText,
-                    {
-                      color: active ? colors.tagSelectedText : colors.tagText,
-                      ...(Platform.OS === 'web' ? { whiteSpace: 'nowrap' } : {}),
-                    },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {label}
-                </Text>
-              </TouchableOpacity>
+              <View key={rowIndex} style={dynamicStyles.tagRow}>
+                {rowItems.map(([key, label]) => {
+                  const active = isSelected(key);
+                  return (
+                    <TouchableOpacity
+                      key={key}
+                      onPress={() => toggleType(key)}
+                      style={[
+                        styles.tag,
+                        dynamicStyles.tag,
+                        {
+                          backgroundColor: active
+                            ? colors.tagSelectedBg
+                            : 'transparent',
+                          borderColor: active
+                            ? colors.tagSelectedBg
+                            : colors.tagBgBorder,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.tagText,
+                          dynamicStyles.tagText,
+                          {
+                            color: active ? colors.tagSelectedText : colors.tagText,
+                            ...(Platform.OS === 'web' ? { whiteSpace: 'nowrap' } : {}),
+                          },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             );
           })}
         </View>
@@ -264,9 +278,6 @@ const styles = StyleSheet.create({
   scrollContent: { flexGrow: 1 },
   tagWrapper: { 
     flexDirection: 'column', 
-    flexWrap: 'wrap',
-    alignContent: 'flex-start',
-    alignItems: 'flex-start'
   },
   tag: { alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   tagText: {},

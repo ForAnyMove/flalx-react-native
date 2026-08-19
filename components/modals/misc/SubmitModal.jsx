@@ -24,7 +24,7 @@ export const SubmitModal = ({ visible, onClose, onSubmitted }) => {
     const sizes = useMemo(() => {
         const scale = isWebLandscape ? scaleByHeight : scaleByHeightMobile;
         return {
-            modalWidth: isWebLandscape ? scale(450) : width,
+            modalWidth: isWebLandscape ? scale(450) : width * 0.9,
             modalMaxHeight: isWebLandscape ? height * 0.8 : height,
             borderRadius: scale(8),
             paddingVertical: scale(40),
@@ -33,6 +33,7 @@ export const SubmitModal = ({ visible, onClose, onSubmitted }) => {
             descriptionSize: scale(18),
             crossSpace: scale(8),
             iconSize: scale(24),
+            buttonWidth: isWebLandscape ? scale(330) : '100%',
             buttonHeight: scale(62),
             buttonFontSize: scale(16),
             successIconContainerSize: scale(112),
@@ -73,6 +74,7 @@ export const SubmitModal = ({ visible, onClose, onSubmitted }) => {
         },
         successContainer: {
             alignItems: 'center',
+            width: '100%',
         },
         successIconContainer: {
             width: sizes.successIconContainerSize,
@@ -104,7 +106,7 @@ export const SubmitModal = ({ visible, onClose, onSubmitted }) => {
             justifyContent: 'center',
             alignItems: 'center',
             marginTop: sizes.successButtonMarginTop,
-            width: '100%',
+            width: sizes.buttonWidth,
         },
         okButtonText: {
             color: themeController.current?.buttonTextColorPrimary,

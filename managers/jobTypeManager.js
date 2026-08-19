@@ -74,7 +74,11 @@ function professionRequests({ session }) {
             return data;
         }
         catch (err) {
-            logError('Error sending profession request to user:', err);
+            if (err?.response?.status === 400 || err?.response?.status === 409) {
+                logInfo('Expected client error sending profession request to user:', err?.message);
+            } else {
+                logError('Error sending profession request to user:', err);
+            }
             throw err;
         }
     }

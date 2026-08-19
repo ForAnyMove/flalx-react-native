@@ -1,5 +1,5 @@
 import React, { forwardRef, useEffect, useMemo } from 'react';
-import { TextInput, Platform } from 'react-native';
+import { TextInput, Platform, DeviceEventEmitter } from 'react-native';
 import { useWindowInfo } from '../../context/windowContext';
 
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
@@ -24,6 +24,14 @@ const CustomTextInput = forwardRef((props, ref) => {
     // that can cause the FlatList to rebuild and immediately dismiss the keyboard.
     if (isMobileWeb && props.editable !== false && !props.readOnly) {
       addFocusedInput(uniqueId);
+    }
+    if (Platform.OS === 'android' && e && e.nativeEvent) {
+      // Extract target synchronously because synthetic event is nullified later
+      const target = e.nativeEvent.target;
+      // Small delay to allow keyboard to finish opening if it was closed
+      setTimeout(() => {
+        DeviceEventEmitter.emit('scrollToFocusedInput', target);
+      }, 50);
     }
     if (props.onFocus) {
       props.onFocus(e);

@@ -63,6 +63,7 @@
     "react-native-gesture-handler": "~2.24.0",
     "react-native-google-places-autocomplete": "^2.5.1",
     "react-native-google-places-textinput": "^0.9.1",
+    "react-native-keyboard-aware-scroll-view": "^0.9.5",
     "react-native-localize": "^3.5.2",
     "react-native-markdown-display": "^7.0.2",
     "react-native-paper": "^5.14.5",

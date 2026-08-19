@@ -258,6 +258,7 @@ const UpdateEmailModal = ({
     successContainer: {
       alignItems: 'center',
       justifyContent: 'center',
+      width: '100%',
     },
     successIcon: {
       width: sizes.successIconSize,

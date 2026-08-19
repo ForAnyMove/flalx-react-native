@@ -5,7 +5,7 @@ import languageManager from '../managers/languageManager';
 import tabsManager from '../managers/tabsManager';
 import jobsManager from '../managers/jobsManager';
 import providersManager from '../managers/providersManager';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Modal, Platform } from 'react-native';
 import { getSubscriptionPlans } from '../src/api/subscriptions';
 import { getImageLimits } from '../src/api/images';
 import authTabsManager from '../managers/authTabsManager';
@@ -111,19 +111,34 @@ export const ComponentProvider = ({ children }) => {
     >
       {children}
       {loadingCounter > 0 && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.3)',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10000,
-          }}
-          pointerEvents="auto"
-        >
-          <ActivityIndicator size="large" color="#ffffff" />
-        </View>
+        Platform.OS === 'web' ? (
+          <View
+            style={{
+              position: 'fixed',
+              top: 0, left: 0, right: 0, bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.3)',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999999,
+            }}
+            pointerEvents="auto"
+          >
+            <ActivityIndicator size="large" color="#ffffff" />
+          </View>
+        ) : (
+          <Modal transparent={true} animationType="fade" visible={true} statusBarTranslucent={true}>
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ActivityIndicator size="large" color="#ffffff" />
+            </View>
+          </Modal>
+        )
       )}
     </ComponentContext.Provider>
   );

@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import {
   FlatList,
   Image,
@@ -11,6 +11,8 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Keyboard,
+  Pressable,
 } from 'react-native';
 import { useComponentContext } from '../context/globalAppContext';
 import CustomFlatList from './ui/CustomFlatList';
@@ -176,6 +178,9 @@ export default function NewJobModal({
   const [subType, setSubType] = useState(
     (editDraft.subType?.key ?? initialJob?.subType.key) || activeKey?.subTypeKey || ''
   );
+
+  const descriptionRef = useRef(null);
+  const priceRef = useRef(null);
 
   // Преобразуем данные из jobTypesController в нужный формат
   const jobTypesOptions = useMemo(() => {
@@ -429,11 +434,11 @@ export default function NewJobModal({
     requiredFields.forEach((field) => {
       // Проверяем, заполнено ли поле. Для location нужна особая проверка.
       if (field === 'location') {
-          newErrors[field] = !location || !location?.address;
-        } else {
-          const fieldValues = { type, subType, price, startDateTime, endDateTime, description };
-          newErrors[field] = !fieldValues[field];
-        }
+        newErrors[field] = !location || !location?.address;
+      } else {
+        const fieldValues = { type, subType, price, startDateTime, endDateTime, description };
+        newErrors[field] = !fieldValues[field];
+      }
     });
 
     setFieldErrors(newErrors);
@@ -681,7 +686,9 @@ export default function NewJobModal({
       error={fieldErrors.location}
       language={languageController.current}
     />,
-    <View
+    <TouchableOpacity
+      activeOpacity={1}
+      onPress={() => descriptionRef.current?.focus()}
       style={[
         styles.inputBlock,
         {
@@ -719,6 +726,7 @@ export default function NewJobModal({
         {t('newJob.description', { defaultValue: 'Description' })}
       </Text>
       <CustomTextInput
+        ref={descriptionRef}
         value={description}
         onChangeText={setDescription}
         placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
@@ -745,9 +753,11 @@ export default function NewJobModal({
         ]}
         multiline
       />
-    </View>,
+    </TouchableOpacity>,
     !isClient && (
-      <View
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={() => priceRef.current?.focus()}
         style={[
           styles.inputBlock,
           {
@@ -782,6 +792,7 @@ export default function NewJobModal({
           {t('newJob.price', { defaultValue: 'Price' })}
         </Text>
         <CustomTextInput
+          ref={priceRef}
           value={price}
           onChangeText={(text) => setPrice(text.replace(/[^0-9]/g, ''))}
           placeholder={t('newJob.typePlaceholder', { defaultValue: 'Type...' })}
@@ -804,7 +815,7 @@ export default function NewJobModal({
           ]}
           keyboardType='numeric'
         />
-      </View>
+      </TouchableOpacity>
     ),
     <View style={styles.imageInputBlock} key='images'>
       <Text
@@ -1024,7 +1035,7 @@ export default function NewJobModal({
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={{ flex: 1 }}
     >
       <View
@@ -1165,7 +1176,9 @@ export default function NewJobModal({
                       },
                     ]}
                   >
-                    <View
+                    <TouchableOpacity
+                      activeOpacity={1}
+                      onPress={() => descriptionRef.current?.focus()}
                       style={[
                         styles.inputBlock,
                         { backgroundColor: bg },
@@ -1202,6 +1215,7 @@ export default function NewJobModal({
                         })}
                       </Text>
                       <CustomTextInput
+                        ref={descriptionRef}
                         value={description}
                         onChangeText={setDescription}
                         placeholder={t('newJob.typePlaceholder', {
@@ -1226,7 +1240,7 @@ export default function NewJobModal({
                         ]}
                         multiline
                       />
-                    </View>
+                    </TouchableOpacity>
                   </View>
 
                   {/* Row 2: Sub type (1/2) + Price (1/2) */}
@@ -1308,7 +1322,9 @@ export default function NewJobModal({
                         },
                       ]}
                     >
-                      <View
+                      <TouchableOpacity
+                        activeOpacity={1}
+                        onPress={() => priceRef.current?.focus()}
                         style={[
                           styles.inputBlock,
                           { backgroundColor: bg },
@@ -1343,6 +1359,7 @@ export default function NewJobModal({
                           {t('newJob.price', { defaultValue: 'Price' })}
                         </Text>
                         <CustomTextInput
+                          ref={priceRef}
                           key='priceInput'
                           value={price}
                           onChangeText={(text) =>
@@ -1372,7 +1389,7 @@ export default function NewJobModal({
                           ]}
                           keyboardType='numeric'
                         />
-                      </View>
+                      </TouchableOpacity>
                     </View>
                   )}
 
@@ -1702,6 +1719,7 @@ export default function NewJobModal({
                   },
                 }}
                 keyboardShouldPersistTaps='handled'
+                enableKeyboardAware={true}
               />
             )}
           </>
@@ -1717,6 +1735,7 @@ export default function NewJobModal({
               },
             }}
             keyboardShouldPersistTaps='handled'
+            enableKeyboardAware={true}
           />
         )}
 

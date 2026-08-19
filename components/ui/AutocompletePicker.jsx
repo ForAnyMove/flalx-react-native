@@ -10,6 +10,7 @@ import {
   Keyboard,
   Image,
   ScrollView,
+  Pressable,
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
@@ -237,8 +238,10 @@ const AutocompletePicker = ({
     itemHeight * (filteredEntries.length > 4 ? 4 : filteredEntries.length);
 
   return (
-    <View
+    <TouchableOpacity
+      activeOpacity={1}
       ref={containerRef}
+      onPress={() => inputRef.current?.focus()}
       style={[
         styles.pickerContainer,
         {
@@ -272,10 +275,10 @@ const AutocompletePicker = ({
           {label}
         </Text>
         <View
-          style={{
+          style={[{
             flexDirection: arrowIcon && isRTL ? 'row-reverse' : 'row',
             alignItems: 'center',
-          }}
+          }, arrowIcon && { justifyContent: 'space-between' }]}
         >
           <CustomTextInput
             ref={inputRef}
@@ -361,7 +364,7 @@ const AutocompletePicker = ({
           </ScrollView>
         </View>
       )}
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -375,6 +378,7 @@ const styles = StyleSheet.create({
   },
   input: {
     padding: 0, // Убираем внутренние отступы TextInput
+    flex: 1,
   },
   dropdownContent: {
     position: 'absolute',

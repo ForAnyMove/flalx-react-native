@@ -157,6 +157,11 @@ const UpdatePhoneModal = ({
       alignItems: 'center',
       position: 'relative',
     },
+    successContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '100%',
+    },
     title: {
       fontSize: sizes.titleSize,
       fontWeight: 'bold',

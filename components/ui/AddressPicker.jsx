@@ -4,8 +4,11 @@ import {
   Text,
   StyleSheet,
   Platform,
+  TouchableOpacity,
+  DeviceEventEmitter,
 } from 'react-native';
 import GooglePlacesTextInput from 'react-native-google-places-textinput';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
@@ -33,6 +36,17 @@ const AddressPicker = ({
 
   const [displayValue, setDisplayValue] = useState(initialAddress);
   const [inputKey, setInputKey] = useState(0);
+  const inputRef = useRef(null);
+
+  const handleFocus = (e) => {
+    if (Platform.OS === 'android' && e && e.nativeEvent) {
+      // Extract target synchronously because synthetic event is nullified later
+      const target = e.nativeEvent.target;
+      setTimeout(() => {
+        DeviceEventEmitter.emit('scrollToFocusedInput', target);
+      }, 50);
+    }
+  };
 
   useEffect(() => {
     setDisplayValue(initialAddress);
@@ -169,7 +183,9 @@ const AddressPicker = ({
   };
 
   return (
-    <View
+    <TouchableOpacity
+      activeOpacity={1}
+      onPress={() => inputRef.current?.focus()}
       style={[
         styles.pickerContainer,
         {
@@ -211,12 +227,14 @@ const AddressPicker = ({
           onError={(error) => {
             handleError(error);
           }}
+          onFocus={handleFocus}
+          ref={inputRef}
 
           debounceDelay={300}
           minCharsToFetch={3}
         />
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

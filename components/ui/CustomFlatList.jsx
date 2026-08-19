@@ -1,4 +1,6 @@
-import { Platform, ScrollView, View } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { Platform, ScrollView, View, DeviceEventEmitter } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 export default function CustomFlatList({
   data = [],
@@ -7,15 +9,36 @@ export default function CustomFlatList({
   contentContainerStyle,
   horizontal = false,
   keyboardShouldPersistTaps = 'never',
+  enableKeyboardAware = false,
 }) {
   const isWeb = Platform.OS === 'web';
+  const ScrollComponent = (!isWeb && enableKeyboardAware) ? KeyboardAwareScrollView : ScrollView;
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (!enableKeyboardAware || Platform.OS !== 'android') return;
+    const subscription = DeviceEventEmitter.addListener('scrollToFocusedInput', (node) => {
+      if (scrollRef.current && scrollRef.current.scrollToFocusedInput) {
+        scrollRef.current.scrollToFocusedInput(node);
+      }
+    });
+    return () => subscription.remove();
+  }, [enableKeyboardAware]);
+
+  const extraProps = (!isWeb && enableKeyboardAware) ? {
+    enableOnAndroid: true,
+    extraScrollHeight: Platform.OS === 'android' ? 80 : 40,
+    keyboardOpeningTime: 0,
+    ref: scrollRef,
+  } : {};
 
   return (
-    <ScrollView
+    <ScrollComponent
       horizontal={horizontal}
       contentContainerStyle={contentContainerStyle}
       keyboardShouldPersistTaps={keyboardShouldPersistTaps}
       style={[isWeb && { overflow: 'auto', maxWidth: '100%', overflowX: 'hidden' }]}
+      {...extraProps}
     >
       {data.map((item, index) => {
         const key = keyExtractor(item, index);
@@ -30,6 +53,6 @@ export default function CustomFlatList({
           </View>
         );
       })}
-    </ScrollView>
+    </ScrollComponent>
   );
 }

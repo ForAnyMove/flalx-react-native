@@ -1,5 +1,5 @@
 import { fetchWithSession } from './apiBase';
-import { logError } from '../../utils/log_util';
+import { logError, logInfo } from '../../utils/log_util';
 
 const ENDPOINTS = {
     getUserRequests: {
@@ -39,7 +39,7 @@ export async function fetchUserProfessions(session) {
         });
         return response.data;
     } catch (error) {
-        logInfo('Error fetching user type requests:', error);
+        logError('Error fetching user type requests:', error);
         throw error;
     }
 }
@@ -54,7 +54,11 @@ export async function sendUserTypeRequest(session, requestData) {
         });
         return response.data;
     } catch (error) {
-        logInfo('Error sending user type request:', error);
+        if (error?.response?.status === 400 || error?.response?.status === 409) {
+            logInfo('Expected client error sending user type request:', error?.message);
+        } else {
+            logError('Error sending user type request:', error);
+        }
         throw error;
     }
 }

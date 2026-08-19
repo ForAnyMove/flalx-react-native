@@ -49,7 +49,11 @@ export async function fetchWithSession({ session, endpoint, data = {}, method = 
 
         return response;
     } catch (error) {
-        logError('Error fetching data from endpoint:', error);
+        if (error?.response?.status === 400 || error?.response?.status === 409) {
+            logInfo('Expected client error fetching data from endpoint:', error?.message);
+        } else {
+            logError('Error fetching data from endpoint:', error);
+        }
 
         // Both the 401 ({error, nextStep}) and 403 MFA-guard ({code, message,
         // nextStep}) error shapes carry `nextStep` at the top level even

@@ -125,14 +125,32 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
     }).then((data) => {
       setIsSubmitted(true);
       onRequestDone && onRequestDone(data);
-    }).catch((error) => {
-      showError(t('professions.errors.failed_to_send_request', { error }), [
-        {
-          title: 'OK',
-          backgroundColor: '#EF4444',
-          textColor: '#FFFFFF'
-        },
-      ]);
+    }).catch((err) => {
+      if (err?.response?.status === 400) {
+        showWarning(t('professions.warnings.validation_failed'), [
+          {
+            title: 'OK',
+            backgroundColor: '#F59E0B',
+            textColor: '#FFFFFF'
+          },
+        ]);
+      } else if (err?.response?.status === 409) {
+        showWarning(t('professions.warnings.already_requested'), [
+          {
+            title: 'OK',
+            backgroundColor: '#F59E0B',
+            textColor: '#FFFFFF'
+          },
+        ]);
+      } else {
+        showError(t('professions.errors.failed_to_send_request', { error: err }), [
+          {
+            title: 'OK',
+            backgroundColor: '#EF4444',
+            textColor: '#FFFFFF'
+          },
+        ]);
+      }
     }).finally(() => {
       setAppLoading(false);
     });
@@ -151,14 +169,32 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
       setIsAddModalVisible(false);
       setIsSubmitted(true);
       onRequestDone && onRequestDone(data);
-    }).catch((error) => {
-      showError(t('professions.errors.failed_to_send_request', { error }), [
-        {
-          title: 'OK',
-          backgroundColor: '#EF4444',
-          textColor: '#FFFFFF'
-        },
-      ]);
+    }).catch((err) => {
+      if (err?.response?.status === 400) {
+        showWarning(t('professions.warnings.validation_failed'), [
+          {
+            title: 'OK',
+            backgroundColor: '#F59E0B',
+            textColor: '#FFFFFF'
+          },
+        ]);
+      } else if (err?.response?.status === 409) {
+        showWarning(t('professions.warnings.already_requested'), [
+          {
+            title: 'OK',
+            backgroundColor: '#F59E0B',
+            textColor: '#FFFFFF'
+          },
+        ]);
+      } else {
+        showError(t('professions.errors.failed_to_send_request', { error: err }), [
+          {
+            title: 'OK',
+            backgroundColor: '#EF4444',
+            textColor: '#FFFFFF'
+          },
+        ]);
+      }
     }).finally(() => {
       setAppLoading(false);
     });
@@ -280,7 +316,7 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
     // Success view styles
     successContainer: {
       alignItems: 'center',
-      padding: sizes.padding,
+      width: '100%',
     },
     successIconContainer: {
       width: sizes.successIconContainerSize,
@@ -312,7 +348,7 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
       justifyContent: 'center',
       alignItems: 'center',
       marginTop: sizes.successButtonMarginTop,
-      width: '100%',
+      width: sizes.buttonWidth,
     },
     okButtonText: {
       color: themeController.current?.buttonTextColorPrimary,

@@ -241,7 +241,7 @@ export default function Jobs() {
     const web = (size) => scaleByHeight(size, height);
     const mobile = (size) => scaleByHeightMobile(size, height);
 
-    const panelHeight = isWebLandscape ? web(65) : mobile(81);
+    const panelHeight = isWebLandscape ? web(65) : mobile(83);
     const badgeSize = isWebLandscape ? web(20) : panelHeight * 0.25;
 
     return {
@@ -251,24 +251,25 @@ export default function Jobs() {
       badgeSize,
       underlineHeight: isWebLandscape ? web(2) : mobile(2),
       globalUnderlineSpace: isWebLandscape ? web(10) : mobile(10),
+      tabPaddingTop: panelHeight * 0.2,
       tabPaddingBottom: panelHeight * 0.1,
+      titleMarginTop: panelHeight * 0.05,
       badgeTop: -badgeSize * 0.3,
       badgeRight: -badgeSize * 0.8,
       badgePaddingHorizontal: badgeSize * 0.3,
       badgeFontSize: badgeSize * 0.6,
-      titleHeight: panelHeight * 0.35,
       titlePaddingHorizontal: isWebLandscape ? web(4) : mobile(4),
       underlineBorderRadius: isWebLandscape ? web(2) : mobile(2),
     };
   }, [height, isWebLandscape]);
-  
+
   return (
     <View style={{ flex: 1, userSelect: 'none' }}>
       {/* Заголовки вкладок */}
       <View
         style={{
           flexDirection: 'row',
-          height: sizes.panelHeight,
+          minHeight: sizes.panelHeight,
           backgroundColor: themeController.current?.backgroundColor,
           overflow: 'hidden',
         }}
@@ -281,7 +282,8 @@ export default function Jobs() {
               style={{
                 flex: 1,
                 alignItems: 'center',
-                justifyContent: 'flex-end',
+                justifyContent: 'flex-start',
+                paddingTop: sizes.tabPaddingTop,
                 paddingBottom: sizes.tabPaddingBottom,
               }}
             >
@@ -329,8 +331,8 @@ export default function Jobs() {
               {/* Заголовок */}
               <View
                 style={{
-                  height: sizes.titleHeight,
-                  justifyContent: 'center',
+                  justifyContent: 'flex-start',
+                  marginTop: sizes.titleMarginTop,
                   paddingHorizontal: sizes.titlePaddingHorizontal,
                 }}
               >

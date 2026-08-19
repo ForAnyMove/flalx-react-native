@@ -1775,7 +1775,7 @@ function InfoField({
         styles.profileInfoString,
         {
           width:
-            field === 'email' || field === 'phoneNumber'
+            (field === 'email' || field === 'phoneNumber') && isLandscape
               ? '48.5%'
               : Platform.OS === 'web' && isLandscape && multiline
                 ? '48.5%'
