@@ -258,6 +258,12 @@ export default function ShowJobModal({
 
   const [status, setStatus] = useState(initialStatus || 'store-waiting');
 
+  useEffect(() => {
+    if (currentJobId) {
+      setStatus(initialStatus || 'store-waiting');
+    }
+  }, [initialStatus, currentJobId]);
+
   const prevJobLocation = useRef(null);
 
   useEffect(() => {
