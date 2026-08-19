@@ -12,8 +12,10 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
 import { useWindowInfo } from '../../context/windowContext';
+import { useNotification } from '../../src/render';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
+import { validatePersonName } from '../../utils/nameValidation';
 import CustomTextInput from '../ui/CustomTextInput';
 
 const UpdateUserDataModal = ({
@@ -25,6 +27,7 @@ const UpdateUserDataModal = ({
 }) => {
   const { t } = useTranslation();
   const { themeController, languageController } = useComponentContext();
+  const { showWarning } = useNotification();
   const theme = themeController.current;
   const { height, isLandscape } = useWindowInfo();
   const isRTL = languageController.isRTL;
@@ -43,12 +46,23 @@ const UpdateUserDataModal = ({
   }, [visible]);
 
   const handleSave = () => {
-    const updatedData = {};
-    if (firstName !== userData.name) {
-      updatedData.name = firstName;
+    const nameCheck = validatePersonName(firstName);
+    if (!nameCheck.valid) {
+      showWarning(t('my_profile.first_name_invalid'));
+      return;
     }
-    if (surname !== userData.surname) {
-      updatedData.surname = surname;
+    const surnameCheck = validatePersonName(surname);
+    if (!surnameCheck.valid) {
+      showWarning(t('my_profile.surname_invalid'));
+      return;
+    }
+
+    const updatedData = {};
+    if (nameCheck.value !== userData.name) {
+      updatedData.name = nameCheck.value;
+    }
+    if (surnameCheck.value !== userData.surname) {
+      updatedData.surname = surnameCheck.value;
     }
     if (about !== userData.about) {
       updatedData.about = about;
