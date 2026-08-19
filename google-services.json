@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "433988900835",
+    "project_id": "flalx-ec11a",
+    "storage_bucket": "flalx-ec11a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:433988900835:android:c68485170d87770da9f2d6",
+        "android_client_info": {
+          "package_name": "com.yulab.flalx"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIiue4GKjbGolMiYePKHvcxBjU9OGFsaE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

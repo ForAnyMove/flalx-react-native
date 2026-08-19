@@ -38,6 +38,17 @@ export default function providersManager({ session }) {
     [token]
   );
 
+  // Сбрасываем кэш участников при смене аккаунта (или выходе) — тот же
+  // паттерн, что уже в jobsManager.js/couponsManager.js/paymentsManager.js.
+  // Без этого cache (ключ `${jobId}:${userId}`) переживал logout/login: новый
+  // аккаунт мог мгновенно увидеть данные участника (включая раскрытый
+  // email/телефон), которые сервер отдал ещё для ПРЕДЫДУЩЕГО аккаунта, до
+  // того как реальный fetch под новым токеном успевал их перезаписать.
+  useEffect(() => {
+    setCache({});
+    setProviders([]);
+  }, [token]);
+
   async function safeFetch(url, opts) {
     const res = await fetch(url, { ...opts, credentials: 'include' });
     if (!res.ok) {

@@ -297,8 +297,26 @@ export default function jobsManager({ session, user, geolocation }) {
     }
   }
 
-  // авто-загрузка, как только есть сессия и юзер
+  // Сбрасываем все списки при смене аккаунта (или выходе) — тот же паттерн,
+  // что уже в couponsManager.js/paymentsManager.js. Без этого между logout
+  // одного аккаунта и завершением reloadAll() для следующего оставалось окно,
+  // где на экране ещё виден список ПРЕДЫДУЩЕГО аккаунта (например, его job в
+  // "creator.waiting"), но уже под новой, залогиненной сессией — и это не
+  // просто визуальный баг: экран работы рендерит кнопки редактировать/
+  // удалить исходя из того, из какого таба (creator vs provider) её открыли,
+  // а не из реальной сверки job.creator с текущим userId.
   useEffect(() => {
+    setCreatorPending([]);
+    setCreatorWaiting([]);
+    setCreatorInProgress([]);
+    setCreatorDone([]);
+    setExecNew([]);
+    setExecWaiting([]);
+    setExecInProgress([]);
+    setExecDone([]);
+    setJobProducts([]);
+    setProviderProducts([]);
+
     if (serverURL && session?.status && userId) {
       reloadAll();
     }

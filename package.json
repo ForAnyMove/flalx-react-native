@@ -13,7 +13,8 @@
     "build:web:pages": "cross-env PUBLIC_URL=/flalx-react-native/ expo export --platform web --output-dir dist",
     "postbuild:web": "node -e \"require('fs').copyFileSync('dist/index.html','dist/404.html')\"",
     "predeploy": "npm run build:web:pages && npm run postbuild:web",
-    "deploy": "gh-pages -d dist -b gh-pages"
+    "deploy": "gh-pages -d dist -b gh-pages",
+    "build:apk": "eas build --platform android --profile preview"
   },
   "expo": {
     "doctor": {
@@ -49,6 +50,7 @@
     "expo-secure-store": "~14.2.4",
     "expo-sharing": "~13.1.5",
     "expo-status-bar": "~2.2.3",
+    "firebase": "^12.17.1",
     "i18next": "^25.3.6",
     "libphonenumber-js": "^1.13.8",
     "react": "19.0.0",

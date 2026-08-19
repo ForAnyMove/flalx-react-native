@@ -107,3 +107,60 @@ export function addNotificationResponseListener(handler) {
     const sub = Notifications.addNotificationResponseReceivedListener(handler);
     return () => sub.remove();
 }
+
+// ─── FCM Token helpers (Phase 1 — Firebase direct) ──────────────────────────
+
+/**
+ * Obtain the native device push token (FCM on Android, APNs on iOS).
+ * This is the token firebase-admin needs on the server to send pushes
+ * directly, bypassing the Expo push service.
+ *
+ * Returns the raw token string (e.g. "dXXX:APA91b...") or null.
+ *
+ * @returns {Promise<string|null>}
+ */
+export async function getDevicePushToken() {
+    if (Platform.OS === 'web') return null;
+
+    try {
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+
+        if (existingStatus !== 'granted') {
+            const { status } = await Notifications.requestPermissionsAsync();
+            finalStatus = status;
+        }
+
+        if (finalStatus !== 'granted') {
+            logWarn('Push notification permission not granted');
+            return null;
+        }
+
+        const tokenData = await Notifications.getDevicePushTokenAsync();
+        logInfo('Native FCM token obtained:', tokenData.data);
+        return tokenData.data;
+    } catch (e) {
+        logError('Error obtaining device push token:', e);
+        return null;
+    }
+}
+
+/**
+ * Obtain an FCM token for the web platform via the Firebase JS SDK.
+ * Returns the token string or null.
+ *
+ * @param {ServiceWorkerRegistration} [swRegistration] — registration for
+ *   public/firebase-messaging-sw.js, so getToken() reuses it instead of
+ *   registering its own default (misconfigured) service worker.
+ * @returns {Promise<string|null>}
+ */
+export async function getWebPushToken(swRegistration) {
+    if (Platform.OS !== 'web') return null;
+
+    // Lazy-import to avoid bundling firebase on native builds
+    const { getWebFCMToken } = require('./firebaseWebConfig');
+    return await getWebFCMToken(swRegistration);
+}
+
+// Re-export web foreground message listener for convenience
+export { onWebMessage } from './firebaseWebConfig';
