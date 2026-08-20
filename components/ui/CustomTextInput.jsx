@@ -59,7 +59,7 @@ const CustomTextInput = forwardRef((props, ref) => {
     <TextInput
       {...props}
       style={[
-        Platform.OS === 'android' ? { padding: 0, textAlignVertical: props.multiline ? 'top' : 'center' } : {},
+        Platform.OS === 'android' ? { padding: 0, textAlignVertical: props.multiline ? 'top' : 'center', includeFontPadding: false } : {},
         props.style
       ]}
       ref={ref}

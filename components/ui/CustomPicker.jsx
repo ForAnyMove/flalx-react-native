@@ -111,7 +111,8 @@ const CustomPicker = ({
   );
 
   const renderCustomScrollBar = (listHeight) => {
-    if (contentHeight <= listHeight) {
+    // Add a small tolerance for subpixel rendering on web
+    if (contentHeight <= listHeight + 1) {
       return null;
     }
 
@@ -289,6 +290,7 @@ const CustomPicker = ({
               onScroll={handleScroll}
               scrollEventThrottle={16}
               onContentSizeChange={(width, height) => setContentHeight(height)}
+              scrollEnabled={Platform.OS === 'web' ? options.length > 4 : true}
             />
             {renderCustomScrollBar(dropdownHeight)}
           </View>

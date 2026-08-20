@@ -11,7 +11,7 @@ export async function registerDevice(session, pushToken, platform) {
     try {
         await fetchWithSession({
             session,
-            endpoint: '/devices/register',
+            endpoint: '/api/devices/register',
             method: 'POST',
             data: {
                 pushToken,

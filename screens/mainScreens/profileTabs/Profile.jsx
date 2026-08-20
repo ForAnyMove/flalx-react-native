@@ -142,7 +142,8 @@ export default function Profile() {
       buttonsMarginBottom: isWebLandscape ? web(20) : mobile(20),
       infoFieldBorderRadius: isWebLandscape ? web(8) : mobile(8),
       infoFieldPaddingH: isWebLandscape ? web(16) : mobile(16),
-      labelMarginBottom: isWebLandscape ? web(4) : mobile(4),
+      labelMarginBottom: isWebLandscape ? web(4) : Platform.OS === 'android' ? mobile(0) : mobile(4),
+      descriptionLabelMarginBottom: isWebLandscape ? web(4) : Platform.OS === 'android' ? mobile(2) : mobile(4),
       editPanelGap: isWebLandscape ? web(5) : mobile(5),
       oneLineInputHeight: isWebLandscape ? web(20) : mobile(20),
     };
@@ -684,9 +685,9 @@ export default function Profile() {
                     justifyContent: 'space-between',
                     backgroundColor: `${themeController.current?.errorTextColor}14`,
                     borderRadius: sizes.infoFieldBorderRadius / 1.5,
-                    paddingHorizontal: sizes.labelMarginBottom * 2,
-                    paddingVertical: sizes.labelMarginBottom,
-                    marginTop: sizes.labelMarginBottom,
+                    paddingHorizontal: sizes.descriptionLabelMarginBottom * 2,
+                    paddingVertical: sizes.descriptionLabelMarginBottom,
+                    marginTop: sizes.descriptionLabelMarginBottom,
                     width: '100%',
                   }}
                 >
@@ -1822,7 +1823,9 @@ function InfoField({
               {
                 fontSize: sizes.labelFont,
                 color: themeController.current?.formInputLabelColor,
-                marginBottom: sizes.labelMarginBottom,
+                marginBottom: multiline && sizes.descriptionLabelMarginBottom !== undefined
+                  ? sizes.descriptionLabelMarginBottom
+                  : sizes.labelMarginBottom,
               },
               multiline && isRTL && { alignSelf: 'flex-end' },
             ]}

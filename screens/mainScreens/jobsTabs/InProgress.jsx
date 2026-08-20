@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Image,
   Platform,
@@ -33,6 +33,8 @@ export default function InProgressScreen({
   const isRTL = languageController.isRTL;
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [cardHeights, setCardHeights] = useState({});
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
@@ -42,7 +44,7 @@ export default function InProgressScreen({
 
     return {
       cardRadius: isWebLandscape ? web(8) : mobile(8),
-      imageHeight: isWebLandscape ? web(120) : mobile(90),
+      imageHeight: isWebLandscape ? web(120) : mobile(100),
       imageWidth: isWebLandscape ? web(153) : '25%',
       fontTitle: isWebLandscape ? web(18) : mobile(18),
       fontLoading: isWebLandscape ? web(20) : mobile(20),
@@ -56,15 +58,34 @@ export default function InProgressScreen({
     };
   }, [height, isWebLandscape]);
 
-  const filteredJobsList = jobsController.executor.inProgress
-    .filter((job) =>
-      filteredJobs.length > 0 ? filteredJobs.includes(job.type.key) || filteredJobs.includes(job.subType.key) : true
-    )
-    .filter((job) =>
-      [tField(job.type, 'name'), job.description].some((field) =>
-        field?.toLowerCase()?.includes(searchValue?.toLowerCase())
+  const mockJob = {
+    id: 'mock-123',
+    type: { key: 'cleaner', name: 'Cleaning', name_i18n: { en: 'Cleaning', ru: 'Уборка', he: 'ניקיון' } },
+    subType: { key: 'general', name: 'General', name_i18n: { en: 'General', ru: 'Генеральная', he: 'כללי' } },
+    title: 'Тестовый заголовок заявки',
+    description: 'This is a mock description for testing purposes. We are testing the display of description, price, and dates.',
+    price: '150',
+    proposed_price: '150',
+    startDateTime: '2026-08-25T10:00:00+00:00',
+    endDateTime: '2026-08-25T14:00:00+00:00',
+    proposed_time_from: '2026-08-25T10:00:00+00:00',
+    proposed_time_to: '2026-08-25T14:00:00+00:00',
+    images: [],
+    creator: 'mock-creator-id',
+  };
+
+  const filteredJobsList = [
+    mockJob,
+    ...jobsController.executor.inProgress
+      .filter((job) =>
+        filteredJobs.length > 0 ? filteredJobs.includes(job.type.key) || filteredJobs.includes(job.subType.key) : true
       )
-    );
+      .filter((job) =>
+        [tField(job.type, 'name'), job.description].some((field) =>
+          field?.toLowerCase()?.includes(searchValue?.toLowerCase())
+        )
+      )
+  ];
 
   return (
     <View
@@ -110,6 +131,21 @@ export default function InProgressScreen({
         >
           {filteredJobsList.map((job, index) => {
             const hasImage = job.images && job.images.length > 0;
+            const currentCardHeight = cardHeights[index] || 0;
+            const isTaller = currentCardHeight > sizes.imageHeight + 5;
+
+            const imageRadiusStyle = isRTL && Platform.OS === 'web'
+              ? {
+                borderTopRightRadius: sizes.cardRadius,
+                borderBottomRightRadius: isTaller ? 0 : sizes.cardRadius,
+                borderBottomLeftRadius: isTaller ? sizes.cardRadius : 0,
+              }
+              : {
+                borderTopLeftRadius: sizes.cardRadius,
+                borderBottomLeftRadius: isTaller ? 0 : sizes.cardRadius,
+                borderBottomRightRadius: isTaller ? sizes.cardRadius : 0,
+              };
+
             return (
               <TouchableOpacity
                 key={index}
@@ -118,6 +154,12 @@ export default function InProgressScreen({
                   { marginBottom: sizes.cardMarginBottom },
                 ]}
                 onPress={() => openJobDetail(job, 'jobs-in-progress')}
+                onLayout={(e) => {
+                  const height = e.nativeEvent.layout.height;
+                  if (cardHeights[index] !== height) {
+                    setCardHeights(prev => ({ ...prev, [index]: height }));
+                  }
+                }}
               >
                 <View
                   style={[
@@ -146,15 +188,7 @@ export default function InProgressScreen({
                             marginRight: sizes.imageMargin,
                             marginLeft: 0,
                           }),
-                        ...(isRTL && Platform.OS === 'web'
-                          ? {
-                            borderTopRightRadius: sizes.cardRadius,
-                            borderBottomRightRadius: sizes.cardRadius,
-                          }
-                          : {
-                            borderTopLeftRadius: sizes.cardRadius,
-                            borderBottomLeftRadius: sizes.cardRadius,
-                          }),
+                        ...imageRadiusStyle,
                       },
                     ]}
                   >
@@ -190,6 +224,8 @@ export default function InProgressScreen({
                     </Text>
                     {job.description ? (
                       <Text
+                        numberOfLines={1}
+                        ellipsizeMode='tail'
                         style={[
                           styles.description,
                           {
@@ -198,6 +234,7 @@ export default function InProgressScreen({
                               isRTL && Platform.OS === 'web' ? 'right' : 'left',
                             fontSize: sizes.fontDescription,
                             marginTop: sizes.descriptionMarginTop,
+                            width: '100%',
                           },
                         ]}
                       >
@@ -230,13 +267,13 @@ const styles = {
   cardContainer: {},
   cardContent: {
     flexDirection: 'row',
-    alignItems: 'center',
     position: 'relative',
   },
   imageContainer: {
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
+    alignSelf: 'flex-start',
   },
   image: {
     width: '100%',
@@ -250,8 +287,8 @@ const styles = {
   },
   textContent: {
     flex: 1,
-    height: Platform.OS === 'web' ? '80%' : undefined,
     justifyContent: 'center',
+    paddingVertical: 10,
   },
   title: {
     // fontWeight: '600',

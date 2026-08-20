@@ -8,6 +8,8 @@ import {
   Platform,
   Image,
   ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import { useWindowInfo } from '../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
@@ -304,8 +306,10 @@ const RequestProfessionModal = ({
   return (
     <>
       <Modal visible={visible && !isAddModalVisible} transparent={true} animationType='fade'>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <View style={styles.modalContainer}>
             {isSubmitted ? (
               <>
                 <View style={styles.successContainer}>
@@ -493,7 +497,9 @@ const RequestProfessionModal = ({
               </>
             )}
           </View>
+            </TouchableWithoutFeedback>
         </View>
+        </TouchableWithoutFeedback>
       </Modal>
       <AddProfessionModal
         visible={visible && isAddModalVisible}

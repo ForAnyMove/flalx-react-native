@@ -47,8 +47,7 @@ const AutocompletePicker = ({
       pickerHeight: isWebLandscape ? web(64) : mobile(64),
       borderRadius: isWebLandscape ? web(8) : mobile(8),
       inputContainerPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
-      labelMarginBottom: isWebLandscape ? web(4) : mobile(4),
-      androidInputHeight: scale(20),
+      labelMarginBottom: isWebLandscape ? web(4) : Platform.OS === 'android' ? -mobile(2) : mobile(4),
       labelGap: scale(3),
       iconSize: scale(24),
     };
@@ -297,9 +296,7 @@ const AutocompletePicker = ({
                 fontFamily: 'Rubik-Regular',
                 textAlign: isRTL ? 'right' : 'left',
               },
-              Platform.OS === 'android' && {
-                height: sizes.androidInputHeight,
-              },
+              Platform.OS === 'android' && {},
             ]}
           />
           {arrowIcon && (

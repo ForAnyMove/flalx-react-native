@@ -235,8 +235,8 @@ export default function NewJobModal({
       font: isWebLandscape ? webLandscapeScale(12) : mobileScale(12),
       inputFont: isWebLandscape ? webLandscapeScale(16) : mobileScale(16),
       baseFont: isWebLandscape ? webLandscapeScale(16) : mobileScale(16),
-      labelMarginBottom: isWebLandscape ? webLandscapeScale(4) : mobileScale(4),
-      androidInputHeight: isWebLandscape ? webLandscapeScale(20) : mobileScale(20),
+      labelMarginBottom: isWebLandscape ? webLandscapeScale(4) : Platform.OS === 'android' ? -mobileScale(2) : mobileScale(4),
+      descriptionLabelMarginBottom: isWebLandscape ? webLandscapeScale(4) : Platform.OS === 'android' ? mobileScale(2) : mobileScale(4),
       padding: isWebLandscape ? webLandscapeScale(4) : mobileScale(8),
       inputContainerPaddingHorizontal: isWebLandscape
         ? webLandscapeScale(16)
@@ -720,7 +720,7 @@ export default function NewJobModal({
           },
           isRTL && { textAlign: 'right' },
           isWebLandscape && { fontSize: sizes.font },
-          Platform.OS === 'android' && !isWebLandscape && { marginBottom: 0 },
+          Platform.OS === 'android' && !isWebLandscape && { marginBottom: sizes.descriptionLabelMarginBottom },
         ]}
       >
         {t('newJob.description', { defaultValue: 'Description' })}
@@ -810,7 +810,6 @@ export default function NewJobModal({
             isAndroid && {
               padding: 0,
               margin: 0,
-              height: sizes.androidInputHeight,
             },
           ]}
           keyboardType='numeric'

@@ -44,13 +44,14 @@ export const NotificationModal = ({
 }) => {
     const slideAnim = useRef(new Animated.Value(-200)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
-    const { languageController } = useComponentContext();
+    const { languageController, themeController } = useComponentContext();
     const isRTL = languageController?.isRTL;
+    const theme = themeController?.current;
 
     const typeConfig = getTypeConfig(type);
     const markdownStyle = {
-        body: { textAlign: isRTL ? 'right' : 'left', writingDirection: isRTL ? 'rtl' : 'ltr' },
-        paragraph: { textAlign: isRTL ? 'right' : 'left', writingDirection: isRTL ? 'rtl' : 'ltr' },
+        body: { textAlign: isRTL ? 'right' : 'left', writingDirection: isRTL ? 'rtl' : 'ltr', color: theme?.textColor || '#1F2937' },
+        paragraph: { textAlign: isRTL ? 'right' : 'left', writingDirection: isRTL ? 'rtl' : 'ltr', color: theme?.textColor || '#1F2937' },
     };
 
     useEffect(() => {
@@ -95,7 +96,7 @@ export const NotificationModal = ({
             key={index}
             style={[
                 {
-                    backgroundColor: button.backgroundColor || '#E5E7EB',
+                    backgroundColor: button.backgroundColor || theme?.buttonColorSecondaryDefault || '#E5E7EB',
                     paddingHorizontal: 20,
                     paddingVertical: 12,
                     borderRadius: 8,
@@ -111,7 +112,7 @@ export const NotificationModal = ({
             }}
         >
             <Text style={{
-                color: button.textColor || '#374151',
+                color: button.textColor || theme?.buttonTextColorSecondaryDefault || '#374151',
                 fontWeight: '400',
                 fontSize: 16,
                 textAlign: isRTL ? 'right' : 'left',
@@ -156,7 +157,7 @@ export const NotificationModal = ({
                 <Animated.View
                     style={[
                         {
-                            backgroundColor: '#FFFFFF',
+                            backgroundColor: theme?.backgroundColor || '#FFFFFF',
                             borderRadius: 16,
                             maxWidth: 550,
                             minWidth: 400,
@@ -254,7 +255,7 @@ export const NotificationModal = ({
                     <Animated.View
                         style={[
                             {
-                                backgroundColor: '#FFFFFF',
+                                backgroundColor: theme?.backgroundColor || '#FFFFFF',
                                 borderRadius: 16,
                                 marginHorizontal: 20,
                                 maxWidth: Platform.OS === 'web' ? 550 : Math.min(screenWidth - 40, 400),

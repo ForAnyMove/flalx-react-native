@@ -129,7 +129,9 @@ export default function CustomDateTimeInput({
     ? formatLocalDateTime(localValue, null, includeTime)
     : value
       ? formatDisplayDateTime(selectedDate, includeTime)
-      : placeholder || t('dateTimePicker.select');
+      : readOnly
+        ? t('common.none', { defaultValue: 'None' })
+        : placeholder || t('dateTimePicker.select');
   const displayWithTimezone =
     (value || localValue) && showTimezone && selectedTimezone
       ? `${displayValue}, ${formatTimezoneLabel(selectedTimezone)}`

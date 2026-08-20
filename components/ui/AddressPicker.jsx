@@ -17,7 +17,11 @@ import { API_BASE_URL } from '../../utils/config';
 import { useNotification } from '../../src/render';
 import { logError } from '../../utils/log_util';
 import { useWindowInfo } from '../../context/windowContext';
+import { LogBox } from 'react-native';
 
+LogBox.ignoreLogs([
+  'VirtualizedLists should never be nested inside plain ScrollViews',
+]);
 const AddressPicker = ({
   label,
   onLocationSelect,
@@ -66,10 +70,9 @@ const AddressPicker = ({
       pickerHeight: isWebLandscape ? web(64) : mobile(64),
       borderRadius: isWebLandscape ? web(8) : mobile(8),
       inputContainerPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
-      labelMarginBottom: isWebLandscape ? web(4) : mobile(4),
-      androidInputHeight: scale(20),
+      labelMarginBottom: isWebLandscape ? web(4) : Platform.OS === 'android' ? -mobile(2) : mobile(4),
       labelGap: scale(3),
-      suggestionItemWidth: isWebLandscape ? web(330) : '100%',
+      suggestionItemWidth: isWebLandscape ? web(330) : undefined,
       suggestionItemLeft: scale(16),
       suggestionMaxHeight: scale(230),
       suggestionItemHeight: scale(57),
@@ -128,7 +131,6 @@ const AddressPicker = ({
       textAlignVertical: 'center',
       flex: 0,
       margin: Platform.OS === 'android' ? 0 : undefined,
-      height: Platform.OS === 'android' ? sizes.androidInputHeight : undefined,
     },
     suggestionsContainer: {
       backgroundColor: themeController.current?.formInputBackground,
@@ -136,7 +138,8 @@ const AddressPicker = ({
       width: sizes.suggestionItemWidth,
       position: 'absolute',
       top: '100%',
-      left: -sizes.suggestionItemLeft,
+      left: -(sizes.suggestionItemLeft + (Platform.OS === 'web' ? 0 : -15)),
+      right: isWebLandscape ? undefined : -(sizes.suggestionItemLeft + (Platform.OS === 'web' ? 0 : -15)),
       borderTopRightRadius: 0,
       borderTopLeftRadius: 0,
       borderBottomRightRadius: sizes.borderRadius,

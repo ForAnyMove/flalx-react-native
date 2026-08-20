@@ -1,4 +1,4 @@
-﻿import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -35,6 +35,7 @@ export default function NewScreen({
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [cardHeights, setCardHeights] = useState({});
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
@@ -224,6 +225,22 @@ export default function NewScreen({
               let extraMarkerColor;
               let extraMarkerText;
 
+              const currentCardHeight = cardHeights[index] || 0;
+              const isTaller = currentCardHeight > sizes.imageHeight + 5;
+              
+              const imageRadius = sizes.cardRadius * 0.6;
+              const imageRadiusStyle = isRTL && Platform.OS === 'web'
+                ? {
+                    borderTopRightRadius: imageRadius,
+                    borderBottomRightRadius: isTaller ? 0 : imageRadius,
+                    borderBottomLeftRadius: isTaller ? imageRadius : 0,
+                  }
+                : {
+                    borderTopLeftRadius: imageRadius,
+                    borderBottomLeftRadius: isTaller ? 0 : imageRadius,
+                    borderBottomRightRadius: isTaller ? imageRadius : 0,
+                  };
+
               if (job?.jobType) {
                 switch (job.jobType) {
                   case 'top':
@@ -278,6 +295,12 @@ export default function NewScreen({
                     { marginBottom: sizes.cardMarginBottom },
                   ]}
                   onPress={() => openJobDetail(job, 'jobs-new')}
+                  onLayout={(e) => {
+                    const height = e.nativeEvent.layout.height;
+                    if (cardHeights[index] !== height) {
+                      setCardHeights(prev => ({...prev, [index]: height}));
+                    }
+                  }}
                 >
                   <View
                     style={[
@@ -308,15 +331,7 @@ export default function NewScreen({
                               marginRight: sizes.imageMargin,
                               marginLeft: 0,
                             }),
-                          ...(isRTL && Platform.OS === 'web'
-                            ? {
-                              borderTopRightRadius: sizes.cardRadius * 0.6,
-                              borderBottomRightRadius: sizes.cardRadius * 0.6,
-                            }
-                            : {
-                              borderTopLeftRadius: sizes.cardRadius * 0.6,
-                              borderBottomLeftRadius: sizes.cardRadius * 0.6,
-                            }),
+                          ...imageRadiusStyle,
                         },
                       ]}
                     >
@@ -352,6 +367,8 @@ export default function NewScreen({
                       </Text>
                       {job.description ? (
                         <Text
+                          numberOfLines={1}
+                          ellipsizeMode='tail'
                           style={[
                             styles.description,
                             {
@@ -362,6 +379,7 @@ export default function NewScreen({
                                   : 'left',
                               fontSize: sizes.fontDescription,
                               marginTop: sizes.descriptionMarginTop,
+                              width: '100%',
                             },
                           ]}
                         >
@@ -429,13 +447,13 @@ const styles = {
   cardContainer: {},
   cardContent: {
     flexDirection: 'row',
-    alignItems: 'center',
     position: 'relative',
   },
   imageContainer: {
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
+    alignSelf: 'flex-start',
   },
   image: {
     width: '100%',
@@ -449,8 +467,8 @@ const styles = {
   },
   textContent: {
     flex: 1,
-    height: Platform.OS === 'web' ? '80%' : undefined,
     justifyContent: 'center',
+    paddingVertical: 10,
   },
   title: {
     // fontWeight: '600',
