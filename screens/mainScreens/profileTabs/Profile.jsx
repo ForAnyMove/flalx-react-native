@@ -37,12 +37,13 @@ import { uploadAvatarForModeration, dismissAvatarRejection } from '../../../src/
 import { dismissAboutRejection } from '../../../src/api/users';
 import { convertImageToBase64 } from '../../../utils/imageToBase64';
 import { exportHtmlToPdf } from '../../../utils/htmlToPdf';
+import { validatePersonName } from '../../../utils/nameValidation';
 
 export default function Profile() {
   const { user, themeController, languageController, session, setAppLoading } =
     useComponentContext();
   const [userState, setUserState] = useState(user.current || {});
-  const { showError, showInfo } = useNotification();
+  const { showError, showInfo, showWarning } = useNotification();
   // While unconfirmed, Supabase doesn't actually have the email set on
   // auth.user yet — the backend surfaces the entered-but-unconfirmed
   // address separately as authUser.pendingEmail until the confirmation link
@@ -150,6 +151,30 @@ export default function Profile() {
   }, [height, isWebLandscape]);
 
   const handleUpdateUserData = async (data) => {
+    // handleUpdateUserData is the single save path shared by
+    // UpdateUserDataModal (which already validates before calling onSave) AND
+    // the inline "editingFields" edit mode below (Save button at ~line 794),
+    // which writes straight to editingFields via InfoField's onChangeText with
+    // no validation of its own. Re-checking here closes that second path —
+    // without it, name/surname could be saved empty via inline edit even
+    // though the modal was already fixed to reject that.
+    if ('name' in data) {
+      const nameCheck = validatePersonName(data.name);
+      if (!nameCheck.valid) {
+        showWarning(t('my_profile.first_name_invalid'));
+        return;
+      }
+      data = { ...data, name: nameCheck.value };
+    }
+    if ('surname' in data) {
+      const surnameCheck = validatePersonName(data.surname);
+      if (!surnameCheck.valid) {
+        showWarning(t('my_profile.surname_invalid'));
+        return;
+      }
+      data = { ...data, surname: surnameCheck.value };
+    }
+
     // Same "resubmitting clears an unread rejection" behavior as
     // uploadAvatar's hadUnreadRejection below — about moderation works
     // exactly the same way.
@@ -792,6 +817,18 @@ export default function Profile() {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
+                  // Validate here (not just inside handleUpdateUserData) so an
+                  // invalid inline edit keeps the field open for correction
+                  // instead of silently reverting to the old value the moment
+                  // edit mode closes below.
+                  if ('name' in editingFields && !validatePersonName(editingFields.name).valid) {
+                    showWarning(t('my_profile.first_name_invalid'));
+                    return;
+                  }
+                  if ('surname' in editingFields && !validatePersonName(editingFields.surname).valid) {
+                    showWarning(t('my_profile.surname_invalid'));
+                    return;
+                  }
                   handleUpdateUserData(editingFields);
                   setBaseInfoEditMode(false);
                 }}

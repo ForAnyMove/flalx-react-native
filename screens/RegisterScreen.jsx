@@ -32,6 +32,7 @@ import { useLocalization } from '../src/services/useLocalization';
 import RequestProfessionModal from '../components/RequestProfessionModal';
 import { PROFESSION_TYPES } from '../constants/enums';
 import { useNotification } from '../src/render';
+import { validatePersonName, NAME_MAX_LENGTH } from '../utils/nameValidation';
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
@@ -43,7 +44,7 @@ export default function RegisterScreen() {
     jobTypesController,
     setAppLoading,
   } = useComponentContext();
-  const { showError } = useNotification();
+  const { showError, showWarning } = useNotification();
   const theme = themeController.current;
   const isRTL = languageController.isRTL;
   const { tField } = useLocalization(languageController.current);
@@ -192,8 +193,19 @@ export default function RegisterScreen() {
     setIsRegisterProfessionModalVisible(false);
   };
 
-  const isNameValid = form.name.trim().length > 1;
-  const isSurnameValid = form.surname.trim().length > 1;
+  const nameCheck = validatePersonName(form.name);
+  const surnameCheck = validatePersonName(form.surname);
+  const isNameValid = nameCheck.valid;
+  const isSurnameValid = surnameCheck.valid;
+  // Только для непустого, но некорректного значения — пустое поле и так
+  // блокирует кнопку "Next" (см. "(required)" рядом с лейблом), не нужно
+  // ещё и пугать пользователя ошибкой до того, как он вообще начал печатать.
+  const nameError = form.name.trim() && !isNameValid
+    ? t('register.name_invalid', { max: NAME_MAX_LENGTH })
+    : null;
+  const surnameError = form.surname.trim() && !isSurnameValid
+    ? t('register.surname_invalid', { max: NAME_MAX_LENGTH })
+    : null;
 
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -213,11 +225,15 @@ export default function RegisterScreen() {
   }
 
   async function handleSubmit() {
+    if (!isNameValid || !isSurnameValid) {
+      showWarning(t('register.name_surname_invalid'));
+      return;
+    }
     try {
       setLoading(true);
       const updatedUser = {};
-      if (form.name) updatedUser.name = form.name;
-      if (form.surname) updatedUser.surname = form.surname;
+      updatedUser.name = nameCheck.value;
+      updatedUser.surname = surnameCheck.value;
       if (form.description) updatedUser.about = form.description;
       if (avatarUrl) updatedUser.avatar = avatarUrl;
       if (selectedJobTypes.length > 0) updatedUser.jobTypes = selectedJobTypes;
@@ -786,6 +802,7 @@ export default function RegisterScreen() {
                     placeholder={t('register.name')}
                     value={form.name}
                     onChangeText={(txt) => setForm({ ...form, name: txt })}
+                    maxLength={NAME_MAX_LENGTH}
                     style={[
                       styles.input,
                       Platform.OS === 'android' ? {
@@ -826,6 +843,19 @@ export default function RegisterScreen() {
                     placeholderTextColor={theme.formInputPlaceholderColor}
                   />
                 </View>
+                {nameError && (
+                  <Text
+                    style={{
+                      color: theme.errorTextColor,
+                      fontSize: sizes.labelFontSize,
+                      textAlign: isRTL ? 'right' : 'left',
+                      marginTop: -sizes.inputBlockMarginBottom / 2,
+                      marginBottom: sizes.inputBlockMarginBottom / 2,
+                    }}
+                  >
+                    {nameError}
+                  </Text>
+                )}
 
                 <View
                   style={[
@@ -858,6 +888,7 @@ export default function RegisterScreen() {
                     placeholder={t('register.surname')}
                     value={form.surname}
                     onChangeText={(txt) => setForm({ ...form, surname: txt })}
+                    maxLength={NAME_MAX_LENGTH}
                     style={[
                       styles.input,
                       Platform.OS === 'android' ? {
@@ -898,6 +929,19 @@ export default function RegisterScreen() {
                     placeholderTextColor={theme.formInputPlaceholderColor}
                   />
                 </View>
+                {surnameError && (
+                  <Text
+                    style={{
+                      color: theme.errorTextColor,
+                      fontSize: sizes.labelFontSize,
+                      textAlign: isRTL ? 'right' : 'left',
+                      marginTop: -sizes.inputBlockMarginBottom / 2,
+                      marginBottom: sizes.inputBlockMarginBottom / 2,
+                    }}
+                  >
+                    {surnameError}
+                  </Text>
+                )}
 
                 <View
                   style={[
