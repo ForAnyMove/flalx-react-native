@@ -2424,7 +2424,7 @@ export default function ShowJobModal({
               />
             </TouchableOpacity>
             <Text style={[styles.logo, dynamicStyles.logo]}>FLALX</Text>
-            {user.current?.id === currentJobInfo?.creator_id ? (
+            {user.current?.id === (currentJobInfo?.creator?.id ?? currentJobInfo?.creator) ? (
               <TouchableOpacity
                 onPress={() => setHistoryModal(true)}
               >
