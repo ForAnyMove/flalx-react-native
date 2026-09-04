@@ -171,6 +171,7 @@ const PhoneField = forwardRef(function PhoneField(
         row: {
           flexDirection: 'row',
           alignItems: 'center',
+          width: '100%',
         },
         pickerButton: {
           flexDirection: 'row',
@@ -200,6 +201,7 @@ const PhoneField = forwardRef(function PhoneField(
         input: {
           flex: 1,
           textAlign: isRTL ? 'right' : 'left',
+          minWidth: 0,
         },
       }),
     [isRTL, theme]
@@ -242,6 +244,7 @@ const PhoneField = forwardRef(function PhoneField(
           autoFocus={autoFocus}
           editable={!disabled}
           value={formatted}
+          maxLength={15}
           onChangeText={(text) => setRawNumber(text.replace(/[^\d]/g, ''))}
           returnKeyType={returnKeyType}
           onSubmitEditing={onSubmitEditing}

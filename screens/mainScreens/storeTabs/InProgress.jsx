@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   Image,
   Platform,
@@ -27,7 +27,7 @@ export default function InProgressScreen({
   const openJobDetail = useJobDetailNavigation({ setCurrentJobId, setShowJobModalVisible, setJobModalStatus, setJobStatusInfo });
   const { tField } = useLocalization(languageController.current);
   const { t } = useTranslation();
-  const { height, isLandscape } = useWindowInfo();
+  const { width, height, isLandscape } = useWindowInfo();
   const isRTL = languageController.isRTL;
   const [searchValue, setSearchValue] = useState('');
 
@@ -46,14 +46,14 @@ export default function InProgressScreen({
       fontDescription: isWebLandscape ? web(16) : mobile(16),
       badgeSize: isWebLandscape ? web(20) : mobile(20),
       badgeFont: isWebLandscape ? web(12) : mobile(12),
-      scrollContainerWidth: isWebLandscape ? '60%' : '100%',
+      scrollContainerWidth: isWebLandscape ? (width / height < 1.3 ? '85%' : '60%') : '100%',
       imageMargin: isWebLandscape ? web(10) : mobile(10),
       containerPaddingH: isWebLandscape ? web(10) : mobile(10),
       containerPaddingV: isWebLandscape ? web(14) : (Platform.OS !== 'web' ? mobile(6) : mobile(14)),
       cardMarginBottom: isWebLandscape ? web(8) : (Platform.OS !== 'web' ? mobile(4) : mobile(8)),
       descriptionMarginTop: isWebLandscape ? web(2) : mobile(2),
     };
-  }, [height, isWebLandscape]);
+  }, [width, height, isWebLandscape]);
 
   const filteredJobsList = jobsController.creator.inProgress
     .filter((job) =>
@@ -110,9 +110,11 @@ export default function InProgressScreen({
                   style={[
                     styles.cardContent,
                     {
-                      backgroundColor:
-                        themeController.current?.formInputBackground,
+                      backgroundColor: themeController.current?.formInputBackground,
                       borderRadius: sizes.cardRadius,
+                      flexDirection: isRTL && Platform.OS !== 'web' ? 'row-reverse' : 'row',
+                      paddingLeft: isRTL ? sizes.imageMargin : 0,
+                      paddingRight: !isRTL ? sizes.imageMargin : 0,
                     },
                   ]}
                 >
@@ -181,8 +183,7 @@ export default function InProgressScreen({
                           styles.description,
                           {
                             color: themeController.current?.unactiveTextColor,
-                            textAlign:
-                              isRTL && Platform.OS === 'web' ? 'right' : 'left',
+                            textAlign: isRTL ? 'right' : 'left',
                             fontSize: sizes.fontDescription,
                             marginTop: sizes.descriptionMarginTop,
                           },

@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   Image,
   Modal,
@@ -28,7 +28,7 @@ export default function DoneScreen({
   const openJobDetail = useJobDetailNavigation({ setCurrentJobId, setShowJobModalVisible, setJobModalStatus, setJobStatusInfo });
   const { tField } = useLocalization(languageController.current);
   const { t } = useTranslation();
-  const { height, isLandscape } = useWindowInfo();
+  const { width, height, isLandscape } = useWindowInfo();
   const isRTL = languageController.isRTL;
   const [searchValue, setSearchValue] = useState('');
 
@@ -47,7 +47,7 @@ export default function DoneScreen({
       fontDescription: isWebLandscape ? web(16) : mobile(16),
       badgeSize: isWebLandscape ? web(20) : mobile(20),
       badgeFont: isWebLandscape ? web(12) : mobile(12),
-      scrollContainerWidth: isWebLandscape ? '60%' : '100%',
+      scrollContainerWidth: isWebLandscape ? (width / height < 1.3 ? '85%' : '60%') : '100%',
       badgePosition: isWebLandscape ? web(5) : mobile(5),
       personalMarkerBorderWidth: isWebLandscape ? web(2) : mobile(2),
       personalMarkerVP: isWebLandscape ? web(3) : mobile(3),
@@ -62,7 +62,7 @@ export default function DoneScreen({
       descriptionMarginTop: isWebLandscape ? web(2) : mobile(2),
       badgePadding: isWebLandscape ? web(2) : mobile(2),
     };
-  }, [height, isWebLandscape]);
+  }, [width, height, isWebLandscape]);
 
   const filteredJobsList = jobsController.creator.done
     .filter((job) =>
@@ -133,9 +133,11 @@ export default function DoneScreen({
                   style={[
                     styles.cardContent,
                     {
-                      backgroundColor:
-                        themeController.current?.formInputBackground,
+                      backgroundColor: themeController.current?.formInputBackground,
                       borderRadius: sizes.cardRadius,
+                      flexDirection: isRTL && Platform.OS !== 'web' ? 'row-reverse' : 'row',
+                      paddingLeft: isRTL ? sizes.imageMargin : 0,
+                      paddingRight: !isRTL ? sizes.imageMargin : 0,
                     },
                     extraMarkerStyle,
                   ]}
@@ -205,8 +207,7 @@ export default function DoneScreen({
                           styles.description,
                           {
                             color: themeController.current?.unactiveTextColor,
-                            textAlign:
-                              isRTL && Platform.OS === 'web' ? 'right' : 'left',
+                            textAlign: isRTL ? 'right' : 'left',
                             fontSize: sizes.fontDescription,
                             marginTop: sizes.descriptionMarginTop,
                           },

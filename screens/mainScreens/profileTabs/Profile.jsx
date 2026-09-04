@@ -305,16 +305,19 @@ export default function Profile() {
       return;
     }
     const url = `whatsapp://send?phone=${number}`;
+    const webUrl = `https://wa.me/${number}`;
     try {
       const supported = await Linking.canOpenURL(url);
       if (supported) {
         await Linking.openURL(url);
       } else {
-        console.log('WhatsApp is not installed');
-        // Optionally, show an alert to the user
+        console.log('WhatsApp is not installed, falling back to wa.me');
+        await Linking.openURL(webUrl);
       }
     } catch (err) {
       console.error('An error occurred', err);
+      // Fallback in case canOpenURL throws an error
+      Linking.openURL(webUrl).catch(() => {});
     }
   };
 

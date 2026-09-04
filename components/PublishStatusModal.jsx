@@ -117,7 +117,7 @@ const PublishStatusModal = ({
       modalWidth: isWebLandscape ? scale(460) : '92%',
       borderRadius: scale(8),
       containerPaddingVertical: scale(36),
-      containerPaddingHorizontal: scale(75), // Scaled to 75px as required
+      containerPaddingHorizontal: isWebLandscape ? scale(75) : scale(24), // Scaled to 75px as required
       titleSize: scale(24),
       titleMarginBottom: scale(24),
       subtitleSize: scale(16),
@@ -729,7 +729,7 @@ const PublishStatusModal = ({
               }
             }}
           >
-            <Text style={[styles.buttonText, styles.outlinePrimaryButtonText]} numberOfLines={1}>
+            <Text style={[styles.buttonText, styles.outlinePrimaryButtonText]} numberOfLines={2} adjustsFontSizeToFit>
               {getPayButtonLabel()}
             </Text>
           </TouchableOpacity>
@@ -756,16 +756,17 @@ const PublishStatusModal = ({
                 style={{
                   flexDirection: isRTL ? 'row-reverse' : 'row',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: sizes.couponButtonGap,
-                    width: '100%',
-                    paddingHorizontal: sizes.buttonMarginHorizontal,
-                  }}
-                >
-                  <Text style={[styles.buttonText, styles.outlineSecondaryButtonText, { flexShrink: 1, maxWidth: undefined }]} numberOfLines={1} ellipsizeMode="tail">
-                    {t('payment_modal.pay_with_coupon_balance', {
-                      balance: couponsCount,
-                    })}
-                  </Text>
+                  width: '100%',
+                  paddingHorizontal: sizes.buttonMarginHorizontal,
+                }}
+              >
+                <Text style={[styles.buttonText, styles.outlineSecondaryButtonText, { flexShrink: 1, maxWidth: undefined }]} numberOfLines={2} adjustsFontSizeToFit>
+                  {t('payment_modal.pay_with_coupon_balance', {
+                    balance: couponsCount,
+                  })}
+                </Text>
                 <Image
                   source={icons.coupon}
                   style={{
@@ -884,7 +885,7 @@ const PublishStatusModal = ({
                   width: '100%',
                 }}
               >
-                <Text style={[styles.buttonText, styles.outlinePrimaryButtonText, { fontSize: sizes.buttonTextSize, marginHorizontal: sizes.compoundTextMarginHorizontal, flexShrink: 1, maxWidth: undefined }]} numberOfLines={1} ellipsizeMode="tail">
+                <Text style={[styles.buttonText, styles.outlinePrimaryButtonText, { fontSize: sizes.buttonTextSize, marginHorizontal: sizes.compoundTextMarginHorizontal, flexShrink: 1, maxWidth: undefined }]} numberOfLines={2} adjustsFontSizeToFit>
                   {getPayButtonBaseLabel()}
                 </Text>
                 <Text style={{ color: theme.formInputPlaceholderColor, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>+</Text>
@@ -1036,13 +1037,13 @@ const PublishStatusModal = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: sizes.compoundButtonGap,
-                  width: '100%',
-                  paddingHorizontal: sizes.buttonMarginHorizontal,
-                }}
-              >
-                <Text style={[styles.buttonText, styles.outlinePrimaryButtonText, { fontSize: sizes.buttonTextSize, marginHorizontal: sizes.compoundTextMarginHorizontal, flexShrink: 1, maxWidth: undefined }]} numberOfLines={1} ellipsizeMode="tail">
-                  {getPayButtonConfirmBaseLabel()}
-                </Text>
+                width: '100%',
+                paddingHorizontal: sizes.buttonMarginHorizontal,
+              }}
+            >
+              <Text style={[styles.buttonText, styles.outlinePrimaryButtonText, { fontSize: sizes.buttonTextSize, marginHorizontal: sizes.compoundTextMarginHorizontal, flexShrink: 1, maxWidth: undefined }]} numberOfLines={2} adjustsFontSizeToFit>
+                {getPayButtonConfirmBaseLabel()}
+              </Text>
               <Text style={{ color: theme.formInputPlaceholderColor, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>+</Text>
               <Text style={{ color: theme.buttonColorSecondaryDefault, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>1</Text>
               <Text style={{ color: theme.buttonColorSecondaryDefault, fontSize: sizes.buttonTextSize, fontFamily: 'Rubik-Bold' }}>

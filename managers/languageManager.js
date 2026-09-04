@@ -14,10 +14,10 @@ import { translations } from "../utils/i18n/translations";
 // change-email `language` field) — even though the UI itself looked fine,
 // since i18next's fallbackLng silently covers missing "ru" resource keys.
 const supportedLanguages = Object.keys(translations);
-const fallbackLng = "en";
+const fallbackLng = "he";
 
 export default function languageManager() {
-  const [currentLang, setCurrentLang] = useState("en");
+  const [currentLang, setCurrentLang] = useState("he");
   const [rtl, setRtl] = useState(false);
 
   useEffect(() => {

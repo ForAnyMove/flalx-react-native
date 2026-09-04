@@ -10,6 +10,7 @@ import { useComponentContext } from './globalAppContext';
 import { useNotification } from '../src/render';
 import { useArchivedRefs } from '../src/services/useArchivedRefs';
 import { useTranslation } from 'react-i18next';
+import { Platform } from 'react-native';
 
 const WebSocketContext = createContext();
 
@@ -201,18 +202,7 @@ export const WebSocketProvider = ({ children }) => {
       }
       case 'JOB_COMPLETED': {
         const jobId = message.payload?.jobId;
-
-        switch (message.payload?.role) {
-          case 'creator':
-            // notify creator about job has been marked as completed by executor
-            jobsController.reloadCreator();
-            break;
-          case 'executor':
-            // notify executor about job has been marked as completed
-            jobsController.reloadExecutor();
-            break;
-          default:
-        }
+        jobsController.reloadAll();
         break;
       }
       case 'COMMENT_CREATED': {
@@ -404,15 +394,7 @@ export const WebSocketProvider = ({ children }) => {
         const grantedToName = message.payload?.grantedToName;
         const accessType = message.payload?.accessType; // phone, email, social
 
-        switch (message.payload?.role) {
-          case 'owner':
-            // notify user that they granted contact access
-            break;
-          case 'recipient':
-            // notify user that they received contact access
-            break;
-          default:
-        }
+        usersReveal.refresh();
         break;
       }
       case 'CONTACT_ACCESS_REVOKED': {
@@ -421,15 +403,7 @@ export const WebSocketProvider = ({ children }) => {
         const revokedFromName = message.payload?.revokedFromName;
         const accessType = message.payload?.accessType;
 
-        switch (message.payload?.role) {
-          case 'owner':
-            // notify user that they revoked contact access
-            break;
-          case 'recipient':
-            // notify user that their contact access was revoked
-            break;
-          default:
-        }
+        usersReveal.refresh();
         break;
       }
       case 'USER_REGISTERED': {

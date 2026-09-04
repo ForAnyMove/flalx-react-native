@@ -197,6 +197,10 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
         fontFamily: 'Rubik-Medium',
         color: theme.primaryColor,
       },
+      passwordInput: {
+        paddingRight: !isRTL ? (isWebLandscape ? scaleByHeight(40, h) : scaleByHeightMobile(40, h)) : 0,
+        paddingLeft: isRTL ? (isWebLandscape ? scaleByHeight(40, h) : scaleByHeightMobile(40, h)) : 0,
+      },
     };
   }, [width, height, isWebLandscape, isRTL, theme]);
 
@@ -436,7 +440,7 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
             <View style={dynamicStyles.fieldContainer}>
               <Text style={dynamicStyles.label}>{t('auth.password_label')}</Text>
               <CustomTextInput
-                style={dynamicStyles.input}
+                style={[dynamicStyles.input, dynamicStyles.passwordInput]}
                 placeholder='******'
                 placeholderTextColor={theme.formInputPlaceholderColor}
                 secureTextEntry={!showPassword}

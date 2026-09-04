@@ -5,7 +5,7 @@ import { translations } from "./translations";
 
 // Языки, которые мы реально поддерживаем
 const supportedLanguages = Object.keys(translations);
-const fallbackLng = "en";
+const fallbackLng = "he";
 
 // Берём первый системный язык
 const locales = Localization.getLocales();

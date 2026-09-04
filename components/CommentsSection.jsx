@@ -9,6 +9,7 @@ import {
   View,
   Platform,
   Image,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useComponentContext } from '../context/globalAppContext';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +17,7 @@ import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useWindowInfo } from '../context/windowContext';
 import CustomTextInput from './ui/CustomTextInput';
+import { useNotification } from '../src/render';
 
 export default function CommentsSection({
   jobId,
@@ -28,6 +30,7 @@ export default function CommentsSection({
   const { themeController, providersController, languageController } =
     useComponentContext();
   const { t } = useTranslation();
+  const { showError } = useNotification();
   const isRTL = languageController.isRTL;
 
   const [comments, setComments] = useState([]);
@@ -89,19 +92,32 @@ export default function CommentsSection({
   }, [comments]);
 
   const handleAdd = async () => {
-    if (!newText.trim() || rating === 0) return;
+    if (rating === 0) {
+      showError(t('errors.missing_rating', { defaultValue: 'Please select a rating' }));
+      return;
+    }
+    if (!newText.trim()) {
+      showError(t('errors.missing_comment', { defaultValue: 'Please write a comment' }));
+      return;
+    }
 
-    const res = await providersController.setComment(userId, {
-      text: newText.trim(),
-      rating: rating, // send 1-5 rating
-      jobId,
-    });
-    if (res) {
-      setComments((prev) => [res, ...prev]);
-      setNewText('');
-      setRating(0);
-      setAddModal(false);
-      onRated?.();
+    try {
+      const res = await providersController.setComment(userId, {
+        text: newText.trim(),
+        rating: rating, // send 1-5 rating
+        jobId,
+      });
+      if (res) {
+        setComments((prev) => [res, ...prev]);
+        setNewText('');
+        setRating(0);
+        setAddModal(false);
+        onRated?.();
+      } else {
+        showError(t('errors.failed_to_add_comment', { defaultValue: 'Failed to submit rating' }));
+      }
+    } catch (e) {
+      showError(t('errors.failed_to_add_comment', { defaultValue: 'Failed to submit rating' }));
     }
   };
 
@@ -285,7 +301,10 @@ export default function CommentsSection({
 
       {/* Модальное окно добавления */}
       <Modal visible={addModal} animationType='slide' transparent>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
           <View
             style={[
               styles.modalCard,
@@ -299,7 +318,7 @@ export default function CommentsSection({
             ]}
           >
             <View style={styles.modalHeader}>
-              <Text style={{ fontSize: sizes.font }}>{t('comments.add')}</Text>
+              <Text style={{ fontSize: sizes.font, color: themeController.current?.textColor }}>{t('comments.add')}</Text>
             </View>
             <TouchableOpacity
               onPress={() => setAddModal(false)}
@@ -347,6 +366,7 @@ export default function CommentsSection({
               value={newText}
               onChangeText={setNewText}
               placeholder={t('comments.placeholder')}
+              placeholderTextColor={themeController.current?.formInputPlaceholderColor}
               multiline
               style={[
                 styles.input,
@@ -383,7 +403,7 @@ export default function CommentsSection({
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

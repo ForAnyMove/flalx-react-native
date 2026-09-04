@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Image,
   Platform,
@@ -47,7 +47,7 @@ export default function DoneScreen({
       fontTitle: isWebLandscape ? web(18) : mobile(18),
       fontLoading: isWebLandscape ? web(20) : mobile(20),
       fontDescription: isWebLandscape ? web(16) : mobile(16),
-      scrollContainerWidth: isWebLandscape ? '60%' : '100%',
+      scrollContainerWidth: isWebLandscape ? (width / height < 1.3 ? '85%' : '60%') : '100%',
       containerPaddingHorizontal: isWebLandscape ? web(10) : mobile(10),
       containerPaddingVertical: isWebLandscape ? web(14) : (Platform.OS !== 'web' ? mobile(6) : mobile(14)),
       cardMarginBottom: isWebLandscape ? web(8) : (Platform.OS !== 'web' ? mobile(4) : mobile(8)),
@@ -66,7 +66,7 @@ export default function DoneScreen({
       badgePosition: isWebLandscape ? web(5) : mobile(5),
       personalMarkerBorderWidth: isWebLandscape ? web(2) : mobile(2),
     };
-  }, [height, isWebLandscape]);
+  }, [width, height, isWebLandscape]);
 
   const filteredJobsList = jobsController.executor.done
     .filter((job) =>
@@ -146,9 +146,11 @@ export default function DoneScreen({
                   style={[
                     styles.cardContent,
                     {
-                      backgroundColor:
-                        themeController.current?.formInputBackground,
+                      backgroundColor: themeController.current?.formInputBackground,
                       borderRadius: sizes.cardRadius,
+                      flexDirection: isRTL && Platform.OS !== 'web' ? 'row-reverse' : 'row',
+                      paddingLeft: isRTL ? sizes.imageMargin : 0,
+                      paddingRight: !isRTL ? sizes.imageMargin : 0,
                     },
                     extraMarkerStyle
                   ]}
@@ -219,7 +221,7 @@ export default function DoneScreen({
                           {
                             color: themeController.current?.unactiveTextColor,
                             textAlign:
-                              isRTL && Platform.OS === 'web' ? 'right' : 'left',
+                              isRTL ? 'right' : 'left',
                             fontSize: sizes.fontDescription,
                             marginTop: sizes.descriptionMarginTop,
                           },

@@ -28,7 +28,7 @@ export default function InProgressScreen({
     useComponentContext();
   const openJobDetail = useJobDetailNavigation({ setCurrentJobId, setShowJobModalVisible, setJobModalStatus, setJobStatusInfo });
   const { tField } = useLocalization(languageController.current);
-  const { height, isLandscape } = useWindowInfo();
+  const { width, height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
   const [filteredJobs, setFilteredJobs] = useState([]);
@@ -49,43 +49,24 @@ export default function InProgressScreen({
       fontTitle: isWebLandscape ? web(18) : mobile(18),
       fontLoading: isWebLandscape ? web(20) : mobile(20),
       fontDescription: isWebLandscape ? web(16) : mobile(16),
-      scrollContainerWidth: isWebLandscape ? '60%' : '100%',
+      scrollContainerWidth: isWebLandscape ? (width / height < 1.3 ? '85%' : '60%') : '100%',
       containerPaddingHorizontal: isWebLandscape ? web(10) : mobile(10),
       containerPaddingVertical: isWebLandscape ? web(14) : (Platform.OS !== 'web' ? mobile(6) : mobile(14)),
       cardMarginBottom: isWebLandscape ? web(8) : (Platform.OS !== 'web' ? mobile(4) : mobile(8)),
       imageMargin: isWebLandscape ? web(10) : mobile(10),
       descriptionMarginTop: isWebLandscape ? web(2) : mobile(2),
     };
-  }, [height, isWebLandscape]);
+  }, [width, height, isWebLandscape]);
 
-  const mockJob = {
-    id: 'mock-123',
-    type: { key: 'cleaner', name: 'Cleaning', name_i18n: { en: 'Cleaning', ru: 'Уборка', he: 'ניקיון' } },
-    subType: { key: 'general', name: 'General', name_i18n: { en: 'General', ru: 'Генеральная', he: 'כללי' } },
-    title: 'Тестовый заголовок заявки',
-    description: 'This is a mock description for testing purposes. We are testing the display of description, price, and dates.',
-    price: '150',
-    proposed_price: '150',
-    startDateTime: '2026-08-25T10:00:00+00:00',
-    endDateTime: '2026-08-25T14:00:00+00:00',
-    proposed_time_from: '2026-08-25T10:00:00+00:00',
-    proposed_time_to: '2026-08-25T14:00:00+00:00',
-    images: [],
-    creator: 'mock-creator-id',
-  };
-
-  const filteredJobsList = [
-    mockJob,
-    ...jobsController.executor.inProgress
-      .filter((job) =>
-        filteredJobs.length > 0 ? filteredJobs.includes(job.type.key) || filteredJobs.includes(job.subType.key) : true
+  const filteredJobsList = jobsController.executor.inProgress
+    .filter((job) =>
+      filteredJobs.length > 0 ? filteredJobs.includes(job.type.key) || filteredJobs.includes(job.subType.key) : true
+    )
+    .filter((job) =>
+      [tField(job.type, 'name'), job.description].some((field) =>
+        field?.toLowerCase()?.includes(searchValue?.toLowerCase())
       )
-      .filter((job) =>
-        [tField(job.type, 'name'), job.description].some((field) =>
-          field?.toLowerCase()?.includes(searchValue?.toLowerCase())
-        )
-      )
-  ];
+    );
 
   return (
     <View
@@ -165,9 +146,11 @@ export default function InProgressScreen({
                   style={[
                     styles.cardContent,
                     {
-                      backgroundColor:
-                        themeController.current?.formInputBackground,
+                      backgroundColor: themeController.current?.formInputBackground,
                       borderRadius: sizes.cardRadius,
+                      flexDirection: isRTL && Platform.OS !== 'web' ? 'row-reverse' : 'row',
+                      paddingLeft: isRTL ? sizes.imageMargin : 0,
+                      paddingRight: !isRTL ? sizes.imageMargin : 0,
                     },
                   ]}
                 >
@@ -231,7 +214,7 @@ export default function InProgressScreen({
                           {
                             color: themeController.current?.unactiveTextColor,
                             textAlign:
-                              isRTL && Platform.OS === 'web' ? 'right' : 'left',
+                              isRTL ? 'right' : 'left',
                             fontSize: sizes.fontDescription,
                             marginTop: sizes.descriptionMarginTop,
                             width: '100%',

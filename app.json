@@ -19,7 +19,8 @@
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
-        }
+        },
+        "LSApplicationQueriesSchemes": ["whatsapp"]
       }
     },
     "android": {

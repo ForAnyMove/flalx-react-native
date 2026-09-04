@@ -1,4 +1,4 @@
-﻿import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useMemo, useState } from 'react';
 import {
   Image,
@@ -169,7 +169,7 @@ export default function WaitingScreen({
     useComponentContext();
   const openJobDetail = useJobDetailNavigation({ setCurrentJobId, setShowJobModalVisible, setJobModalStatus, setJobStatusInfo });
   const { tField } = useLocalization(languageController.current);
-  const { height, isLandscape } = useWindowInfo();
+  const { width, height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
   const [filteredJobs, setFilteredJobs] = useState([]);
@@ -188,7 +188,7 @@ export default function WaitingScreen({
       fontTitle: isWebLandscape ? web(18) : mobile(18),
       fontLoading: isWebLandscape ? web(20) : mobile(20),
       fontDescription: isWebLandscape ? web(16) : mobile(16),
-      scrollContainerWidth: isWebLandscape ? '60%' : '100%',
+      scrollContainerWidth: isWebLandscape ? (width / height < 1.3 ? '85%' : '60%') : '100%',
       personalMarkerBorderWidth: isWebLandscape ? web(2) : mobile(2),
       personalMarkerVP: isWebLandscape ? web(2) : mobile(2),
       personalMarkerHP: isWebLandscape ? web(6) : mobile(6),
@@ -200,7 +200,7 @@ export default function WaitingScreen({
       imageMargin: isWebLandscape ? web(10) : mobile(10),
       descriptionMarginTop: isWebLandscape ? web(2) : mobile(2),
     };
-  }, [height, isWebLandscape]);
+  }, [width, height, isWebLandscape]);
   // const filteredJobsList = mock;
   const filteredJobsList = jobsController.executor.waiting
     .filter((job) =>
@@ -375,9 +375,11 @@ export default function WaitingScreen({
                   style={[
                     styles.cardContent,
                     {
-                      backgroundColor:
-                        themeController.current?.formInputBackground,
+                      backgroundColor: themeController.current?.formInputBackground,
                       borderRadius: sizes.cardRadius,
+                      flexDirection: isRTL && Platform.OS !== 'web' ? 'row-reverse' : 'row',
+                      paddingLeft: isRTL ? sizes.imageMargin : 0,
+                      paddingRight: !isRTL ? sizes.imageMargin : 0,
                     },
                     checkIsBadgeExist() && {
                       borderWidth: sizes.personalMarkerBorderWidth,
@@ -451,7 +453,7 @@ export default function WaitingScreen({
                           {
                             color: themeController.current?.unactiveTextColor,
                             textAlign:
-                              isRTL && Platform.OS === 'web' ? 'right' : 'left',
+                              isRTL ? 'right' : 'left',
                             fontSize: sizes.fontDescription,
                             marginTop: sizes.descriptionMarginTop,
                           },

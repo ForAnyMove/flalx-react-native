@@ -1229,7 +1229,7 @@ export default function ShowJobModal({
           <CommentsSection
             jobId={currentJobInfo?.id}
             userId={currentJobInfo?.executor}
-            allowAdd={currentJobInfo?.comments?.length == 0}
+            allowAdd={!currentJobInfo?.comments?.some(c => c.author_id === user?.current?.id)}
             allowAddOnly={true}
             onRated={() => jobsController.reloadAll()}
           />,
@@ -1955,7 +1955,7 @@ export default function ShowJobModal({
             // needs the id specifically for its own API calls
             // (getCommentsReceived/setComment), not the whole object.
             userId={currentJobInfo?.creator?.id ?? currentJobInfo?.creator}
-            allowAdd={currentJobInfo?.comments?.length == 0}
+            allowAdd={!currentJobInfo?.comments?.some(c => c.author_id === user?.current?.id)}
             allowAddOnly={true}
             onRated={() => jobsController.reloadAll()}
           />
@@ -2424,21 +2424,22 @@ export default function ShowJobModal({
               />
             </TouchableOpacity>
             <Text style={[styles.logo, dynamicStyles.logo]}>FLALX</Text>
-            <TouchableOpacity
-              // onPress={() =>
-              //   router.canGoBack?.() ? router.back() : router.replace('/store')
-              // }
-              onPress={() => setHistoryModal(true)}
-            >
-              <Image
-                source={icons.history}
-                style={{
-                  width: sizes.historyIconSize,
-                  height: sizes.historyIconSize,
-                  tintColor: themeController.current?.formInputLabelColor,
-                }}
-              />
-            </TouchableOpacity>
+            {user.current?.id === currentJobInfo?.creator_id ? (
+              <TouchableOpacity
+                onPress={() => setHistoryModal(true)}
+              >
+                <Image
+                  source={icons.history}
+                  style={{
+                    width: sizes.historyIconSize,
+                    height: sizes.historyIconSize,
+                    tintColor: themeController.current?.formInputLabelColor,
+                  }}
+                />
+              </TouchableOpacity>
+            ) : (
+              <View style={{ width: sizes.historyIconSize }} />
+            )}
           </View>
 
           {Platform.OS === 'web' ? (

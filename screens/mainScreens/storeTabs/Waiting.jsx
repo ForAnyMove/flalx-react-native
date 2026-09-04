@@ -1,4 +1,4 @@
-﻿import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useMemo, useState } from 'react';
 import {
   Image,
@@ -31,7 +31,7 @@ export default function WaitingScreen({
     useComponentContext();
   const openJobDetail = useJobDetailNavigation({ setCurrentJobId, setShowJobModalVisible, setJobModalStatus, setJobStatusInfo });
   const { tField } = useLocalization(languageController.current);
-  const { height, isLandscape } = useWindowInfo();
+  const { width, height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 
@@ -70,7 +70,7 @@ export default function WaitingScreen({
       fontDescription: isWebLandscape ? web(16) : mobile(16),
       badgeSize: isWebLandscape ? web(20) : mobile(20),
       badgeFont: isWebLandscape ? web(12) : mobile(12),
-      scrollContainerWidth: isWebLandscape ? '60%' : '100%',
+      scrollContainerWidth: isWebLandscape ? (width / height < 1.3 ? '85%' : '60%') : '100%',
       badgePosition: isWebLandscape ? web(5) : mobile(5),
       imageMargin: isWebLandscape ? web(10) : mobile(10),
       containerPaddingH: isWebLandscape ? web(10) : mobile(10),
@@ -79,7 +79,7 @@ export default function WaitingScreen({
       descriptionMarginTop: isWebLandscape ? web(2) : mobile(2),
       badgePadding: isWebLandscape ? web(2) : mobile(2),
     };
-  }, [height, isWebLandscape]);
+  }, [width, height, isWebLandscape]);
 
   const pendingJobsList = jobsController.creator.pending
     .filter((job) =>
@@ -188,6 +188,9 @@ export default function WaitingScreen({
             {
               backgroundColor: themeController.current?.formInputBackground,
               borderRadius: sizes.cardRadius,
+              flexDirection: isRTL && Platform.OS !== 'web' ? 'row-reverse' : 'row',
+              paddingLeft: isRTL ? sizes.imageMargin : 0,
+              paddingRight: !isRTL ? sizes.imageMargin : 0,
             },
           ]}
         >
@@ -254,8 +257,7 @@ export default function WaitingScreen({
                   styles.description,
                   {
                     color: themeController.current?.unactiveTextColor,
-                    textAlign:
-                      isRTL && Platform.OS === 'web' ? 'right' : 'left',
+                    textAlign: isRTL ? 'right' : 'left',
                     fontSize: sizes.fontDescription,
                     marginTop: sizes.descriptionMarginTop,
                   },
@@ -482,8 +484,7 @@ export default function WaitingScreen({
                     styles.description,
                     {
                       color: themeController.current?.unactiveTextColor,
-                      textAlign:
-                        isRTL && Platform.OS === 'web' ? 'right' : 'left',
+                      textAlign: isRTL ? 'right' : 'left',
                       fontSize: sizes.fontDescription,
                       marginTop: sizes.descriptionMarginTop,
                     },

@@ -29,7 +29,7 @@ export default function NewScreen({
     useComponentContext();
   const openJobDetail = useJobDetailNavigation({ setCurrentJobId, setShowJobModalVisible, setJobModalStatus, setJobStatusInfo });
   const { tField } = useLocalization(languageController.current);
-  const { height, isLandscape } = useWindowInfo();
+  const { width, height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
   const [filteredJobs, setFilteredJobs] = useState([]);
@@ -68,7 +68,7 @@ export default function NewScreen({
       fontTitle: isWebLandscape ? web(18) : mobile(18),
       fontLoading: isWebLandscape ? web(20) : mobile(20),
       fontDescription: isWebLandscape ? web(16) : mobile(16),
-      scrollContainerWidth: isWebLandscape ? '60%' : '100%',
+      scrollContainerWidth: isWebLandscape ? (width / height < 1.3 ? '85%' : '60%') : '100%',
       personalMarkerBorderWidth: isWebLandscape ? web(2) : mobile(2),
       personalMarkerVP: isWebLandscape ? web(2) : mobile(2),
       personalMarkerHP: isWebLandscape ? web(6) : mobile(6),
@@ -87,7 +87,7 @@ export default function NewScreen({
       refreshBtnIcon: isWebLandscape ? web(16) : mobile(16),
       refreshBtnGap: isWebLandscape ? web(12) : mobile(12),
     };
-  }, [height, isWebLandscape]);
+  }, [width, height, isWebLandscape]);
 
   const filteredJobsList =
     jobsController == null ||
@@ -306,9 +306,11 @@ export default function NewScreen({
                     style={[
                       styles.cardContent,
                       {
-                        backgroundColor:
-                          themeController.current?.formInputBackground,
+                        backgroundColor: themeController.current?.formInputBackground,
                         borderRadius: sizes.cardRadius,
+                        flexDirection: isRTL && Platform.OS !== 'web' ? 'row-reverse' : 'row',
+                        paddingLeft: isRTL ? sizes.imageMargin : 0,
+                        paddingRight: !isRTL ? sizes.imageMargin : 0,
                       },
                       extraMarkerStyle,
                     ]}
@@ -373,10 +375,7 @@ export default function NewScreen({
                             styles.description,
                             {
                               color: themeController.current?.unactiveTextColor,
-                              textAlign:
-                                isRTL && Platform.OS === 'web'
-                                  ? 'right'
-                                  : 'left',
+                              textAlign: isRTL ? 'right' : 'left',
                               fontSize: sizes.fontDescription,
                               marginTop: sizes.descriptionMarginTop,
                               width: '100%',
