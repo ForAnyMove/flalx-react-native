@@ -431,7 +431,7 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
                 if (error) setError(null);
               }}
               containerStyle={dynamicStyles.phoneEmailFieldContainer}
-              inputStyle={dynamicStyles.input}
+              inputStyle={[dynamicStyles.input, loginMode === 'phone' && { textAlign: 'left' }]}
               autoFocus
               returnKeyType='next'
             />

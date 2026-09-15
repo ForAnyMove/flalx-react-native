@@ -9,6 +9,7 @@ import {
   View,
   Platform,
   TouchableWithoutFeedback,
+  Pressable,
 } from 'react-native';
 // import { RFValue } from 'react-native-responsive-fontsize';
 import { useComponentContext } from '../context/globalAppContext';
@@ -405,215 +406,212 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
       </TouchableOpacity>
 
       {/* Fullscreen Modal */}
-      <Modal visible={modalVisible} animationType='slide' transparent>
-        <TouchableWithoutFeedback
-          onPress={() => {
-            setModalVisible(false);
-            setShowContactInfo(false);
-          }}
-        >
-          <View style={[styles.backdrop]}>
-            <TouchableWithoutFeedback>
-              <View
-                style={{
-                  backgroundColor: themeController.current?.backgroundColor,
-                  // Panel slides in from the side opposite alignSelf below —
-                  // rounded corners belong on the inner edge, which flips
-                  // with it (was hardcoded left, wrong in RTL).
-                  ...(isRTL
-                    ? { borderTopRightRadius: sizes.borderRadius, borderBottomRightRadius: sizes.borderRadius }
-                    : { borderTopLeftRadius: sizes.borderRadius, borderBottomLeftRadius: sizes.borderRadius }),
-                  paddingBottom: sizes.padding,
-                  paddingHorizontal: sizes.pagePaddingHorizontal,
-                  // Веб-альбомная: узкая панель справа, с пустой кликабельной зоной слева
-                  // width: isWebLandscape ? width - effectiveSidebarWidth : '100%',
-                  alignSelf: isRTL ? 'flex-start' : 'flex-end',
-                  height: '100%',
-                }}
-              >
-                <View style={[styles.modalHeader, dynamicStyles.modalHeader]}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setModalVisible(false);
-                      setShowContactInfo(false);
+      {modalVisible && (
+        <Modal visible={modalVisible} animationType='slide' transparent>
+          <View style={{ flex: 1 }} pointerEvents='box-none'>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => {
+                setModalVisible(false);
+                setShowContactInfo(false);
+              }}
+            />
+            <View
+              style={{
+                backgroundColor: themeController.current?.backgroundColor,
+                // Panel slides in from the side opposite alignSelf below
+                ...(isRTL
+                  ? { borderTopRightRadius: sizes.borderRadius, borderBottomRightRadius: sizes.borderRadius }
+                  : { borderTopLeftRadius: sizes.borderRadius, borderBottomLeftRadius: sizes.borderRadius }),
+                paddingBottom: sizes.padding,
+                paddingHorizontal: sizes.pagePaddingHorizontal,
+                alignSelf: isRTL ? 'flex-start' : 'flex-end',
+                height: '100%',
+              }}
+            >
+              <View style={[styles.modalHeader, dynamicStyles.modalHeader]}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setModalVisible(false);
+                    setShowContactInfo(false);
+                  }}
+                >
+                  <Image
+                    source={isRTL ? icons.forward : icons.back}
+                    style={{
+                      width: sizes.icon,
+                      height: sizes.icon,
+                      tintColor: themeController.current?.textColor,
                     }}
-                  >
-                    <Image
-                      source={isRTL ? icons.forward : icons.back}
-                      style={{
-                        width: sizes.icon,
-                        height: sizes.icon,
-                        tintColor: themeController.current?.textColor,
-                      }}
-                    />
-                  </TouchableOpacity>
-                  <Text style={[styles.modalTitle, dynamicStyles.modalTitle]}>
-                    FLALX
-                  </Text>
-                </View>
-                <ScrollView contentContainerStyle={{}}>
-                  {avatar ? (
-                    <Image
-                      source={{ uri: avatar }}
-                      style={{
+                  />
+                </TouchableOpacity>
+                <Text style={[styles.modalTitle, dynamicStyles.modalTitle]}>
+                  FLALX
+                </Text>
+              </View>
+              <ScrollView contentContainerStyle={{}}>
+                {avatar ? (
+                  <Image
+                    source={{ uri: avatar }}
+                    style={{
+                      width: sizes.modalAvatar,
+                      height: sizes.modalAvatar,
+                      borderRadius: sizes.modalAvatar / 2,
+                      alignSelf: 'center',
+                      marginTop: sizes.avatarMarginTop,
+                      marginBottom: sizes.avatarMarginBottom,
+                    }}
+                  />
+                ) : (
+                  <View
+                    style={[
+                      {
                         width: sizes.modalAvatar,
                         height: sizes.modalAvatar,
                         borderRadius: sizes.modalAvatar / 2,
                         alignSelf: 'center',
                         marginTop: sizes.avatarMarginTop,
                         marginBottom: sizes.avatarMarginBottom,
-                      }}
+                      },
+                    ]}
+                  >
+                    <Image
+                      source={
+                        themeController.current.isTheme
+                          ? icons.defaultAvatar
+                          : icons.monotoneAvatar
+                      }
+                      style={{ width: '100%', height: '100%' }}
                     />
-                  ) : (
+                  </View>
+                )}
+                <Text
+                  style={{
+                    fontSize: sizes.nameSize,
+                    textAlign: 'center',
+                    fontFamily: 'Rubik-Bold',
+                    color: themeController.current?.textColor,
+                    marginBottom: professions?.[0]
+                      ? sizes.titleMarginBottom
+                      : sizes.professionMarginBottom,
+                  }}
+                >
+                  {`${name} ${surname}`}
+                </Text>
+                {professions?.[0] && (
+                  <Text
+                    style={{
+                      fontSize: sizes.professionSize,
+                      color: themeController.current?.unactiveTextColor,
+                      textAlign: 'center',
+                      marginBottom: sizes.professionMarginBottom,
+                    }}
+                  >
+                    {LICENSES[professions?.[0]]}
+                  </Text>
+                )}
+
+                {/* Контейнер для сетки 2x2 */}
+                <View
+                  style={[
+                    {
+                      marginBottom: sizes.infoSectionsContainerMarginBottom,
+                      gap: sizes.infoSectionsContainerGap,
+                    },
+                    isWebLandscape && {
+                      flexDirection: isRTL ? 'row-reverse' : 'row',
+                      flexWrap: 'wrap',
+                      justifyContent: 'space-between',
+                      alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                    },
+                    isWebLandscape && { width: '66%' },
+                  ]}
+                >
+                  {/* Job Types */}
+                  {professions && professions?.length > 0 && (
                     <View
                       style={[
-                        {
-                          width: sizes.modalAvatar,
-                          height: sizes.modalAvatar,
-                          borderRadius: sizes.modalAvatar / 2,
-                          alignSelf: 'center',
-                          marginTop: sizes.avatarMarginTop,
-                          marginBottom: sizes.avatarMarginBottom,
+                        isWebLandscape && {
+                          width: '48%',
+                          marginBottom: sizes.infoSectionMarginBottom,
                         },
                       ]}
                     >
-                      <Image
-                        source={
-                          themeController.current.isTheme
-                            ? icons.defaultAvatar
-                            : icons.monotoneAvatar
-                        }
-                        style={{ width: '100%', height: '100%' }}
-                      />
+                      <Text
+                        style={[
+                          styles.sectionTitle,
+                          dynamicStyles.sectionTitle,
+                        ]}
+                      >
+                        {t('profile.job_types')}
+                      </Text>
+                      <View
+                        style={[
+                          styles.wrapRow,
+                          { gap: sizes.badgeGap },
+                          isRTL && { justifyContent: 'flex-end' },
+                        ]}
+                      >
+                        {professions?.map((p, i) => (
+                          <View
+                            key={i}
+                            style={[
+                              styles.typeBadge,
+                              dynamicStyles.typeBadge,
+                            ]}
+                          >
+                            <Text style={dynamicStyles.badgeText}>
+                              {tField(p.job_type, 'name')}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
                     </View>
                   )}
-                  <Text
-                    style={{
-                      fontSize: sizes.nameSize,
-                      textAlign: 'center',
-                      fontFamily: 'Rubik-Bold',
-                      color: themeController.current?.textColor,
-                      marginBottom: professions?.[0]
-                        ? sizes.titleMarginBottom
-                        : sizes.professionMarginBottom,
-                    }}
-                  >
-                    {`${name} ${surname}`}
-                  </Text>
-                  {professions?.[0] && (
-                    <Text
-                      style={{
-                        fontSize: sizes.professionSize,
-                        color: themeController.current?.unactiveTextColor,
-                        textAlign: 'center',
-                        marginBottom: sizes.professionMarginBottom,
-                      }}
+
+                  {professions && professions?.length > 0 && (
+                    <View
+                      style={[
+                        isWebLandscape && {
+                          width: '48%',
+                          marginBottom: sizes.infoSectionMarginBottom,
+                        },
+                      ]}
                     >
-                      {LICENSES[professions?.[0]]}
-                    </Text>
+                      <Text
+                        style={[
+                          styles.sectionTitle,
+                          dynamicStyles.sectionTitle,
+                        ]}
+                      >
+                        {t('profile.job_subtypes')}
+                      </Text>
+                      <View
+                        style={[
+                          styles.wrapRow,
+                          { gap: sizes.badgeGap },
+                          isRTL && { justifyContent: 'flex-end' },
+                        ]}
+                      >
+                        {professions?.map((p, i) => (
+                          <View
+                            key={i}
+                            style={[
+                              styles.typeBadge,
+                              dynamicStyles.typeBadge,
+                            ]}
+                          >
+                            <Text style={dynamicStyles.badgeText}>
+                              {tField(p.job_subtype, 'name')}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
                   )}
 
-                  {/* Контейнер для сетки 2x2 */}
-                  <View
-                    style={[
-                      {
-                        marginBottom: sizes.infoSectionsContainerMarginBottom,
-                        gap: sizes.infoSectionsContainerGap,
-                      },
-                      isWebLandscape && {
-                        flexDirection: isRTL ? 'row-reverse' : 'row',
-                        flexWrap: 'wrap',
-                        justifyContent: 'space-between',
-                        alignSelf: isRTL ? 'flex-end' : 'flex-start',
-                      },
-                      isWebLandscape && { width: '66%' },
-                    ]}
-                  >
-                    {/* Job Types */}
-                    {professions && professions?.length > 0 && (
-                      <View
-                        style={[
-                          isWebLandscape && {
-                            width: '48%',
-                            marginBottom: sizes.infoSectionMarginBottom,
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.sectionTitle,
-                            dynamicStyles.sectionTitle,
-                          ]}
-                        >
-                          {t('profile.job_types')}
-                        </Text>
-                        <View
-                          style={[
-                            styles.wrapRow,
-                            { gap: sizes.badgeGap },
-                            isRTL && { justifyContent: 'flex-end' },
-                          ]}
-                        >
-                          {professions?.map((p, i) => (
-                            <View
-                              key={i}
-                              style={[
-                                styles.typeBadge,
-                                dynamicStyles.typeBadge,
-                              ]}
-                            >
-                              <Text style={dynamicStyles.badgeText}>
-                                {tField(p.job_type, 'name')}
-                              </Text>
-                            </View>
-                          ))}
-                        </View>
-                      </View>
-                    )}
-
-                    {professions && professions?.length > 0 && (
-                      <View
-                        style={[
-                          isWebLandscape && {
-                            width: '48%',
-                            marginBottom: sizes.infoSectionMarginBottom,
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.sectionTitle,
-                            dynamicStyles.sectionTitle,
-                          ]}
-                        >
-                          {t('profile.job_subtypes')}
-                        </Text>
-                        <View
-                          style={[
-                            styles.wrapRow,
-                            { gap: sizes.badgeGap },
-                            isRTL && { justifyContent: 'flex-end' },
-                          ]}
-                        >
-                          {professions?.map((p, i) => (
-                            <View
-                              key={i}
-                              style={[
-                                styles.typeBadge,
-                                dynamicStyles.typeBadge,
-                              ]}
-                            >
-                              <Text style={dynamicStyles.badgeText}>
-                                {tField(p.job_subtype, 'name')}
-                              </Text>
-                            </View>
-                          ))}
-                        </View>
-                      </View>
-                    )}
-
-                    {/* Professions */}
-                    {/* {professions && professions?.length > 0 && (
+                  {/* Professions */}
+                  {/* {professions && professions?.length > 0 && (
                       <View
                         style={[
                           isWebLandscape && {
@@ -654,8 +652,8 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                       </View>
                     )} */}
 
-                    {/* Sub Types */}
-                    {/* <Text style={[styles.sectionTitle, { fontSize: sizes.sectionTitleSize , color: themeController.current?.textColor}]}>
+                  {/* Sub Types */}
+                  {/* <Text style={[styles.sectionTitle, { fontSize: sizes.sectionTitleSize , color: themeController.current?.textColor}]}>
                     {t('profile.job_subtypes')}
                   </Text>
                   <View style={styles.wrapRow}>
@@ -668,150 +666,197 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                     ))}
                   </View> */}
 
-                    {/* About */}
-                    <View
+                  {/* About */}
+                  <View
+                    style={[
+                      isWebLandscape && {
+                        width: '48%',
+                        marginBottom: sizes.infoSectionMarginBottom,
+                      },
+                    ]}
+                  >
+                    <Text
                       style={[
-                        isWebLandscape && {
-                          width: '48%',
-                          marginBottom: sizes.infoSectionMarginBottom,
-                        },
+                        styles.sectionTitle,
+                        dynamicStyles.sectionTitle,
                       ]}
                     >
-                      <Text
-                        style={[
-                          styles.sectionTitle,
-                          dynamicStyles.sectionTitle,
-                        ]}
-                      >
-                        {t('profile.about_me')}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: sizes.small,
-                          color: themeController.current?.unactiveTextColor,
-                          maxHeight: sizes.aboutMaxHeight,
-                          overflow: 'auto',
-                          textAlign: isRTL ? 'right' : 'left',
-                        }}
-                      >
-                        {about}
-                      </Text>
-                    </View>
+                      {t('profile.about_me')}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: sizes.small,
+                        color: themeController.current?.unactiveTextColor,
+                        maxHeight: sizes.aboutMaxHeight,
+                        overflow: 'auto',
+                        textAlign: isRTL ? 'right' : 'left',
+                      }}
+                    >
+                      {about}
+                    </Text>
+                  </View>
 
-                    {/* Contact Info */}
-                    <View
+                  {/* Contact Info */}
+                  <View
+                    style={[
+                      isWebLandscape && {
+                        width: '48%',
+                        marginBottom: sizes.infoSectionMarginBottom,
+                      },
+                    ]}
+                  >
+                    <Text
                       style={[
-                        isWebLandscape && {
-                          width: '48%',
-                          marginBottom: sizes.infoSectionMarginBottom,
-                        },
+                        styles.sectionTitle,
+                        dynamicStyles.sectionTitle,
                       ]}
                     >
-                      <Text
+                      {t('profile.contact_info')}
+                    </Text>
+                    {!usersReveal.contains(user.id) ? (
+                      // {true ? (
+                      <TouchableOpacity
                         style={[
-                          styles.sectionTitle,
-                          dynamicStyles.sectionTitle,
+                          styles.primaryBtn,
+                          dynamicStyles.primaryBtn,
+                          {
+                            height: sizes.unlockContactBtnHeight,
+                            width: 'max-content',
+                            alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                            paddingHorizontal:
+                              sizes.unlockContactBtnPaddingHorizontal,
+                          },
                         ]}
+                        onPress={() => setPurchaseModalVisible(true)}
                       >
-                        {t('profile.contact_info')}
-                      </Text>
-                      {!usersReveal.contains(user.id) ? (
-                        // {true ? (
-                        <TouchableOpacity
-                          style={[
-                            styles.primaryBtn,
-                            dynamicStyles.primaryBtn,
-                            {
-                              height: sizes.unlockContactBtnHeight,
-                              width: 'max-content',
-                              alignSelf: isRTL ? 'flex-end' : 'flex-start',
-                              paddingHorizontal:
-                                sizes.unlockContactBtnPaddingHorizontal,
-                            },
-                          ]}
-                          onPress={() => setPurchaseModalVisible(true)}
+                        <Text
+                          style={{
+                            fontSize: sizes.unlockContactBtnFontSize,
+                            color:
+                              themeController.current?.buttonTextColorPrimary,
+                          }}
                         >
-                          <Text
+                          {t('common.purchase')}
+                        </Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <View
+                        style={
+                          isWebLandscape && {
+                            flexDirection: isRTL ? 'row-reverse' : 'row',
+                            alignItems: 'center',
+                            height: sizes.contactInfoHeight,
+                          }
+                        }
+                      >
+                        {phoneNumber && (
+                          <View
                             style={{
-                              fontSize: sizes.unlockContactBtnFontSize,
-                              color:
-                                themeController.current?.buttonTextColorPrimary,
-                            }}
-                          >
-                            {t('common.purchase')}
-                          </Text>
-                        </TouchableOpacity>
-                      ) : (
-                        <View
-                          style={
-                            isWebLandscape && {
                               flexDirection: isRTL ? 'row-reverse' : 'row',
                               alignItems: 'center',
-                              height: sizes.contactInfoHeight,
-                            }
-                          }
-                        >
-                          {phoneNumber && (
-                            <View
+                            }}
+                          >
+                            <Image
+                              source={icons.mobile}
                               style={{
-                                flexDirection: isRTL ? 'row-reverse' : 'row',
-                                alignItems: 'center',
+                                width: sizes.icon,
+                                height: sizes.icon,
+                                [isRTL ? 'marginLeft' : 'marginRight']:
+                                  sizes.iconMargin,
+                              }}
+                            />
+                            <Text
+                              style={{
+                                fontSize: sizes.small,
+                                color:
+                                  themeController.current?.unactiveTextColor,
                               }}
                             >
-                              <Image
-                                source={icons.mobile}
-                                style={{
-                                  width: sizes.icon,
-                                  height: sizes.icon,
-                                  [isRTL ? 'marginLeft' : 'marginRight']:
-                                    sizes.iconMargin,
-                                }}
-                              />
-                              <Text
-                                style={{
-                                  fontSize: sizes.small,
-                                  color:
-                                    themeController.current?.unactiveTextColor,
-                                }}
-                              >
-                                {formatPhoneDisplay(phoneNumber)}
-                              </Text>
-                            </View>
-                          )}
-                          {email && (
-                            <View
+                              {formatPhoneDisplay(phoneNumber)}
+                            </Text>
+                          </View>
+                        )}
+                        {email && (
+                          <View
+                            style={{
+                              flexDirection: isRTL ? 'row-reverse' : 'row',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <Image
+                              source={icons.emailContact}
                               style={{
-                                flexDirection: isRTL ? 'row-reverse' : 'row',
-                                alignItems: 'center',
+                                width: sizes.icon,
+                                height: sizes.icon,
+                                [isRTL ? 'marginLeft' : 'marginRight']:
+                                  sizes.iconMargin,
+                              }}
+                            />
+                            <Text
+                              style={{
+                                fontSize: sizes.small,
+                                color:
+                                  themeController.current?.unactiveTextColor,
                               }}
                             >
-                              <Image
-                                source={icons.emailContact}
-                                style={{
-                                  width: sizes.icon,
-                                  height: sizes.icon,
-                                  [isRTL ? 'marginLeft' : 'marginRight']:
-                                    sizes.iconMargin,
-                                }}
-                              />
-                              <Text
-                                style={{
-                                  fontSize: sizes.small,
-                                  color:
-                                    themeController.current?.unactiveTextColor,
-                                }}
-                              >
-                                {email}
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-                      )}
-                    </View>
+                              {email}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    )}
                   </View>
-                  <CommentsSection userId={user.id} />
-                </ScrollView>
-                {isWebLandscape ? (
+                </View>
+                <CommentsSection userId={user.id} />
+              </ScrollView>
+              {isWebLandscape ? (
+                <TouchableOpacity
+                  style={[
+                    styles.primaryBtn,
+                    dynamicStyles.primaryBtn,
+                    {
+                      padding: 0,
+                    },
+                    isWebLandscape && {
+                      width: '30%',
+                      alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                      marginBottom: sizes.infoSectionMarginBottom,
+                    },
+                  ]}
+                  onPress={() => {
+                    chooseUser();
+                    setModalVisible(false);
+                    setShowContactInfo(false);
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: sizes.createRequestBtnFontSize,
+                      color: themeController.current?.buttonTextColorPrimary,
+                    }}
+                  >
+                    {t('providersSection.createRequest')}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <View
+                  style={[
+                    styles.bottomButtonWrapper,
+                    {
+                      width: width,
+                      backgroundColor:
+                        themeController.current?.backgroundColor,
+                      paddingHorizontal: sizes.containerPaddingHorizontal,
+                      paddingVertical:
+                        sizes.mobileBottomContainerPaddingVertical,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: -6 },
+                      shadowOpacity: 0.12,
+                      shadowRadius: 8,
+                      elevation: 16,
+                    },
+                  ]}
+                >
                   <TouchableOpacity
                     style={[
                       styles.primaryBtn,
@@ -834,90 +879,42 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                     <Text
                       style={{
                         fontSize: sizes.createRequestBtnFontSize,
-                        color: themeController.current?.buttonTextColorPrimary,
+                        color:
+                          themeController.current?.buttonTextColorPrimary,
                       }}
                     >
                       {t('providersSection.createRequest')}
                     </Text>
                   </TouchableOpacity>
-                ) : (
-                  <View
-                    style={[
-                      styles.bottomButtonWrapper,
-                      {
-                        width: width,
-                        backgroundColor:
-                          themeController.current?.backgroundColor,
-                        paddingHorizontal: sizes.containerPaddingHorizontal,
-                        paddingVertical:
-                          sizes.mobileBottomContainerPaddingVertical,
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: -6 },
-                        shadowOpacity: 0.12,
-                        shadowRadius: 8,
-                        elevation: 16,
-                      },
-                    ]}
-                  >
-                    <TouchableOpacity
-                      style={[
-                        styles.primaryBtn,
-                        dynamicStyles.primaryBtn,
-                        {
-                          padding: 0,
-                        },
-                        isWebLandscape && {
-                          width: '30%',
-                          alignSelf: isRTL ? 'flex-end' : 'flex-start',
-                          marginBottom: sizes.infoSectionMarginBottom,
-                        },
-                      ]}
-                      onPress={() => {
-                        chooseUser();
-                        setModalVisible(false);
-                        setShowContactInfo(false);
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: sizes.createRequestBtnFontSize,
-                          color:
-                            themeController.current?.buttonTextColorPrimary,
-                        }}
-                      >
-                        {t('providersSection.createRequest')}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            </TouchableWithoutFeedback>
+                </View>
+              )}
+            </View>
           </View>
-        </TouchableWithoutFeedback>
+        </Modal>
+      )}
 
-        {/* OPEN CONTACT PURCHASE MODAL */}
-        <PurchaseModal
-          visible={purchaseModalVisible}
-          onClose={() => setPurchaseModalVisible(false)}
-          type='regular'
-          price={usersReveal?.product ? `${usersReveal.product.price} ${usersReveal.product.currency}` : ''}
-          onPurchase={handlePurchaseReveal}
-          onPayWithCoupons={handlePayCouponsReveal}
-          onOpenSubscriptions={() => {
-            setPurchaseModalVisible(false);
-            setPlansModalVisible(true);
-          }}
-        />
-        {/* PLANS MODAL (простая заглушка, такой же фон/центрирование) */}
-        <SubscriptionsModal
-          visible={plansModalVisible}
-          main={false}
-          closeModal={() => {
-            setPlansModalVisible(false);
-            setPurchaseModalVisible(true);
-          }}
-        />
-      </Modal>
+      {/* OPEN CONTACT PURCHASE MODAL */}
+      <PurchaseModal
+        visible={purchaseModalVisible}
+        onClose={() => setPurchaseModalVisible(false)}
+        type='regular'
+        price={usersReveal?.product ? `${usersReveal.product.price} ${usersReveal.product.currency}` : ''}
+        onPurchase={handlePurchaseReveal}
+        onPayWithCoupons={handlePayCouponsReveal}
+        onOpenSubscriptions={() => {
+          setPurchaseModalVisible(false);
+          setPlansModalVisible(true);
+        }}
+      />
+      {/* PLANS MODAL (простая заглушка, такой же фон/центрирование) */}
+      <SubscriptionsModal
+        visible={plansModalVisible}
+        main={false}
+        closeModal={() => {
+          setPlansModalVisible(false);
+          setPurchaseModalVisible(true);
+        }}
+      />
     </>
   );
 };

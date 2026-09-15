@@ -302,9 +302,8 @@ export default function ShowJobModal({
     if (currentLocation) {
       const prev = prevJobLocation.current;
       if (prev && prev !== currentLocation) {
-        const fromStatus = `${isCreator ? 'client' : 'business'}-${prev}`;
-        const toStatus = `${isCreator ? 'client' : 'business'
-          }-${currentLocation}`;
+        const fromStatus = `${isCreator ? 'store' : 'jobs'}-${prev.replace('_', '-')}`;
+        const toStatus = `${isCreator ? 'store' : 'jobs'}-${currentLocation.replace('_', '-')}`;
         setStatus(toStatus);
       }
 
@@ -317,7 +316,7 @@ export default function ShowJobModal({
     }
   }, [
     status,
-    ...(status.startsWith('client')
+    ...(status.startsWith('store')
       ? [
         jobsController.creator.waiting,
         jobsController.creator.inProgress,
@@ -1716,41 +1715,13 @@ export default function ShowJobModal({
       //   ];
       case 'store-done':
         return [
-          // false &&
-          // ((
-          //   <TouchableOpacity
-          //     key='confirmButton'
-          //     style={[
-          //       styles.createButton,
-          //       {
-          //         backgroundColor:
-          //           themeController.current?.buttonColorPrimaryDefault,
-          //         borderRadius: sizes.borderRadius,
-          //         ...(isWebLandscape && {
-          //           paddingVertical: sizes.padding * 1.2,
-          //           borderRadius: sizes.borderRadius,
-          //         }),
-          //       },
-          //       isWebLandscape && {
-          //         width: sizes.saveBtnWidth,
-          //         height: sizes.saveBtnHeight,
-          //       },
-          //     ]}
-          //     onPress={() => jobsController.actions.confirmJob(currentJobId)}
-          //   >
-          //     <Text
-          //       style={{
-          //         color: 'white',
-          //         textAlign: 'center',
-          //         ...(isWebLandscape && { fontSize: sizes.saveBtnFont }),
-          //       }}
-          //     >
-          //       {t('showJob.buttons.confirmCompletion', {
-          //         defaultValue: 'Confirm job completion',
-          //       })}
-          //     </Text>
-          //   </TouchableOpacity>
-          // )),
+          <CommentsSection
+            key='commentsSection'
+            jobId={currentJobInfo?.id}
+            userId={currentJobInfo?.executor?.id ?? currentJobInfo?.executor}
+            allowAdd={!currentJobInfo?.comments?.some(c => c.author_id === user?.current?.id)}
+            onRated={() => jobsController.reloadAll()}
+          />,
         ];
       case 'jobs-new':
         return [
@@ -3480,10 +3451,18 @@ export default function ShowJobModal({
           setCompleteJobModalVisible(false);
         }}
         completeFunc={(options) => {
-          completeJob(currentJobId, options, session).then(
-            () => jobsController.reloadExecutor(),
-            closeModal()
-          );
+          setAppLoading?.(true);
+          completeJob(currentJobId, options, session)
+            .then(() => {
+              setCompleteJobModalVisible(false);
+              jobsController.reloadExecutor();
+            })
+            .catch((err) => {
+              console.log('Complete job failed', err);
+            })
+            .finally(() => {
+              setAppLoading?.(false);
+            });
         }}
       />
       <Modal visible={agreementModalVisible} transparent animationType='fade'>

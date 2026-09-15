@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { jobImages } from '../../../constants/jobImages';
+
 import { useComponentContext } from '../../../context/globalAppContext';
 import JobTypeSelector from '../../../components/JobTypeSelector';
 import { FontAwesome6 } from '@expo/vector-icons';
@@ -187,6 +189,12 @@ export default function DoneScreen({
                     {hasImage ? (
                       <Image
                         source={{ uri: job.images[0] }}
+                        style={styles.image}
+                        resizeMode='cover'
+                      />
+                    ) : jobImages[job.subType?.key] || jobImages[job.type?.key] ? (
+                      <Image
+                        source={jobImages[job.subType?.key] || jobImages[job.type?.key]}
                         style={styles.image}
                         resizeMode='cover'
                       />

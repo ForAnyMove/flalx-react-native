@@ -273,7 +273,7 @@ export default function CommentsSection({
         </>
       )}
       {/* Кнопка добавления */}
-      {allowAdd && (
+      {allowAdd && !addModal && (
         <TouchableOpacity
           style={[
             styles.addBtn,
@@ -299,21 +299,28 @@ export default function CommentsSection({
         </TouchableOpacity>
       )}
 
-      {/* Модальное окно добавления */}
-      <Modal visible={addModal} animationType='slide' transparent>
+      {/* Форма добавления (popup) */}
+      <Modal
+        visible={addModal}
+        animationType="slide"
+        transparent
+        hardwareAccelerated
+        statusBarTranslucent
+      >
         <KeyboardAvoidingView
           style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <View
             style={[
               styles.modalCard,
               {
                 backgroundColor: themeController.current?.backgroundColor,
-                height: sizes.modalHeight,
-                width: sizes.modalWidth,
+                width: isWebLandscape ? sizes.containerWidth : '90%',
                 borderRadius: sizes.borderRadius,
                 padding: sizes.modalPadding,
+                borderWidth: 1,
+                borderColor: themeController.current?.profileDefaultBackground,
               },
             ]}
           >
@@ -337,14 +344,13 @@ export default function CommentsSection({
                 }}
               />
             </TouchableOpacity>
-            <View style={[styles.statusRow, { gap: sizes.modalIconsGap }]}>
+            <View style={[styles.statusRow, { gap: sizes.modalIconsGap, marginVertical: sizes.btnMarginVertical }]}>
               {[1, 2, 3, 4, 5].map((star) => (
                 <TouchableOpacity
                   key={star}
                   onPress={() => setRating(star)}
                   onPressIn={() => setHoverRating(star)}
                   onPressOut={() => setHoverRating(0)}
-                  // onMouseEnter and onMouseLeave are for web
                   onMouseEnter={() => Platform.OS === 'web' && setHoverRating(star)}
                   onMouseLeave={() => Platform.OS === 'web' && setHoverRating(0)}
                 >
@@ -374,8 +380,9 @@ export default function CommentsSection({
                   color: themeController.current?.textColor,
                   borderRadius: sizes.borderRadius,
                   height: sizes.modalTextfieldHeight,
-                  width: sizes.modalTextfieldWidth,
+                  width: '100%',
                   padding: sizes.modalTextareaPadding,
+                  textAlignVertical: 'top',
                 },
               ]}
             />
@@ -388,7 +395,7 @@ export default function CommentsSection({
                   width: sizes.btnWidth,
                   height: sizes.btnHeight,
                   borderRadius: sizes.borderRadius,
-                  marginVertical: sizes.btnMarginVertical,
+                  marginTop: sizes.btnMarginVertical,
                 },
               ]}
               onPress={handleAdd}

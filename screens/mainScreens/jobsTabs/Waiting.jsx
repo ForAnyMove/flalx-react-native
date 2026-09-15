@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { jobImages } from '../../../constants/jobImages';
 import JobTypeSelector from '../../../components/JobTypeSelector';
 import SearchPanel from '../../../components/SearchPanel';
 import { useComponentContext } from '../../../context/globalAppContext';
@@ -419,6 +420,12 @@ export default function WaitingScreen({
                     {hasImage ? (
                       <Image
                         source={{ uri: job.images[0] }}
+                        style={styles.image}
+                        resizeMode='cover'
+                      />
+                    ) : jobImages[job.subType?.key] || jobImages[job.type?.key] ? (
+                      <Image
+                        source={jobImages[job.subType?.key] || jobImages[job.type?.key]}
                         style={styles.image}
                         resizeMode='cover'
                       />

@@ -9,6 +9,7 @@ import {
   View,
   Platform,
 } from 'react-native';
+import { jobImages } from '../../../constants/jobImages';
 import SearchPanel from '../../../components/SearchPanel';
 import ShowJobModal from '../../../components/ShowJobModal';
 import { useComponentContext } from '../../../context/globalAppContext';
@@ -226,6 +227,12 @@ export default function WaitingScreen({
             {hasImage ? (
               <Image
                 source={{ uri: draftImages[0] }}
+                style={styles.image}
+                resizeMode='cover'
+              />
+            ) : jobImages[job.subType?.key] || jobImages[job.type?.key] ? (
+              <Image
+                source={jobImages[job.subType?.key] || jobImages[job.type?.key]}
                 style={styles.image}
                 resizeMode='cover'
               />

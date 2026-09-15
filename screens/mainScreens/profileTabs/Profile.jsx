@@ -66,7 +66,7 @@ export default function Profile() {
   const [showNewPassword, setShowNewPassword] = useState(false);
 
   const [pickerVisible, setPickerVisible] = useState(false);
-  const { height, isLandscape } = useWindowInfo();
+  const { width, height, isLandscape } = useWindowInfo();
   const { t } = useTranslation();
   const isRTL = languageController.isRTL;
 
@@ -147,8 +147,13 @@ export default function Profile() {
       descriptionLabelMarginBottom: isWebLandscape ? web(4) : Platform.OS === 'android' ? mobile(2) : mobile(4),
       editPanelGap: isWebLandscape ? web(5) : mobile(5),
       oneLineInputHeight: isWebLandscape ? web(20) : mobile(20),
+      statusBadgePaddingHorizontal: isWebLandscape ? web(8) : mobile(8),
+      statusBadgePaddingVertical: isWebLandscape ? web(4) : mobile(4),
+      statusBadgeBorderRadius: isWebLandscape ? web(20) : mobile(20),
+      statusBadgeDotSize: isWebLandscape ? web(8) : mobile(8),
+      statusBadgeDotMargin: isWebLandscape ? web(6) : mobile(6),
     };
-  }, [height, isWebLandscape]);
+  }, [width, height, isWebLandscape]);
 
   const handleUpdateUserData = async (data) => {
     // handleUpdateUserData is the single save path shared by
@@ -317,7 +322,7 @@ export default function Profile() {
     } catch (err) {
       console.error('An error occurred', err);
       // Fallback in case canOpenURL throws an error
-      Linking.openURL(webUrl).catch(() => {});
+      Linking.openURL(webUrl).catch(() => { });
     }
   };
 
@@ -984,22 +989,22 @@ export default function Profile() {
               backgroundColor: session.mfa?.enabled
                 ? `${themeController.current?.verifiedMarkerColor}26`
                 : `${themeController.current?.unactiveTextColor}26`,
-              paddingHorizontal: sizes.labelMarginBottom * 2,
-              paddingVertical: 4,
-              borderRadius: 20,
+              paddingHorizontal: sizes.statusBadgePaddingHorizontal,
+              paddingVertical: sizes.statusBadgePaddingVertical,
+              borderRadius: sizes.statusBadgeBorderRadius,
               marginBottom: sizes.labelMarginBottom * 2,
             }}
           >
             <View
               style={{
-                width: 8,
-                height: 8,
-                borderRadius: 4,
+                width: sizes.statusBadgeDotSize,
+                height: sizes.statusBadgeDotSize,
+                borderRadius: sizes.statusBadgeDotSize / 2,
                 backgroundColor: session.mfa?.enabled
                   ? themeController.current?.verifiedMarkerColor
                   : themeController.current?.unactiveTextColor,
-                marginRight: isRTL ? 0 : 6,
-                marginLeft: isRTL ? 6 : 0,
+                marginRight: isRTL ? 0 : sizes.statusBadgeDotMargin,
+                marginLeft: isRTL ? sizes.statusBadgeDotMargin : 0,
               }}
             />
             <Text
@@ -1028,64 +1033,70 @@ export default function Profile() {
               : t('my_profile.security.description_off')}
           </Text>
           {session.mfa?.enabled ? (
-            <TouchableOpacity
-              onPress={() => setMfaDisableModalVisible(true)}
-              style={[
-                styles.secondaryReverseBtn,
-                {
-                  backgroundColor: themeController.current?.backgroundColor,
-                  borderColor: themeController.current?.errorTextColor,
-                  height: sizes.btnHeight,
-                  width: isWebLandscape ? undefined : '100%',
-                  minWidth: isWebLandscape ? 160 : undefined,
-                  alignSelf: isWebLandscape
-                    ? isRTL
-                      ? 'flex-end'
-                      : 'flex-start'
-                    : 'stretch',
-                  paddingHorizontal: isWebLandscape ? sizes.infoFieldPaddingH : 0,
-                  borderRadius: sizes.infoFieldBorderRadius,
-                },
-              ]}
-            >
-              <Text
-                style={{
-                  color: themeController.current?.errorTextColor,
-                  fontSize: sizes.btnFont,
-                }}
+            <View style={isWebLandscape ? { marginHorizontal: -sizes.infoFieldPaddingH } : { width: '100%' }}>
+              <TouchableOpacity
+                onPress={() => setMfaDisableModalVisible(true)}
+                style={[
+                  styles.secondaryReverseBtn,
+                  {
+                    backgroundColor: themeController.current?.backgroundColor,
+                    borderColor: themeController.current?.errorTextColor,
+                    height: sizes.btnHeight,
+                    width: sizes.btnWidth,
+                    marginLeft: isWebLandscape && !isRTL ? sizes.infoFieldPaddingH : 0,
+                    marginRight: isWebLandscape && isRTL ? sizes.infoFieldPaddingH : 0,
+                    alignSelf: isWebLandscape
+                      ? isRTL
+                        ? 'flex-end'
+                        : 'flex-start'
+                      : 'stretch',
+                    paddingHorizontal: isWebLandscape ? sizes.infoFieldPaddingH : 0,
+                    borderRadius: sizes.infoFieldBorderRadius,
+                  },
+                ]}
               >
-                {t('my_profile.security.disable_button')}
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={{
+                    color: themeController.current?.errorTextColor,
+                    fontSize: sizes.btnFont,
+                  }}
+                >
+                  {t('my_profile.security.disable_button')}
+                </Text>
+              </TouchableOpacity>
+            </View>
           ) : (
-            <TouchableOpacity
-              onPress={() => setMfaSetupModalVisible(true)}
-              style={[
-                styles.primaryBtn,
-                {
-                  backgroundColor: themeController.current?.buttonColorPrimaryDefault,
-                  height: sizes.btnHeight,
-                  width: isWebLandscape ? undefined : '100%',
-                  minWidth: isWebLandscape ? 160 : undefined,
-                  alignSelf: isWebLandscape
-                    ? isRTL
-                      ? 'flex-end'
-                      : 'flex-start'
-                    : 'stretch',
-                  paddingHorizontal: isWebLandscape ? sizes.infoFieldPaddingH : 0,
-                  borderRadius: sizes.infoFieldBorderRadius,
-                },
-              ]}
-            >
-              <Text
-                style={{
-                  color: themeController.current?.buttonTextColorPrimary,
-                  fontSize: sizes.btnFont,
-                }}
+            <View style={isWebLandscape ? { marginHorizontal: -sizes.infoFieldPaddingH } : { width: '100%' }}>
+              <TouchableOpacity
+                onPress={() => setMfaSetupModalVisible(true)}
+                style={[
+                  styles.primaryBtn,
+                  {
+                    backgroundColor: themeController.current?.buttonColorPrimaryDefault,
+                    height: sizes.btnHeight,
+                    width: sizes.btnWidth,
+                    marginLeft: isWebLandscape && !isRTL ? sizes.infoFieldPaddingH : 0,
+                    marginRight: isWebLandscape && isRTL ? sizes.infoFieldPaddingH : 0,
+                    alignSelf: isWebLandscape
+                      ? isRTL
+                        ? 'flex-end'
+                        : 'flex-start'
+                      : 'stretch',
+                    paddingHorizontal: isWebLandscape ? sizes.infoFieldPaddingH : 0,
+                    borderRadius: sizes.infoFieldBorderRadius,
+                  },
+                ]}
               >
-                {t('my_profile.security.setup_button')}
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={{
+                    color: themeController.current?.buttonTextColorPrimary,
+                    fontSize: sizes.btnFont,
+                  }}
+                >
+                  {t('my_profile.security.setup_button')}
+                </Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
         <View

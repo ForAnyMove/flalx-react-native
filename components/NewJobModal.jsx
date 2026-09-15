@@ -400,7 +400,7 @@ export default function NewJobModal({
   const requiredFields = [
     'type',
     'subType',
-    // ...(isClient ? [] : ['price']),
+    ...(isBusiness ? ['price'] : []),
     // ...(isBusiness ? ['startDateTime', 'endDateTime'] : []),
     // 'location',
     // 'description',
@@ -430,16 +430,35 @@ export default function NewJobModal({
   };
 
   const handleCreate = (paymentOptions = {}) => {
+    let effStartDateTime = startDateTime;
+    let effEndDateTime = endDateTime;
+    let effStartLocal = startLocal;
+    let effEndLocal = endLocal;
+
+    if (isBusiness) {
+      if (effStartDateTime && !effEndDateTime) {
+        effEndDateTime = effStartDateTime;
+        effEndLocal = effStartLocal;
+      } else if (!effStartDateTime && effEndDateTime) {
+        effStartDateTime = effEndDateTime;
+        effStartLocal = effEndLocal;
+      }
+    }
+
     const newErrors = {};
     requiredFields.forEach((field) => {
       // Проверяем, заполнено ли поле. Для location нужна особая проверка.
       if (field === 'location') {
         newErrors[field] = !location || !location?.address;
       } else {
-        const fieldValues = { type, subType, price, startDateTime, endDateTime, description };
+        const fieldValues = { type, subType, price, startDateTime: effStartDateTime, endDateTime: effEndDateTime, description };
         newErrors[field] = !fieldValues[field];
       }
     });
+
+    if (isBusiness && !effStartDateTime && !effEndDateTime) {
+      newErrors.startDateTime = true;
+    }
 
     setFieldErrors(newErrors);
 
@@ -466,22 +485,22 @@ export default function NewJobModal({
       if (experience !== initialJob.experience)
         jobChanges.experience = experience;
       if (
-        startDateTime &&
-        new Date(startDateTime).toISOString() !== initialJob.startDateTime
+        effStartDateTime &&
+        new Date(effStartDateTime).toISOString() !== initialJob.startDateTime
       ) {
-        jobChanges.startDateTime = new Date(startDateTime).toISOString();
+        jobChanges.startDateTime = new Date(effStartDateTime).toISOString();
       }
       if (
-        endDateTime &&
-        new Date(endDateTime).toISOString() !== initialJob.endDateTime
+        effEndDateTime &&
+        new Date(effEndDateTime).toISOString() !== initialJob.endDateTime
       ) {
-        jobChanges.endDateTime = new Date(endDateTime).toISOString();
+        jobChanges.endDateTime = new Date(effEndDateTime).toISOString();
       }
-      if (startLocal && startLocal !== (initialJob.startLocal || initialJob.start_local)) {
-        jobChanges.startLocal = startLocal;
+      if (effStartLocal && effStartLocal !== (initialJob.startLocal || initialJob.start_local)) {
+        jobChanges.startLocal = effStartLocal;
       }
-      if (endLocal && endLocal !== (initialJob.endLocal || initialJob.end_local)) {
-        jobChanges.endLocal = endLocal;
+      if (effEndLocal && effEndLocal !== (initialJob.endLocal || initialJob.end_local)) {
+        jobChanges.endLocal = effEndLocal;
       }
       if (sourceTimezone && sourceTimezone !== (initialJob.source_timezone || initialJob.sourceTimezone)) {
         jobChanges.source_timezone = sourceTimezone;
@@ -513,12 +532,12 @@ export default function NewJobModal({
         location,
         experience,
         // Преобразуем даты в ISO формат
-        startDateTime: startDateTime
-          ? new Date(startDateTime).toISOString()
+        startDateTime: effStartDateTime
+          ? new Date(effStartDateTime).toISOString()
           : null,
-        endDateTime: endDateTime ? new Date(endDateTime).toISOString() : null,
-        startLocal,
-        endLocal,
+        endDateTime: effEndDateTime ? new Date(effEndDateTime).toISOString() : null,
+        startLocal: effStartLocal,
+        endLocal: effEndLocal,
         source_timezone: sourceTimezone,
         // createdAt: new Date().toISOString(),
         jobType: jobType, // статус задания

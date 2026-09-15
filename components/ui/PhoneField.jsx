@@ -165,9 +165,8 @@ const PhoneField = forwardRef(function PhoneField(
       StyleSheet.create({
         // Region picker deliberately stays LTR-laid-out (always on the
         // visual left, flag→code→chevron order) regardless of app
-        // language — only the text input itself should flip for RTL. Per
-        // explicit request: a right-side picker read as "the phone number
-        // is shown backwards" in RTL.
+        // language. Per explicit request: a right-side picker read as 
+        // "the phone number is shown backwards" in RTL.
         row: {
           flexDirection: 'row',
           alignItems: 'center',
@@ -200,7 +199,7 @@ const PhoneField = forwardRef(function PhoneField(
         },
         input: {
           flex: 1,
-          textAlign: isRTL ? 'right' : 'left',
+          textAlign: 'left',
           minWidth: 0,
         },
       }),
