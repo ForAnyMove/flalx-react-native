@@ -1,6 +1,5 @@
 import {
   Image,
-  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
 } from 'react-native';
 import { useComponentContext } from '../context/globalAppContext';
 import JobModalWrapper from './JobModalWrapper';
+import AppModal from './ui/AppModal';
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
@@ -668,9 +668,9 @@ export default function SubscriptionsModal({ visible, main, closeModal }) {
           <SubscriptionsModalContent closeModal={closeModal} />
         </JobModalWrapper>
       ) : (
-        <Modal visible={visible} animationType='slide' transparent>
+        <AppModal visible={visible} transparent>
           <SubscriptionsModalContent closeModal={closeModal} />
-        </Modal>
+        </AppModal>
       )}
     </>
   );

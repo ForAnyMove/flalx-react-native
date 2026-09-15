@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Modal,
   View,
   Text,
   TouchableOpacity,
@@ -21,6 +20,7 @@ import { useNotification } from '../src/render';
 import CustomTextInput from './ui/CustomTextInput';
 import CustomExperiencePicker from './ui/CustomExperiencePicker';
 import AddProfessionModal from './AddProfessionModal';
+import AppModal from './ui/AppModal';
 import { useLocalization } from '../src/services/useLocalization';
 
 const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) => {
@@ -361,7 +361,7 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
 
   return (
     <>
-      <Modal visible={visible && !isAddModalVisible} transparent={true} animationType='fade'>
+      <AppModal visible={visible && !isAddModalVisible} transparent={true}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -484,7 +484,7 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
             </TouchableWithoutFeedback>
         </View>
         </TouchableWithoutFeedback>
-      </Modal>
+      </AppModal>
       <AddProfessionModal
         visible={visible && isAddModalVisible}
         onClose={handleAddModalClose}

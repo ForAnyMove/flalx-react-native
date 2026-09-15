@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
   Image,
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,6 +16,7 @@ import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import CommentsSection from './CommentsSection';
 import PurchaseModal from './PurchaseModal';
+import AppModal from './ui/AppModal';
 import { useWebView } from '../context/webViewContext';
 import { useWindowInfo } from '../context/windowContext';
 import { useLocalization } from '../src/services/useLocalization';
@@ -462,7 +462,7 @@ const UserSummaryBlock = ({
       </TouchableOpacity>
 
       {/* Fullscreen Modal (прозрачная, клик по пустой зоне закрывает) */}
-      <Modal visible={modalVisible} animationType='slide' transparent>
+      <AppModal visible={modalVisible} transparent>
         {/* клик по фону — закрыть */}
         <TouchableWithoutFeedback
           onPress={() => {
@@ -1162,7 +1162,7 @@ const UserSummaryBlock = ({
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
-      </Modal>
+      </AppModal>
 
       <PurchaseModal
         visible={purchaseModalVisible}

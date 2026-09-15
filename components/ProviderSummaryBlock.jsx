@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Image,
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,6 +23,7 @@ import { useLocalization } from '../src/services/useLocalization';
 import SubscriptionsModal from './SubscriptionsModal';
 import { useNotification } from '../src/render';
 import PurchaseModal from './PurchaseModal';
+import AppModal from './ui/AppModal';
 import { formatCurrency } from '../utils/currency_formatter';
 import { formatPhoneDisplay } from '../src/phone/phoneUtils';
 
@@ -405,7 +405,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
       </TouchableOpacity>
 
       {/* Fullscreen Modal */}
-      <Modal visible={modalVisible} animationType='slide' transparent>
+      <AppModal visible={modalVisible} transparent>
         <TouchableWithoutFeedback
           onPress={() => {
             setModalVisible(false);
@@ -917,7 +917,7 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
             setPurchaseModalVisible(true);
           }}
         />
-      </Modal>
+      </AppModal>
     </>
   );
 };

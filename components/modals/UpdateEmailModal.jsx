@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
-  Modal,
   View,
   Text,
   TouchableOpacity,
@@ -16,6 +15,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
 import CustomTextInput from '../ui/CustomTextInput';
 import { getResendCooldownUntil, setResendCooldownUntil } from '../../src/auth/emailResendCooldown';
+import AppModal from '../ui/AppModal';
 
 const RESEND_COOLDOWN_MS = 2 * 60 * 1000;
 
@@ -311,7 +311,7 @@ const UpdateEmailModal = ({
   );
 
   return (
-    <Modal visible={visible} transparent={true} animationType='fade'>
+    <AppModal visible={visible} transparent={true}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           {(isLoading || internalLoading) && (
@@ -326,7 +326,7 @@ const UpdateEmailModal = ({
           {step === 'enterEmail' ? renderEnterEmail() : renderSuccess()}
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 };
 

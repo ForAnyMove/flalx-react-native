@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import {
-    Modal,
     View,
     Text,
     TouchableOpacity,
@@ -14,6 +13,7 @@ import { useWindowInfo } from '../../../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import { useComponentContext } from '../../../context/globalAppContext';
 import { useTranslation } from 'react-i18next';
+import AppModal from '../../ui/AppModal';
 
 export const SubmitModal = ({ visible, onClose, onSubmitted }) => {
     const { themeController } = useComponentContext();
@@ -123,7 +123,7 @@ export const SubmitModal = ({ visible, onClose, onSubmitted }) => {
         onClose && onClose();
     }
 
-    return <Modal visible={visible} transparent={true} animationType='fade'>
+    return <AppModal visible={visible} transparent={true}>
         <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
                 <>
@@ -160,5 +160,5 @@ export const SubmitModal = ({ visible, onClose, onSubmitted }) => {
                 </>
             </View>
         </View>
-    </Modal>
+    </AppModal>
 }

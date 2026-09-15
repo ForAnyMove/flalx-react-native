@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Modal, View, Text, TouchableOpacity, Image, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
@@ -7,6 +7,7 @@ import { useWindowInfo } from '../../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
 import MfaSetupModal from './MfaSetupModal';
+import AppModal from '../ui/AppModal';
 import { setMfaRecommendCooldownUntil, MFA_RECOMMEND_COOLDOWN_MS } from '../../src/auth/mfaRecommendCooldown';
 import { logError } from '../../utils/log_util';
 
@@ -96,7 +97,7 @@ export default function MfaRecommendationModal({ visible, onClose }) {
 
   return (
     <>
-      <Modal visible={visible && !setupVisible} transparent animationType='fade' onRequestClose={handleClose}>
+      <AppModal visible={visible && !setupVisible} transparent onRequestClose={handleClose}>
         {visible && !setupVisible && (
           <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' }}>
             <View
@@ -243,7 +244,7 @@ export default function MfaRecommendationModal({ visible, onClose }) {
             </View>
           </View>
         )}
-      </Modal>
+      </AppModal>
 
       <MfaSetupModal visible={setupVisible} onClose={handleSetupDone} onDone={handleSetupDone} showSkip />
     </>

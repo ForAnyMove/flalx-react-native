@@ -1,6 +1,5 @@
 import {
   Animated,
-  Modal,
   PanResponder,
   Text,
   TouchableOpacity,
@@ -14,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { icons } from '../../constants/icons';
 import { useWindowInfo } from '../../context/windowContext';
 import NewJobModal from '../../components/NewJobModal';
+import AppModal from '../../components/ui/AppModal';
 import NewScreen from './jobsTabs/New';
 import WaitingScreen from './jobsTabs/Waiting';
 import InProgressScreen from './jobsTabs/InProgress';
@@ -417,14 +417,14 @@ export default function Jobs() {
           />
         </JobModalWrapper>
       ) : (
-        <Modal visible={showJobModalVisible} animationType='slide'>
+        <AppModal visible={showJobModalVisible}>
           <ShowJobModal
             closeModal={() => setShowJobModalVisible(false)}
             status={jobModalStatus}
             currentJobId={currentJobId}
             jobStatusInfo={jobStatusInfo}
           />
-        </Modal>
+        </AppModal>
       )}
     </View>
   );

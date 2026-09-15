@@ -1,6 +1,5 @@
 import {
   Animated,
-  Modal,
   PanResponder,
   Text,
   TouchableOpacity,
@@ -14,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { icons } from '../../constants/icons';
 import { useWindowInfo } from '../../context/windowContext';
 import NewJobModal from '../../components/NewJobModal';
+import AppModal from '../../components/ui/AppModal';
 import NewScreen from './storeTabs/New';
 import WaitingScreen from './storeTabs/Waiting';
 import InProgressScreen from './storeTabs/InProgress';
@@ -529,13 +529,13 @@ export default function Store() {
           />
         </JobModalWrapper>
       ) : (
-        <Modal visible={newJobModalVisible} animationType='slide' transparent>
+        <AppModal visible={newJobModalVisible} transparent>
           <NewJobModal
             closeModal={() => setNewJobModalVisible(false)}
             redirectToWaiting={() => { setNewJobModalVisible(false); handleTabPress(orderedTabs.indexOf('waiting') >= 0 ? orderedTabs.indexOf('waiting') : 0); }}
             activeKey={activeKey}
           />
-        </Modal>
+        </AppModal>
       )}
       {isWebLandscape ? (
         <JobModalWrapper visible={showJobModalVisible} main={true}>
@@ -547,14 +547,14 @@ export default function Store() {
           />
         </JobModalWrapper>
       ) : (
-        <Modal visible={showJobModalVisible} animationType='slide'>
+        <AppModal visible={showJobModalVisible}>
           <ShowJobModal
             closeModal={() => setShowJobModalVisible(false)}
             status={jobModalStatus}
             currentJobId={currentJobId}
             jobStatusInfo={jobStatusInfo}
           />
-        </Modal>
+        </AppModal>
       )}
     </View>
   );

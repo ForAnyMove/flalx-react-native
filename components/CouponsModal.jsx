@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import {
-  Modal,
   View,
   Text,
   TouchableOpacity,
@@ -16,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
 import CustomTextInput from './ui/CustomTextInput';
+import AppModal from './ui/AppModal';
 
 const CouponsModal = ({ visible, onClose }) => {
   const { themeController, languageController, couponsManagerController, user } = useComponentContext();
@@ -192,7 +192,7 @@ const CouponsModal = ({ visible, onClose }) => {
   });
 
   return (
-    <Modal visible={visible} transparent={true} animationType='fade'>
+    <AppModal visible={visible} transparent={true}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           <TouchableOpacity style={styles.crossButton} onPress={onClose}>
@@ -248,7 +248,7 @@ const CouponsModal = ({ visible, onClose }) => {
           </TouchableOpacity>
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 };
 

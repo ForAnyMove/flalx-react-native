@@ -4,7 +4,6 @@ import {
   FlatList,
   Image,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -18,6 +17,7 @@ import { JOB_TYPES } from '../constants/jobTypes';
 import { LICENSES } from '../constants/licenses';
 import { useComponentContext } from '../context/globalAppContext';
 import JobHistoryModal from './JobHistoryModal';
+import AppModal from './ui/AppModal';
 import NewJobModal from './NewJobModal';
 import JobExpectationsBadge from './ui/JobExpectationsBadge';
 import ProvidersSection from './ProvidersSection';
@@ -1228,7 +1228,7 @@ export default function ShowJobModal({
           </View>,
           <CommentsSection
             jobId={currentJobInfo?.id}
-            userId={currentJobInfo?.executor}
+            userId={currentJobInfo?.executor?.id}
             allowAdd={!currentJobInfo?.comments?.some(c => c.author_id === user?.current?.id)}
             allowAddOnly={true}
             onRated={() => jobsController.reloadAll()}
@@ -1954,7 +1954,7 @@ export default function ShowJobModal({
             // (was: `userId={currentJobInfo?.creator}`) — CommentsSection
             // needs the id specifically for its own API calls
             // (getCommentsReceived/setComment), not the whole object.
-            userId={currentJobInfo?.creator?.id ?? currentJobInfo?.creator}
+            userId={currentJobInfo?.creator?.id}
             allowAdd={!currentJobInfo?.comments?.some(c => c.author_id === user?.current?.id)}
             allowAddOnly={true}
             onRated={() => jobsController.reloadAll()}
@@ -3084,7 +3084,7 @@ export default function ShowJobModal({
         </View>
       )}
       {/* Edit job modal */}
-      {/* <Modal visible={newJobModalVisible} animationType='slide'>
+      {/* <Modal visible={newJobModalVisible} animationType='fade'>
         <NewJobModal
           closeModal={() => setNewJobModalVisible(false)}
           editMode={true}
@@ -3106,7 +3106,7 @@ export default function ShowJobModal({
           />
         </JobModalWrapper>
       ) : (
-        <Modal visible={newJobModalVisible} animationType='slide' transparent>
+        <AppModal visible={newJobModalVisible} transparent>
           <NewJobModal
             closeModal={() => setNewJobModalVisible(false)}
             redirectToWaiting={() => {
@@ -3117,7 +3117,7 @@ export default function ShowJobModal({
             currentJobId={currentJobId}
             initialJob={currentJobInfo}
           />
-        </Modal>
+        </AppModal>
       )}
       {currentJobInfo && <PurchaseModal
         visible={publishModalVisible}
@@ -3137,7 +3137,7 @@ export default function ShowJobModal({
       />}
 
       {/* Cancel interest modal */}
-      <Modal visible={showCancelRequestModal} transparent animationType='fade'>
+      <AppModal visible={showCancelRequestModal} transparent>
         <View style={styles.modalOverlay}>
           <View
             style={[
@@ -3255,7 +3255,7 @@ export default function ShowJobModal({
             </View>
           </View>
         </View>
-      </Modal>
+      </AppModal>
       {/* Confirm interest (paywall) modal */}
       <PurchaseModal
         visible={showConfirmInterestModal}
@@ -3344,7 +3344,7 @@ export default function ShowJobModal({
       </Modal> */}
 
       {/* Modal подтверждения */}
-      <Modal visible={acceptModalVisible} transparent animationType='fade'>
+      <AppModal visible={acceptModalVisible} transparent>
         <View style={styles.modalOverlay}>
           <View
             style={[
@@ -3450,7 +3450,7 @@ export default function ShowJobModal({
             </View>
           </View>
         </View>
-      </Modal>
+      </AppModal>
       <JobHistoryModal
         visible={showHistoryModal}
         onClose={() => setHistoryModal(false)}
@@ -3486,7 +3486,7 @@ export default function ShowJobModal({
           );
         }}
       />
-      <Modal visible={agreementModalVisible} transparent animationType='fade'>
+      <AppModal visible={agreementModalVisible} transparent>
         <View style={styles.modalOverlay}>
           <View
             style={[
@@ -3655,12 +3655,12 @@ export default function ShowJobModal({
             </View>
           </View>
         </View>
-      </Modal>
+      </AppModal>
 
       {/* Discard-pending-edit confirmation — same title+diff-rows+buttons
           structure as the agreement modal above, so the diff reads as plain
           text rows instead of being crammed into one bold heading. */}
-      <Modal visible={discardEditModalVisible} transparent animationType='fade'>
+      <AppModal visible={discardEditModalVisible} transparent>
         <View style={styles.modalOverlay}>
           <View
             style={[
@@ -3826,7 +3826,7 @@ export default function ShowJobModal({
             </View>
           </View>
         </View>
-      </Modal>
+      </AppModal>
     </KeyboardAvoidingView>
   );
 }

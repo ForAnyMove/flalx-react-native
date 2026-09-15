@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import {
-  Modal,
   View,
   Text,
   TouchableOpacity,
@@ -13,6 +12,7 @@ import { useComponentContext } from '../../context/globalAppContext';
 import { useWindowInfo } from '../../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
+import AppModal from './AppModal';
 
 /**
  * Small reusable "are you sure?" dialog — title + Cancel/Confirm, styled to
@@ -56,7 +56,7 @@ export default function ConfirmModal({
   }, [isWebLandscape, height]);
 
   return (
-    <Modal visible={visible} transparent animationType='fade' onRequestClose={onCancel}>
+    <AppModal visible={visible} transparent onRequestClose={onCancel}>
       <View style={styles.overlay}>
         <View
           style={[
@@ -135,7 +135,7 @@ export default function ConfirmModal({
           </View>
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 }
 

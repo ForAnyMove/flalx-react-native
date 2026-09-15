@@ -1,6 +1,5 @@
 import {
   Image,
-  Modal,
   ScrollView,
   StyleSheet,
   Switch,
@@ -12,6 +11,7 @@ import {
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
 import CustomPicker from '../../../components/ui/CustomPicker';
+import AppModal from '../../../components/ui/AppModal';
 import { icons } from '../../../constants/icons';
 import { useState, useMemo, useEffect } from 'react';
 import { useWindowInfo } from '../../../context/windowContext';
@@ -439,9 +439,8 @@ export default function Settings() {
       </View>
 
       {/* About Modal */}
-      <Modal
+      <AppModal
         visible={aboutVisible}
-        animationType='slide'
         transparent={isWebLandscape}
       >
         <ModalContent
@@ -454,12 +453,11 @@ export default function Settings() {
           isRTL={isRTL}
           height={height}
         />
-      </Modal>
+      </AppModal>
 
       {/* Regulations Modal */}
-      <Modal
+      <AppModal
         visible={regulationsVisible}
-        animationType='slide'
         transparent={isWebLandscape}
       >
         <ModalContent
@@ -471,7 +469,7 @@ export default function Settings() {
           isRTL={isRTL}
           height={height}
         />
-      </Modal>
+      </AppModal>
     </View>
   );
 }

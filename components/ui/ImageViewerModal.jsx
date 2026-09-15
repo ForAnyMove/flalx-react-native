@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Image,
-  Modal,
   PanResponder,
   Platform,
   StatusBar,
@@ -12,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { icons } from '../../constants/icons';
+import AppModal from './AppModal';
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 5;
@@ -262,15 +262,14 @@ export default function ImageViewerModal({ visible, images, initialIndex = 0, on
   // overlay instead — it covers the full-screen parent Modal area.
   if (Platform.OS === 'web') {
     return (
-      <Modal
+      <AppModal
         visible
         transparent
-        animationType="fade"
         onRequestClose={onClose}
         statusBarTranslucent
       >
         {content}
-      </Modal>
+      </AppModal>
     );
   }
 

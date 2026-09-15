@@ -23,7 +23,7 @@ export default function DoneScreen({
   setJobModalStatus,
   setJobStatusInfo,
 }) {
-  const { themeController, jobsController, languageController } =
+  const { themeController, jobsController, languageController, user } =
     useComponentContext();
   const openJobDetail = useJobDetailNavigation({ setCurrentJobId, setShowJobModalVisible, setJobModalStatus, setJobStatusInfo });
   const { tField } = useLocalization(languageController.current);
@@ -111,11 +111,10 @@ export default function DoneScreen({
             const hasImage = job.images && job.images.length > 0;
 
             let extraMarkerStyle = {};
-            let isMarkerExist = false;
+            let commentMade = job?.comments?.find(i => i.author?.id == user?.current?.id) == null;
             let extraMarkerColor;
             let extraMarkerText;
-            if (job?.comments?.length == 0) {
-              isMarkerExist = true;
+            if (commentMade) {
               extraMarkerColor = themeController.current?.personalMarkerColor;
               extraMarkerText = t('extra_markers.rate_me');
               extraMarkerStyle = {
@@ -217,7 +216,7 @@ export default function DoneScreen({
                       </Text>
                     ) : null}
                   </View>
-                  {job?.comments?.length == 0 && (
+                  {commentMade && (
                     <View
                       style={[
                         styles.specialMarkerContainer,

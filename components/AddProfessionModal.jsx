@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Modal,
   View,
   Text,
   TouchableOpacity,
@@ -14,6 +13,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import ImagePickerModal from './ui/ImagePickerModal';
+import AppModal from './ui/AppModal';
 import { icons } from '../constants/icons';
 import { uploadImageAsset } from '../src/files/uploadFile';
 import { logError } from '../utils/log_util';
@@ -311,7 +311,7 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
   );
 
   return (
-    <Modal visible={visible} transparent={true} animationType='fade'>
+    <AppModal visible={visible} transparent={true}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           {isSubmitted ? (
@@ -441,7 +441,7 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
         onAdd={handleAddImages}
         multiple
       />
-    </Modal>
+    </AppModal>
   );
 };
 
