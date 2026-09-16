@@ -1,9 +1,10 @@
 import React from 'react';
-import { Modal, View, TouchableOpacity, Image, Platform } from 'react-native';
+import { View, TouchableOpacity, Image, Platform } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { useWindowInfo } from '../../context/windowContext';
 import { icons } from '../../constants/icons';
 import MfaSetupScreen from '../../screens/register/MfaSetupScreen';
+import AppModal from '../ui/AppModal';
 
 /**
  * Reusable wrapper around the same MfaSetupScreen used during registration's
@@ -26,7 +27,7 @@ export default function MfaSetupModal({ visible, onClose, onDone, showSkip = fal
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
   return (
-    <Modal visible={visible} animationType='slide' transparent={false} onRequestClose={onClose}>
+    <AppModal visible={visible} transparent={false} onRequestClose={onClose}>
       {visible && (
         <View style={{ flex: 1, backgroundColor: theme.backgroundColor }}>
           {!showSkip && (
@@ -45,6 +46,6 @@ export default function MfaSetupModal({ visible, onClose, onDone, showSkip = fal
           <MfaSetupScreen optional={showSkip} onDone={onDone} onSkip={showSkip ? onClose : undefined} />
         </View>
       )}
-    </Modal>
+    </AppModal>
   );
 }

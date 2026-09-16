@@ -1,6 +1,5 @@
 import {
     Image,
-    Modal,
     Text,
     TouchableOpacity,
     View,
@@ -16,6 +15,7 @@ import { useMemo } from 'react';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { formatCurrency } from '../utils/currency_formatter';
 import { RTLView } from './common/RTLView';
+import AppModal from './ui/AppModal';
 
 export const PublishJobModal = ({
     visible,
@@ -67,7 +67,7 @@ export const PublishJobModal = ({
         };
     }, [isWebLandscape, height]);
 
-    return <Modal visible={visible} animationType='fade' transparent>
+    return <AppModal visible={visible} transparent>
         {/* кликабельная подложка с отступом под сайдбар на web-landscape */}
         <View
             style={[
@@ -297,7 +297,7 @@ export const PublishJobModal = ({
                 </View>
             </TouchableOpacity>
         </View>
-    </Modal>
+    </AppModal>
 }
 
 const styles = StyleSheet.create({

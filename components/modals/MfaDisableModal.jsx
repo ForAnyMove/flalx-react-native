@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Modal,
   View,
   Text,
   TouchableOpacity,
@@ -17,6 +16,7 @@ import { icons } from '../../constants/icons';
 import CustomTextInput from '../ui/CustomTextInput';
 import { getAuthErrorMessage } from '../../src/auth/authErrors';
 import { logError } from '../../utils/log_util';
+import AppModal from '../ui/AppModal';
 
 const OTP_LENGTH = 6;
 
@@ -142,7 +142,7 @@ export default function MfaDisableModal({ visible, onClose, onDisabled }) {
   };
 
   return (
-    <Modal visible={visible} transparent animationType='fade' onRequestClose={handleClose}>
+    <AppModal visible={visible} transparent onRequestClose={handleClose}>
       {visible && (
         <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' }}>
           <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: undefined })}>
@@ -256,6 +256,6 @@ export default function MfaDisableModal({ visible, onClose, onDisabled }) {
           </KeyboardAvoidingView>
         </View>
       )}
-    </Modal>
+    </AppModal>
   );
 }

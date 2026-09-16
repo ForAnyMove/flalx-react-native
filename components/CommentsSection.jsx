@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,6 +16,7 @@ import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useWindowInfo } from '../context/windowContext';
 import CustomTextInput from './ui/CustomTextInput';
+import AppModal from './ui/AppModal';
 import { useNotification } from '../src/render';
 
 export default function CommentsSection({
@@ -27,7 +27,7 @@ export default function CommentsSection({
   onRated,
 }) {
   const { width, height } = useWindowInfo();
-  const { themeController, providersController, languageController } =
+  const { themeController, providersController, languageController, setAppLoading } =
     useComponentContext();
   const { t } = useTranslation();
   const { showError } = useNotification();
@@ -101,6 +101,7 @@ export default function CommentsSection({
       return;
     }
 
+    setAppLoading(true);
     try {
       const res = await providersController.setComment(userId, {
         text: newText.trim(),
@@ -118,6 +119,8 @@ export default function CommentsSection({
       }
     } catch (e) {
       showError(t('errors.failed_to_add_comment', { defaultValue: 'Failed to submit rating' }));
+    } finally {
+      setAppLoading(false);
     }
   };
 
@@ -299,14 +302,8 @@ export default function CommentsSection({
         </TouchableOpacity>
       )}
 
-      {/* Форма добавления (popup) */}
-      <Modal
-        visible={addModal}
-        animationType="slide"
-        transparent
-        hardwareAccelerated
-        statusBarTranslucent
-      >
+      {/* Модальное окно добавления */}
+      <AppModal visible={addModal} transparent hardwareAccelerated={true} statusBarTranslucent={true}>
         <KeyboardAvoidingView
           style={styles.modalOverlay}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -411,7 +408,7 @@ export default function CommentsSection({
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
-      </Modal>
+      </AppModal>
     </View>
   );
 }

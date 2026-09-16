@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import {
   FlatList,
   Image,
-  Modal,
   Platform,
   StyleSheet,
   Text,
@@ -17,11 +16,12 @@ import { LICENSES } from '../constants/licenses';
 import { useComponentContext } from '../context/globalAppContext';
 import { useWindowInfo } from '../context/windowContext';
 import JobModalWrapper from './JobModalWrapper';
+import AppModal from './ui/AppModal';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { formatExperience } from '../utils/experience_ulit';
 
-function CustomModal({ isWebLandscape, visible, transparent, animationType, children }) {
+function CustomModal({ isWebLandscape, visible, transparent, children }) {
   if (isWebLandscape) {
     return (
       <JobModalWrapper visible={visible} main={false}>
@@ -30,9 +30,9 @@ function CustomModal({ isWebLandscape, visible, transparent, animationType, chil
     )
   }
   return (
-    <Modal visible={visible} animationType={animationType} transparent={transparent}>
+    <AppModal visible={visible} transparent={transparent}>
       {children}
-    </Modal>
+    </AppModal>
   )
 }
 
@@ -230,7 +230,6 @@ export default function JobHistoryModal({ visible, onClose, history = [] }) {
     <CustomModal
       visible={visible}
       isWebLandscape={isWebLandscape}
-      animationType='slide'
       transparent={false}
     >
       <View

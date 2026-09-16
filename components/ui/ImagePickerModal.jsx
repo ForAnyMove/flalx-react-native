@@ -2,7 +2,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { useMemo, useState } from 'react';
 import {
   Image,
-  Modal,
   Platform,
   Text,
   TouchableOpacity,
@@ -18,6 +17,7 @@ import { logError } from '../../utils/log_util';
 import { icons } from '../../constants/icons';
 import CustomTextInput from './CustomTextInput';
 import ImageViewerModal from './ImageViewerModal';
+import AppModal from './AppModal';
 import { useNotification } from '../../src/render';
 
 let nextId = 0;
@@ -281,7 +281,7 @@ export default function ImagePickerModal({ visible, onClose, onAdd, limitType, m
   );
 
   return (
-    <Modal visible={visible} transparent animationType='fade' onRequestClose={handleCancel}>
+    <AppModal visible={visible} transparent onRequestClose={handleCancel}>
       <View
         style={{
           flex: 1,
@@ -530,6 +530,6 @@ export default function ImagePickerModal({ visible, onClose, onAdd, limitType, m
         initialIndex={viewerIndex ?? 0}
         onClose={() => setViewerIndex(null)}
       />
-    </Modal>
+    </AppModal>
   );
 }

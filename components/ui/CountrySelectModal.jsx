@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Modal,
   View,
   Text,
   TouchableOpacity,
@@ -18,6 +17,7 @@ import { useWindowInfo } from '../../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
 import CustomTextInput from './CustomTextInput';
+import AppModal from './AppModal';
 import { flagSvgFor } from '../../src/phone/phoneUtils';
 
 // The library's own <CountryPicker> renders an unstyled, full-page list with
@@ -192,7 +192,7 @@ export default function CountrySelectModal({ visible, onClose, onSelect, transla
   };
 
   return (
-    <Modal visible={visible} transparent animationType='fade' onRequestClose={onClose}>
+    <AppModal visible={visible} transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.container}>
           <View style={styles.header}>
@@ -223,6 +223,6 @@ export default function CountrySelectModal({ visible, onClose, onSelect, transla
           )}
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 }

@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
-  Modal,
   View,
   Text,
   TouchableOpacity,
@@ -17,6 +16,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
 import { validatePersonName } from '../../utils/nameValidation';
 import CustomTextInput from '../ui/CustomTextInput';
+import AppModal from '../ui/AppModal';
 
 const UpdateUserDataModal = ({
   visible,
@@ -193,7 +193,7 @@ const UpdateUserDataModal = ({
   });
 
   return (
-    <Modal visible={visible} transparent={true} animationType='fade'>
+    <AppModal visible={visible} transparent={true}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           {isLoading && (
@@ -240,7 +240,7 @@ const UpdateUserDataModal = ({
           </TouchableOpacity>
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 };
 

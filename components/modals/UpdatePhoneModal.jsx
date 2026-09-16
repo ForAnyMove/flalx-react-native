@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
-  Modal,
   View,
   Text,
   TouchableOpacity,
@@ -18,6 +17,7 @@ import CustomTextInput from '../ui/CustomTextInput';
 import PhoneField from '../ui/PhoneField';
 import { normalizeE164 } from '../../src/phone/phoneUtils';
 import { toE164 } from '../../src/auth/phoneFormat';
+import AppModal from '../ui/AppModal';
 
 const OTP_LENGTH = 6;
 
@@ -322,7 +322,7 @@ const UpdatePhoneModal = ({
   );
 
   return (
-    <Modal visible={visible} transparent={true} animationType='fade'>
+    <AppModal visible={visible} transparent={true}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           {(isLoading || internalLoading) && (
@@ -337,7 +337,7 @@ const UpdatePhoneModal = ({
           {step === 'enterPhone' ? renderEnterPhone() : renderEnterCode()}
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 };
 

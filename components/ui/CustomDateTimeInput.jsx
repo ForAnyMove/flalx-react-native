@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
-  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -15,6 +14,7 @@ import { icons } from '../../constants/icons';
 import { useComponentContext } from '../../context/globalAppContext';
 import { useWindowInfo } from '../../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
+import AppModal from './AppModal';
 import {
   formatDisplayDateTime,
   formatLocalDateTime,
@@ -295,7 +295,7 @@ export default function CustomDateTimeInput({
         </View>
       </TouchableOpacity>
 
-      <Modal visible={isOpen} transparent animationType="fade" onRequestClose={closePicker}>
+      <AppModal visible={isOpen} transparent onRequestClose={closePicker}>
         <View style={styles.overlay}>
           <View
             style={[
@@ -561,7 +561,7 @@ export default function CustomDateTimeInput({
             ) : null}
           </View>
         </View>
-      </Modal>
+      </AppModal>
     </>
   );
 }

@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react';
 import { useWindowInfo } from '../context/windowContext';
 import {
   FlatList,
-  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -16,6 +15,7 @@ import {
 import { useComponentContext } from '../context/globalAppContext';
 import CustomFlatList from './ui/CustomFlatList';
 import UserSummaryBlock from './UserSummaryBlock';
+import AppModal from './ui/AppModal';
 import { useTranslation } from 'react-i18next'; // ⬅️ переводы
 import { icons } from '../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
@@ -552,9 +552,8 @@ export default function ProvidersSection({
           </>
         )}
       </View>
-      <Modal
+      <AppModal
         visible={isModalVisible}
-        animationType='slide'
         // presentationStyle='fullScreen'
         transparent
       >
@@ -619,7 +618,7 @@ export default function ProvidersSection({
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
-      </Modal>
+      </AppModal>
     </>
   );
 }

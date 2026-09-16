@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Modal,
   StyleSheet,
   Image,
   FlatList,
@@ -15,6 +14,7 @@ import { useComponentContext } from '../../context/globalAppContext';
 import { icons } from '../../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { useWindowInfo } from '../../context/windowContext';
+import AppModal from './AppModal';
 
 const CustomPicker = ({
   label,
@@ -197,10 +197,9 @@ const CustomPicker = ({
   };
 
   const renderFullScreenModal = () => (
-    <Modal
+    <AppModal
       visible={modalVisible}
       transparent={true}
-      animationType='fade'
       statusBarTranslucent={true}
       onRequestClose={() => setModalVisible(false)}
     >
@@ -230,14 +229,13 @@ const CustomPicker = ({
           {renderCustomScrollBar(dropdownHeight)}
         </View>
       </TouchableOpacity>
-    </Modal>
+    </AppModal>
   );
 
   const renderDropdownModal = () => (
-    <Modal
+    <AppModal
       visible={modalVisible}
       transparent={true}
-      animationType='fade'
       statusBarTranslucent={true}
       onRequestClose={() => setModalVisible(false)}
     >
@@ -296,7 +294,7 @@ const CustomPicker = ({
           </View>
         )}
       </TouchableOpacity>
-    </Modal>
+    </AppModal>
   );
 
   if (headerStyle) {

@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
-  Modal,
   View,
   Text,
   TouchableOpacity,
@@ -17,6 +16,7 @@ import { useWebView } from '../context/webViewContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 import PaymentLegalNotice from './PaymentLegalNotice';
+import AppModal from './ui/AppModal';
 
 const PaymentMethodsModal = ({ visible, onClose }) => {
   const { themeController, languageController, paymentsManagerController } =
@@ -611,7 +611,7 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
   };
 
   return (
-    <Modal visible={visible} transparent={true} animationType='fade'>
+    <AppModal visible={visible} transparent={true}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           {isLoading && (
@@ -632,7 +632,7 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
           {renderContent()}
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 };
 

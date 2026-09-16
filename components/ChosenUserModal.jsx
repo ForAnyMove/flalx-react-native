@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
-  Modal,
   View,
   Text,
   TouchableOpacity,
@@ -15,6 +14,7 @@ import { useWindowInfo } from '../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 import JobExpectationsBadge from './ui/JobExpectationsBadge';
+import AppModal from './ui/AppModal';
 
 const ChosenUserModal = ({
   visible,
@@ -370,7 +370,7 @@ const ChosenUserModal = ({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <AppModal visible={visible} transparent>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           <TouchableOpacity style={styles.crossButton} onPress={handleCrossPress}>
@@ -379,7 +379,7 @@ const ChosenUserModal = ({
           {renderContent()}
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 };
 

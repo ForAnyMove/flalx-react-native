@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import {
-  Modal,
   View,
   Text,
   TouchableOpacity,
@@ -13,6 +12,7 @@ import { useComponentContext } from '../context/globalAppContext';
 import { useWindowInfo } from '../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
+import AppModal from './ui/AppModal';
 
 const AlertModal = ({
   visible,
@@ -57,7 +57,7 @@ const AlertModal = ({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <AppModal visible={visible} transparent>
       <View style={styles.overlay}>
         <View
           style={[
@@ -129,7 +129,7 @@ const AlertModal = ({
           </View>
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 };
 

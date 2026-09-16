@@ -1,6 +1,5 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
 import {
-  Modal,
   View,
   Text,
   TouchableOpacity,
@@ -16,6 +15,7 @@ import { useWindowInfo } from '../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 import PaymentLegalNotice from './PaymentLegalNotice';
+import AppModal from './ui/AppModal';
 
 /**
  * PurchaseModal вЂ” modal for selecting a payment method and completing a purchase.
@@ -841,7 +841,7 @@ const PurchaseModal = ({
 
   // в”Ђв”Ђв”Ђ Render в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   return (
-    <Modal visible={visible} transparent animationType='fade'>
+    <AppModal visible={visible} transparent>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           {isLoading && (
@@ -860,7 +860,7 @@ const PurchaseModal = ({
           </ScrollView>
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 };
 

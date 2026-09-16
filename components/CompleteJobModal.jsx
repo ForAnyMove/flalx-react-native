@@ -1,6 +1,5 @@
 import {
   Image,
-  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -11,6 +10,7 @@ import {
 } from 'react-native';
 import { useComponentContext } from '../context/globalAppContext';
 import JobModalWrapper from './JobModalWrapper';
+import AppModal from './ui/AppModal';
 import { useWindowInfo } from '../context/windowContext';
 import { icons } from '../constants/icons';
 import { scaleByHeight } from '../utils/resizeFuncs';
@@ -494,12 +494,12 @@ export default function CompleteJobModal({
           />
         </JobModalWrapper>
       ) : (
-        <Modal visible={visible} animationType='slide' transparent>
+        <AppModal visible={visible} transparent>
           <CompleteJobModalContent
             closeModal={closeModal}
             completeFunc={completeFunc}
           />
-        </Modal>
+        </AppModal>
       )}
     </>
   );

@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Modal,
   View,
   Text,
   TouchableOpacity,
@@ -19,6 +18,7 @@ import { icons } from '../../constants/icons';
 import CustomTextInput from '../ui/CustomTextInput';
 import CustomPicker from '../ui/CustomPicker';
 import UpdateEmailModal from './UpdateEmailModal';
+import AppModal from '../ui/AppModal';
 import { sendSupportRequest } from '../../src/api/support';
 import { parsePhone, formatAsYouType, callingCodeFor } from '../../src/phone/phoneUtils';
 import { logError } from '../../utils/log_util';
@@ -703,7 +703,7 @@ export default function ContactSupportModal({ visible, onClose }) {
   );
 
   return (
-    <Modal visible={visible} transparent animationType='fade' onRequestClose={handleClose}>
+    <AppModal visible={visible} transparent onRequestClose={handleClose}>
       <View
         style={{
           flex: 1,
@@ -757,6 +757,6 @@ export default function ContactSupportModal({ visible, onClose }) {
         onSave={() => { }}
         isLoading={false}
       />
-    </Modal>
+    </AppModal>
   );
 }

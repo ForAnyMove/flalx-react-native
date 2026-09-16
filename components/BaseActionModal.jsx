@@ -1,6 +1,5 @@
 ﻿import React from 'react';
 import {
-  Modal,
   View,
   TouchableOpacity,
   StyleSheet,
@@ -8,6 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { icons } from '../constants/icons';
+import AppModal from './ui/AppModal';
 
 const BaseActionModal = ({
   visible,
@@ -67,7 +67,7 @@ const BaseActionModal = ({
   });
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <AppModal visible={visible} transparent>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           {isLoading && (
@@ -87,7 +87,7 @@ const BaseActionModal = ({
           {children}
         </View>
       </View>
-    </Modal>
+    </AppModal>
   );
 };
 

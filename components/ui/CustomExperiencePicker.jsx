@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Modal,
   StyleSheet,
   Image,
   FlatList,
@@ -18,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { formatExperience } from '../../utils/experience_ulit';
 import { useWindowInfo } from '../../context/windowContext';
 import CustomTextInput from './CustomTextInput';
+import AppModal from './AppModal';
 
 const CustomExperiencePicker = ({
   label,
@@ -427,10 +427,9 @@ const CustomExperiencePicker = ({
   };
 
   const renderFullScreenModal = () => (
-    <Modal
+    <AppModal
       visible={modalVisible}
       transparent={true}
-      animationType='fade'
       onRequestClose={() => {
         setModalVisible(false);
         // setViewMode('list');
@@ -465,7 +464,7 @@ const CustomExperiencePicker = ({
           {renderCustomScrollBar(dropdownHeight)}
         </View>
       </TouchableOpacity>
-    </Modal>
+    </AppModal>
   );
 
   const renderCustomInput = () => (
@@ -590,10 +589,9 @@ const CustomExperiencePicker = ({
   );
 
   const renderDropdownModal = () => (
-    <Modal
+    <AppModal
       visible={modalVisible}
       transparent={true}
-      animationType='fade'
       onRequestClose={() => {
         setModalVisible(false);
         // setViewMode('list');
@@ -658,7 +656,7 @@ const CustomExperiencePicker = ({
           </View>
         )}
       </TouchableOpacity>
-    </Modal>
+    </AppModal>
   );
 
   return (

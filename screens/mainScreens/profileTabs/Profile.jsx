@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   View,
   Platform,
-  Modal,
 } from 'react-native';
 import { useComponentContext } from '../../../context/globalAppContext';
 import { useMemo, useState, useEffect } from 'react';
@@ -17,6 +16,7 @@ import { icons } from '../../../constants/icons';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import ImagePickerModal from '../../../components/ui/ImagePickerModal';
+import AppModal from '../../../components/ui/AppModal';
 import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import SubscriptionsModal from '../../../components/SubscriptionsModal';
 import { getUserExportData } from '../../../src/api/dataExport';
@@ -1279,7 +1279,7 @@ export default function Profile() {
       </View>
 
       {/* Modal подтверждения */}
-      <Modal visible={acceptModalVisible} transparent animationType='fade'>
+      <AppModal visible={acceptModalVisible} transparent>
         <View style={styles.modalOverlay}>
           <View
             style={[
@@ -1384,10 +1384,10 @@ export default function Profile() {
             </View>
           </View>
         </View>
-      </Modal>
+      </AppModal>
 
       {/* Modal смены пароля */}
-      <Modal visible={changePasswordModal} transparent animationType='fade'>
+      <AppModal visible={changePasswordModal} transparent>
         <View style={styles.modalOverlay}>
           <View
             style={[
@@ -1708,7 +1708,7 @@ export default function Profile() {
             </View>
           </View>
         </View>
-      </Modal>
+      </AppModal>
 
       {/* Modal выбора изображения */}
       <ImagePickerModal

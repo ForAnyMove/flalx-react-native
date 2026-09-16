@@ -4,7 +4,6 @@ import {
   Text,
   View,
   Platform,
-  Modal,
   StyleSheet,
 } from 'react-native';
 import JobTypeSelector from '../../components/JobTypeSelector';
@@ -13,6 +12,7 @@ import SearchPanel from '../../components/SearchPanel';
 import { useComponentContext } from '../../context/globalAppContext';
 import JobModalWrapper from '../../components/JobModalWrapper';
 import NewJobModal from '../../components/NewJobModal';
+import AppModal from '../../components/ui/AppModal';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
 import { useWindowInfo } from '../../context/windowContext';
@@ -127,13 +127,13 @@ export default function Providers() {
           />
         </JobModalWrapper>
       ) : (
-        <Modal visible={newJobModalVisible} animationType='slide' transparent>
+        <AppModal visible={newJobModalVisible} transparent>
           <NewJobModal
             closeModal={() => setNewJobModalVisible(false)}
             executorId={chosenUserId}
             executor={chosenUser}
           />
-        </Modal>
+        </AppModal>
       )}
     </View>
   );

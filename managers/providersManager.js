@@ -121,6 +121,8 @@ export default function providersManager({ session }) {
 
   // получить комментарии, оставленные юзеру (target)
   async function getCommentsReceived(userId) {
+    console.log(userId);
+
     const query = userId ? `?id=${userId}` : "";
     return safeFetch(`${serverURL}/users/target/comments${query}`, {
       headers: authHeaders,
