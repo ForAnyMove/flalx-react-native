@@ -219,11 +219,6 @@ function App() {
     content = <ForgotPasswordPhoneScreen />;
   }
 
-  content = (
-    <WebSocketProvider>
-      <AppScreen />
-    </WebSocketProvider>
-  );
   return (
     <SafeAreaProvider>
       <SafeAreaView
