@@ -126,6 +126,7 @@ export default function InProgressScreen({
                       {
                         width: sizes.imageWidth,
                         height: sizes.imageHeight,
+                        maxWidth: sizes.imageHeight * 1.275,
                         backgroundColor:
                           themeController.current?.defaultBlocksMockBackground,
                         ...(isRTL
