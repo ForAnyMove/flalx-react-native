@@ -400,8 +400,9 @@ export default function NewJobModal({
   const requiredFields = [
     'type',
     'subType',
-    ...(isBusiness ? ['price'] : []),
-    // ...(isBusiness ? ['startDateTime', 'endDateTime'] : []),
+    // 'price',
+    // 'startDateTime',
+    // 'endDateTime',
     // 'location',
     // 'description',
   ];
@@ -435,14 +436,12 @@ export default function NewJobModal({
     let effStartLocal = startLocal;
     let effEndLocal = endLocal;
 
-    if (isBusiness) {
-      if (effStartDateTime && !effEndDateTime) {
-        effEndDateTime = effStartDateTime;
-        effEndLocal = effStartLocal;
-      } else if (!effStartDateTime && effEndDateTime) {
-        effStartDateTime = effEndDateTime;
-        effStartLocal = effEndLocal;
-      }
+    if (effStartDateTime && !effEndDateTime) {
+      effEndDateTime = effStartDateTime;
+      effEndLocal = effStartLocal;
+    } else if (!effStartDateTime && effEndDateTime) {
+      effStartDateTime = effEndDateTime;
+      effStartLocal = effEndLocal;
     }
 
     const newErrors = {};
@@ -455,10 +454,6 @@ export default function NewJobModal({
         newErrors[field] = !fieldValues[field];
       }
     });
-
-    if (isBusiness && !effStartDateTime && !effEndDateTime) {
-      newErrors.startDateTime = true;
-    }
 
     setFieldErrors(newErrors);
 

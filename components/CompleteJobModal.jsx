@@ -396,6 +396,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.imageScrollContainer}
+                  style={{ flex: 1 }}
                 >
                   {(isRTL ? images.map((uri, i) => ({ uri, i })).reverse() : images.map((uri, i) => ({ uri, i }))).map(({ uri, i: index }) => (
                     <View key={index} style={dynamicStyles.imageWrapper}>
@@ -549,6 +550,13 @@ const styles = StyleSheet.create({
     // justifyContent: 'center',
     // alignItems: 'center',
     // zIndex: 10,
+  },
+  gridFull: {
+    width: '100%',
+  },
+  imageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
 

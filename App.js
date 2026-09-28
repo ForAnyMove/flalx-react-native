@@ -81,9 +81,10 @@ function App() {
     isLoader,
     registerControl,
     forgotPassControl,
+    jobsController,
   } = useComponentContext();
 
-  usePushNotifications({ session });
+  usePushNotifications({ session, onNotification: () => { jobsController.reloadAll(); } });
   const [isOnboardingShowed, setOnboardingShowed] = useState(false);
   const [onboardingStatusChecked, setOnboardingStatusChecked] = useState(false);
   const { width, height, isLandscape, isKeyboardVisible, focusedInputs } =
@@ -219,6 +220,7 @@ function App() {
     content = <ForgotPasswordPhoneScreen />;
   }
 
+  // content = <RegisterScreen />;
   return (
     <SafeAreaProvider>
       <SafeAreaView
@@ -248,3 +250,4 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });
+

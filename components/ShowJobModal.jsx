@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+﻿import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
@@ -249,7 +249,18 @@ export default function ShowJobModal({
   } = useComponentContext();
   const { tField } = useLocalization(languageController.current);
   const { showError, showWarning } = useNotification();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const renderSafeText = (val) => {
+    if (!val) return null;
+    if (typeof val === 'string') return val.trim() || null;
+    if (Array.isArray(val)) return val.length > 0 ? val.join('\n') : null;
+    if (typeof val === 'object') {
+      const text = val[i18n?.language] || Object.values(val)[0];
+      return text ? String(text) : null;
+    }
+    return String(val);
+  };
+
   const { width, height, isLandscape } = useWindowInfo();
   const { openWebView } = useWebView();
   const { lastMessage } = useWebSocket();
@@ -611,6 +622,8 @@ export default function ShowJobModal({
   const [showConfirmInterestModal, setConfirmInterestModal] = useState(false);
   const [showInterestRequestModal, setShowInterestRequestModal] = useState(false);
   const [completeJobModalVisible, setCompleteJobModalVisible] = useState(false);
+  const [commentImagePreviewVisible, setCommentImagePreviewVisible] = useState(false);
+  const [commentImagePreviewIndex, setCommentImagePreviewIndex] = useState(0);
 
   const [publishModalVisible, setPublishModalVisible] = useState(false);
   const [interestFormData, setInterestFormData] = useState({
@@ -745,7 +758,7 @@ export default function ShowJobModal({
     // pre-check, done once right before this modal was opened — reused here
     // instead of making a second, redundant is-provider call for the same
     // job (the whole point of merging that into one endpoint response).
-    setInterestedRequest(jobStatusInfo?.isProvider === true);
+    // setInterestedRequest moved to separate useEffect
     setLoading(false);
   }, [
     currentJobId,
@@ -759,6 +772,12 @@ export default function ShowJobModal({
     jobsController.executor.inProgress,
     jobsController.executor.done,
   ]);
+
+  useEffect(() => {
+    if (jobStatusInfo != null) {
+      setInterestedRequest(jobStatusInfo.isProvider === true);
+    }
+  }, [currentJobId, jobStatusInfo]);
 
   const [editableCommentState, setEditableCommentState] = useState(false);
   const [editableCommentValue, setEditableCommentValue] = useState(
@@ -893,7 +912,10 @@ export default function ShowJobModal({
     const isBusinessJob = currentJobInfo?.created_by_account_type === 'business';
     const hasSubscription = subscription.current != null;
 
-    if (isBusinessJob) {
+    const requirePrice = isBusinessJob ? !currentJobInfo?.price : true;
+    const requireDate = isBusinessJob ? (!currentJobInfo?.startDateTime && !currentJobInfo?.endDateTime) : true;
+
+    if (isBusinessJob && !requirePrice && !requireDate) {
       if (hasSubscription) {
         handleAddingSelfToJobProviders({});
       } else {
@@ -1016,6 +1038,68 @@ export default function ShowJobModal({
   };
 
   function extraUiByStatus(status) {
+    const completedPhotosBlock = currentJobInfo?.job_comment?.images?.length > 0 ? (
+      <View
+        style={[styles.imageInputBlock, dynamicStyles.imageInputBlock]}
+        key='completed-images'
+      >
+        <Text
+          style={[
+            styles.label,
+            isRTL && { textAlign: 'right' },
+            {
+              fontSize: sizes.photosLabelSize,
+              marginBottom: sizes.photosLabelMarginBottom,
+              color: themeController.current?.textColor,
+            },
+          ]}
+        >
+          {t('showJob.fields.completedPhotos', {
+            defaultValue: 'Completed photos',
+          })}
+        </Text>
+        <View style={[styles.gridFull]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.imageScrollContainer,
+              dynamicStyles.imageScrollContainer,
+              !isWebLandscape && { width: '100%' },
+            ]}
+          >
+            {(isRTL
+              ? currentJobInfo.job_comment.images.map((uri, i) => ({ uri, i })).reverse()
+              : currentJobInfo.job_comment.images.map((uri, i) => ({ uri, i }))
+            ).map(({ uri, i: index }) => (
+              <TouchableOpacity
+                key={index}
+                activeOpacity={0.85}
+                style={[
+                  styles.imageWrapper,
+                  dynamicStyles.imageWrapper,
+                  isRTL && { marginRight: 0, marginLeft: sizes.margin / 2 },
+                ]}
+                onPress={() => {
+                  setCommentImagePreviewIndex(index);
+                  setCommentImagePreviewVisible(true);
+                }}
+              >
+                <Image
+                  source={{ uri }}
+                  style={[
+                    styles.imageThumbnail,
+                    dynamicStyles.imageThumbnail,
+                  ]}
+                  resizeMode='cover'
+                />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+    ) : null;
+
     switch (status) {
       case 'store-waiting':
         switch (currentJobInfo?.status) {
@@ -1060,7 +1144,7 @@ export default function ShowJobModal({
               }}>
                 {t('showJob.messages.requiresEditing', { defaultValue: 'This job was rejected by moderation and requires editing.' })}
               </Text>
-              {currentJobInfo?.rejection_reason ? (
+              {renderSafeText(currentJobInfo?.rejection_reason) ? (
                 <Text style={{
                   alignSelf: isRTL ? 'flex-end' : 'flex-start',
                   color: themeController.current?.textColor,
@@ -1070,10 +1154,10 @@ export default function ShowJobModal({
                   <Text style={{ fontFamily: 'Rubik-Bold' }}>
                     {t('showJob.messages.rejectionReason', { defaultValue: 'Rejection reason' })}{': '}
                   </Text>
-                  {currentJobInfo.rejection_reason}
+                  {renderSafeText(currentJobInfo.rejection_reason)}
                 </Text>
               ) : null}
-              {currentJobInfo?.moderation_comment ? (
+              {renderSafeText(currentJobInfo?.moderation_comment) ? (
                 <Text style={{
                   alignSelf: isRTL ? 'flex-end' : 'flex-start',
                   color: themeController.current?.textColor,
@@ -1082,7 +1166,7 @@ export default function ShowJobModal({
                   <Text style={{ fontFamily: 'Rubik-Bold' }}>
                     {t('showJob.messages.moderationComment', { defaultValue: 'Moderator comment' })}{': '}
                   </Text>
-                  {currentJobInfo.moderation_comment}
+                  {renderSafeText(currentJobInfo.moderation_comment)}
                 </Text>
               ) : null}
             </View>]
@@ -1097,7 +1181,7 @@ export default function ShowJobModal({
               }}>
                 {t('showJob.messages.updateRequiresEditing', { defaultValue: 'Your edit to this job was rejected by moderation and requires editing. The published version is still visible to providers.' })}
               </Text>
-              {currentJobInfo?.rejection_reason ? (
+              {renderSafeText(currentJobInfo?.rejection_reason) ? (
                 <Text style={{
                   alignSelf: isRTL ? 'flex-end' : 'flex-start',
                   color: themeController.current?.textColor,
@@ -1107,10 +1191,10 @@ export default function ShowJobModal({
                   <Text style={{ fontFamily: 'Rubik-Bold' }}>
                     {t('showJob.messages.rejectionReason', { defaultValue: 'Rejection reason' })}{': '}
                   </Text>
-                  {currentJobInfo.rejection_reason}
+                  {renderSafeText(currentJobInfo.rejection_reason)}
                 </Text>
               ) : null}
-              {currentJobInfo?.moderation_comment ? (
+              {renderSafeText(currentJobInfo?.moderation_comment) ? (
                 <Text style={{
                   alignSelf: isRTL ? 'flex-end' : 'flex-start',
                   color: themeController.current?.textColor,
@@ -1120,7 +1204,7 @@ export default function ShowJobModal({
                   <Text style={{ fontFamily: 'Rubik-Bold' }}>
                     {t('showJob.messages.moderationComment', { defaultValue: 'Moderator comment' })}{': '}
                   </Text>
-                  {currentJobInfo.moderation_comment}
+                  {renderSafeText(currentJobInfo.moderation_comment)}
                 </Text>
               ) : null}
               <TouchableOpacity onPress={handleDiscardPendingEdit}>
@@ -1225,6 +1309,7 @@ export default function ShowJobModal({
               />
             </View>
           </View>,
+          completedPhotosBlock,
           <CommentsSection
             jobId={currentJobInfo?.id}
             userId={currentJobInfo?.executor?.id}
@@ -1575,6 +1660,7 @@ export default function ShowJobModal({
               />
             </View>
           </View>,
+          completedPhotosBlock,
         ];
       default:
         return [];
@@ -1754,22 +1840,6 @@ export default function ShowJobModal({
                   })}
                 </Text>
               </TouchableOpacity>
-              <Text
-                style={[
-                  styles.waitText,
-                  {
-                    color: themeController.current?.unactiveTextColor,
-                    marginTop: sizes.underBtnTextMarginTop,
-                    fontSize: sizes.inputFont,
-                    textAlign: 'center',
-                  },
-                ]}
-                key='waitText'
-              >
-                {t('showJob.messages.waitForCall', {
-                  defaultValue: 'Wait for a call from the customer...',
-                })}
-              </Text>
             </>
           ) : (
             <TouchableOpacity
@@ -1831,22 +1901,6 @@ export default function ShowJobModal({
                   })}
                 </Text>
               </TouchableOpacity>
-              <Text
-                style={[
-                  styles.waitText,
-                  {
-                    color: themeController.current?.unactiveTextColor,
-                    marginTop: sizes.underBtnTextMarginTop,
-                    fontSize: sizes.inputFont,
-                    textAlign: 'center',
-                  },
-                ]}
-                key='waitText'
-              >
-                {t('showJob.messages.waitForCall', {
-                  defaultValue: 'Wait for a call from the customer...',
-                })}
-              </Text>
             </>
           ) : (
             <TouchableOpacity
@@ -2295,7 +2349,7 @@ export default function ShowJobModal({
         styles.row,
         {
           gap: sizes.dateTimeGapMobile,
-          paddingBottom: sizes.mobileBottomPaddingExtraSpace, // чтобы не закрывались кнопками
+          marginBottom: sizes.margin,
         },
         isRTL && { flexDirection: 'row-reverse' },
       ]}
@@ -2343,6 +2397,10 @@ export default function ShowJobModal({
 
   // Грид версия (только веб-альбомная)
   const bg = themeController.current?.formInputBackground;
+
+  useEffect(() => {
+    console.log("CURRENT_JOB_INFO_LOG:", currentJobInfo);
+  }, [currentJobInfo]);
 
   return (
     <KeyboardAvoidingView
@@ -3272,6 +3330,12 @@ export default function ShowJobModal({
         initialIndex={imagePreviewIndex}
         onClose={() => setImagePreviewVisible(false)}
       />
+      <ImageViewerModal
+        visible={commentImagePreviewVisible}
+        images={currentJobInfo?.job_comment?.images || []}
+        initialIndex={commentImagePreviewIndex}
+        onClose={() => setCommentImagePreviewVisible(false)}
+      />
       <AlertModal
         visible={alertModalVisible}
         title={alertModalTitle}
@@ -3455,6 +3519,7 @@ export default function ShowJobModal({
           completeJob(currentJobId, options, session)
             .then(() => {
               setCompleteJobModalVisible(false);
+              setStatus('executor-done');
               jobsController.reloadExecutor();
             })
             .catch((err) => {
@@ -3964,3 +4029,8 @@ const styles = StyleSheet.create({
     left: 0,
   },
 });
+
+
+
+
+

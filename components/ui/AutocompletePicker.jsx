@@ -106,8 +106,8 @@ const AutocompletePicker = ({
 
   // Синхронизация текста в инпуте, если он меняется извне
   useEffect(() => {
-    setInputText(options[value] || '');
-  }, [value, options]);
+    setInputText(options[value] || (allowCustomText && value ? value : ''));
+  }, [value, options, allowCustomText]);
 
   // Фильтрация списка
   useEffect(() => {

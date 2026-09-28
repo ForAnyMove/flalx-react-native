@@ -106,6 +106,9 @@ export default function Profile() {
     return {
       baseFont: isWebLandscape ? web(12) : mobile(12),
       avatarSize: isWebLandscape ? web(114) : mobile(114),
+      avatarRecommendsTextMarginTop: isWebLandscape ? web(8) : mobile(10),
+      avatarRecommendsTextFontSize: isWebLandscape ? web(14) : mobile(14),
+      avatarRecommendsTextPaddingHorizontal: isWebLandscape ? web(20) : mobile(20),
       btnPadding: isWebLandscape ? web(10) : mobile(10),
       btnMargin: isWebLandscape ? 0 : mobile(5),
       btnFont: isWebLandscape ? web(20) : mobile(20),
@@ -498,6 +501,18 @@ export default function Profile() {
                 <Image source={icons.camera} style={styles.cameraIcon} />
               </TouchableOpacity>
             </View>
+            <Text
+              style={{
+                color: themeController.current?.textColor,
+                marginTop: sizes.avatarRecommendsTextMarginTop,
+                fontSize: sizes.avatarRecommendsTextFontSize,
+                paddingHorizontal: sizes.avatarRecommendsTextPaddingHorizontal,
+                textAlign: 'center',
+                opacity: 0.7,
+              }}
+            >
+              {t('register.profile_avatar_recommended')}
+            </Text>
 
             {/* Текст о модерации аватарки */}
             {userState.pending_avatar && (

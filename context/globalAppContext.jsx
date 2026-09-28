@@ -5,7 +5,7 @@ import languageManager from '../managers/languageManager';
 import tabsManager from '../managers/tabsManager';
 import jobsManager from '../managers/jobsManager';
 import providersManager from '../managers/providersManager';
-import { View, ActivityIndicator, Modal, Platform } from 'react-native';
+import { View, ActivityIndicator, Modal, Platform, AppState } from 'react-native';
 import { getSubscriptionPlans } from '../src/api/subscriptions';
 import { getImageLimits } from '../src/api/images';
 import authTabsManager from '../managers/authTabsManager';
@@ -44,6 +44,26 @@ export const ComponentProvider = ({ children }) => {
   const { registerControl, forgotPassControl } = authTabsManager();
 
   const jobsController = jobsManager({ session, user, geolocation: geolocationController });
+
+  const appState = useRef(AppState.currentState);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === 'active'
+      ) {
+        if (session.status === 'loggedIn') {
+          jobsController.reloadAll();
+        }
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [session.status, jobsController]);
   const jobTypesController = jobTypeManager({ session });
 
   const providersController = providersManager({ session });
@@ -145,3 +165,4 @@ export const ComponentProvider = ({ children }) => {
 };
 
 export const useComponentContext = () => useContext(ComponentContext);
+

@@ -382,7 +382,7 @@ export default function ProvidersSection({
             // paddingHorizontal: sizes.containerPaddingHorizontal,
             paddingVertical: sizes.containerPaddingVertical,
             borderRadius: sizes.borderRadius,
-            marginBottom: sizes.sectionMarginBottom,
+            marginBottom: sizes.margin,
             width: sizes.sectionWidth,
           },
         ]}

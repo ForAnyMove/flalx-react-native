@@ -38,7 +38,7 @@ export default function Profession() {
   const [isFromRequest, setIsFromRequest] = useState(false);
   const [isRequestModalVisible, setIsRequestModalVisible] = useState(false);
   const [showTabs, setShowTabs] = useState(
-    jobTypesController.userToSystemRequest.list.length > 3
+    jobTypesController.userToSystemRequest.list.length > 0
   );
 
   const orderedTabs = isRTL ? TAB_TITLES_RTL : TAB_TITLES;

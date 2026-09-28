@@ -1,7 +1,6 @@
 import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 import { filesApi } from './filesApi';
-import { logInfo } from '../../utils/log_util';
 import i18n from '../../utils/i18n/i18n';
 
 const MAX_FILE_MB = 5;
@@ -149,6 +148,13 @@ export async function uploadFileToBackendStorage({ file, purpose = 'other' }) {
  */
 export async function uploadImageAsset(source, options = {}) {
   const { purpose = 'other', fileName = 'image' } = options;
+  const uri = typeof source === 'string' ? source : source?.uri;
+
+  // Fetching external URLs to re-upload them is unnecessary (and fails on Web due to CORS, or fails backend validation if the URL lacks an extension). Just return the public URL directly on all platforms.
+  if (uri && (uri.startsWith('http://') || uri.startsWith('https://'))) {
+    console.log('✅ External URL used directly:', uri);
+    return { url: uri, fileId: null };
+  }
 
   const file = await toLocalUploadFile(source, fileName);
   assertSizeWithinLimit(file);
@@ -156,6 +162,6 @@ export async function uploadImageAsset(source, options = {}) {
   const { fileId } = await uploadFileToBackendStorage({ file, purpose });
   const { downloadUrl } = await filesApi.getDownloadUrl(fileId);
 
-  logInfo('✅ Файл загружен:', downloadUrl);
+  console.log('✅ Файл загружен:', downloadUrl);
   return { url: downloadUrl, fileId };
 }

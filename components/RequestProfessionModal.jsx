@@ -151,10 +151,6 @@ const RequestProfessionModal = ({
 
   const handleSwitch = () => {
     onSwitchToSystemProfessions();
-    if (showTabs) {
-      const newIndex = orderedTabs.indexOf('system_professions');
-      handleTabPress(newIndex);
-    }
   };
 
   const handleClose = () => {

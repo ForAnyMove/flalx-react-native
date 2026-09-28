@@ -1,5 +1,5 @@
 import axios from "axios";
-import { logError } from "../../utils/log_util";
+import { logError, logInfo } from "../../utils/log_util";
 import { FALLBACK_API_BASE_URL } from "../../utils/config";
 import { getSessionToken } from "../auth/authStorage";
 import { notifyAuthState } from "../auth/authEvents";

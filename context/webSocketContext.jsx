@@ -511,6 +511,7 @@ export const WebSocketProvider = ({ children }) => {
         couponsManagerController.refreshBalance();
         break;
       default:
+        console.log('UNHANDLED WS MESSAGE:', message?.type, message);
         break;
     }
   };
