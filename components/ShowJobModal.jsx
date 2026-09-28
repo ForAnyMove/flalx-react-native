@@ -706,6 +706,58 @@ export default function ShowJobModal({
   const displayEndLocal = creatorDraft?.endLocal ?? currentJobInfo?.endLocal ?? currentJobInfo?.end_local;
   const displaySourceTimezone = creatorDraft?.source_timezone ?? currentJobInfo?.source_timezone ?? currentJobInfo?.sourceTimezone;
 
+  // Once a business job is underway/finished, the executor's proposal is the
+  // only value a price/date the business left empty can have, so it's shown
+  // in those fields (primary color + caption). "Missing" means the same as
+  // in the interest form (requirePrice / requireDate).
+  const isJobUnderway =
+    status === 'store-in-progress' ||
+    status === 'store-done' ||
+    status === 'jobs-in-progress' ||
+    status === 'jobs-done';
+  const isBusinessCreated = currentJobInfo?.created_by_account_type === 'business';
+  const showProposedPrice =
+    isBusinessCreated && isJobUnderway && !displayPrice && !!currentJobInfo?.proposed_price;
+  const showProposedDate =
+    isBusinessCreated &&
+    isJobUnderway &&
+    !displayStartDateTime &&
+    !displayEndDateTime &&
+    !!(currentJobInfo?.proposed_time_from || currentJobInfo?.proposed_time_to);
+  const proposedColor = themeController.current?.primaryColor;
+  const proposalCaption = status?.startsWith('jobs')
+    ? t('showJob.fields.yourProposal', { defaultValue: 'Your proposal' })
+    : t('showJob.fields.executorProposal', { defaultValue: "Executor's proposal" });
+  const withProposalCaption = (label, isProposed) =>
+    isProposed ? `${label} · ${proposalCaption}` : label;
+  const proposedStyle = { color: proposedColor };
+
+  const priceValue = showProposedPrice
+    ? String(currentJobInfo.proposed_price)
+    : displayPrice;
+  const startDateProps = {
+    label: withProposalCaption(
+      t('showJob.fields.start', { defaultValue: 'Start' }),
+      showProposedDate,
+    ),
+    value: showProposedDate ? currentJobInfo.proposed_time_from : displayStartDateTime,
+    localValue: showProposedDate ? currentJobInfo.proposed_time_from_local : displayStartLocal,
+    timezone: displaySourceTimezone,
+    readOnly: true,
+    ...(showProposedDate && { textStyle: proposedStyle, labelStyle: proposedStyle }),
+  };
+  const endDateProps = {
+    label: withProposalCaption(
+      t('showJob.fields.end', { defaultValue: 'End' }),
+      showProposedDate,
+    ),
+    value: showProposedDate ? currentJobInfo.proposed_time_to : displayEndDateTime,
+    localValue: showProposedDate ? currentJobInfo.proposed_time_to_local : displayEndLocal,
+    timezone: displaySourceTimezone,
+    readOnly: true,
+    ...(showProposedDate && { textStyle: proposedStyle, labelStyle: proposedStyle }),
+  };
+
   const location = creatorDraft?.location ?? currentJobInfo?.location;
 
   // Подгружаем job из уже загруженных списков (list-эндпоинты возвращают полные данные)
@@ -875,17 +927,28 @@ export default function ShowJobModal({
       .finally(() => setAppLoading(false));
   };
 
-  // InterestRequestModal: coupon-only handler with form data for client-created jobs.
+  // Business-created jobs may already carry a price and/or a date — the
+  // interest form then only asks for whichever of the two is missing.
+  // Client-created jobs never have them, so both are always required there.
+  const isBusinessJob = currentJobInfo?.created_by_account_type === 'business';
+  const requirePrice = isBusinessJob ? !currentJobInfo?.price : true;
+  const requireDate = isBusinessJob
+    ? !currentJobInfo?.startDateTime && !currentJobInfo?.endDateTime
+    : true;
+
+  // InterestRequestModal: coupon-only handler with form data.
   const handlePayCouponsInterest = () => {
     const payload = {
       useCoupon: true,
       ...(interestFormData && {
-        proposed_price: interestFormData.price,
-        proposed_time_from: interestFormData.startDate,
-        proposed_time_to: interestFormData.endDate,
-        proposed_time_from_local: interestFormData.startLocal,
-        proposed_time_to_local: interestFormData.endLocal,
-        source_timezone: interestFormData.sourceTimezone,
+        ...(requirePrice && { proposed_price: interestFormData.price }),
+        ...(requireDate && {
+          proposed_time_from: interestFormData.startDate,
+          proposed_time_to: interestFormData.endDate,
+          proposed_time_from_local: interestFormData.startLocal,
+          proposed_time_to_local: interestFormData.endLocal,
+          source_timezone: interestFormData.sourceTimezone,
+        }),
       }),
     };
     setConfirmInterestModal(false);
@@ -909,11 +972,10 @@ export default function ShowJobModal({
 
   const handleInterestRequest = async () => {
     // We don't reset formData here to allow persistence across payment flows
-    const isBusinessJob = currentJobInfo?.created_by_account_type === 'business';
     const hasSubscription = subscription.current != null;
 
-    const requirePrice = isBusinessJob ? !currentJobInfo?.price : true;
-    const requireDate = isBusinessJob ? (!currentJobInfo?.startDateTime && !currentJobInfo?.endDateTime) : true;
+    console.log(isBusinessJob, requirePrice, requireDate);
+
 
     if (isBusinessJob && !requirePrice && !requireDate) {
       if (hasSubscription) {
@@ -925,6 +987,8 @@ export default function ShowJobModal({
       // If we are starting a fresh request (no price entered), reset step to 1
       if (!interestFormData.price) setInterestStep(1);
       setShowInterestRequestModal(true);
+
+      console.log('open modal');
     }
   };
 
@@ -933,12 +997,12 @@ export default function ShowJobModal({
       setInterestFormData(formData);
       const finalOptions = {
         ...paymentOptions,
-        ...(formData.price && { proposed_price: formData.price }),
-        ...(formData.startDate && { proposed_time_from: formData.startDate }),
-        ...(formData.endDate && { proposed_time_to: formData.endDate }),
-        ...(formData.startLocal && { proposed_time_from_local: formData.startLocal }),
-        ...(formData.endLocal && { proposed_time_to_local: formData.endLocal }),
-        ...(formData.sourceTimezone && { source_timezone: formData.sourceTimezone }),
+        ...(requirePrice && formData.price && { proposed_price: formData.price }),
+        ...(requireDate && formData.startDate && { proposed_time_from: formData.startDate }),
+        ...(requireDate && formData.endDate && { proposed_time_to: formData.endDate }),
+        ...(requireDate && formData.startLocal && { proposed_time_from_local: formData.startLocal }),
+        ...(requireDate && formData.endLocal && { proposed_time_to_local: formData.endLocal }),
+        ...(requireDate && formData.sourceTimezone && { source_timezone: formData.sourceTimezone }),
       };
 
       const result = await handleAddingSelfToJobProviders(finalOptions);
@@ -2207,16 +2271,18 @@ export default function ShowJobModal({
           styles.label,
           dynamicStyles.label,
           isRTL && { textAlign: 'right' },
+          showProposedPrice && proposedStyle,
         ]}
       >
-        {t('showJob.fields.price', { defaultValue: 'Price' })}
+        {withProposalCaption(t('showJob.fields.price', { defaultValue: 'Price' }), showProposedPrice)}
       </Text>
       <CustomTextInput
-        value={displayPrice || '-'}
+        value={priceValue || '-'}
         style={[
           styles.input,
           dynamicStyles.input,
           isRTL && { textAlign: 'right' },
+          showProposedPrice && proposedStyle,
         ]}
         keyboardType='numeric'
         readOnly
@@ -2356,40 +2422,14 @@ export default function ShowJobModal({
       key='dateTimeRange'
     >
       {Platform.OS !== 'android' ? (
-        <DateTimeInput
-          key='startDateTime'
-          label={t('showJob.fields.start', { defaultValue: 'Start' })}
-          value={displayStartDateTime}
-          localValue={displayStartLocal}
-          timezone={displaySourceTimezone}
-          readOnly={true}
-        />
+        <DateTimeInput key='startDateTime' {...startDateProps} />
       ) : (
-        <DateTimeInputDouble
-          label={t('showJob.fields.start', { defaultValue: 'Start' })}
-          value={displayStartDateTime}
-          localValue={displayStartLocal}
-          timezone={displaySourceTimezone}
-          readOnly={true}
-        />
+        <DateTimeInputDouble {...startDateProps} />
       )}
       {Platform.OS !== 'android' ? (
-        <DateTimeInput
-          key='endDateTime'
-          label={t('showJob.fields.end', { defaultValue: 'End' })}
-          value={displayEndDateTime}
-          localValue={displayEndLocal}
-          timezone={displaySourceTimezone}
-          readOnly={true}
-        />
+        <DateTimeInput key='endDateTime' {...endDateProps} />
       ) : (
-        <DateTimeInputDouble
-          label={t('showJob.fields.end', { defaultValue: 'End' })}
-          value={displayEndDateTime}
-          localValue={displayEndLocal}
-          timezone={displaySourceTimezone}
-          readOnly={true}
-        />
+        <DateTimeInputDouble {...endDateProps} />
       )}
     </View> : null,
     ...extraUiByStatus(status),
@@ -2790,18 +2830,19 @@ export default function ShowJobModal({
                           },
                           isRTL && { textAlign: 'right' },
                           { fontSize: sizes.font },
+                          showProposedPrice && proposedStyle,
                         ]}
                       >
-                        {t('showJob.fields.price', { defaultValue: 'Price' })}
+                        {withProposalCaption(t('showJob.fields.price', { defaultValue: 'Price' }), showProposedPrice)}
                       </Text>
                       <CustomTextInput
-                        value={displayPrice || '-'}
+                        value={priceValue || '-'}
                         style={{
                           // fontWeight: '500',
                           fontFamily: 'Rubik-Medium',
                           padding: 0,
                           paddingVertical: sizes.padding,
-                          color: themeController.current?.textColor,
+                          color: showProposedPrice ? proposedColor : themeController.current?.textColor,
                           fontSize: sizes.inputFont,
                           borderRadius: sizes.borderRadius,
                           backgroundColor: 'transparent',
@@ -2974,26 +3015,9 @@ export default function ShowJobModal({
                       style={{ flexDirection: isRTL ? 'row-reverse' : 'row' }}
                     >
                       {Platform.OS !== 'android' ? (
-                        <DateTimeInput
-                          key='startDateTime'
-                          label={t('showJob.fields.start', {
-                            defaultValue: 'Start',
-                          })}
-                          value={displayStartDateTime}
-                          localValue={displayStartLocal}
-                          timezone={displaySourceTimezone}
-                          readOnly={true}
-                        />
+                        <DateTimeInput key='startDateTime' {...startDateProps} />
                       ) : (
-                        <DateTimeInputDouble
-                          label={t('showJob.fields.start', {
-                            defaultValue: 'Start',
-                          })}
-                          value={displayStartDateTime}
-                          localValue={displayStartLocal}
-                          timezone={displaySourceTimezone}
-                          readOnly={true}
-                        />
+                        <DateTimeInputDouble {...startDateProps} />
                       )}
                     </View>
                   </View>}
@@ -3014,26 +3038,9 @@ export default function ShowJobModal({
                       style={{ flexDirection: isRTL ? 'row-reverse' : 'row' }}
                     >
                       {Platform.OS !== 'android' ? (
-                        <DateTimeInput
-                          key='endDateTime'
-                          label={t('showJob.fields.end', {
-                            defaultValue: 'End',
-                          })}
-                          value={displayEndDateTime}
-                          localValue={displayEndLocal}
-                          timezone={displaySourceTimezone}
-                          readOnly={true}
-                        />
+                        <DateTimeInput key='endDateTime' {...endDateProps} />
                       ) : (
-                        <DateTimeInputDouble
-                          label={t('showJob.fields.end', {
-                            defaultValue: 'End',
-                          })}
-                          value={displayEndDateTime}
-                          localValue={displayEndLocal}
-                          timezone={displaySourceTimezone}
-                          readOnly={true}
-                        />
+                        <DateTimeInputDouble {...endDateProps} />
                       )}
                     </View>
                   </View>}
@@ -3306,7 +3313,9 @@ export default function ShowJobModal({
       <InterestRequestModal
         visible={showInterestRequestModal}
         onClose={() => setShowInterestRequestModal(false)}
-        isBusinessJob={currentJobInfo?.created_by_account_type === 'business'}
+        isBusinessJob={isBusinessJob}
+        requirePrice={requirePrice}
+        requireDate={requireDate}
         hasSubscription={subscription.current != null}
         price={formatCurrency(
           jobsController.providerProduct?.price,

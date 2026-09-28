@@ -146,6 +146,8 @@ const InterestRequestModal = ({
   onClose,
   isBusinessJob,
   hasSubscription,
+  requirePrice = true, // ask for the price (false when the job already has one)
+  requireDate = true, // ask for the dates (false when the job already has them)
   price, // Total price for payment e.g. "$1.99"
   onConfirm, // callback(formData, paymentOptions)
   onPayWithCoupons,
@@ -178,12 +180,14 @@ const InterestRequestModal = ({
   const availableMethods = paymentsManagerController?.availableMethods ?? [];
   const couponsCount = couponsManagerController?.balance ?? 0;
 
+  const needsForm = requirePrice || requireDate;
+
   // в”Ђв”Ђв”Ђ Effect: Reset/Initialize в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   useEffect(() => {
     if (visible) {
       couponsManagerController?.refreshBalance?.();
       // Only set step automatically if it's not already set to something meaningful or if it's a fresh open
-      if (isBusinessJob && !hasSubscription) {
+      if (isBusinessJob && !hasSubscription && !needsForm) {
         setStep(2);
       }
       setFieldErrors({ price: false, date: false });
@@ -194,7 +198,7 @@ const InterestRequestModal = ({
         setSelectedMethodId(defaultMethod.id);
       }
     }
-  }, [visible, isBusinessJob, hasSubscription]);
+  }, [visible, isBusinessJob, hasSubscription, needsForm]);
 
   // в”Ђв”Ђв”Ђ Sizes (Synchronized with Design Requirements) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   const sizes = useMemo(() => {
@@ -297,13 +301,11 @@ const InterestRequestModal = ({
 
   // в”Ђв”Ђв”Ђ Handlers в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   const handleContinue = () => {
-    const hasPrice = formData.price.trim() !== '';
-    const hasDate = formData.startDate !== null;
+    const priceMissing = requirePrice && formData.price.trim() === '';
+    const dateMissing = requireDate && formData.startDate === null;
 
-    if (!isBusinessJob) {
-      setFieldErrors({ price: !hasPrice, date: !hasDate });
-      if (!hasPrice || !hasDate) return;
-    }
+    setFieldErrors({ price: priceMissing, date: dateMissing });
+    if (priceMissing || dateMissing) return;
 
     if (hasSubscription) {
       onConfirm(formData, {});
@@ -397,7 +399,7 @@ const InterestRequestModal = ({
           {t('interestRequest.your_application', { defaultValue: 'Your application' })}
         </Text>
 
-        <FormInput
+        {requirePrice && <FormInput
           label={t('interestRequest.price_header', { defaultValue: 'Price' })}
           value={formData.price}
           onChangeText={(v) => {
@@ -411,9 +413,9 @@ const InterestRequestModal = ({
           isRTL={isRTL}
           error={fieldErrors.price}
           t={t}
-        />
+        />}
 
-        <View style={[styles.timeSection, { marginBottom: sizes.sectionMarginBottom }]}>
+        {requireDate && <View style={[styles.timeSection, { marginBottom: sizes.sectionMarginBottom }]}>
           <Text style={[styles.inputLabelOutside, { color: theme.textColor, fontSize: sizes.sectionHeaderFontSize, marginBottom: sizes.sectionHeaderMarginBottom, textAlign: isRTL ? 'right' : 'left' }]}>
             {t('interestRequest.time_label', { defaultValue: 'Available time' })}
           </Text>
@@ -448,7 +450,7 @@ const InterestRequestModal = ({
           <Text style={[styles.hintText, { color: theme.unactiveTextColor, fontSize: sizes.hintSize, textAlign: isRTL ? 'right' : 'left' }]}>
             {t('interestRequest.time_hint', { defaultValue: 'If exact вЂ” pick same date for both' })}
           </Text>
-        </View>
+        </View>}
 
         <TouchableOpacity
           style={[styles.primaryButton, { backgroundColor: theme.primaryColor, height: sizes.buttonHeight, borderRadius: sizes.borderRadius }]}
@@ -467,7 +469,7 @@ const InterestRequestModal = ({
 
     const step2Header = (
       <>
-        {isClientJob && <PaginationDots activeStep={2} sizes={sizes} theme={theme} t={t} isRTL={isRTL} />}
+        {needsForm && <PaginationDots activeStep={2} sizes={sizes} theme={theme} t={t} isRTL={isRTL} />}
 
         <View style={[styles.paymentHeader, { marginBottom: sizes.paymentHeaderMarginBottom }]}>
           <Text style={[styles.modalTitle, { color: theme.textColor, fontSize: sizes.titleSize, marginBottom: 4 }]}>
@@ -633,7 +635,7 @@ const InterestRequestModal = ({
 
   // в”Ђв”Ђв”Ђ Main Content Selector в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   let content;
-  if (isBusinessJob && hasSubscription) {
+  if (isBusinessJob && hasSubscription && !needsForm) {
     content = renderBusinessSubscribed();
   } else if (step === 2) {
     content = renderPayment();
@@ -660,7 +662,7 @@ const InterestRequestModal = ({
         <ScrollView style={{ width: '100%' }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <View style={{ width: '100%' }}>
             {content}
-            {step === 2 && !showAddMethod && !isBusinessJob && !hasSubscription && renderStepBackButton()}
+            {step === 2 && !showAddMethod && needsForm && !hasSubscription && renderStepBackButton()}
           </View>
         </ScrollView>
       </BaseActionModal>

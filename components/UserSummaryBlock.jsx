@@ -982,7 +982,7 @@ const UserSummaryBlock = ({
                   )}
                 </View>
               </View>
-              {jobExpectations != null && <View
+              {Boolean(proposed_price || proposed_time_from || proposed_time_to) && <View
                 style={{
                   flexDirection: isRTL ? 'row-reverse' : 'row',
                   height: sizes.contactInfoHeight,
@@ -990,7 +990,14 @@ const UserSummaryBlock = ({
                 }}
               >
                 <JobExpectationsBadge
-                  expectations={jobExpectations}
+                  expectations={{
+                    proposed_price,
+                    proposed_time_from,
+                    proposed_time_to,
+                    proposed_time_from_local,
+                    proposed_time_to_local,
+                    source_timezone,
+                  }}
                   isRTL={isRTL}
                 />
               </View>}
