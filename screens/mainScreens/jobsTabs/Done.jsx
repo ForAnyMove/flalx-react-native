@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   Platform,
+  RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -35,8 +37,19 @@ export default function DoneScreen({
   const isRTL = languageController.isRTL;
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchValue, setSearchValue] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  const handleRefresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await jobsController.reloadExecutor();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -67,6 +80,12 @@ export default function DoneScreen({
       badgeFont: isWebLandscape ? web(12) : mobile(12),
       badgePosition: isWebLandscape ? web(5) : mobile(5),
       personalMarkerBorderWidth: isWebLandscape ? web(2) : mobile(2),
+      refreshBtnHeight: isWebLandscape ? web(48) : mobile(48),
+      refreshBtnPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
+      refreshBtnBorderRadius: isWebLandscape ? web(8) : mobile(8),
+      refreshBtnFont: isWebLandscape ? web(14) : mobile(14),
+      refreshBtnIcon: isWebLandscape ? web(16) : mobile(16),
+      refreshBtnGap: isWebLandscape ? web(12) : mobile(12),
     };
   }, [width, height, isWebLandscape]);
 
@@ -92,11 +111,62 @@ export default function DoneScreen({
         },
       ]}
     >
-      <View>
-        <SearchPanel
-          searchValue={searchValue}
-          setSearchValue={setSearchValue}
-        />
+      <View
+        style={{
+          flexDirection: isRTL ? 'row-reverse' : 'row',
+          alignItems: 'flex-start',
+          gap: sizes.refreshBtnGap,
+        }}
+      >
+        <View style={{ flex: isWebLandscape ? undefined : 1 }}>
+          <SearchPanel
+            searchValue={searchValue}
+            setSearchValue={setSearchValue}
+          />
+        </View>
+        <TouchableOpacity
+          onPress={handleRefresh}
+          disabled={refreshing}
+          style={{
+            flexDirection: isRTL ? 'row-reverse' : 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: sizes.refreshBtnHeight,
+            paddingHorizontal: sizes.refreshBtnPaddingHorizontal,
+            borderRadius: sizes.refreshBtnBorderRadius,
+            borderWidth: 1,
+            borderColor: themeController.current?.buttonColorSecondaryDefault,
+            backgroundColor: themeController.current?.backgroundColor,
+            opacity: refreshing ? 0.7 : 1,
+          }}
+        >
+          {refreshing ? (
+            <ActivityIndicator
+              size='small'
+              color={themeController.current?.buttonColorSecondaryDefault}
+            />
+          ) : (
+            <>
+              <FontAwesome6
+                name='arrows-rotate'
+                size={sizes.refreshBtnIcon}
+                color={themeController.current?.buttonColorSecondaryDefault}
+                style={{
+                  marginRight: isRTL ? 0 : sizes.refreshBtnGap / 2,
+                  marginLeft: isRTL ? sizes.refreshBtnGap / 2 : 0,
+                }}
+              />
+              <Text
+                style={{
+                  color: themeController.current?.buttonColorSecondaryDefault,
+                  fontSize: sizes.refreshBtnFont,
+                }}
+              >
+                {t('common.refresh')}
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
       </View>
       <View>
         <JobTypeSelector
@@ -117,6 +187,14 @@ export default function DoneScreen({
         <Text>{jobsController.error}</Text>
       ) : (
         <ScrollView
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={[themeController.current?.buttonColorSecondaryDefault || '#000']}
+              tintColor={themeController.current?.buttonColorSecondaryDefault || '#000'}
+            />
+          }
           contentContainerStyle={[
             styles.scrollContainer,
             { width: sizes.scrollContainerWidth },

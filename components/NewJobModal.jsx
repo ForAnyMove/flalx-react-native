@@ -654,6 +654,11 @@ export default function NewJobModal({
       placeholder={t('newJob.selectOrType', {
         defaultValue: 'Select or type...',
       })}
+      onFocusChange={(focused) => {
+        const newFocus = [...focusStates];
+        newFocus[0] = focused;
+        setFocusStates(newFocus);
+      }}
       stateFocusIndex={0}
       setFocusStates={setFocusStates}
       filterOptions={filterOptions}
@@ -680,6 +685,11 @@ export default function NewJobModal({
       placeholder={t('newJob.selectOrType', {
         defaultValue: 'Select or type...',
       })}
+      onFocusChange={(focused) => {
+        const newFocus = [...focusStates];
+        newFocus[1] = focused;
+        setFocusStates(newFocus);
+      }}
       stateFocusIndex={1}
       setFocusStates={setFocusStates}
       filterOptions={filterOptions}
@@ -1167,6 +1177,11 @@ export default function NewJobModal({
                       placeholder={t('newJob.selectOrType', {
                         defaultValue: 'Select or type...',
                       })}
+                      onFocusChange={(focused) => {
+                        const newFocus = [...focusStates];
+                        newFocus[0] = focused;
+                        setFocusStates(newFocus);
+                      }}
                       stateFocusIndex={0}
                       setFocusStates={setFocusStates}
                       filterOptions={filterOptions}
@@ -1285,6 +1300,11 @@ export default function NewJobModal({
                       placeholder={t('newJob.selectOrType', {
                         defaultValue: 'Select or type...',
                       })}
+                      onFocusChange={(focused) => {
+                        const newFocus = [...focusStates];
+                        newFocus[1] = focused;
+                        setFocusStates(newFocus);
+                      }}
                       stateFocusIndex={1}
                       setFocusStates={setFocusStates}
                       filterOptions={filterOptions}
@@ -1733,6 +1753,7 @@ export default function NewJobModal({
                 }}
                 keyboardShouldPersistTaps='handled'
                 enableKeyboardAware={true}
+                scrollEnabled={!focusStates.some(Boolean)}
               />
             )}
           </>
@@ -1749,6 +1770,7 @@ export default function NewJobModal({
             }}
             keyboardShouldPersistTaps='handled'
             enableKeyboardAware={true}
+            scrollEnabled={!focusStates.some(Boolean)}
           />
         )}
 
