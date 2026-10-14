@@ -139,12 +139,12 @@ const CustomExperiencePicker = ({
       borderRadius: scale(8),
       inputContainerPaddingHorizontal: scale(16),
       labelGap: scale(3),
-      counterFontSize: scale(16),
-      counterLabelSize: scale(12),
+      counterFontSize: scale(18),
+      counterLabelSize: scale(13),
       counterContainerGap: scale(20),
-      counterContainerPadding: scale(12),
-      counterContainerHeight: scale(165),
-      finalTextMarginTop: scale(10),
+      counterContainerPadding: scale(14),
+      counterContainerHeight: scale(185),
+      finalTextMarginTop: scale(12),
       modalPadding: scale(10),
       shadowElevation: 5, // Platform-specific, doesn't scale
       shadowOffsetY: 3,
@@ -152,15 +152,17 @@ const CustomExperiencePicker = ({
       shadowRadius: 3,
       scrollBarWidth: scale(6),
       scrollBarOffset: scale(2),
-      counterUnitPaddingV: scale(10),
-      counterUnitPaddingH: scale(20),
-      counterButtonFontSize: scale(14),
-      counterInputMarginV: scale(10),
+      counterUnitPaddingV: scale(4),
+      counterUnitPaddingH: scale(8),
+      counterButtonFontSize: scale(20),
+      counterButtonHeight: scale(32),
+      counterUnitHeight: scale(110),
+      counterInputMarginV: scale(4),
       buttonContainerMarginTop: scale(10),
       buttonPadding: scale(10),
-      counterWidth: scale(40),
-      counterGap: scale(25),
-      counterLabelMarginBottom: scale(8),
+      counterWidth: scale(80),
+      counterGap: scale(24),
+      counterLabelMarginBottom: scale(6),
     };
   }, [isWebLandscape, height]);
 
@@ -235,11 +237,21 @@ const CustomExperiencePicker = ({
         justifyContent: 'space-between',
         paddingVertical: sizes.counterUnitPaddingV,
         paddingHorizontal: sizes.counterUnitPaddingH,
+        width: sizes.counterWidth,
+        height: sizes.counterUnitHeight,
+        borderRadius: sizes.borderRadius,
+      },
+      counterButton: {
         width: '100%',
+        height: sizes.counterButtonHeight,
+        alignItems: 'center',
+        justifyContent: 'center',
       },
       counterButtonText: {
         fontSize: sizes.counterButtonFontSize,
-        color: themeController.current?.unactiveTextColor,
+        color: themeController.current?.primaryColor,
+        fontFamily: 'Rubik-Bold',
+        lineHeight: sizes.counterButtonFontSize,
       },
       counterInput: {
         fontSize: sizes.counterFontSize,
@@ -247,7 +259,9 @@ const CustomExperiencePicker = ({
         textAlign: 'center',
         marginVertical: sizes.counterInputMarginV,
         fontFamily: 'Rubik-Bold',
-        width: sizes.counterFontSize * 2,
+        width: '100%',
+        height: sizes.counterFontSize * 1.6,
+        padding: 0,
       },
       customInputButtons: {
         flexDirection: 'row',
@@ -259,11 +273,30 @@ const CustomExperiencePicker = ({
   }, [sizes, themeController]);
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [pickerLayout, setPickerLayout] = useState(null);
   const pickerRef = useRef(null);
+  const containerRef = useRef(null);
   const [hoveredValue, setHoveredValue] = useState(null);
   const scrollY = useRef(new Animated.Value(0)).current;
   const [contentHeight, setContentHeight] = useState(0);
+
+  const isMobileFlow = Platform.OS !== 'web' || !isWebLandscape;
+  const isBottom = isMobileFlow ? true : bottomDropdown;
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const handleClickOutside = (event) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
+      ) {
+        setModalVisible(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const getSelectedLabel = () => {
     if (selectedValue && typeof selectedValue === 'object') {
@@ -288,38 +321,16 @@ const CustomExperiencePicker = ({
   const dropdownHeight =
     itemHeight * (experienceLevels.length > 4 ? 4 : experienceLevels.length);
 
-  useEffect(() => {
-    pickerRef.current?.measure((fx, fy, width, height, px, py) => {
-      setPickerLayout({
-        top: bottomDropdown ? py + height : py - dropdownHeight,
-        left: px,
-        width: width,
-      });
-    });
-  }, [height, width]);
-
   const handlePress = () => {
     if (fullScreen) {
       setModalVisible(true);
     } else {
-      pickerRef.current.measure((fx, fy, width, height, px, py) => {
-        setPickerLayout({
-          top: bottomDropdown ? py + height : py - dropdownHeight,
-          left: px,
-          width: width,
-        });
-        // Always open in list view unless a custom value is already set
-        // const isCustom =
-        //   selectedValue &&
-        //   typeof selectedValue === 'object' &&
-        //   !experienceLevels.some(
-        //     (opt) =>
-        //       typeof opt.value === 'object' &&
-        //       compareExperience(opt.value, selectedValue)
-        //   );
-        // setViewMode(isCustom ? 'counter' : 'list');
-        setViewMode('list');
-        setModalVisible(true);
+      setModalVisible((prev) => {
+        const next = !prev;
+        if (next) {
+          setViewMode('list');
+        }
+        return next;
       });
     }
   };
@@ -468,23 +479,61 @@ const CustomExperiencePicker = ({
   );
 
   const renderCustomInput = () => (
-    <TouchableOpacity
+    <View
       style={{
         alignItems: 'center',
         width: '100%',
-        height: sizes.counterContainerHeight,
-        justifyContent: 'center',
-        padding: sizes.counterContainerPadding,
+        paddingVertical: sizes.counterContainerPadding,
+        paddingHorizontal: sizes.counterContainerPadding,
       }}
-      onPress={(e) => {
-        e.stopPropagation()
-      }}
-      activeOpacity={1}
     >
       <View
         style={{
           flexDirection: isRTL ? 'row-reverse' : 'row',
+          justifyContent: 'space-between',
+          width: '100%',
+          paddingHorizontal: sizes.counterUnitPaddingH,
+          marginBottom: sizes.counterLabelMarginBottom * 2,
+        }}
+      >
+        <TouchableOpacity
+          onPress={() => setViewMode('list')}
+          style={{ paddingVertical: 4, paddingHorizontal: 6 }}
+        >
+          <Text
+            style={{
+              fontSize: sizes.font,
+              color: themeController.current?.primaryColor,
+              fontFamily: 'Rubik-Medium',
+            }}
+          >
+            {isRTL ? '→ ' : '← '}
+            {t('common.back', { defaultValue: 'Back' })}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setModalVisible(false)}
+          style={{ paddingVertical: 4, paddingHorizontal: 6 }}
+        >
+          <Text
+            style={{
+              fontSize: sizes.font,
+              color: themeController.current?.primaryColor,
+              fontFamily: 'Rubik-Medium',
+            }}
+          >
+            {t('common.done', { defaultValue: 'Done' })}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View
+        style={{
+          flexDirection: isRTL ? 'row-reverse' : 'row',
           gap: sizes.counterGap,
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
         {/* Year Counter */}
@@ -494,6 +543,7 @@ const CustomExperiencePicker = ({
               fontSize: sizes.counterLabelSize,
               color: themeController.current?.unactiveTextColor,
               marginBottom: sizes.counterLabelMarginBottom,
+              fontFamily: 'Rubik-Medium',
             }}
           >
             {t('register.year_label')}
@@ -503,12 +553,13 @@ const CustomExperiencePicker = ({
               styles.counterUnit,
               {
                 backgroundColor: themeController.current?.formInputBackground,
-                borderRadius: sizes.borderRadius,
               },
             ]}
           >
             <TouchableOpacity
+              style={styles.counterButton}
               onPress={() => handleExperienceChange('years', 1)}
+              hitSlop={{ top: 8, bottom: 4, left: 8, right: 8 }}
             >
               <Text style={styles.counterButtonText}>+</Text>
             </TouchableOpacity>
@@ -523,12 +574,15 @@ const CustomExperiencePicker = ({
               keyboardType='number-pad'
             />
             <TouchableOpacity
+              style={styles.counterButton}
               onPress={() => handleExperienceChange('years', -1)}
+              hitSlop={{ top: 4, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={styles.counterButtonText}>-</Text>
+              <Text style={styles.counterButtonText}>−</Text>
             </TouchableOpacity>
           </View>
         </View>
+
         {/* Month Counter */}
         <View style={{ alignItems: 'center', width: sizes.counterWidth }}>
           <Text
@@ -536,6 +590,7 @@ const CustomExperiencePicker = ({
               fontSize: sizes.counterLabelSize,
               color: themeController.current?.unactiveTextColor,
               marginBottom: sizes.counterLabelMarginBottom,
+              fontFamily: 'Rubik-Medium',
             }}
           >
             {t('register.month_label')}
@@ -545,12 +600,13 @@ const CustomExperiencePicker = ({
               styles.counterUnit,
               {
                 backgroundColor: themeController.current?.formInputBackground,
-                borderRadius: sizes.borderRadius,
               },
             ]}
           >
             <TouchableOpacity
+              style={styles.counterButton}
               onPress={() => handleExperienceChange('months', 1)}
+              hitSlop={{ top: 8, bottom: 4, left: 8, right: 8 }}
             >
               <Text style={styles.counterButtonText}>+</Text>
             </TouchableOpacity>
@@ -569,98 +625,138 @@ const CustomExperiencePicker = ({
               keyboardType='number-pad'
             />
             <TouchableOpacity
+              style={styles.counterButton}
               onPress={() => handleExperienceChange('months', -1)}
+              hitSlop={{ top: 4, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={styles.counterButtonText}>-</Text>
+              <Text style={styles.counterButtonText}>−</Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
+
       <Text
         style={{
           marginTop: sizes.finalTextMarginTop,
-          color: themeController.current?.unactiveTextColor,
+          color: themeController.current?.textColor,
           fontSize: sizes.font,
+          fontFamily: 'Rubik-Medium',
+          textAlign: 'center',
         }}
       >
         {formatExperience({ years, months }, t)}
       </Text>
-    </TouchableOpacity>
+    </View>
   );
 
-  const renderDropdownModal = () => (
-    <AppModal
-      visible={modalVisible}
-      transparent={true}
-      onRequestClose={() => {
-        setModalVisible(false);
-        // setViewMode('list');
-      }}
-    >
-      <TouchableOpacity
-        style={styles.modalBackdrop}
-        activeOpacity={1}
-        onPressOut={() => {
-          setModalVisible(false);
-          // setViewMode('list');
-        }}
-      >
-        {pickerLayout && (
-          <View
-            style={[
-              styles.dropdownContent,
-              {
-                top:
-                  viewMode === 'counter' && !bottomDropdown
-                    ? sizes.counterContainerHeight +
-                    pickerLayout.top -
-                    sizes.pickerHeight * 1.5
-                    : pickerLayout.top,
-                left: pickerLayout.left,
-                width: pickerLayout.width,
-                backgroundColor:
-                  viewMode === 'list'
-                    ? themeController.current?.formInputBackground
-                    : themeController.current?.dropdownBackground,
-                ...(bottomDropdown
-                  ? {
+  const triggerBorderRadius = useMemo(() => {
+    if (!modalVisible) {
+      return { borderRadius: sizes.borderRadius };
+    }
+    if (isBottom) {
+      return {
+        borderTopLeftRadius: sizes.borderRadius,
+        borderTopRightRadius: sizes.borderRadius,
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+      };
+    } else {
+      return {
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: 0,
+        borderBottomLeftRadius: sizes.borderRadius,
+        borderBottomRightRadius: sizes.borderRadius,
+      };
+    }
+  }, [modalVisible, isBottom, sizes.borderRadius]);
+
+  const renderDropdown = () => (
+    <View
+      style={[
+        styles.dropdownContent,
+        isMobileFlow
+          ? {
+              position: 'relative',
+              top: 0,
+              left: 0,
+              right: 0,
+              width: '100%',
+              flexDirection: 'column',
+              backgroundColor:
+                viewMode === 'list'
+                  ? themeController.current?.formInputBackground
+                  : themeController.current?.dropdownBackground,
+              borderBottomLeftRadius: sizes.borderRadius,
+              borderBottomRightRadius: sizes.borderRadius,
+              borderTopLeftRadius: 0,
+              borderTopRightRadius: 0,
+              elevation: 0,
+              shadowOpacity: 0,
+            }
+          : {
+              position: 'absolute',
+              flexDirection: viewMode === 'list' ? 'row' : 'column',
+              ...(isBottom
+                ? {
+                    top: sizes.pickerHeight,
                     borderBottomLeftRadius: sizes.borderRadius,
                     borderBottomRightRadius: sizes.borderRadius,
+                    borderTopLeftRadius: 0,
+                    borderTopRightRadius: 0,
                   }
-                  : {
+                : {
+                    bottom: sizes.pickerHeight,
                     borderTopLeftRadius: sizes.borderRadius,
                     borderTopRightRadius: sizes.borderRadius,
+                    borderBottomLeftRadius: 0,
+                    borderBottomRightRadius: 0,
                   }),
-              },
-            ]}
-          >
-            {viewMode === 'list' ? (
-              <>
-                <FlatList
-                  data={experienceLevels}
-                  keyExtractor={(item) => item.key}
-                  renderItem={renderOption}
-                  showsVerticalScrollIndicator={false}
-                  onScroll={handleScroll}
-                  scrollEventThrottle={16}
-                  onContentSizeChange={(width, height) =>
-                    setContentHeight(height)
-                  }
-                  style={{ height: dropdownHeight }}
-                />
-                {renderCustomScrollBar(dropdownHeight)}
-              </>
-            ) : (
-              renderCustomInput()
-            )}
-          </View>
-        )}
-      </TouchableOpacity>
-    </AppModal>
+              left: 0,
+              right: 0,
+              backgroundColor:
+                viewMode === 'list'
+                  ? themeController.current?.formInputBackground
+                  : themeController.current?.dropdownBackground,
+              zIndex: 9999,
+            },
+      ]}
+    >
+      {viewMode === 'list' ? (
+        <>
+          <FlatList
+            data={experienceLevels}
+            keyExtractor={(item) => String(item.key)}
+            renderItem={renderOption}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+            keyboardShouldPersistTaps='handled'
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            onContentSizeChange={(_, height) =>
+              setContentHeight(height)
+            }
+            style={{ maxHeight: dropdownHeight }}
+          />
+          {renderCustomScrollBar(dropdownHeight)}
+        </>
+      ) : (
+        renderCustomInput()
+      )}
+    </View>
   );
 
   return (
-    <>
+    <View
+      ref={containerRef}
+      style={[
+        {
+          position: 'relative',
+          zIndex: modalVisible ? 999 : 1,
+          elevation: modalVisible ? 999 : 0,
+        },
+        containerStyle,
+      ]}
+    >
       <TouchableOpacity
         ref={pickerRef}
         style={[
@@ -669,16 +765,9 @@ const CustomExperiencePicker = ({
             backgroundColor: themeController.current?.formInputBackground,
             height: sizes.pickerHeight,
             paddingHorizontal: sizes.inputContainerPaddingHorizontal,
-            borderRadius: sizes.borderRadius,
             flexDirection: isRTL ? 'row-reverse' : 'row',
           },
-          modalVisible && {
-            borderTopLeftRadius: bottomDropdown ? sizes.borderRadius : 0,
-            borderTopRightRadius: bottomDropdown ? sizes.borderRadius : 0,
-            borderBottomLeftRadius: bottomDropdown ? 0 : sizes.borderRadius,
-            borderBottomRightRadius: bottomDropdown ? 0 : sizes.borderRadius,
-          },
-          containerStyle,
+          triggerBorderRadius,
         ]}
         onPress={handlePress}
       >
@@ -687,7 +776,6 @@ const CustomExperiencePicker = ({
         >
           <Text
             style={[
-              // styles.label,
               {
                 color: themeController.current?.unactiveTextColor,
                 fontSize: sizes.font,
@@ -699,11 +787,7 @@ const CustomExperiencePicker = ({
           </Text>
           <Text
             style={[
-              // styles.value,
               {
-                // color: selectedValue
-                //   ? themeController.current?.textColor
-                //   : placeholderColor,
                 color: themeController.current?.textColor,
                 fontSize: sizes.baseFont,
                 textAlign: isRTL ? 'right' : 'left',
@@ -731,8 +815,10 @@ const CustomExperiencePicker = ({
         </View>
       </TouchableOpacity>
 
-      {fullScreen ? renderFullScreenModal() : renderDropdownModal()}
-    </>
+      {fullScreen
+        ? renderFullScreenModal()
+        : modalVisible && renderDropdown()}
+    </View>
   );
 };
 

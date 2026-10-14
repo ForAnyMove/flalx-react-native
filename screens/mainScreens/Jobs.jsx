@@ -54,6 +54,8 @@ export default function Jobs() {
   const screenWidthRef = useRef(SCREEN_WIDTH);
   const [screenWidth, setScreenWidth] = useState(SCREEN_WIDTH);
   // Стейты для модальных окон
+  const [newJobModalVisible, setNewJobModalVisible] = useState(false);
+  const [activeKey, setActiveKey] = useState(null);
   const [showJobModalVisible, setShowJobModalVisible] = useState(false);
   const [currentJobId, setCurrentJobId] = useState(null);
   const [jobModalStatus, setJobModalStatus] = useState(null);
@@ -260,6 +262,21 @@ export default function Jobs() {
       badgeFontSize: badgeSize * 0.6,
       titlePaddingHorizontal: isWebLandscape ? web(4) : mobile(4),
       underlineBorderRadius: isWebLandscape ? web(2) : mobile(2),
+      plusButtonSize: isWebLandscape ? web(64) : mobile(64),
+      plusButtonLeft: isWebLandscape ? web(24) : mobile(16),
+      plusButtonRight: isWebLandscape ? web(24) : mobile(16),
+      plusButtonBottom: isWebLandscape ? web(24) : mobile(24),
+      plusIconSize: isWebLandscape ? web(24) : mobile(24),
+      plusButtonShadowColor: '#000',
+      plusButtonShadowOffset: {
+        width: 0,
+        height: isWebLandscape ? web(4) : mobile(4),
+      },
+      plusButtonShadowOpacity: 0.3,
+      plusButtonShadowRadius: isWebLandscape ? web(5) : mobile(5),
+      plusButtonElevation: isWebLandscape ? 10 : 8,
+      plusButtonLabelFontSize: isWebLandscape ? web(12) : mobile(12),
+      plusButtonLabelMarginTop: isWebLandscape ? web(8) : mobile(8),
     };
   }, [height, isWebLandscape]);
 
@@ -406,6 +423,79 @@ export default function Jobs() {
           ))}
         </Animated.View>
       </View>
+
+      {/* Кнопка + */}
+      <View
+        style={{
+          position: 'absolute',
+          right: sizes.plusButtonRight,
+          bottom: sizes.plusButtonBottom,
+          alignItems: 'center',
+        }}
+      >
+        <TouchableOpacity
+          style={{
+            backgroundColor: themeController.current?.mainBadgeBackground,
+            width: sizes.plusButtonSize,
+            height: sizes.plusButtonSize,
+            borderRadius: sizes.plusButtonSize,
+            justifyContent: 'center',
+            alignItems: 'center',
+            shadowColor: sizes.plusButtonShadowColor,
+            shadowOffset: sizes.plusButtonShadowOffset,
+            shadowOpacity: sizes.plusButtonShadowOpacity,
+            shadowRadius: sizes.plusButtonShadowRadius,
+            elevation: sizes.plusButtonElevation,
+          }}
+          onPress={async () => {
+            setActiveKey(null);
+            setNewJobModalVisible(true);
+          }}
+        >
+          <Image
+            source={icons.plus}
+            style={{
+              width: sizes.plusIconSize,
+              height: sizes.plusIconSize,
+              tintColor: themeController.current?.buttonTextColorPrimary,
+            }}
+            resizeMode='contain'
+          />
+        </TouchableOpacity>
+        <Text
+          style={{
+            color: themeController.current?.formInputLabelColor,
+            fontSize: sizes.plusButtonLabelFontSize,
+            marginTop: sizes.plusButtonLabelMarginTop,
+          }}
+        >
+          {t('common.create_request')}
+        </Text>
+      </View>
+
+      {isWebLandscape ? (
+        <JobModalWrapper visible={newJobModalVisible} main={true}>
+          <NewJobModal
+            closeModal={() => setNewJobModalVisible(false)}
+            redirectToWaiting={() => {
+              setNewJobModalVisible(false);
+              handleTabPress(orderedTabs.indexOf('waiting') >= 0 ? orderedTabs.indexOf('waiting') : 0);
+            }}
+            activeKey={activeKey}
+          />
+        </JobModalWrapper>
+      ) : (
+        <AppModal visible={newJobModalVisible} transparent>
+          <NewJobModal
+            closeModal={() => setNewJobModalVisible(false)}
+            redirectToWaiting={() => {
+              setNewJobModalVisible(false);
+              handleTabPress(orderedTabs.indexOf('waiting') >= 0 ? orderedTabs.indexOf('waiting') : 0);
+            }}
+            activeKey={activeKey}
+          />
+        </AppModal>
+      )}
 
       {isWebLandscape ? (
         <JobModalWrapper visible={showJobModalVisible} main={true}>

@@ -26,6 +26,7 @@ import { useNotification } from '../src/render';
 import JobExpectationsBadge from './ui/JobExpectationsBadge';
 import ConfirmSelectProviderModal from './ConfirmSelectProviderModal';
 import { formatPhoneDisplay } from '../src/phone/phoneUtils';
+import { formatExperience } from '../utils/experience_ulit';
 
 const UserSummaryBlock = ({
   user,
@@ -262,16 +263,6 @@ const UserSummaryBlock = ({
       .finally(() => setAppLoading(false));
   };
 
-  const formatExperience = (exp) => {
-    if (!exp) return null;
-    const years = exp.years || 0;
-    const months = exp.months || 0;
-    if (!years && !months) return null;
-    const parts = [];
-    if (years) parts.push(`${years} year${years !== 1 ? 's' : ''}`);
-    if (months) parts.push(`${months} month${months !== 1 ? 's' : ''}`);
-    return parts.join(' ');
-  };
 
   const renderStars = (rating) => {
     const stars = [];
@@ -694,7 +685,14 @@ const UserSummaryBlock = ({
                       {professions?.map((p, i) => {
                         const typeLabel = tField(p.job_type, 'name');
                         const subtypeLabel = tField(p.job_subtype, 'name');
-                        const expLabel = formatExperience(p.experience);
+                        const rawExp =
+                          p.experience ??
+                          p.years_of_experience ??
+                          p.yearsOfExperience ??
+                          p.years_experience ??
+                          (professions?.length === 1 ? (experience ?? _userData?.years_of_experience ?? _userData?.yearsOfExperience) : null);
+                        const expLabel = formatExperience(rawExp, t);
+                        const hasExperience = Boolean(expLabel && expLabel !== '-');
                         return (
                           <View
                             key={i}
@@ -723,18 +721,20 @@ const UserSummaryBlock = ({
                               {subtypeLabel}
                             </Text>
                             <View style={{ flex: 1 }} />
-                            <View
-                              style={{
-                                backgroundColor: `${themeController.current?.primaryColor}1A`,
-                                paddingHorizontal: sizes.expBadgePaddingHorizontal,
-                                paddingVertical: sizes.expBadgePaddingVertical,
-                                borderRadius: sizes.expBadgeRadius,
-                              }}
-                            >
-                              <Text style={{ fontSize: sizes.smallFont, color: themeController.current?.primaryColor, fontFamily: 'Rubik-Medium' }}>
-                                {expLabel}
-                              </Text>
-                            </View>
+                            {hasExperience && (
+                              <View
+                                style={{
+                                  backgroundColor: `${themeController.current?.primaryColor}1A`,
+                                  paddingHorizontal: sizes.expBadgePaddingHorizontal,
+                                  paddingVertical: sizes.expBadgePaddingVertical,
+                                  borderRadius: sizes.expBadgeRadius,
+                                }}
+                              >
+                                <Text style={{ fontSize: sizes.smallFont, color: themeController.current?.primaryColor, fontFamily: 'Rubik-Medium' }}>
+                                  {expLabel}
+                                </Text>
+                              </View>
+                            )}
                           </View>
                         );
                       })}

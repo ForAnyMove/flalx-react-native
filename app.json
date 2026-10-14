@@ -42,12 +42,18 @@
     "extra": {
       "eas": {
         "projectId": "3b752486-12ec-41fc-93e6-c32197197fd4"
-      }
+      },
+      "supportsRTL": false
     },
     "owner": "yulab",
     "plugins": [
       "expo-router",
-      "expo-localization",
+      [
+        "expo-localization",
+        {
+          "supportsRTL": false
+        }
+      ],
       [
         "expo-notifications",
         {

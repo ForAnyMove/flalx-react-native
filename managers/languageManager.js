@@ -63,10 +63,14 @@ export default function languageManager() {
     const isRTL = ["he", "ar"].includes(lang);
     setRtl(isRTL);
 
-    // if (Platform.OS !== "web") {
-    //   I18nManager.allowRTL(isRTL);
-    //   I18nManager.forceRTL(isRTL);
-    // }
+    if (Platform.OS !== "web") {
+      try {
+        I18nManager.allowRTL(false);
+        I18nManager.forceRTL(false);
+      } catch (e) {
+        console.error("Error disabling native RTL:", e);
+      }
+    }
 
     if (Platform.OS === "web") {
       localStorage.setItem("app_language", lang);

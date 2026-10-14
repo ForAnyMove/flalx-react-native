@@ -360,19 +360,20 @@ export default function NewJobModal({
   const [isExperienceRequired, setIsExperienceRequired] = useState(false);
   const [experience, setExperience] = useState(editDraft.experience ?? initialJob?.experience ?? null);
 
-  // Хук для отслеюивания смены type или subType и отображения поля ввода опыта, если она требует опыта
+  // Хук для отслеживания смены type или subType и отображения поля ввода опыта, если профессия требует опыта
   useEffect(() => {
     let requiresExperience = false;
     if (jobTypesController.jobTypesWithSubtypes) {
+      const selectedTypeObj = jobTypesController.jobTypesWithSubtypes.find(
+        (t) => t.key === type || t.id === type || t.name === type
+      );
       // Проверяем, требует ли верификации выбранный тип
-      const typeRequiresVerification = jobTypesController.jobTypesWithSubtypes.find(
-        (t) => t.key === type
-      )?.requires_verification;
+      const typeRequiresVerification = selectedTypeObj?.requires_verification === true;
 
-      // Проверяем, требует ли верификации выбранный "подтип" (который является таким же типом)
-      const subTypeRequiresVerification = jobTypesController.jobTypesWithSubtypes.find(
-        (t) => t.key === subType
-      )?.requires_verification;
+      // Проверяем, требует ли верификации выбранный подтип внутри выбранного типа
+      const subTypeRequiresVerification = selectedTypeObj?.subtypes?.find(
+        (st) => st.key === subType || st.id === subType || st.name === subType
+      )?.requires_verification === true;
 
       if (typeRequiresVerification || subTypeRequiresVerification) {
         requiresExperience = true;
@@ -389,6 +390,40 @@ export default function NewJobModal({
   const [modalVisible, setModalVisible] = useState(false);
   const [imagePreviewVisible, setImagePreviewVisible] = useState(false);
   const [imagePreviewIndex, setImagePreviewIndex] = useState(0);
+
+  const [imageContainerWidth, setImageContainerWidth] = useState(0);
+
+  const portraitImageGap = useMemo(() => {
+    return Math.max(6, Math.round(scaleByHeightMobile(8, height)));
+  }, [height]);
+
+  const portraitItemSize = useMemo(() => {
+    const availableImageWidth =
+      imageContainerWidth > 0
+        ? imageContainerWidth
+        : width - (sizes.containerPaddingHorizontal || 14) * 2;
+    return Math.max(
+      40,
+      Math.floor((availableImageWidth - 3 * portraitImageGap) / 4)
+    );
+  }, [
+    imageContainerWidth,
+    width,
+    sizes.containerPaddingHorizontal,
+    portraitImageGap,
+  ]);
+
+  const portraitRows = useMemo(() => {
+    const items = [
+      { type: 'add' },
+      ...images.map((uri, index) => ({ type: 'image', uri, index })),
+    ];
+    const rows = [];
+    for (let i = 0; i < items.length; i += 4) {
+      rows.push(items.slice(i, i + 4));
+    }
+    return rows;
+  }, [images]);
 
   // Состояния для управления фокусом на полях ввода
   const [focusStates, setFocusStates] = useState([false, false, false]);
@@ -840,7 +875,16 @@ export default function NewJobModal({
         />
       </TouchableOpacity>
     ),
-    <View style={styles.imageInputBlock} key='images'>
+    <View
+      style={styles.imageInputBlock}
+      key='images'
+      onLayout={(e) => {
+        const w = e.nativeEvent.layout.width;
+        if (w > 0 && Math.abs(w - imageContainerWidth) > 1) {
+          setImageContainerWidth(w);
+        }
+      }}
+    >
       <Text
         style={[
           styles.label,
@@ -854,101 +898,197 @@ export default function NewJobModal({
       >
         {t('newJob.uploadingPhotos', { defaultValue: 'Uploading photos' })}
       </Text>
-      <View
-        style={[styles.imageRow, isRTL && { flexDirection: 'row-reverse' }]}
-      >
-        {/* Кнопка добавления */}
-        <TouchableOpacity
-          onPress={() => setModalVisible(true)}
-          style={[
-            styles.addImageButton,
-            {
-              backgroundColor:
-                themeController.current?.profileDefaultBackground,
-              width: sizes.thumb,
-              height: sizes.thumb,
-              borderRadius: sizes.borderRadius,
-              marginRight: isRTL ? 0 : sizes.margin / 2,
-              marginLeft: isRTL ? sizes.margin / 2 : 0,
-            },
-          ]}
-        >
-          <Image
-            source={icons.plus}
-            style={{
-              width: sizes.imageSize,
-              height: sizes.imageSize,
-              tintColor: themeController.current?.primaryColor,
-            }}
-            resizeMode='contain'
-          />
-        </TouchableOpacity>
 
-        {/* Скролл с картинками */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.imageScrollContainer}
-        >
-          {/* flexDirection:'row-reverse' on a ScrollView's contentContainerStyle
-              isn't reliable (same family of issue as flexWrap+row-reverse
-              elsewhere) — reverse the array itself instead, keeping each
-              item's original index for removal/preview so those still target
-              the right image regardless of display order. */}
-          {(isRTL ? images.map((uri, i) => ({ uri, i })).reverse() : images.map((uri, i) => ({ uri, i }))).map(({ uri, i: index }) => (
-            <TouchableOpacity
-              key={index}
-              activeOpacity={0.85}
-              style={[
-                styles.imageWrapper,
-                {
-                  marginRight: isRTL ? 0 : sizes.margin / 2,
-                  marginLeft: isRTL ? sizes.margin / 2 : 0,
-                },
-              ]}
-              onPress={() => {
-                setImagePreviewIndex(index);
-                setImagePreviewVisible(true);
+      {!isLandscape ? (
+        <View style={{ gap: portraitImageGap }}>
+          {portraitRows.map((rowItems, rowIndex) => (
+            <View
+              key={`img-row-${rowIndex}`}
+              style={{
+                flexDirection: isRTL ? 'row-reverse' : 'row',
+                gap: portraitImageGap,
               }}
             >
-              <Image
-                source={{ uri }}
-                style={[
-                  styles.imageThumbnail,
-                  {
-                    width: sizes.thumb,
-                    height: sizes.thumb,
-                    borderRadius: sizes.borderRadius,
-                  },
-                ]}
-              />
+              {rowItems.map((item) => {
+                if (item.type === 'add') {
+                  return (
+                    <TouchableOpacity
+                      key='add-btn'
+                      onPress={() => setModalVisible(true)}
+                      style={[
+                        styles.addImageButton,
+                        {
+                          backgroundColor:
+                            themeController.current?.profileDefaultBackground,
+                          width: portraitItemSize,
+                          height: portraitItemSize,
+                          borderRadius: sizes.borderRadius,
+                        },
+                      ]}
+                    >
+                      <Image
+                        source={icons.plus}
+                        style={{
+                          width: Math.round(portraitItemSize * 0.32),
+                          height: Math.round(portraitItemSize * 0.32),
+                          tintColor: themeController.current?.primaryColor,
+                        }}
+                        resizeMode='contain'
+                      />
+                    </TouchableOpacity>
+                  );
+                }
+
+                return (
+                  <TouchableOpacity
+                    key={`img-${item.index}`}
+                    activeOpacity={0.85}
+                    style={[
+                      styles.imageWrapper,
+                      {
+                        width: portraitItemSize,
+                        height: portraitItemSize,
+                      },
+                    ]}
+                    onPress={() => {
+                      setImagePreviewIndex(item.index);
+                      setImagePreviewVisible(true);
+                    }}
+                  >
+                    <Image
+                      source={{ uri: item.uri }}
+                      style={[
+                        styles.imageThumbnail,
+                        {
+                          width: portraitItemSize,
+                          height: portraitItemSize,
+                          borderRadius: sizes.borderRadius,
+                        },
+                      ]}
+                      resizeMode='cover'
+                    />
+                    <TouchableOpacity
+                      style={[
+                        styles.removeIcon,
+                        {
+                          borderRadius: Math.round(portraitItemSize * 0.22),
+                          top: sizes.removeIconPosition,
+                          right: sizes.removeIconPosition,
+                          width: Math.round(portraitItemSize * 0.22),
+                          height: Math.round(portraitItemSize * 0.22),
+                        },
+                      ]}
+                      onPress={() => setPendingRemoveIndex(item.index)}
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                    >
+                      <Image
+                        source={icons.cross}
+                        style={{
+                          width: Math.round(portraitItemSize * 0.14),
+                          height: Math.round(portraitItemSize * 0.14),
+                          tintColor: themeController.current?.textColor,
+                        }}
+                        resizeMode='contain'
+                      />
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ))}
+        </View>
+      ) : (
+        <View
+          style={[styles.imageRow, isRTL && { flexDirection: 'row-reverse' }]}
+        >
+          {/* Кнопка добавления */}
+          <TouchableOpacity
+            onPress={() => setModalVisible(true)}
+            style={[
+              styles.addImageButton,
+              {
+                backgroundColor:
+                  themeController.current?.profileDefaultBackground,
+                width: sizes.thumb,
+                height: sizes.thumb,
+                borderRadius: sizes.borderRadius,
+                marginRight: isRTL ? 0 : sizes.margin / 2,
+                marginLeft: isRTL ? sizes.margin / 2 : 0,
+              },
+            ]}
+          >
+            <Image
+              source={icons.plus}
+              style={{
+                width: sizes.imageSize,
+                height: sizes.imageSize,
+                tintColor: themeController.current?.primaryColor,
+              }}
+              resizeMode='contain'
+            />
+          </TouchableOpacity>
+
+          {/* Скролл с картинками */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.imageScrollContainer}
+          >
+            {(isRTL ? images.map((uri, i) => ({ uri, i })).reverse() : images.map((uri, i) => ({ uri, i }))).map(({ uri, i: index }) => (
               <TouchableOpacity
+                key={index}
+                activeOpacity={0.85}
                 style={[
-                  styles.removeIcon,
+                  styles.imageWrapper,
                   {
-                    borderRadius: sizes.removeIconSize,
-                    top: sizes.removeIconPosition,
-                    right: sizes.removeIconPosition,
-                    width: sizes.removeIconSize,
-                    height: sizes.removeIconSize,
+                    marginRight: isRTL ? 0 : sizes.margin / 2,
+                    marginLeft: isRTL ? sizes.margin / 2 : 0,
                   },
                 ]}
-                onPress={() => setPendingRemoveIndex(index)}
+                onPress={() => {
+                  setImagePreviewIndex(index);
+                  setImagePreviewVisible(true);
+                }}
               >
                 <Image
-                  source={icons.cross}
-                  style={{
-                    width: sizes.crossIconSize,
-                    height: sizes.crossIconSize,
-                    tintColor: themeController.current?.textColor,
-                  }}
-                  resizeMode='contain'
+                  source={{ uri }}
+                  style={[
+                    styles.imageThumbnail,
+                    {
+                      width: sizes.thumb,
+                      height: sizes.thumb,
+                      borderRadius: sizes.borderRadius,
+                    },
+                  ]}
                 />
+                <TouchableOpacity
+                  style={[
+                    styles.removeIcon,
+                    {
+                      borderRadius: sizes.removeIconSize,
+                      top: sizes.removeIconPosition,
+                      right: sizes.removeIconPosition,
+                      width: sizes.removeIconSize,
+                      height: sizes.removeIconSize,
+                    },
+                  ]}
+                  onPress={() => setPendingRemoveIndex(index)}
+                >
+                  <Image
+                    source={icons.cross}
+                    style={{
+                      width: sizes.crossIconSize,
+                      height: sizes.crossIconSize,
+                      tintColor: themeController.current?.textColor,
+                    }}
+                    resizeMode='contain'
+                  />
+                </TouchableOpacity>
               </TouchableOpacity>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       <ImagePickerModal
         visible={modalVisible}
@@ -975,7 +1115,6 @@ export default function NewJobModal({
         containerStyle={{
           marginBottom: sizes.typeTagsSelectorMarginBottom,
         }}
-        bottomDropdown={false}
       />
     ) : null,
     !isClient && (
