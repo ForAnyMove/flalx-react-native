@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { getSystemTypesWithSubtypes } from "../src/api/jobTypes";
 import { fetchUserTypeCreationRequests, sendUserTypeCreationRequest } from "../src/api/jobTypesRegistration";
 import { fetchUserProfessions, fetchUserTypeRequests, sendUserTypeRequest } from "../src/api/jobTypesRequests";
@@ -8,33 +8,64 @@ function professionRequests({ session }) {
     const [professionsRequestedToSystem, setProfessionsRequestedToSystem] = useState([]);
     const [professionsRequestedBySystem, setProfessionsRequestedBySystem] = useState([]);
 
+    const loadingRef = useRef(false);
+    const pendingReloadRef = useRef(false);
+
     async function loadProfessionRequests() {
+        if (!session?.status) return;
+
+        if (loadingRef.current) {
+            pendingReloadRef.current = true;
+            return;
+        }
+        loadingRef.current = true;
+        pendingReloadRef.current = false;
+
         try {
-            const [registrationRequestsData, professionRequestsData, userProfessionsData] = await Promise.all([
+            const [regResult, reqResult, profResult] = await Promise.allSettled([
                 fetchUserTypeCreationRequests(session),
                 fetchUserTypeRequests(session),
                 fetchUserProfessions(session)
             ]);
 
+            const registrationRequestsData = regResult.status === 'fulfilled' ? regResult.value : null;
+            const professionRequestsData = reqResult.status === 'fulfilled' ? reqResult.value : null;
+            const userProfessionsData = profResult.status === 'fulfilled' ? profResult.value : null;
+
             const userRequested = [];
-            if (professionRequestsData) {
-                for (const req of professionRequestsData) {
-                    if (req.status === 'approved') continue;
-                    userRequested.push(req);
-                }
-            }
+            const approvedKeys = new Set();
 
             if (userProfessionsData) {
                 for (const profession of userProfessionsData) {
+                    const key = `${profession.job_type_id}_${profession.job_subtype_id}`;
+                    approvedKeys.add(key);
                     userRequested.push({ ...profession, status: 'approved' });
                 }
             }
 
-            setProfessionsRequestedToSystem(registrationRequestsData || []);
+            if (professionRequestsData) {
+                for (const req of professionRequestsData) {
+                    if (req.status === 'approved') continue;
+                    const key = `${req.job_type_id}_${req.job_subtype_id}`;
+                    if (approvedKeys.has(key)) continue;
+                    userRequested.push(req);
+                }
+            }
+
+            if (registrationRequestsData) {
+                setProfessionsRequestedToSystem(registrationRequestsData);
+            }
             setProfessionsRequestedBySystem(userRequested);
         }
         catch (err) {
             logError('Error loading profession requests:', err);
+        }
+        finally {
+            loadingRef.current = false;
+            if (pendingReloadRef.current) {
+                pendingReloadRef.current = false;
+                loadProfessionRequests();
+            }
         }
     }
 
@@ -50,6 +81,7 @@ function professionRequests({ session }) {
             if (data)
                 setProfessionsRequestedToSystem(prev => [...prev, data]);
 
+            loadProfessionRequests();
             return data;
         }
         catch (err) {
@@ -71,6 +103,7 @@ function professionRequests({ session }) {
             if (data)
                 setProfessionsRequestedBySystem(prev => [...prev, data]);
 
+            loadProfessionRequests();
             return data;
         }
         catch (err) {
@@ -190,14 +223,23 @@ export default function jobTypeManager({ session }) {
         jobTypesWithSubtypes,
         checkIfVerificationNeeded,
         reloadJobTypes: loadJobTypesWithSubtypes,
+        reloadProfessionRequests: userProfessionRequests.reloadProfessionRequests,
+        reloadAll: async () => {
+            await Promise.allSettled([
+                loadJobTypesWithSubtypes(),
+                userProfessionRequests.reloadProfessionRequests()
+            ]);
+        },
         approvedProfessions,
         userToSystemRequest: {
             list: userProfessionRequests.professionsRequestedToSystem,
-            makeRequest: userProfessionRequests.requestProfessionToSystem
+            makeRequest: userProfessionRequests.requestProfessionToSystem,
+            reload: userProfessionRequests.reloadProfessionRequests
         },
         userToUserRequest: {
             list: userProfessionRequests.professionsRequestedBySystem,
-            makeRequest: userProfessionRequests.requestProfessionToUser
+            makeRequest: userProfessionRequests.requestProfessionToUser,
+            reload: userProfessionRequests.reloadProfessionRequests
         }
     };
 }

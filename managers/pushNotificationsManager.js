@@ -72,6 +72,14 @@ function handleNotificationTap(response) {
             // TODO Phase 2: navigate to security settings
             break;
 
+        // ─── Professions ─────────────────────────────────────────────────
+        case 'PROFESSION_REQUEST_APPROVED':
+        case 'PROFESSION_REQUEST_REJECTED':
+        case 'USER_PROFESSION_REQUEST_APPROVED':
+        case 'USER_PROFESSION_REQUEST_REJECTED':
+            // TODO Phase 2: navigate to profile professions tab
+            break;
+
         default:
             break;
     }

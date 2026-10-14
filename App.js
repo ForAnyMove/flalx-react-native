@@ -82,9 +82,16 @@ function App() {
     registerControl,
     forgotPassControl,
     jobsController,
+    jobTypesController,
   } = useComponentContext();
 
-  usePushNotifications({ session, onNotification: () => { jobsController.reloadAll(); } });
+  usePushNotifications({
+    session,
+    onNotification: () => {
+      jobsController.reloadAll();
+      jobTypesController?.reloadProfessionRequests?.();
+    },
+  });
   const [isOnboardingShowed, setOnboardingShowed] = useState(false);
   const [onboardingStatusChecked, setOnboardingStatusChecked] = useState(false);
   const { width, height, isLandscape, isKeyboardVisible, focusedInputs } =

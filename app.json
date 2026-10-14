@@ -39,14 +39,15 @@
       "shortName": "Flalx",
       "description": "Flalx is a platform that connects users with professional services easily and efficiently."
     },
+    "supportsRTL": false,
     "extra": {
       "eas": {
         "projectId": "3b752486-12ec-41fc-93e6-c32197197fd4"
-      },
-      "supportsRTL": false
+      }
     },
     "owner": "yulab",
     "plugins": [
+      "./plugins/withDisableRTL",
       "expo-router",
       [
         "expo-localization",

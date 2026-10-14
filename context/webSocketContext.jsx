@@ -24,6 +24,7 @@ export const WebSocketProvider = ({ children }) => {
     providersController,
     subscription,
     jobsController,
+    jobTypesController,
     couponsManagerController,
     paymentsManagerController,
     languageController,
@@ -510,6 +511,30 @@ export const WebSocketProvider = ({ children }) => {
       case 'COUPON_AUTHORIZED':
         couponsManagerController.refreshBalance();
         break;
+      case 'PROFESSION_REQUEST_APPROVED':
+      case 'PROFESSION_REQUEST_REJECTED':
+      case 'PROFESSION_REQUEST_STATUS_CHANGED':
+      case 'USER_PROFESSION_REQUEST_APPROVED':
+      case 'USER_PROFESSION_REQUEST_REJECTED':
+      case 'USER_PROFESSION_REQUEST_STATUS_CHANGED':
+      case 'USER_PROFESSION_ADDED':
+      case 'USER_PROFESSION_REMOVED':
+      case 'USER_PROFESSION_DELETED':
+      case 'USER_PROFESSION_UPDATED':
+      case 'SYSTEM_PROFESSION_REQUEST_APPROVED':
+      case 'SYSTEM_PROFESSION_REQUEST_REJECTED':
+      case 'USER_TYPE_REQUEST_APPROVED':
+      case 'USER_TYPE_REQUEST_REJECTED': {
+        jobTypesController?.reloadProfessionRequests?.();
+        break;
+      }
+      case 'JOB_TYPE_CREATED':
+      case 'JOB_TYPE_UPDATED':
+      case 'JOB_SUBTYPE_CREATED':
+      case 'JOB_SUBTYPE_UPDATED': {
+        jobTypesController?.reloadAll?.();
+        break;
+      }
       default:
         console.log('UNHANDLED WS MESSAGE:', message?.type, message);
         break;

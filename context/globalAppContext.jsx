@@ -44,6 +44,7 @@ export const ComponentProvider = ({ children }) => {
   const { registerControl, forgotPassControl } = authTabsManager();
 
   const jobsController = jobsManager({ session, user, geolocation: geolocationController });
+  const jobTypesController = jobTypeManager({ session });
 
   const appState = useRef(AppState.currentState);
 
@@ -55,6 +56,7 @@ export const ComponentProvider = ({ children }) => {
       ) {
         if (session.status === 'loggedIn') {
           jobsController.reloadAll();
+          jobTypesController?.reloadProfessionRequests?.();
         }
       }
       appState.current = nextAppState;
@@ -63,8 +65,7 @@ export const ComponentProvider = ({ children }) => {
     return () => {
       subscription.remove();
     };
-  }, [session.status, jobsController]);
-  const jobTypesController = jobTypeManager({ session });
+  }, [session.status, jobsController, jobTypesController]);
 
   const providersController = providersManager({ session });
   const [subscriptionPlans, setSubscriptionPlans] = useState(null);

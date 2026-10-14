@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import {
   Image,
   Platform,
@@ -7,6 +7,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  RefreshControl,
 } from 'react-native';
 import SearchPanel from '../../../../components/SearchPanel';
 import {
@@ -110,6 +111,17 @@ const SystemProfessions = ({ openSystemRegistration }) => {
     });
   }, [formattedUserRequests, searchValue]);
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await jobTypesController?.reloadProfessionRequests?.();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [jobTypesController]);
+
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
     const mobile = (size) => scaleByHeightMobile(size, height);
@@ -166,6 +178,14 @@ const SystemProfessions = ({ openSystemRegistration }) => {
             styles.scrollContainer,
             { paddingBottom: sizes.scrollContainerPaddingBottom },
           ]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[themeController.current?.primaryColor || '#007AFF']}
+              tintColor={themeController.current?.primaryColor || '#007AFF'}
+            />
+          }
         >
           {filteredFormattedUserRequests.map((request, index) =>
             <UniversalProfessionComponent

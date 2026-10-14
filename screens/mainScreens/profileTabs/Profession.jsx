@@ -41,6 +41,16 @@ export default function Profession() {
     jobTypesController.userToSystemRequest.list.length > 0
   );
 
+  useEffect(() => {
+    jobTypesController?.reloadProfessionRequests?.();
+  }, []);
+
+  useEffect(() => {
+    if (jobTypesController.userToSystemRequest.list.length > 0) {
+      setShowTabs(true);
+    }
+  }, [jobTypesController.userToSystemRequest.list.length]);
+
   const orderedTabs = isRTL ? TAB_TITLES_RTL : TAB_TITLES;
   const orderedScreens = isRTL
     ? [SystemProfessions, MyProfessions]

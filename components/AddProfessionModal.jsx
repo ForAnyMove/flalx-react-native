@@ -36,12 +36,12 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
   const sizes = useMemo(() => {
     const scale = isWebLandscape ? scaleByHeight : scaleByHeightMobile;
     return {
-      modalWidth: isWebLandscape ? scale(450) : width,
+      modalWidth: isWebLandscape ? scale(450) : width * 0.9,
       modalMaxHeight: isWebLandscape ? height * 0.8 : height,
       borderRadius: scale(8),
       padding: scale(24),
       paddingVertical: scale(40),
-      paddingHorizontal: scale(60),
+      paddingHorizontal: scale(24),
       headerBottomMargin: scale(32),
       titleSize: scale(24),
       descriptionSize: scale(18),
