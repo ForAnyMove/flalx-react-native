@@ -49,7 +49,7 @@ const UniversalProfessionComponent = ({ item, onPress }) => {
     };
   }, [height, isWebLandscape]);
 
-  const typeConfig = useMemo(() => {
+  const configMap = useMemo(() => {
     const config = {
       [PROFESSION_TYPES.VERIFIED]: {
         icon: icons.verified_icon,
@@ -77,8 +77,11 @@ const UniversalProfessionComponent = ({ item, onPress }) => {
         titleColor: themeController.current?.textColor,
       },
     };
-    return config[type] || config[PROFESSION_TYPES.NEW];
-  }, [type, themeController.current]);
+    return config;
+  }, [themeController.current]);
+
+  const typeConfig_ = (key) => configMap[key] || configMap[PROFESSION_TYPES.NEW];
+  const typeConfig = typeConfig_(type);
 
   const styles = StyleSheet.create({
     container: {
@@ -201,6 +204,25 @@ const UniversalProfessionComponent = ({ item, onPress }) => {
           </View>
         </View>
       )}
+      {extra?.userProfession && (() => {
+        const userConfig = typeConfig_(extra.userProfession.type);
+        return (
+          <View style={styles.commentBlock}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={[styles.subtitle, { flex: 1 }]}>{extra.userProfession.label}</Text>
+              <Text style={[styles.statusText, { color: userConfig.color }]}>{userConfig.statusText}</Text>
+            </View>
+            {extra.userProfession.comment && (
+              <View style={{ marginTop: sizes.commentPaddingV }}>
+                <Text style={[styles.commentTitle, { color: userConfig.color }]}>{extra.userProfession.comment.title}</Text>
+                <View style={[styles.commentContentContainer, { borderLeftColor: userConfig.color }]}>
+                  <Text style={styles.commentContent}>{extra.userProfession.comment.content}</Text>
+                </View>
+              </View>
+            )}
+          </View>
+        );
+      })()}
     </TouchableOpacity>
   );
 };

@@ -30,6 +30,7 @@ import CustomTextInput from '../components/ui/CustomTextInput';
 import UniversalProfessionComponent from '../components/ui/UniversalProfessionComponent';
 import { useLocalization } from '../src/services/useLocalization';
 import RequestProfessionModal from '../components/RequestProfessionModal';
+import { getProfessionRequestErrorMessage } from '../utils/professionRequestErrors';
 import { PROFESSION_TYPES } from '../constants/enums';
 import { useNotification } from '../src/render';
 import { validatePersonName, NAME_MAX_LENGTH } from '../utils/nameValidation';
@@ -259,7 +260,16 @@ export default function RegisterScreen() {
               })
               .then(() => { })
               .catch((err) => {
-                if (err?.response?.status === 400) {
+                const codeMessage = getProfessionRequestErrorMessage(err, t);
+                if (codeMessage) {
+                  showWarning(codeMessage, [
+                    {
+                      title: 'OK',
+                      backgroundColor: '#F59E0B',
+                      textColor: '#FFFFFF',
+                    },
+                  ]);
+                } else if (err?.response?.status === 400) {
                   showWarning(t('professions.warnings.validation_failed'), [
                     {
                       title: 'OK',

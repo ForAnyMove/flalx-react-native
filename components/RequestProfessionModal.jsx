@@ -129,7 +129,7 @@ const RequestProfessionModal = ({
       job_subtype_id: subtypeObj?.id ?? null,
       passport_photo_urls: null,
       certificate_photo_urls: null,
-      experience,
+      years_of_experience: experience,
     });
   };
 
@@ -141,7 +141,7 @@ const RequestProfessionModal = ({
       job_subtype_id: subtypeObj?.id ?? null,
       passport_photo_urls: docs.passport_photos,
       certificate_photo_urls: docs.certificate_photos,
-      experience,
+      years_of_experience: experience,
     });
   };
 
@@ -306,195 +306,195 @@ const RequestProfessionModal = ({
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
               <View style={styles.modalContainer}>
-            {isSubmitted ? (
-              <>
-                <View style={styles.successContainer}>
-                  <View style={styles.successIconContainer}>
-                    <Image
-                      source={icons.checkDefault}
+                {isSubmitted ? (
+                  <>
+                    <View style={styles.successContainer}>
+                      <View style={styles.successIconContainer}>
+                        <Image
+                          source={icons.checkDefault}
+                          style={{
+                            width: sizes.successIconSize,
+                            height: sizes.successIconSize,
+                          }}
+                        />
+                      </View>
+                      <Text style={styles.successTitle}>
+                        {t('professions.request_modal.success_title')}
+                      </Text>
+                      <Text style={styles.successDescription}>
+                        {t('professions.request_modal.success_description')}
+                      </Text>
+                      <TouchableOpacity style={styles.okButton} onPress={handleClose}>
+                        <Text style={styles.okButtonText}>
+                          {t('professions.request_modal.ok_button')}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity
+                      onPress={handleClose}
                       style={{
-                        width: sizes.successIconSize,
-                        height: sizes.successIconSize,
-                      }}
-                    />
-                  </View>
-                  <Text style={styles.successTitle}>
-                    {t('professions.request_modal.success_title')}
-                  </Text>
-                  <Text style={styles.successDescription}>
-                    {t('professions.request_modal.success_description')}
-                  </Text>
-                  <TouchableOpacity style={styles.okButton} onPress={handleClose}>
-                    <Text style={styles.okButtonText}>
-                      {t('professions.request_modal.ok_button')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                <TouchableOpacity
-                  onPress={handleClose}
-                  style={{
-                    position: 'absolute',
-                    top: sizes.crossSpace,
-                    right: sizes.crossSpace,
-                  }}
-                >
-                  <Image source={icons.cross} style={styles.crossIcon} />
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <View style={styles.header}>
-                  <Text style={styles.title}>
-                    {t('professions.request_modal.title')}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  onPress={handleClose}
-                  style={{
-                    position: 'absolute',
-                    top: sizes.crossSpace,
-                    right: sizes.crossSpace,
-                  }}
-                >
-                  <Image source={icons.cross} style={styles.crossIcon} />
-                </TouchableOpacity>
-
-                <AutocompletePicker
-                  label={t('professions.request_modal.profession_label')}
-                  placeholder={t(
-                    'professions.request_modal.profession_placeholder'
-                  )}
-                  options={jobTypesOptions}
-                  onValueChange={setType}
-                  setValue={setType}
-                  selectedValue={type}
-                  value={type}
-                  isRTL={isRTL}
-                  containerStyle={{
-                    marginBottom: sizes.inputGap,
-                    width: sizes.inputWidth,
-                    zIndex: 10,
-                  }}
-                  arrowIcon={true}
-                />
-                {!mode && (
-                  <View
-                    style={{
-                      width: sizes.inputWidth,
-                      alignItems: isRTL ? 'flex-end' : 'flex-start',
-                    }}
-                  >
-                    <TouchableOpacity onPress={handleSwitch}>
-                      <Text
-                        style={[
-                          styles.didntFindText,
-                          {
-                            textDecorationLine: 'underline',
-                          },
-                        ]}
-                      >
-                        {t('professions.request_modal.profession_not_found')}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-                <AutocompletePicker
-                  label={t('professions.request_modal.subtype_label')}
-                  placeholder={t('professions.request_modal.subtype_placeholder')}
-                  options={jobSubTypesOptions}
-                  onValueChange={setSubType}
-                  setValue={setSubType}
-                  selectedValue={subType}
-                  value={subType}
-                  isRTL={isRTL}
-                  containerStyle={{
-                    marginBottom: sizes.inputGap,
-                    width: sizes.inputWidth,
-                    zIndex: 5,
-                  }}
-                  arrowIcon={true}
-                />
-                {!mode ? (
-                  <View
-                    style={{
-                      width: sizes.inputWidth,
-                      alignItems: isRTL ? 'flex-end' : 'flex-start',
-                    }}
-                  >
-                    <TouchableOpacity onPress={handleSwitch}>
-                      <Text
-                        style={[
-                          styles.didntFindText,
-                          {
-                            textDecorationLine: 'underline',
-                          },
-                        ]}
-                      >
-                        {t('professions.request_modal.subtype_not_found')}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <View style={{ width: sizes.inputWidth, marginTop: sizes.infoTextMarginTop }}>
-                    {requiresVerification && (
-                      <Text
-                        style={{
-                          fontSize: sizes.infoTextSize,
-                          color: themeController.current?.warningTextColor,
-                          textAlign: 'center',
-                          marginBottom: sizes.verificationWarningMarginBottom,
-                          lineHeight: sizes.infoTextSize * 1.4,
-                          fontFamily: 'Rubik-SemiBold',
-                        }}
-                      >
-                        {t('professions.request_modal_verification_warning')}
-                      </Text>
-                    )}
-                    <Text
-                      style={{
-                        fontSize: sizes.infoTextSize,
-                        color: themeController.current?.formInputLabelColor,
-                        textAlign: 'center',
-                        lineHeight: sizes.infoTextSize * 1.4,
+                        position: 'absolute',
+                        top: sizes.crossSpace,
+                        right: sizes.crossSpace,
                       }}
                     >
-                      {t('professions.request_modal_not_found_info')}
-                    </Text>
-                  </View>
-                )}
+                      <Image source={icons.cross} style={styles.crossIcon} />
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.header}>
+                      <Text style={styles.title}>
+                        {t('professions.request_modal.title')}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={handleClose}
+                      style={{
+                        position: 'absolute',
+                        top: sizes.crossSpace,
+                        right: sizes.crossSpace,
+                      }}
+                    >
+                      <Image source={icons.cross} style={styles.crossIcon} />
+                    </TouchableOpacity>
 
-                {requiresVerification && (
-                  <CustomExperiencePicker
-                    label={t('register.experience_label')}
-                    selectedValue={experience}
-                    onValueChange={setExperience}
-                    isRTL={isRTL}
-                    containerStyle={{
-                      width: sizes.inputWidth,
-                    }}
-                    bottomDropdown={false}
-                  />
-                )}
+                    <AutocompletePicker
+                      label={t('professions.request_modal.profession_label')}
+                      placeholder={t(
+                        'professions.request_modal.profession_placeholder'
+                      )}
+                      options={jobTypesOptions}
+                      onValueChange={setType}
+                      setValue={setType}
+                      selectedValue={type}
+                      value={type}
+                      isRTL={isRTL}
+                      containerStyle={{
+                        marginBottom: sizes.inputGap,
+                        width: sizes.inputWidth,
+                        zIndex: 10,
+                      }}
+                      arrowIcon={true}
+                    />
+                    {!mode && (
+                      <View
+                        style={{
+                          width: sizes.inputWidth,
+                          alignItems: isRTL ? 'flex-end' : 'flex-start',
+                        }}
+                      >
+                        <TouchableOpacity onPress={handleSwitch}>
+                          <Text
+                            style={[
+                              styles.didntFindText,
+                              {
+                                textDecorationLine: 'underline',
+                              },
+                            ]}
+                          >
+                            {t('professions.request_modal.profession_not_found')}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                    <AutocompletePicker
+                      label={t('professions.request_modal.subtype_label')}
+                      placeholder={t('professions.request_modal.subtype_placeholder')}
+                      options={jobSubTypesOptions}
+                      onValueChange={setSubType}
+                      setValue={setSubType}
+                      selectedValue={subType}
+                      value={subType}
+                      isRTL={isRTL}
+                      containerStyle={{
+                        marginBottom: sizes.inputGap,
+                        width: sizes.inputWidth,
+                        zIndex: 5,
+                      }}
+                      arrowIcon={true}
+                    />
+                    {!mode ? (
+                      <View
+                        style={{
+                          width: sizes.inputWidth,
+                          alignItems: isRTL ? 'flex-end' : 'flex-start',
+                        }}
+                      >
+                        <TouchableOpacity onPress={handleSwitch}>
+                          <Text
+                            style={[
+                              styles.didntFindText,
+                              {
+                                textDecorationLine: 'underline',
+                              },
+                            ]}
+                          >
+                            {t('professions.request_modal.subtype_not_found')}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <View style={{ width: sizes.inputWidth, marginTop: sizes.infoTextMarginTop }}>
+                        {requiresVerification && (
+                          <Text
+                            style={{
+                              fontSize: sizes.infoTextSize,
+                              color: themeController.current?.warningTextColor,
+                              textAlign: 'center',
+                              marginBottom: sizes.verificationWarningMarginBottom,
+                              lineHeight: sizes.infoTextSize * 1.4,
+                              fontFamily: 'Rubik-SemiBold',
+                            }}
+                          >
+                            {t('professions.request_modal_verification_warning')}
+                          </Text>
+                        )}
+                        <Text
+                          style={{
+                            fontSize: sizes.infoTextSize,
+                            color: themeController.current?.formInputLabelColor,
+                            textAlign: 'center',
+                            lineHeight: sizes.infoTextSize * 1.4,
+                          }}
+                        >
+                          {t('professions.request_modal_not_found_info')}
+                        </Text>
+                      </View>
+                    )}
 
-                <TouchableOpacity
-                  disabled={!type || !subType || type === '' || subType === ''}
-                  style={[
-                    styles.sendButton,
-                    (!type || !subType || type === '' || subType === '') && {
-                      opacity: 0.5,
-                    },
-                  ]}
-                  onPress={handleSend}
-                >
-                  <Text style={styles.sendButtonText}>
-                    {requiresVerification ? t('common.next') : t('professions.request_modal.send_button')}
-                  </Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
+                    {requiresVerification && (
+                      <CustomExperiencePicker
+                        label={t('register.experience_label')}
+                        selectedValue={experience}
+                        onValueChange={setExperience}
+                        isRTL={isRTL}
+                        containerStyle={{
+                          width: sizes.inputWidth,
+                        }}
+                        bottomDropdown={false}
+                      />
+                    )}
+
+                    <TouchableOpacity
+                      disabled={!type || !subType || type === '' || subType === ''}
+                      style={[
+                        styles.sendButton,
+                        (!type || !subType || type === '' || subType === '') && {
+                          opacity: 0.5,
+                        },
+                      ]}
+                      onPress={handleSend}
+                    >
+                      <Text style={styles.sendButtonText}>
+                        {requiresVerification ? t('common.next') : t('professions.request_modal.send_button')}
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
             </TouchableWithoutFeedback>
-        </View>
+          </View>
         </TouchableWithoutFeedback>
       </AppModal>
       <AddProfessionModal

@@ -22,6 +22,9 @@ import CustomExperiencePicker from './ui/CustomExperiencePicker';
 import AddProfessionModal from './AddProfessionModal';
 import AppModal from './ui/AppModal';
 import { useLocalization } from '../src/services/useLocalization';
+import ProfessionDocumentsBlock from './ProfessionDocumentsBlock';
+
+const EMPTY_DOCUMENTS = { passportPhotos: [], certificatePhotos: [], experience: null };
 
 const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) => {
   const { themeController, languageController, jobTypesController, setAppLoading } = useComponentContext();
@@ -36,6 +39,7 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
   const [subtype, setSubtype] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [experience, setExperience] = useState(null);
+  const [documents, setDocuments] = useState(EMPTY_DOCUMENTS);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
 
   useEffect(() => {
@@ -44,6 +48,7 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
       setSubtype('');
       setIsSubmitted(false);
       setExperience(null);
+      setDocuments(EMPTY_DOCUMENTS);
       setIsAddModalVisible(false);
     }
   }, [visible]);
@@ -100,6 +105,18 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
     return type !== null && type !== '' && subtype.trim() !== '';
   }
 
+  // Optional fields: empty arrays / unset experience are not sent at all.
+  const buildDocumentsPayload = () => {
+    const payload = {};
+    if (documents.passportPhotos.length > 0) payload.passport_photo_urls = documents.passportPhotos;
+    if (documents.certificatePhotos.length > 0) payload.certificate_photo_urls = documents.certificatePhotos;
+    if (documents.experience) {
+      payload.work_experience = documents.experience;
+      payload.years_of_experience = documents.experience;
+    }
+    return payload;
+  };
+
   const handleSend = async () => {
     if (!validateForm()) {
       showWarning(t('professions.warnings.invalid_input'), [
@@ -112,18 +129,13 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
       return;
     }
 
-    if (requiresVerification) {
-      setIsAddModalVisible(true);
-      return;
-    }
-
     setAppLoading(true);
 
     jobTypesController.userToSystemRequest.makeRequest({
       requested_type_name: jobTypesOptions[type] || type,
       requested_subtype_name: subtype.trim(),
       selected_type_id: jobTypesOptions[type] ? jobTypesController.jobTypesWithSubtypes.find(t => t.key === type)?.id : null,
-      experience,
+      ...buildDocumentsPayload(),
     }).then((data) => {
       setIsSubmitted(true);
       onRequestDone && onRequestDone(data);
@@ -218,6 +230,7 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
       setType(null);
       setSubtype('');
       setExperience(null);
+      setDocuments(EMPTY_DOCUMENTS);
       setIsAddModalVisible(false);
     }, 300);
   };
@@ -459,23 +472,15 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
                   />
                 </View>
 
-                {requiresVerification && (
-                  <CustomExperiencePicker
-                    label={t('register.experience_label')}
-                    selectedValue={experience}
-                    onValueChange={setExperience}
-                    isRTL={isRTL}
-                    containerStyle={{
-                      marginBottom: sizes.inputGap,
-                      width: sizes.inputWidth,
-                    }}
-                    bottomDropdown={false}
-                  />
-                )}
+                <ProfessionDocumentsBlock
+                  value={documents}
+                  onChange={setDocuments}
+                  width={sizes.inputWidth}
+                />
 
                 <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
                   <Text style={styles.sendButtonText}>
-                    {requiresVerification ? t('common.next') : t('professions.register_modal.send_button')}
+                    {t('professions.register_modal.send_button')}
                   </Text>
                 </TouchableOpacity>
               </>

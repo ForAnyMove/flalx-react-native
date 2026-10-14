@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocalization } from '../../../../src/services/useLocalization';
 import { SubmitModal } from '../../../../components/modals/misc/SubmitModal';
 import { useNotification } from '../../../../src/render';
+import { getProfessionRequestErrorMessage } from '../../../../utils/professionRequestErrors';
 
 const MyProfessions = ({ openSystemRegistration, onBackFromSystemRegistration, isRequestModalVisible, setIsRequestModalVisible }) => {
   const [searchValue, setSearchValue] = useState('');
@@ -139,7 +140,16 @@ const MyProfessions = ({ openSystemRegistration, onBackFromSystemRegistration, i
         setIsRequestModalVisible(false);
         setIsSubmitModalVisible(true);
       }).catch((err) => {
-        if (err?.response?.status === 400) {
+        const codeMessage = getProfessionRequestErrorMessage(err, t);
+        if (codeMessage) {
+          showWarning(codeMessage, [
+            {
+              title: 'OK',
+              backgroundColor: '#F59E0B',
+              textColor: '#FFFFFF'
+            },
+          ]);
+        } else if (err?.response?.status === 400) {
           showWarning(t('professions.warnings.validation_failed'), [
             {
               title: 'OK',

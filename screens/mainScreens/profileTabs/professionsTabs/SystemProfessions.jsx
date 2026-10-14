@@ -58,11 +58,42 @@ const SystemProfessions = ({ openSystemRegistration }) => {
         };
       }
 
+      const userProfessionType = (() => {
+        switch (request.user_profession_status) {
+          case "pending":
+            return PROFESSION_TYPES.PENDING;
+          case "approved":
+            return PROFESSION_TYPES.VERIFIED;
+          case "rejected":
+            return PROFESSION_TYPES.REJECTED;
+          default:
+            return null;
+        }
+      })();
+
+      if (userProfessionType) {
+        reuqestObject.extra = {
+          ...reuqestObject.extra,
+          userProfession: {
+            type: userProfessionType,
+            label: t('professions.request_status.user_profession'),
+            comment:
+              request.user_profession_status === 'rejected' &&
+                request.user_profession_rejection_reason
+                ? {
+                  title: 'Rejection reason:',
+                  content: request.user_profession_rejection_reason,
+                }
+                : null,
+          },
+        };
+      }
+
       requests.push(reuqestObject);
     });
 
     return requests;
-  }, [jobTypesController.userToSystemRequest.list]);
+  }, [jobTypesController.userToSystemRequest.list, languageController.current]);
 
   const filteredFormattedUserRequests = useMemo(() => {
     if (searchValue.trim() === '') {
