@@ -15,6 +15,7 @@ import { icons } from '../../constants/icons';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { useWindowInfo } from '../../context/windowContext';
 import AppModal from './AppModal';
+import { MODAL_SLIDE_OFFSET } from './useModalTransition';
 
 const CustomPicker = ({
   label,
@@ -88,13 +89,19 @@ const CustomPicker = ({
           ? px + btnW - dropdownW  // right-align
           : px;                    // left-align
         const left = Math.max(0, Math.min(preferred, width - dropdownW));
-        setPickerLayout({ top: py + btnH, left, width: dropdownW });
+        const pyAdjusted = isWebLandscape ? py + MODAL_SLIDE_OFFSET : py;
+        setPickerLayout({ top: pyAdjusted + btnH, left, width: dropdownW });
         setModalVisible(true);
       });
     } else {
       pickerRef.current.measure((fx, fy, btnW, btnH, px, py) => {
         const left = Math.max(0, Math.min(px, width - btnW));
-        const pyAdjusted = Platform.OS === 'android' && insideModal ? py + (StatusBar.currentHeight || 0) : py;
+        let pyAdjusted = py;
+        if (Platform.OS === 'android' && insideModal) {
+          pyAdjusted = py + (StatusBar.currentHeight || 0);
+        } else if (isWebLandscape) {
+          pyAdjusted = py + MODAL_SLIDE_OFFSET;
+        }
         setPickerLayout({
           top: bottomDropdown ? pyAdjusted + btnH : pyAdjusted - dropdownHeight,
           left,

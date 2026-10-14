@@ -30,6 +30,7 @@ const AutocompletePicker = ({
   value,
   arrowIcon = false,
   allowCustomText = false, // Новый пропс для разрешения кастомного текста
+  onFocusChange,
 }) => {
   const { themeController } = useComponentContext();
   const { width, height, isLandscape } = useWindowInfo();
@@ -59,6 +60,12 @@ const AutocompletePicker = ({
   const [inputText, setInputText] = useState(value ? options[value] : '');
   const [filteredOptions, setFilteredOptions] = useState(options);
   const [hoveredValue, setHoveredValue] = useState(null);
+
+  useEffect(() => {
+    if (onFocusChange) {
+      onFocusChange(isFocused);
+    }
+  }, [isFocused]);
 
   const containerRef = useRef(null);
   const inputRef = useRef(null);
@@ -237,29 +244,33 @@ const AutocompletePicker = ({
     itemHeight * (filteredEntries.length > 4 ? 4 : filteredEntries.length);
 
   return (
-    <TouchableOpacity
-      activeOpacity={1}
+    <View
       ref={containerRef}
-      onPress={() => inputRef.current?.focus()}
       style={[
         styles.pickerContainer,
         {
-          backgroundColor: themeController.current?.formInputBackground,
-          height: sizes.pickerHeight,
-          paddingHorizontal: sizes.inputContainerPaddingHorizontal,
-          borderTopLeftRadius: sizes.borderRadius,
-          borderTopRightRadius: sizes.borderRadius,
-          borderBottomLeftRadius: (isFocused && filteredEntries.length > 0) ? 0 : sizes.borderRadius,
-          borderBottomRightRadius: (isFocused && filteredEntries.length > 0) ? 0 : sizes.borderRadius,
           zIndex: isFocused ? 999 : 1,
           elevation: isFocused ? 999 : 0, // Android needs elevation to reliably render above later siblings
-          shadowColor: 'transparent', // Prevent massive shadow from elevation
         },
-        error && { borderColor: 'red', borderWidth: 1 },
         containerStyle,
       ]}
     >
-      <View style={{ flex: 1, justifyContent: 'center' }}>
+      <Pressable 
+        style={[
+          { 
+            height: sizes.pickerHeight,
+            backgroundColor: themeController.current?.formInputBackground,
+            paddingHorizontal: sizes.inputContainerPaddingHorizontal,
+            borderTopLeftRadius: sizes.borderRadius,
+            borderTopRightRadius: sizes.borderRadius,
+            borderBottomLeftRadius: (isFocused && filteredEntries.length > 0) ? 0 : sizes.borderRadius,
+            borderBottomRightRadius: (isFocused && filteredEntries.length > 0) ? 0 : sizes.borderRadius,
+            justifyContent: 'center' 
+          },
+          error && { borderColor: 'red', borderWidth: 1 }
+        ]}
+        onPress={() => inputRef.current?.focus()}
+      >
         <Text
           style={[
             styles.label,
@@ -329,7 +340,7 @@ const AutocompletePicker = ({
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      </Pressable>
 
       {/* Выпадающий список без Modal */}
       {isFocused && filteredEntries.length > 0 && (
@@ -337,7 +348,8 @@ const AutocompletePicker = ({
           style={[
             styles.dropdownContent,
             {
-              top: sizes.pickerHeight, // Позиционируем относительно родителя
+              position: Platform.OS === 'web' ? 'absolute' : 'relative',
+              top: Platform.OS === 'web' ? sizes.pickerHeight : 0,
               left: 0,
               right: 0,
               backgroundColor: themeController.current?.formInputBackground,
@@ -361,7 +373,7 @@ const AutocompletePicker = ({
           </ScrollView>
         </View>
       )}
-    </TouchableOpacity>
+    </View>
   );
 };
 

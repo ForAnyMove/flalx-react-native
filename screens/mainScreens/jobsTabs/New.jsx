@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Image,
   Platform,
+  RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -197,6 +198,14 @@ export default function NewScreen({
         <Text>{jobsController.error}</Text>
       ) : (
         <ScrollView
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={[themeController.current?.buttonColorSecondaryDefault || '#000']}
+              tintColor={themeController.current?.buttonColorSecondaryDefault || '#000'}
+            />
+          }
           contentContainerStyle={[
             styles.scrollContainer,
             {

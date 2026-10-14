@@ -10,6 +10,7 @@ export default function CustomFlatList({
   horizontal = false,
   keyboardShouldPersistTaps = 'never',
   enableKeyboardAware = false,
+  scrollEnabled = true,
 }) {
   const isWeb = Platform.OS === 'web';
   const ScrollComponent = (!isWeb && enableKeyboardAware) ? KeyboardAwareScrollView : ScrollView;
@@ -37,6 +38,7 @@ export default function CustomFlatList({
       horizontal={horizontal}
       contentContainerStyle={contentContainerStyle}
       keyboardShouldPersistTaps={keyboardShouldPersistTaps}
+      scrollEnabled={scrollEnabled}
       style={[isWeb && { overflow: 'auto', maxWidth: '100%', overflowX: 'hidden' }]}
       {...extraProps}
     >
