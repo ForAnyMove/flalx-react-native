@@ -533,6 +533,9 @@ export default function ProvidersSection({
                   <Pressable
                     onPress={() => setIsModalVisible(true)}
                     style={[styleRow.iconButton, { padding: sizes.padding / 2 }]}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('common.fullscreen', { defaultValue: 'מסך מלא' })}
                   >
                     <Image
                       source={icons.fullScreen}
@@ -542,6 +545,8 @@ export default function ProvidersSection({
                         tintColor: themeController.current?.textColor || 'black',
                         opacity: 0.4,
                       }}
+                      accessible={false}
+                      aria-hidden={true}
                     />
                   </Pressable>
                 )}
@@ -577,11 +582,24 @@ export default function ProvidersSection({
                 ]}
               >
                 <View style={[styleRow.header, { marginBottom: sizes.headerMarginBottom }]}>
-                  <Text style={[styleRow.modalTitle, { fontSize: sizes.font * 1.2, fontFamily: 'Rubik-Bold' }]}>
+                  <Text
+                    style={[styleRow.modalTitle, { fontSize: sizes.font * 1.2, fontFamily: 'Rubik-Bold' }]}
+                    accessibilityRole="header"
+                  >
                     {t('providersSection.interested_providers', { defaultValue: 'Interested providers' })}
                   </Text>
-                  <TouchableOpacity onPress={() => setIsModalVisible(false)}>
-                    <Image source={icons.cross} style={{ width: sizes.icon, height: sizes.icon, tintColor: themeController.current?.textColor }} />
+                  <TouchableOpacity
+                    onPress={() => setIsModalVisible(false)}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+                  >
+                    <Image
+                      source={icons.cross}
+                      style={{ width: sizes.icon, height: sizes.icon, tintColor: themeController.current?.textColor }}
+                      accessible={false}
+                      aria-hidden={true}
+                    />
                   </TouchableOpacity>
                 </View>
 

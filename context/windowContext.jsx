@@ -6,7 +6,7 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
-import { Dimensions, Platform } from 'react-native';
+import { Dimensions, Platform, PixelRatio } from 'react-native';
 import { scaleByHeight } from '../utils/resizeFuncs';
 import { useKeyboardListener } from '../utils/useKeyboardListener';
 
@@ -26,6 +26,7 @@ export function WindowProvider({ children }) {
 
   const getWindow = () => {
     const { width, height } = Dimensions.get('window');
+    const fontScale = PixelRatio.getFontScale();
     const isLandscape = width > height;
 
     // 👇 вычисляем sidebarWidth сразу тут
@@ -35,6 +36,7 @@ export function WindowProvider({ children }) {
     return {
       width,
       height,
+      fontScale,
       isLandscape,
       sidebarWidth,
       isKeyboardVisible: false,
@@ -66,6 +68,7 @@ export function WindowProvider({ children }) {
         ...prev,
         width: window.width,
         height: shouldBlockResize ? prev.height : window.height,
+        fontScale: PixelRatio.getFontScale(),
         isLandscape: shouldBlockResize ? prev.isLandscape : isLandscape,
         sidebarWidth:
           Platform.OS === 'web' &&

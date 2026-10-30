@@ -55,7 +55,12 @@ export default function AppModal({
       onRequestClose={onRequestClose}
       {...rest}
     >
-      <View style={{ flex: 1 }}>
+      <View
+        style={{ flex: 1 }}
+        accessibilityViewIsModal={true}
+        aria-modal={true}
+        role="dialog"
+      >
         <Animated.View
           style={
             isWebLandscape

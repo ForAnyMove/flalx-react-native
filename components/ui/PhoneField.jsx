@@ -12,6 +12,8 @@ import { useComponentContext } from '../../context/globalAppContext';
 import { icons } from '../../constants/icons';
 import CustomTextInput from './CustomTextInput';
 import CountrySelectModal from './CountrySelectModal';
+import { useWindowInfo } from '../../context/windowContext';
+import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import {
   formatAsYouType,
   parsePhone,
@@ -159,6 +161,10 @@ const PhoneField = forwardRef(function PhoneField(
   }, [value]);
 
   const callingCode = callingCodeFor(countryCode);
+  const { height, isLandscape } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const scale = isWebLandscape ? (s) => scaleByHeight(s, height) : (s) => scaleByHeightMobile(s, height);
+  const flagW = scale(22);
 
   const styles = useMemo(
     () =>
@@ -175,27 +181,27 @@ const PhoneField = forwardRef(function PhoneField(
         pickerButton: {
           flexDirection: 'row',
           alignItems: 'center',
-          marginRight: 8,
+          marginRight: scale(8),
         },
         flag: {
-          width: 22,
-          height: Math.round((22 * 2) / 3),
-          borderRadius: 2,
+          width: flagW,
+          height: Math.round((flagW * 2) / 3),
+          borderRadius: scale(2),
           overflow: 'hidden',
         },
         callingCodeText: {
-          marginHorizontal: 4,
+          marginHorizontal: scale(4),
         },
         chevron: {
-          width: 10,
-          height: 10,
+          width: scale(10),
+          height: scale(10),
           tintColor: theme.formInputLabelColor,
         },
         divider: {
           width: 1,
           height: '60%',
           backgroundColor: theme.borderColor,
-          marginRight: 8,
+          marginRight: scale(8),
         },
         input: {
           flex: 1,
@@ -203,7 +209,7 @@ const PhoneField = forwardRef(function PhoneField(
           minWidth: 0,
         },
       }),
-    [isRTL, theme]
+    [isRTL, theme, scale, flagW]
   );
 
   const translation = languageController.current === 'he' ? 'isr' : 'common';
@@ -216,24 +222,32 @@ const PhoneField = forwardRef(function PhoneField(
           style={styles.pickerButton}
           onPress={() => !disabled && setPickerVisible(true)}
           disabled={disabled}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isRTL
+              ? `בחירת מדינה: ${countryCode}, קוד +${callingCode}`
+              : `Select country: ${countryCode}, code +${callingCode}`
+          }
         >
           {flagSvgFor(countryCode) ? (
-            <View style={styles.flag}>
+            <View style={styles.flag} accessible={false} aria-hidden={true}>
               <SvgXml xml={flagSvgFor(countryCode)} width='100%' height='100%' />
             </View>
           ) : (
-            <View style={[styles.flag, { backgroundColor: theme.formInputBackground }]} />
+            <View style={[styles.flag, { backgroundColor: theme.formInputBackground }]} accessible={false} aria-hidden={true} />
           )}
           <Text style={[inputStyle, styles.callingCodeText]}>
             {callingCode ? `+${callingCode}` : ''}
           </Text>
-          <Image source={icons.arrowDown} style={styles.chevron} resizeMode='contain' />
+          <Image source={icons.arrowDown} style={styles.chevron} resizeMode='contain' accessible={false} aria-hidden={true} />
         </TouchableOpacity>
 
         <View style={styles.divider} />
 
         <CustomTextInput
           ref={inputRef}
+          accessibilityLabel={label || placeholder || (isRTL ? 'מספר טלפון' : 'Phone number')}
           style={[inputStyle, styles.input]}
           placeholder={placeholder}
           placeholderTextColor={theme.formInputPlaceholderColor}

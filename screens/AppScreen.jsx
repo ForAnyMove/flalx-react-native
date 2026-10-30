@@ -13,7 +13,7 @@ import { useComponentContext } from '../context/globalAppContext';
 import AppMainScreen from './AppMainScreen';
 import AppProfileScreen from './AppProfileScreen';
 import { icons } from '../constants/icons';
-import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
+import { BASE_DESIGN_HEIGHT, scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useWindowInfo } from '../context/windowContext';
 
 export default function AppScreen() {
@@ -63,12 +63,12 @@ export default function AppScreen() {
   }, [screenName, isClient, profileTabController.active]);
 
   const sizes = useMemo(() => {
-    const web = (size) => scaleByHeight(size, height);
-    const mobile = (size) => scaleByHeightMobile(size, height);
+    const web = (size, options) => scaleByHeight(size, height, BASE_DESIGN_HEIGHT, options);
+    const mobile = (size, options) => scaleByHeightMobile(size, height, options);
 
     return {
       iconSize: isWebLandscape ? web(24) : mobile(22),
-      fontSize: isWebLandscape ? web(12) : mobile(12),
+      fontSize: isWebLandscape ? web(12) : mobile(12, { maxScale: 1.25 }),
       tabTitleGap: isWebLandscape ? web(12) : mobile(5),
       sideBarPaddingHorizontal: isWebLandscape ? web(18) : mobile(8),
       sideBarPaddingVertical: isWebLandscape ? web(30) : mobile(6),
@@ -104,7 +104,7 @@ export default function AppScreen() {
           isSideMenu && {
             flexDirection: isRTL ? 'row-reverse' : 'row',
             alignItems: 'center',
-            paddingVertical: 6,
+            paddingVertical: sizes.tabContainerMarginVertical,
             paddingHorizontal: 0,
             marginVertical: height * 0.007,
             gap: sizes.tabTitleGap,
@@ -152,6 +152,7 @@ export default function AppScreen() {
           }
           numberOfLines={1}
           ellipsizeMode='tail'
+          maxFontSizeMultiplier={1.25}
         >
           {t(`tabs.${tab}${tabName}`)}
         </Text>

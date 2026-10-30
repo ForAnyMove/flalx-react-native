@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 import { useWindowInfo } from '../../context/windowContext';
-import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
+import { BASE_DESIGN_HEIGHT, scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { PROFESSION_TYPES } from '../../constants/enums';
 import { icons } from '../../constants/icons';
@@ -22,28 +22,28 @@ const UniversalProfessionComponent = ({ item, onPress }) => {
   const { type, title, subtitle, extra } = item;
 
   const sizes = useMemo(() => {
-    const web = (size) => scaleByHeight(size, height);
-    const mobile = (size) => scaleByHeightMobile(size, height);
+    const web = (size, options) => scaleByHeight(size, height, BASE_DESIGN_HEIGHT, options);
+    const mobile = (size, options) => scaleByHeightMobile(size, height, options);
     const scale = isWebLandscape ? web : mobile;
 
     return {
       containerWidth: isWebLandscape ? web(351) : '100%',
-      padding: scale(16),
+      padding: scale(16, { maxScale: 1.2 }),
       borderRadius: scale(8),
       badgeBorderRadius: scale(6),
-      iconContainerSize: scale(36),
-      iconSize: scale(24),
-      titleSize: scale(16),
-      subtitleSize: scale(14),
-      statusSize: scale(12),
-      commentTitleSize: scale(12),
-      commentContentSize: scale(12),
+      iconContainerSize: scale(36, { maxScale: 1.3 }),
+      iconSize: scale(24, { maxScale: 1.3 }),
+      titleSize: scale(16, { maxScale: 1.25 }),
+      subtitleSize: scale(14, { maxScale: 1.25 }),
+      statusSize: scale(12, { maxScale: 1.2 }),
+      commentTitleSize: scale(12, { maxScale: 1.25 }),
+      commentContentSize: scale(12, { maxScale: 1.25 }),
       commentPaddingV: scale(4),
-      commentPaddingH: scale(26),
+      commentPaddingH: scale(26, { maxScale: 1.2 }),
       commentBorderRadius: scale(8),
       badgePaddingV: scale(2),
-      badgePaddingH: scale(8),
-      badgeFontSize: scale(12),
+      badgePaddingH: scale(8, { maxScale: 1.2 }),
+      badgeFontSize: scale(12, { maxScale: 1.2 }),
       leftBorderWidth: scale(2),
       commentTitleMarginBottom: scale(2),
     };

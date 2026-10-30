@@ -17,11 +17,13 @@ import { useComponentContext } from '../context/globalAppContext';
 import { useWindowInfo } from '../context/windowContext';
 import JobModalWrapper from './JobModalWrapper';
 import AppModal from './ui/AppModal';
+import AppHeading from './ui/AppHeading';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 import { useTranslation } from 'react-i18next';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { formatExperience } from '../utils/experience_ulit';
 
-function CustomModal({ isWebLandscape, visible, transparent, children }) {
+function CustomModal({ isWebLandscape, visible, transparent, onClose, children }) {
   if (isWebLandscape) {
     return (
       <JobModalWrapper visible={visible} main={false}>
@@ -30,7 +32,7 @@ function CustomModal({ isWebLandscape, visible, transparent, children }) {
     )
   }
   return (
-    <AppModal visible={visible} transparent={transparent}>
+    <AppModal visible={visible} transparent={transparent} onRequestClose={onClose}>
       {children}
     </AppModal>
   )
@@ -231,6 +233,7 @@ export default function JobHistoryModal({ visible, onClose, history = [] }) {
       visible={visible}
       isWebLandscape={isWebLandscape}
       transparent={false}
+      onClose={onClose}
     >
       <View
         style={[
@@ -242,6 +245,9 @@ export default function JobHistoryModal({ visible, onClose, history = [] }) {
             paddingHorizontal: sizes.modalSide,
           },
         ]}
+        accessibilityViewIsModal={true}
+        role="dialog"
+        aria-modal="true"
       >
         <View
           style={[
@@ -252,7 +258,13 @@ export default function JobHistoryModal({ visible, onClose, history = [] }) {
             },
           ]}
         >
-          <TouchableOpacity onPress={onClose}>
+          <TouchableOpacity
+            onPress={onClose}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+            hitSlop={ACCESSIBILITY_HIT_SLOP}
+          >
             <Image
               source={icons.cross}
               style={{
@@ -260,9 +272,12 @@ export default function JobHistoryModal({ visible, onClose, history = [] }) {
                 height: sizes.icon,
                 tintColor: themeController.current?.textColor || 'black',
               }}
+              accessible={false}
+              aria-hidden={true}
             />
           </TouchableOpacity>
-          <Text
+          <AppHeading
+            level={1}
             style={[
               styles.headerTitle,
               {
@@ -272,11 +287,13 @@ export default function JobHistoryModal({ visible, onClose, history = [] }) {
             ]}
           >
             FLALX
-          </Text>
+          </AppHeading>
         </View>
 
         <TouchableOpacity
           onPress={() => setSortNewFirst(!sortNewFirst)}
+          accessible={true}
+          accessibilityRole="button"
           style={[
             styles.sortButton,
             {

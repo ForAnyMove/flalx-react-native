@@ -6,8 +6,10 @@ import { useComponentContext } from '../../context/globalAppContext';
 import { useWindowInfo } from '../../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
+import { ACCESSIBILITY_HIT_SLOP } from '../../constants/themes';
 import MfaSetupModal from './MfaSetupModal';
 import AppModal from '../ui/AppModal';
+import AppHeading from '../ui/AppHeading';
 import { setMfaRecommendCooldownUntil, MFA_RECOMMEND_COOLDOWN_MS } from '../../src/auth/mfaRecommendCooldown';
 import { logError } from '../../utils/log_util';
 
@@ -81,6 +83,8 @@ export default function MfaRecommendationModal({ visible, onClose }) {
       btnFont: scale(16),
       gap: scale(16),
       smallGap: scale(8),
+      badgeRadius: scale(20),
+      iconTopMargin: scale(2),
     };
   }, [isWebLandscape, height]);
 
@@ -90,7 +94,7 @@ export default function MfaRecommendationModal({ visible, onClose }) {
 
   const BenefitRow = ({ icon, text }) => (
     <View style={[row, { alignItems: 'center', marginBottom: sizes.smallGap }]}>
-      <Ionicons name={icon} size={16} color={theme.primaryColor} style={iconMargin} />
+      <Ionicons name={icon} size={16} color={theme.primaryColor} style={iconMargin} accessible={false} aria-hidden={true} />
       <Text style={{ flex: 1, fontSize: sizes.helpFont, color: theme.textColor, textAlign }}>{text}</Text>
     </View>
   );
@@ -108,6 +112,9 @@ export default function MfaRecommendationModal({ visible, onClose }) {
                 borderRadius: sizes.borderRadius,
                 padding: sizes.padding,
               }}
+              accessibilityViewIsModal={true}
+              role="dialog"
+              aria-modal="true"
             >
               <TouchableOpacity
                 style={{
@@ -117,10 +124,16 @@ export default function MfaRecommendationModal({ visible, onClose }) {
                   zIndex: 10,
                 }}
                 onPress={handleClose}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+                hitSlop={ACCESSIBILITY_HIT_SLOP}
               >
                 <Image
                   source={icons.cross}
                   style={{ width: sizes.closeIconSize, height: sizes.closeIconSize, tintColor: theme.textColor }}
+                  accessible={false}
+                  aria-hidden={true}
                 />
               </TouchableOpacity>
 
@@ -133,18 +146,19 @@ export default function MfaRecommendationModal({ visible, onClose }) {
                     backgroundColor: `${theme.primaryColor}14`,
                     paddingHorizontal: sizes.smallGap * 1.5,
                     paddingVertical: sizes.smallGap * 0.75,
-                    borderRadius: 20,
+                    borderRadius: sizes.badgeRadius,
                     marginBottom: sizes.gap,
                   },
                 ]}
               >
-                <Ionicons name='settings-outline' size={13} color={theme.primaryColor} style={iconMargin} />
+                <Ionicons name='settings-outline' size={13} color={theme.primaryColor} style={iconMargin} accessible={false} aria-hidden={true} />
                 <Text style={{ color: theme.primaryColor, fontFamily: 'Rubik-Medium', fontSize: sizes.badgeFont }}>
                   {t('auth.mfa_recommend.badge')}
                 </Text>
               </View>
 
-              <Text
+              <AppHeading
+                level={2}
                 style={{
                   fontSize: sizes.titleFont,
                   fontFamily: 'Rubik-Bold',
@@ -154,7 +168,7 @@ export default function MfaRecommendationModal({ visible, onClose }) {
                 }}
               >
                 {t('auth.mfa_recommend.title')}
-              </Text>
+              </AppHeading>
               <Text
                 style={{
                   fontSize: sizes.subtitleFont,
@@ -178,7 +192,7 @@ export default function MfaRecommendationModal({ visible, onClose }) {
                   },
                 ]}
               >
-                <Ionicons name='phone-portrait-outline' size={20} color={theme.primaryColor} style={iconMargin} />
+                <Ionicons name='phone-portrait-outline' size={20} color={theme.primaryColor} style={iconMargin} accessible={false} aria-hidden={true} />
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: sizes.helpFont, color: theme.unactiveTextColor, textAlign }}>
                     {t('auth.mfa_recommend.method_label')}
@@ -187,7 +201,7 @@ export default function MfaRecommendationModal({ visible, onClose }) {
                     {t('auth.mfa_recommend.method_value')}
                   </Text>
                 </View>
-                <Ionicons name='checkmark-circle' size={20} color={theme.verifiedMarkerColor} />
+                <Ionicons name='checkmark-circle' size={20} color={theme.verifiedMarkerColor} accessible={false} aria-hidden={true} />
               </View>
 
               <View
@@ -205,7 +219,7 @@ export default function MfaRecommendationModal({ visible, onClose }) {
               </View>
 
               <View style={[row, { alignItems: 'flex-start', marginBottom: sizes.gap }]}>
-                <Ionicons name='lock-closed-outline' size={14} color={theme.unactiveTextColor} style={[iconMargin, { marginTop: 2 }]} />
+                <Ionicons name='lock-closed-outline' size={14} color={theme.unactiveTextColor} style={[iconMargin, { marginTop: sizes.iconTopMargin }]} accessible={false} aria-hidden={true} />
                 <Text style={{ flex: 1, fontSize: sizes.helpFont, color: theme.unactiveTextColor, textAlign }}>
                   {t('auth.mfa_recommend.disclaimer')}
                 </Text>
@@ -221,6 +235,9 @@ export default function MfaRecommendationModal({ visible, onClose }) {
                   justifyContent: 'center',
                   marginBottom: sizes.smallGap,
                 }}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('auth.mfa_recommend.enable_button')}
               >
                 <Text style={{ color: theme.buttonTextColorPrimary, fontFamily: 'Rubik-Medium', fontSize: sizes.btnFont }}>
                   {t('auth.mfa_recommend.enable_button')}
@@ -236,6 +253,9 @@ export default function MfaRecommendationModal({ visible, onClose }) {
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('auth.mfa_recommend.not_now_button')}
               >
                 <Text style={{ color: theme.textColor, fontFamily: 'Rubik-Medium', fontSize: sizes.btnFont }}>
                   {t('auth.mfa_recommend.not_now_button')}

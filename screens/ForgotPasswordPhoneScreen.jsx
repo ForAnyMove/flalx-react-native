@@ -18,6 +18,8 @@ import { useWindowInfo } from '../context/windowContext';
 import CustomTextInput from '../components/ui/CustomTextInput';
 import PhoneOrEmailInput from '../components/ui/PhoneOrEmailInput';
 import Step3_PhoneVerify from './register/Step3_PhoneVerify';
+import AppHeading from '../components/ui/AppHeading';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 
 const EMAIL_RE = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@(([^<>()[\]\\.,;:\s@"]+\.)+[^<>()[\]\\.,;:\s@"]{2,})$/i;
 
@@ -27,6 +29,10 @@ function PrimaryOutlineButton({ title, onPress, disabled, theme, isLandscape, he
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled}
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={typeof title === 'string' ? title : undefined}
+      accessibilityState={{ disabled: Boolean(disabled) }}
       style={[
         styles.outlineBtn,
         {
@@ -246,6 +252,7 @@ export default function ForgotPasswordPhoneScreen() {
       eyeIconPosition: isWebLandscape ? web(14) : mobile(12),
       eyeIconTop: isWebLandscape ? web(26) : mobile(35),
       eyeIconSize: isWebLandscape ? web(24) : mobile(24),
+      errorMarginBottom: isWebLandscape ? web(8) : mobile(8),
     };
   }, [isWebLandscape, height]);
 
@@ -281,9 +288,9 @@ export default function ForgotPasswordPhoneScreen() {
         <View style={[styles.contentBlock, isWebLandscape ? { width: height * 0.5 } : { width: '100%' }]}>
           {step === 'input' && (
             <>
-              <Text style={[styles.title, { color: theme.unactiveTextColor, fontSize: sizes.titleFontSize }]}>
+              <AppHeading level={1} style={[styles.title, { color: theme.unactiveTextColor, fontSize: sizes.titleFontSize }]}>
                 {t('auth.forgot_pass_title')}
-              </Text>
+              </AppHeading>
               <Text
                 style={[
                   styles.subtitle,
@@ -337,7 +344,7 @@ export default function ForgotPasswordPhoneScreen() {
               />
 
               {!!inputError && (
-                <Text style={{ color: theme.errorTextColor, fontSize: sizes.errorFontSize, marginBottom: 8 }}>
+                <Text style={{ color: theme.errorTextColor, fontSize: sizes.errorFontSize, marginBottom: sizes.errorMarginBottom }}>
                   {inputError}
                 </Text>
               )}
@@ -348,7 +355,12 @@ export default function ForgotPasswordPhoneScreen() {
                   { width: sizes.linksRowWidth, marginBottom: sizes.linksRowMarginBottom, flexDirection: isRTL ? 'row-reverse' : 'row' },
                 ]}
               >
-                <TouchableOpacity onPress={() => forgotPassControl.switch()}>
+                <TouchableOpacity
+                  onPress={() => forgotPassControl.switch()}
+                  accessible={true}
+                  accessibilityRole="link"
+                  accessibilityLabel={t('auth.back_to_sign_in')}
+                >
                   <Text style={[styles.link, { fontSize: sizes.linkFontSize, color: theme.formInputLabelColor }]}>
                     {t('auth.back_to_sign_in')}
                   </Text>
@@ -368,9 +380,9 @@ export default function ForgotPasswordPhoneScreen() {
 
           {step === 'email_sent' && (
             <>
-              <Text style={[styles.title, { color: theme.unactiveTextColor, fontSize: sizes.titleFontSize * 1.3 }]}>
+              <AppHeading level={1} style={[styles.title, { color: theme.unactiveTextColor, fontSize: sizes.titleFontSize * 1.3 }]}>
                 {t('auth.check_email_title')}
-              </Text>
+              </AppHeading>
               <Text
                 style={[
                   styles.subtitle,
@@ -391,9 +403,9 @@ export default function ForgotPasswordPhoneScreen() {
 
           {step === 'new_password' && (
             <>
-              <Text style={[styles.title, { color: theme.unactiveTextColor, fontSize: sizes.titleFontSize }]}>
+              <AppHeading level={1} style={[styles.title, { color: theme.unactiveTextColor, fontSize: sizes.titleFontSize }]}>
                 {t('reset.title')}
-              </Text>
+              </AppHeading>
               <Text
                 style={[
                   styles.subtitle,
@@ -447,6 +459,9 @@ export default function ForgotPasswordPhoneScreen() {
                 />
                 <TouchableOpacity
                   onPress={() => setShowPassword((prev) => !prev)}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? t('auth.hide_password', 'הסתר סיסמה') : t('auth.show_password', 'הצג סיסמה')}
                   style={{
                     position: 'absolute',
                     right: isRTL ? undefined : sizes.eyeIconPosition,
@@ -460,13 +475,15 @@ export default function ForgotPasswordPhoneScreen() {
                 >
                   <Image
                     source={showPassword ? icons.eyeOpen : icons.eyeClosed}
+                    accessible={false}
+                    aria-hidden={true}
                     style={{ width: sizes.eyeIconSize, height: sizes.eyeIconSize, tintColor: theme.formInputLabelColor }}
                     resizeMode='contain'
                   />
                 </TouchableOpacity>
               </View>
               {!!passwordError && (
-                <Text style={{ color: theme.errorTextColor, fontSize: sizes.errorFontSize, marginBottom: 8 }}>
+                <Text style={{ color: theme.errorTextColor, fontSize: sizes.errorFontSize, marginBottom: sizes.errorMarginBottom }}>
                   {passwordError}
                 </Text>
               )}
@@ -515,7 +532,7 @@ export default function ForgotPasswordPhoneScreen() {
                 />
               </View>
               {!!confirmPasswordError && (
-                <Text style={{ color: theme.errorTextColor, fontSize: sizes.errorFontSize, marginBottom: 8 }}>
+                <Text style={{ color: theme.errorTextColor, fontSize: sizes.errorFontSize, marginBottom: sizes.errorMarginBottom }}>
                   {confirmPasswordError}
                 </Text>
               )}
@@ -533,9 +550,9 @@ export default function ForgotPasswordPhoneScreen() {
 
           {step === 'success' && (
             <>
-              <Text style={[styles.title, { color: theme.unactiveTextColor, fontSize: sizes.titleFontSize * 1.3 }]}>
+              <AppHeading level={1} style={[styles.title, { color: theme.unactiveTextColor, fontSize: sizes.titleFontSize * 1.3 }]}>
                 {t('reset.success_title')}
-              </Text>
+              </AppHeading>
               <Text
                 style={[
                   styles.subtitle,

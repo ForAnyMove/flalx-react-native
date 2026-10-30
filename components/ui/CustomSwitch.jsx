@@ -2,7 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { TouchableOpacity, Animated, Easing } from 'react-native';
 import { useComponentContext } from '../../context/globalAppContext';
 
-const CustomSwitch = ({ value, onValueChange, width, height, circleSize, padding }) => {
+const CustomSwitch = ({
+  value,
+  onValueChange,
+  width,
+  height,
+  circleSize,
+  padding,
+  label,
+  accessibilityLabel,
+  disabled = false,
+}) => {
   const { themeController } = useComponentContext();
   const switchAnimation = useRef(new Animated.Value(value ? 1 : 0)).current;
 
@@ -16,7 +26,9 @@ const CustomSwitch = ({ value, onValueChange, width, height, circleSize, padding
   }, [value]);
 
   const handlePress = () => {
-    onValueChange(!value);
+    if (!disabled && onValueChange) {
+      onValueChange(!value);
+    }
   };
 
   const circlePosition = switchAnimation.interpolate({
@@ -32,15 +44,25 @@ const CustomSwitch = ({ value, onValueChange, width, height, circleSize, padding
     ],
   });
 
+  const isChecked = Boolean(value);
+
   return (
     <TouchableOpacity
       onPress={handlePress}
+      disabled={disabled}
+      accessible={true}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: isChecked, disabled }}
+      accessibilityLabel={accessibilityLabel || label || undefined}
+      role="switch"
+      aria-checked={isChecked}
       style={{
         width: width,
         height: height,
         borderRadius: height / 2,
         backgroundColor: themeController.current?.switchTrackColor,
         justifyContent: 'center',
+        opacity: disabled ? 0.6 : 1,
       }}
       activeOpacity={1}
     >

@@ -10,6 +10,7 @@ import { useComponentContext } from '../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useWindowInfo } from '../context/windowContext';
+import AppHeading from './ui/AppHeading';
 
 export default function TagSelector({
   title,
@@ -41,6 +42,7 @@ export default function TagSelector({
       subtitleFont: isWebLandscape ? webScale(14) : mobileScale(12),
       titleGap: isWebLandscape ? webScale(6) : mobileScale(2),
       subtitleGap: isWebLandscape ? webScale(16) : mobileScale(10),
+      scrollPaddingBottom: isWebLandscape ? webScale(5) : mobileScale(5),
     };
   }, [height, isWebLandscape]);
 
@@ -98,7 +100,8 @@ export default function TagSelector({
 
   return (
     <View style={containerStyle}>
-      <Text
+      <AppHeading
+        level={3}
         style={[
           styles.title,
           {
@@ -109,7 +112,7 @@ export default function TagSelector({
         ]}
       >
         {title}
-      </Text>
+      </AppHeading>
       <Text
         style={[
           styles.subtitle,
@@ -126,7 +129,7 @@ export default function TagSelector({
         ref={scrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: sizes.scrollPaddingBottom }]}
       >
         <View
           onLayout={handleContainerLayout}
@@ -148,6 +151,12 @@ export default function TagSelector({
               <TouchableOpacity
                 key={key}
                 onPress={() => toggleType(key)}
+                accessible={true}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: active }}
+                accessibilityLabel={label}
+                role="checkbox"
+                aria-checked={active}
                 style={[
                   styles.tag,
                   {
@@ -184,9 +193,7 @@ export default function TagSelector({
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    paddingBottom: 5, // небольшой отступ для тени/обводки
-  },
+  scrollContent: {},
   tagWrapper: {
     flexDirection: 'row',
     flexWrap: 'wrap',

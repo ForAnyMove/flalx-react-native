@@ -16,7 +16,7 @@ import { FontAwesome6 } from '@expo/vector-icons';
 import SearchPanel from '../../../components/SearchPanel';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
-import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
+import { BASE_DESIGN_HEIGHT, scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import { useLocalization } from '../../../src/services/useLocalization';
 import { useJobDetailNavigation } from '../../../src/services/useJobDetailNavigation';
 
@@ -49,10 +49,11 @@ export default function InProgressScreen({
   };
 
   const sizes = useMemo(() => {
-    const web = (size) => scaleByHeight(size, height);
-    const mobile = (size) => scaleByHeightMobile(size, height);
+    const web = (size, options) => scaleByHeight(size, height, BASE_DESIGN_HEIGHT, options);
+    const mobile = (size, options) => scaleByHeightMobile(size, height, options);
 
     return {
+      listPaddingBottom: isWebLandscape ? web(40) : mobile(120),
       cardRadius: isWebLandscape ? web(8) : mobile(8),
       imageHeight: isWebLandscape ? web(120) : mobile(90),
       imageWidth: isWebLandscape ? web(153) : '25%',
@@ -68,11 +69,11 @@ export default function InProgressScreen({
       cardMarginBottom: isWebLandscape ? web(8) : (Platform.OS !== 'web' ? mobile(4) : mobile(8)),
       descriptionMarginTop: isWebLandscape ? web(2) : mobile(2),
       refreshBtnHeight: isWebLandscape ? web(48) : mobile(48),
-      refreshBtnPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
+      refreshBtnPaddingHorizontal: isWebLandscape ? web(16) : mobile(12, { maxScale: 1.2 }),
       refreshBtnBorderRadius: isWebLandscape ? web(8) : mobile(8),
-      refreshBtnFont: isWebLandscape ? web(14) : mobile(14),
-      refreshBtnIcon: isWebLandscape ? web(16) : mobile(16),
-      refreshBtnGap: isWebLandscape ? web(12) : mobile(12),
+      refreshBtnFont: isWebLandscape ? web(14) : mobile(13, { maxScale: 1.2 }),
+      refreshBtnIcon: isWebLandscape ? web(16) : mobile(15, { maxScale: 1.2 }),
+      refreshBtnGap: isWebLandscape ? web(12) : mobile(8, { maxScale: 1.2 }),
     };
   }, [width, height, isWebLandscape]);
 
@@ -175,7 +176,7 @@ export default function InProgressScreen({
           }
           contentContainerStyle={[
             styles.scrollContainer,
-            { width: sizes.scrollContainerWidth },
+            { width: sizes.scrollContainerWidth, paddingBottom: sizes.listPaddingBottom },
           ]}
         >
           {filteredJobsList.map((job, index) => {

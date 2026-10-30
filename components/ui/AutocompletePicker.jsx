@@ -12,6 +12,7 @@ import {
   ScrollView,
   Pressable,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
@@ -32,6 +33,7 @@ const AutocompletePicker = ({
   allowCustomText = false, // Новый пропс для разрешения кастомного текста
   onFocusChange,
 }) => {
+  const { t } = useTranslation();
   const { themeController } = useComponentContext();
   const { width, height, isLandscape } = useWindowInfo();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
@@ -51,6 +53,7 @@ const AutocompletePicker = ({
       labelMarginBottom: isWebLandscape ? web(4) : Platform.OS === 'android' ? -mobile(2) : mobile(4),
       labelGap: scale(3),
       iconSize: scale(24),
+      pickerPaddingVertical: scale(6),
     };
   }, [isWebLandscape, height]);
 
@@ -258,7 +261,8 @@ const AutocompletePicker = ({
       <Pressable 
         style={[
           { 
-            height: sizes.pickerHeight,
+            minHeight: sizes.pickerHeight,
+            paddingVertical: sizes.pickerPaddingVertical,
             backgroundColor: themeController.current?.formInputBackground,
             paddingHorizontal: sizes.inputContainerPaddingHorizontal,
             borderTopLeftRadius: sizes.borderRadius,
@@ -322,9 +326,14 @@ const AutocompletePicker = ({
                   inputRef.current?.focus();
                 }
               }}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={isFocused ? (t('common.close', { defaultValue: 'סגור' })) : (t('common.open', { defaultValue: 'פתח' }))}
             >
               <Image
                 source={icons.arrowDown}
+                accessible={false}
+                aria-hidden={true}
                 style={[
                   styles.arrowIcon,
                   {

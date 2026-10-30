@@ -33,6 +33,9 @@ export default function JobModalWrapper({ visible, children, main = true }) {
 
   return (
     <View
+      accessibilityViewIsModal={true}
+      aria-modal={true}
+      role="dialog"
       style={{
         position: 'absolute',
         top: main ? -(height * 0.07) : 0,

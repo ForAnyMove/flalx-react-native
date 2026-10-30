@@ -12,7 +12,9 @@ import { useComponentContext } from '../../context/globalAppContext';
 import { useWindowInfo } from '../../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
+import { ACCESSIBILITY_HIT_SLOP } from '../../constants/themes';
 import AppModal from './AppModal';
+import AppHeading from './AppHeading';
 
 /**
  * Small reusable "are you sure?" dialog — title + Cancel/Confirm, styled to
@@ -68,18 +70,28 @@ export default function ConfirmModal({
               borderRadius: sizes.borderRadius,
             },
           ]}
+          accessibilityViewIsModal={true}
+          role="alertdialog"
+          aria-modal="true"
         >
           <TouchableOpacity
             style={{ position: 'absolute', top: sizes.closeIconPosition, right: sizes.closeIconPosition }}
             onPress={onCancel}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+            hitSlop={ACCESSIBILITY_HIT_SLOP}
           >
             <Image
               source={icons.cross}
               style={{ width: sizes.closeIconSize, height: sizes.closeIconSize, tintColor: theme.textColor }}
+              accessible={false}
+              aria-hidden={true}
             />
           </TouchableOpacity>
 
-          <Text
+          <AppHeading
+            level={2}
             style={{
               fontFamily: 'Rubik-Bold',
               textAlign: 'center',
@@ -90,7 +102,7 @@ export default function ConfirmModal({
             }}
           >
             {title}
-          </Text>
+          </AppHeading>
 
           <View
             style={{
@@ -103,7 +115,8 @@ export default function ConfirmModal({
             <TouchableOpacity
               style={{
                 height: sizes.btnHeight,
-                width: sizes.btnWidth,
+                width: isWebLandscape ? sizes.btnWidth : undefined,
+                flex: isWebLandscape ? undefined : 1,
                 borderRadius: sizes.borderRadius,
                 backgroundColor: theme.backgroundColor,
                 borderWidth: 1,
@@ -112,6 +125,9 @@ export default function ConfirmModal({
                 justifyContent: 'center',
               }}
               onPress={onCancel}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={cancelText || t('common.cancel')}
             >
               <Text style={{ color: theme.buttonColorSecondaryDefault, fontSize: sizes.btnFont }}>
                 {cancelText || t('common.cancel')}
@@ -120,13 +136,17 @@ export default function ConfirmModal({
             <TouchableOpacity
               style={{
                 height: sizes.btnHeight,
-                width: sizes.btnWidth,
+                width: isWebLandscape ? sizes.btnWidth : undefined,
+                flex: isWebLandscape ? undefined : 1,
                 borderRadius: sizes.borderRadius,
                 backgroundColor: destructive ? theme.errorTextColor : theme.buttonColorPrimaryDefault,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
               onPress={onConfirm}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={confirmText || t('common.confirm')}
             >
               <Text style={{ color: theme.buttonTextColorPrimary, fontSize: sizes.btnFont }}>
                 {confirmText || t('common.confirm')}

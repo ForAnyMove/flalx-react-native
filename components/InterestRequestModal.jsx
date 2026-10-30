@@ -89,6 +89,7 @@ const FormInput = ({ label, value, placeholder, onChangeText, hint, keyboardType
         {t('interestRequest.price_input_label', { defaultValue: 'Your price' })}
       </Text>
       <TextInput
+        accessibilityLabel={t('interestRequest.price_input_label', { defaultValue: 'Your price' })}
         style={[styles.textInput, { color: theme.textColor, fontSize: sizes.inputTextSize, textAlign: isRTL ? 'right' : 'left', marginTop: sizes.textInputMarginTop }]}
         value={value}
         onChangeText={(text) => {
@@ -274,6 +275,8 @@ const InterestRequestModal = ({
       // New restored sizes
       dotsRowMarginBottom: scale(8),
       dotMarginHorizontal: scale(4),
+      smallGap: scale(8),
+      buttonMarginTop: scale(12),
       successHeaderMarginBottom: scale(24),
       successCircleMarginBottom: scale(16),
       subtitleBoxPaddingBottom: scale(16),
@@ -419,7 +422,7 @@ const InterestRequestModal = ({
           <Text style={[styles.inputLabelOutside, { color: theme.textColor, fontSize: sizes.sectionHeaderFontSize, marginBottom: sizes.sectionHeaderMarginBottom, textAlign: isRTL ? 'right' : 'left' }]}>
             {t('interestRequest.time_label', { defaultValue: 'Available time' })}
           </Text>
-          <View style={{ gap: sizes.itemMarginBottom / 2, marginBottom: 8 }}>
+          <View style={{ gap: sizes.itemMarginBottom / 2, marginBottom: sizes.smallGap }}>
             <DateInput
               label={t('common.from', { defaultValue: 'From' })}
               value={formData.startDate}
@@ -472,7 +475,7 @@ const InterestRequestModal = ({
         {needsForm && <PaginationDots activeStep={2} sizes={sizes} theme={theme} t={t} isRTL={isRTL} />}
 
         <View style={[styles.paymentHeader, { marginBottom: sizes.paymentHeaderMarginBottom }]}>
-          <Text style={[styles.modalTitle, { color: theme.textColor, fontSize: sizes.titleSize, marginBottom: 4 }]}>
+          <Text style={[styles.modalTitle, { color: theme.textColor, fontSize: sizes.titleSize, marginBottom: sizes.successSubtitleMarginBottom }]}>
             {isClientJob ? t('interestRequest.payment', { defaultValue: 'Payment' }) : t('interestRequest.submit_application_title', { defaultValue: 'Submit application' })}
           </Text>
           <Text style={[styles.totalPrice, { color: theme.textColor, fontSize: sizes.totalPriceSize }]}>
@@ -518,7 +521,7 @@ const InterestRequestModal = ({
                 height: sizes.buttonHeight,
                 borderRadius: sizes.borderRadius,
                 backgroundColor: theme.backgroundColor,
-                marginTop: 12,
+                marginTop: sizes.buttonMarginTop,
               },
             ]}
             onPress={onPayWithCoupons}
@@ -558,7 +561,7 @@ const InterestRequestModal = ({
         )}
 
         <TouchableOpacity
-          style={[styles.primaryButton, { backgroundColor: theme.primaryColor, height: sizes.buttonHeight, borderRadius: sizes.borderRadius, marginTop: 12 }]}
+          style={[styles.primaryButton, { backgroundColor: theme.primaryColor, height: sizes.buttonHeight, borderRadius: sizes.borderRadius, marginTop: sizes.buttonMarginTop }]}
           onPress={onOpenSubscriptions}
         >
           <Text style={[styles.buttonText, { color: theme.buttonTextColorPrimary, fontSize: sizes.buttonTextSize }]}>

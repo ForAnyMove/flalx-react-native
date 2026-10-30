@@ -1,4 +1,4 @@
-﻿import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
@@ -58,6 +58,8 @@ import { logError } from '../utils/log_util';
 import CustomTextInput from './ui/CustomTextInput';
 import ImageViewerModal from './ui/ImageViewerModal';
 import { getDeviceTimezone } from '../utils/datetimeTimezone';
+import AppHeading from './ui/AppHeading';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -1148,6 +1150,9 @@ export default function ShowJobModal({
                   setCommentImagePreviewIndex(index);
                   setCommentImagePreviewVisible(true);
                 }}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('showJob.photoIndex', { defaultValue: 'Photo {{index}}', index: index + 1 })}
               >
                 <Image
                   source={{ uri }}
@@ -1156,6 +1161,8 @@ export default function ShowJobModal({
                     dynamicStyles.imageThumbnail,
                   ]}
                   resizeMode='cover'
+                  accessible={false}
+                  aria-hidden={true}
                 />
               </TouchableOpacity>
             ))}
@@ -1653,6 +1660,9 @@ export default function ShowJobModal({
                           currentJobInfo?.job_comment?.comment || ''
                         );
                       }}
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('common.cancel', { defaultValue: 'ביטול' })}
                     >
                       <MaterialIcons
                         name='cancel'
@@ -1672,6 +1682,9 @@ export default function ShowJobModal({
                           jobsController.reloadExecutor();
                         });
                       }}
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('common.save', { defaultValue: 'שמור' })}
                     >
                       <MaterialIcons
                         name='check-circle'
@@ -1683,6 +1696,9 @@ export default function ShowJobModal({
                 ) : (
                   <TouchableOpacity
                     onPress={() => setEditableCommentState(true)}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('common.edit', { defaultValue: 'ערוך' })}
                   >
                     <MaterialCommunityIcons
                       name='pencil'
@@ -2346,6 +2362,9 @@ export default function ShowJobModal({
                     setImagePreviewIndex(index);
                     setImagePreviewVisible(true);
                   }}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('showJob.photoIndex', { defaultValue: 'Photo {{index}}', index: index + 1 })}
                 >
                   <Image
                     source={{ uri }}
@@ -2353,6 +2372,8 @@ export default function ShowJobModal({
                       styles.imageThumbnail,
                       dynamicStyles.imageThumbnail,
                     ]}
+                    accessible={false}
+                    aria-hidden={true}
                   />
                 </TouchableOpacity>
               ))}
@@ -2477,10 +2498,10 @@ export default function ShowJobModal({
             ]}
           >
             <TouchableOpacity
-              // onPress={() =>
-              //   router.canGoBack?.() ? router.back() : router.replace('/store')
-              // }
               onPress={() => closeModal()}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.close') || 'סגור'}
+              hitSlop={ACCESSIBILITY_HIT_SLOP}
             >
               <Image
                 source={icons.cross}
@@ -2492,10 +2513,13 @@ export default function ShowJobModal({
                 resizeMode='contain'
               />
             </TouchableOpacity>
-            <Text style={[styles.logo, dynamicStyles.logo]}>FLALX</Text>
+            <AppHeading level={1} style={[styles.logo, dynamicStyles.logo]}>FLALX</AppHeading>
             {user.current?.id === (currentJobInfo?.creator?.id ?? currentJobInfo?.creator) ? (
               <TouchableOpacity
                 onPress={() => setHistoryModal(true)}
+                accessibilityRole="button"
+                accessibilityLabel={t('showJob.history') || 'היסטוריה'}
+                hitSlop={ACCESSIBILITY_HIT_SLOP}
               >
                 <Image
                   source={icons.history}
@@ -2902,6 +2926,9 @@ export default function ShowJobModal({
                                   setImagePreviewIndex(index);
                                   setImagePreviewVisible(true);
                                 }}
+                                accessible={true}
+                                accessibilityRole="button"
+                                accessibilityLabel={t('showJob.photoIndex', { defaultValue: 'Photo {{index}}', index: index + 1 })}
                               >
                                 <Image
                                   source={{ uri }}
@@ -2910,6 +2937,8 @@ export default function ShowJobModal({
                                     height: sizes.thumb,
                                     borderRadius: sizes.borderRadius,
                                   }}
+                                  accessible={false}
+                                  aria-hidden={true}
                                 />
                               </TouchableOpacity>
                             ))}
@@ -3186,6 +3215,9 @@ export default function ShowJobModal({
               },
               isWebLandscape && { height: sizes.modalHeight },
             ]}
+            accessibilityViewIsModal={true}
+            role="dialog"
+            aria-modal="true"
           >
             <TouchableOpacity
               style={[
@@ -3196,6 +3228,10 @@ export default function ShowJobModal({
                 },
               ]}
               onPress={() => setAcceptModalVisible(false)}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+              hitSlop={ACCESSIBILITY_HIT_SLOP}
             >
               <Image
                 source={icons.cross}
@@ -3204,6 +3240,8 @@ export default function ShowJobModal({
                   height: sizes.iconSize,
                   tintColor: themeController.current?.textColor,
                 }}
+                accessible={false}
+                aria-hidden={true}
               />
             </TouchableOpacity>
             <Text
@@ -3401,6 +3439,9 @@ export default function ShowJobModal({
               },
               isWebLandscape && { height: sizes.modalHeight },
             ]}
+            accessibilityViewIsModal={true}
+            role="dialog"
+            aria-modal="true"
           >
             <TouchableOpacity
               style={[
@@ -3411,6 +3452,10 @@ export default function ShowJobModal({
                 },
               ]}
               onPress={() => setAcceptModalVisible(false)}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+              hitSlop={ACCESSIBILITY_HIT_SLOP}
             >
               <Image
                 source={icons.cross}
@@ -3419,6 +3464,8 @@ export default function ShowJobModal({
                   height: sizes.iconSize,
                   tintColor: themeController.current?.textColor,
                 }}
+                accessible={false}
+                aria-hidden={true}
               />
             </TouchableOpacity>
             <Text
@@ -3551,6 +3598,9 @@ export default function ShowJobModal({
                 borderRadius: sizes.modalBtnBorderRadius,
               },
             ]}
+            accessibilityViewIsModal={true}
+            role="dialog"
+            aria-modal="true"
           >
             <TouchableOpacity
               style={[
@@ -3564,6 +3614,10 @@ export default function ShowJobModal({
                 setAgreementModalVisible(false);
                 closeModal();
               }}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+              hitSlop={ACCESSIBILITY_HIT_SLOP}
             >
               <Image
                 source={icons.cross}
@@ -3572,6 +3626,8 @@ export default function ShowJobModal({
                   height: sizes.iconSize,
                   tintColor: themeController.current?.textColor,
                 }}
+                accessible={false}
+                aria-hidden={true}
               />
             </TouchableOpacity>
             <Text
@@ -3601,8 +3657,8 @@ export default function ShowJobModal({
                         flexWrap: 'wrap',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: 4,
-                        marginBottom: 6,
+                        gap: Math.round(sizes.margin / 4),
+                        marginBottom: Math.round(sizes.margin / 2),
                       },
                     ]}
                   >
@@ -3725,6 +3781,9 @@ export default function ShowJobModal({
                 borderRadius: sizes.modalBtnBorderRadius,
               },
             ]}
+            accessibilityViewIsModal={true}
+            role="dialog"
+            aria-modal="true"
           >
             <TouchableOpacity
               style={[
@@ -3735,6 +3794,10 @@ export default function ShowJobModal({
                 },
               ]}
               onPress={() => setDiscardEditModalVisible(false)}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+              hitSlop={ACCESSIBILITY_HIT_SLOP}
             >
               <Image
                 source={icons.cross}
@@ -3743,6 +3806,8 @@ export default function ShowJobModal({
                   height: sizes.iconSize,
                   tintColor: themeController.current?.textColor,
                 }}
+                accessible={false}
+                aria-hidden={true}
               />
             </TouchableOpacity>
             <Text
@@ -3772,8 +3837,8 @@ export default function ShowJobModal({
                         flexWrap: 'wrap',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: 4,
-                        marginBottom: 6,
+                        gap: Math.round(sizes.margin / 4),
+                        marginBottom: Math.round(sizes.margin / 2),
                       },
                     ]}
                   >
@@ -3954,19 +4019,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 0,
     elevation: 4,
-  },
-  badge: {
-    borderRadius: 999,
-    paddingHorizontal: 2,
-    paddingVertical: 2,
-    minWidth: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeText: {
-    fontWeight: 'bold',
-    fontSize: 12,
   },
   waitText: {
     textAlign: 'center',

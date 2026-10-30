@@ -17,7 +17,7 @@ import { FontAwesome6 } from '@expo/vector-icons';
 import SearchPanel from '../../../components/SearchPanel';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
-import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
+import { BASE_DESIGN_HEIGHT, scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import { useLocalization } from '../../../src/services/useLocalization';
 import { useJobDetailNavigation } from '../../../src/services/useJobDetailNavigation';
 
@@ -50,10 +50,11 @@ export default function DoneScreen({
   };
 
   const sizes = useMemo(() => {
-    const web = (size) => scaleByHeight(size, height);
-    const mobile = (size) => scaleByHeightMobile(size, height);
+    const web = (size, options) => scaleByHeight(size, height, BASE_DESIGN_HEIGHT, options);
+    const mobile = (size, options) => scaleByHeightMobile(size, height, options);
 
     return {
+      listPaddingBottom: isWebLandscape ? web(40) : mobile(120),
       cardRadius: isWebLandscape ? web(8) : mobile(8),
       imageHeight: isWebLandscape ? web(120) : mobile(90),
       imageWidth: isWebLandscape ? web(153) : '25%',
@@ -65,10 +66,10 @@ export default function DoneScreen({
       scrollContainerWidth: isWebLandscape ? (width / height < 1.3 ? '85%' : '60%') : '100%',
       badgePosition: isWebLandscape ? web(5) : mobile(5),
       personalMarkerBorderWidth: isWebLandscape ? web(2) : mobile(2),
-      personalMarkerVP: isWebLandscape ? web(3) : mobile(3),
-      personalMarkerHP: isWebLandscape ? web(12) : mobile(12),
+      personalMarkerVP: isWebLandscape ? web(3) : mobile(3, { maxScale: 1.2 }),
+      personalMarkerHP: isWebLandscape ? web(12) : mobile(12, { maxScale: 1.2 }),
       personalMarkerBottomAngleRadius: isWebLandscape ? web(8) : mobile(8),
-      personalMarkerFontSize: isWebLandscape ? web(15) : mobile(15),
+      personalMarkerFontSize: isWebLandscape ? web(15) : mobile(15, { maxScale: 1.25 }),
       containerMarginTop: isWebLandscape ? web(24) : mobile(24),
       imageMargin: isWebLandscape ? web(10) : mobile(10),
       containerPaddingH: isWebLandscape ? web(10) : mobile(10),
@@ -77,11 +78,11 @@ export default function DoneScreen({
       descriptionMarginTop: isWebLandscape ? web(2) : mobile(2),
       badgePadding: isWebLandscape ? web(2) : mobile(2),
       refreshBtnHeight: isWebLandscape ? web(48) : mobile(48),
-      refreshBtnPaddingHorizontal: isWebLandscape ? web(16) : mobile(16),
+      refreshBtnPaddingHorizontal: isWebLandscape ? web(16) : mobile(12, { maxScale: 1.2 }),
       refreshBtnBorderRadius: isWebLandscape ? web(8) : mobile(8),
-      refreshBtnFont: isWebLandscape ? web(14) : mobile(14),
-      refreshBtnIcon: isWebLandscape ? web(16) : mobile(16),
-      refreshBtnGap: isWebLandscape ? web(12) : mobile(12),
+      refreshBtnFont: isWebLandscape ? web(14) : mobile(13, { maxScale: 1.2 }),
+      refreshBtnIcon: isWebLandscape ? web(16) : mobile(15, { maxScale: 1.2 }),
+      refreshBtnGap: isWebLandscape ? web(12) : mobile(8, { maxScale: 1.2 }),
     };
   }, [width, height, isWebLandscape]);
 
@@ -184,7 +185,7 @@ export default function DoneScreen({
           }
           contentContainerStyle={[
             styles.scrollContainer,
-            { width: sizes.scrollContainerWidth },
+            { width: sizes.scrollContainerWidth, paddingBottom: sizes.listPaddingBottom },
           ]}
         >
           {filteredJobsList.map((job, index) => {

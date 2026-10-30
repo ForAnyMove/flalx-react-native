@@ -163,6 +163,9 @@ export default function LoginStep1_EmailPassword({ onSubmit, onSwitchMethod, onG
         color: theme.formInputLabelColor,
         fontFamily: 'Rubik-Medium',
       },
+      switchMethodButton: {
+        marginTop: isWebLandscape ? scaleByHeight(12, h) : scaleByHeightMobile(12, h),
+      },
       error: {
         fontSize: isWebLandscape ? scaleByHeight(14, h) : scaleByHeightMobile(14, h),
         color: theme.errorTextColor,
@@ -298,11 +301,20 @@ export default function LoginStep1_EmailPassword({ onSubmit, onSwitchMethod, onG
             <TouchableOpacity
               onPress={() => setShowPassword((prev) => !prev)}
               style={dynamicStyles.eyeIconContainer}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={
+                showPassword
+                  ? t('auth.hide_password', { defaultValue: 'הסתר סיסמה' })
+                  : t('auth.show_password', { defaultValue: 'הצג סיסמה' })
+              }
             >
               <Image
                 source={showPassword ? icons.eyeOpen : icons.eyeClosed}
                 style={dynamicStyles.eyeIcon}
                 resizeMode='contain'
+                accessible={false}
+                aria-hidden={true}
               />
             </TouchableOpacity>
           </View>
@@ -327,7 +339,7 @@ export default function LoginStep1_EmailPassword({ onSubmit, onSwitchMethod, onG
             </Text>
           )}
 
-          <TouchableOpacity onPress={onSwitchMethod} style={{ marginTop: 12 }}>
+          <TouchableOpacity onPress={onSwitchMethod} style={dynamicStyles.switchMethodButton}>
             <Text style={[dynamicStyles.link, { color: theme.primaryColor, textDecorationLine: 'underline', textAlign: 'center' }]}>
               {t('auth.login_with_phone')}
             </Text>

@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import SearchPanel from '../../../../components/SearchPanel';
 import {
+  BASE_DESIGN_HEIGHT,
   scaleByHeight,
   scaleByHeightMobile,
 } from '../../../../utils/resizeFuncs';
@@ -123,19 +124,19 @@ const SystemProfessions = ({ openSystemRegistration }) => {
   }, [jobTypesController]);
 
   const sizes = useMemo(() => {
-    const web = (size) => scaleByHeight(size, height);
-    const mobile = (size) => scaleByHeightMobile(size, height);
+    const web = (size, options) => scaleByHeight(size, height, BASE_DESIGN_HEIGHT, options);
+    const mobile = (size, options) => scaleByHeightMobile(size, height, options);
 
     return {
       containerPaddingH: isWebLandscape ? web(10) : mobile(10),
       containerPaddingV: isWebLandscape ? web(14) : mobile(14),
-      scrollContainerPaddingBottom: isWebLandscape ? web(20) : mobile(20),
-      plusButtonSize: isWebLandscape ? web(64) : mobile(64),
+      scrollContainerPaddingBottom: isWebLandscape ? web(20) : mobile(120),
+      plusButtonSize: isWebLandscape ? web(64) : mobile(64, { maxScale: 1.35 }),
       plusButtonLeft: isWebLandscape ? web(32) : mobile(16),
       plusButtonRight: isWebLandscape ? web(32) : mobile(16),
 
       plusButtonBottom: isWebLandscape ? web(16) : mobile(16),
-      plusIconSize: isWebLandscape ? web(24) : mobile(24),
+      plusIconSize: isWebLandscape ? web(24) : mobile(24, { maxScale: 1.35 }),
       plusButtonShadowColor: '#000',
       plusButtonShadowOffset: {
         width: 0,
@@ -227,6 +228,9 @@ const SystemProfessions = ({ openSystemRegistration }) => {
                 elevation: sizes.plusButtonElevation,
               }}
               onPress={add}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('professions.add_profession', { defaultValue: 'הוסף מקצוע' })}
             >
               <Image
                 source={icons.plus}
@@ -236,6 +240,8 @@ const SystemProfessions = ({ openSystemRegistration }) => {
                   tintColor: themeController.current?.buttonTextColorPrimary,
                 }}
                 resizeMode='contain'
+                accessible={false}
+                aria-hidden={true}
               />
             </TouchableOpacity>
           </>
@@ -257,6 +263,7 @@ const SystemProfessions = ({ openSystemRegistration }) => {
               }}
             >
               <Text
+                accessibilityRole="header"
                 style={{
                   color: themeController.current?.textColor,
                   textAlign: 'center',
@@ -282,6 +289,9 @@ const SystemProfessions = ({ openSystemRegistration }) => {
                   elevation: sizes.plusButtonElevation,
                 }}
                 onPress={add}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('professions.add_profession', { defaultValue: 'הוסף מקצוע' })}
               >
                 <Image
                   source={icons.plus}
@@ -291,6 +301,8 @@ const SystemProfessions = ({ openSystemRegistration }) => {
                     tintColor: themeController.current?.buttonTextColorPrimary,
                   }}
                   resizeMode='contain'
+                  accessible={false}
+                  aria-hidden={true}
                 />
               </TouchableOpacity>
             </View>

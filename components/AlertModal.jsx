@@ -12,7 +12,9 @@ import { useComponentContext } from '../context/globalAppContext';
 import { useWindowInfo } from '../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 import AppModal from './ui/AppModal';
+import AppHeading from './ui/AppHeading';
 
 const AlertModal = ({
   visible,
@@ -72,6 +74,10 @@ const AlertModal = ({
         >
           <TouchableOpacity
             onPress={handleClose}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close', 'סגור')}
+            hitSlop={ACCESSIBILITY_HIT_SLOP}
             style={[
               styles.closeBtn,
               { top: sizes.crossIconPosition, right: sizes.crossIconPosition },
@@ -79,6 +85,8 @@ const AlertModal = ({
           >
             <Image
               source={icons.cross}
+              accessible={false}
+              aria-hidden={true}
               style={{
                 width: sizes.crossIconSize,
                 height: sizes.crossIconSize,
@@ -87,7 +95,8 @@ const AlertModal = ({
             />
           </TouchableOpacity>
 
-          <Text
+          <AppHeading
+            level={2}
             style={[
               styles.title,
               {
@@ -99,11 +108,14 @@ const AlertModal = ({
             ]}
           >
             {title}
-          </Text>
+          </AppHeading>
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               onPress={onConfirm}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.ok', { defaultValue: 'OK' })}
               style={[
                 styles.button,
                 {

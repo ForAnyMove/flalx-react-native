@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Image,
@@ -11,7 +11,10 @@ import {
   View,
 } from 'react-native';
 import { icons } from '../../constants/icons';
+import { ACCESSIBILITY_HIT_SLOP } from '../../constants/themes';
 import AppModal from './AppModal';
+import { useWindowInfo } from '../../context/windowContext';
+import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 5;
@@ -28,6 +31,40 @@ function getTouchDistance(touches) {
 
 export default function ImageViewerModal({ visible, images, initialIndex = 0, onClose }) {
   const [index, setIndex] = useState(initialIndex);
+  const { height, isLandscape } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const scaleBy = isWebLandscape ? (s) => scaleByHeight(s, height) : (s) => scaleByHeightMobile(s, height);
+
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        topBar: {
+          paddingHorizontal: scaleBy(16),
+          paddingTop: Platform.OS === 'android' ? scaleBy(44) : scaleBy(56),
+          paddingBottom: scaleBy(12),
+        },
+        counter: {
+          fontSize: scaleBy(15),
+        },
+        closeBtn: {
+          width: scaleBy(36),
+          height: scaleBy(36),
+          borderRadius: scaleBy(18),
+        },
+        closeIcon: {
+          width: scaleBy(18),
+          height: scaleBy(18),
+        },
+        navBtn: {
+          width: scaleBy(52),
+        },
+        navIcon: {
+          width: scaleBy(24),
+          height: scaleBy(24),
+        },
+      }),
+    [height, isWebLandscape]
+  );
 
   const scale = useRef(new Animated.Value(1)).current;
   const translateX = useRef(new Animated.Value(0)).current;
@@ -209,16 +246,19 @@ export default function ImageViewerModal({ visible, images, initialIndex = 0, on
       <StatusBar hidden />
 
       {/* Top bar */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, dynamicStyles.topBar]}>
         {images.length > 1 ? (
-          <Text style={styles.counter}>{index + 1} / {images.length}</Text>
+          <Text style={[styles.counter, dynamicStyles.counter]}>{index + 1} / {images.length}</Text>
         ) : <View />}
         <TouchableOpacity
           onPress={onClose}
-          style={styles.closeBtn}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          style={[styles.closeBtn, dynamicStyles.closeBtn]}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="סגור תמונה"
+          hitSlop={ACCESSIBILITY_HIT_SLOP}
         >
-          <Image source={icons.cross} style={styles.closeIcon} />
+          <Image source={icons.cross} accessible={false} aria-hidden={true} style={[styles.closeIcon, dynamicStyles.closeIcon]} />
         </TouchableOpacity>
       </View>
 
@@ -226,6 +266,9 @@ export default function ImageViewerModal({ visible, images, initialIndex = 0, on
       <View style={styles.imageArea} {...panResponder.panHandlers}>
         <Animated.Image
           source={{ uri: images[index] }}
+          accessible={true}
+          accessibilityRole="image"
+          accessibilityLabel={`תמונה ${index + 1} מתוך ${images.length}`}
           style={[
             styles.image,
             { transform: [{ translateX }, { translateY }, { scale }] },
@@ -240,16 +283,24 @@ export default function ImageViewerModal({ visible, images, initialIndex = 0, on
           <TouchableOpacity
             onPress={goPrev}
             disabled={isFirst}
-            style={[styles.navBtn, styles.navBtnLeft, isFirst && styles.navBtnDisabled]}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="תמונה קודמת"
+            accessibilityState={{ disabled: isFirst }}
+            style={[styles.navBtn, dynamicStyles.navBtn, styles.navBtnLeft, isFirst && styles.navBtnDisabled]}
           >
-            <Image source={icons.arrowLeft} style={styles.navIcon} />
+            <Image source={icons.arrowLeft} accessible={false} aria-hidden={true} style={[styles.navIcon, dynamicStyles.navIcon]} />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={goNext}
             disabled={isLast}
-            style={[styles.navBtn, styles.navBtnRight, isLast && styles.navBtnDisabled]}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="תמונה הבאה"
+            accessibilityState={{ disabled: isLast }}
+            style={[styles.navBtn, dynamicStyles.navBtn, styles.navBtnRight, isLast && styles.navBtnDisabled]}
           >
-            <Image source={icons.arrowRight} style={styles.navIcon} />
+            <Image source={icons.arrowRight} accessible={false} aria-hidden={true} style={[styles.navIcon, dynamicStyles.navIcon]} />
           </TouchableOpacity>
         </>
       )}
@@ -294,31 +345,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 44 : 56,
-    paddingBottom: 12,
-    // Above navBtn (zIndex 10) — the nav strips span the full height
-    // (top:0, bottom:0) and are rendered after this in JSX, so without a
-    // higher z-index the right-side "next" strip sits on top of the close
-    // button/counter and swallows taps meant for them.
     zIndex: 20,
   },
   counter: {
     color: 'rgba(255,255,255,0.7)',
     fontFamily: 'Rubik-Medium',
-    fontSize: 15,
   },
   closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
     backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeIcon: {
-    width: 18,
-    height: 18,
     tintColor: 'white',
   },
   imageArea: {
@@ -334,7 +372,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     bottom: 0,
-    width: 52,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
@@ -349,8 +386,6 @@ const styles = StyleSheet.create({
     opacity: 0.2,
   },
   navIcon: {
-    width: 24,
-    height: 24,
     tintColor: 'white',
   },
 });

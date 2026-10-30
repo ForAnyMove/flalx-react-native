@@ -15,6 +15,8 @@ import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
 import CustomTextInput from '../ui/CustomTextInput';
 import PhoneField from '../ui/PhoneField';
+import AppHeading from '../ui/AppHeading';
+import { ACCESSIBILITY_HIT_SLOP } from '../../constants/themes';
 import { normalizeE164 } from '../../src/phone/phoneUtils';
 import { toE164 } from '../../src/auth/phoneFormat';
 import AppModal from '../ui/AppModal';
@@ -135,6 +137,11 @@ const UpdatePhoneModal = ({
       labelSize: scale(12),
       inputSize: scale(16),
       saveButtonHeight: scale(52),
+      saveButtonFontSize: scale(18),
+      labelTop: scale(8),
+      inputPaddingTop: scale(15),
+      phoneFieldLabelMarginBottom: scale(4),
+      errorTextMarginBottom: scale(10),
       errorTextSize: scale(14),
       otpRowMarginBottom: scale(20),
       otpCellSize: isWebLandscape ? scale(48) : scale(44),
@@ -194,7 +201,7 @@ const UpdatePhoneModal = ({
       fontSize: sizes.labelSize,
       color: theme.formInputLabelColor,
       position: 'absolute',
-      top: 8,
+      top: sizes.labelTop,
       left: sizes.inputPaddingHorizontal,
       right: sizes.inputPaddingHorizontal,
       textAlign: isRTL ? 'right' : 'left',
@@ -202,7 +209,7 @@ const UpdatePhoneModal = ({
     input: {
       fontSize: sizes.inputSize,
       color: theme.formInputTextColor,
-      paddingTop: 15,
+      paddingTop: sizes.inputPaddingTop,
       textAlign: isRTL ? 'right' : 'left',
     },
     // PhoneField renders its label in normal flow (above the row), not as a
@@ -220,7 +227,7 @@ const UpdatePhoneModal = ({
     phoneFieldLabel: {
       fontSize: sizes.labelSize,
       color: theme.formInputLabelColor,
-      marginBottom: 4,
+      marginBottom: sizes.phoneFieldLabelMarginBottom,
       textAlign: isRTL ? 'right' : 'left',
     },
     phoneFieldInput: {
@@ -238,7 +245,7 @@ const UpdatePhoneModal = ({
     },
     saveButtonText: {
       color: theme.buttonTextColorPrimary,
-      fontSize: 18,
+      fontSize: sizes.saveButtonFontSize,
       fontWeight: 'bold',
     },
     loadingOverlay: {
@@ -256,7 +263,7 @@ const UpdatePhoneModal = ({
     errorText: {
       color: theme.error,
       fontSize: sizes.errorTextSize,
-      marginBottom: 10,
+      marginBottom: sizes.errorTextMarginBottom,
       alignSelf: 'flex-start',
     },
     otpRow: {
@@ -279,7 +286,7 @@ const UpdatePhoneModal = ({
 
   const renderEnterPhone = () => (
     <>
-      <Text style={styles.title}>{t('my_profile.change_phone')}</Text>
+      <AppHeading level={2} style={styles.title}>{t('my_profile.change_phone')}</AppHeading>
       <PhoneField
         value={phone}
         onChangeValue={setPhone}
@@ -291,7 +298,13 @@ const UpdatePhoneModal = ({
         inputStyle={styles.phoneFieldInput}
       />
       {error && <Text style={styles.errorText}>{error}</Text>}
-      <TouchableOpacity style={styles.saveButton} onPress={handleSendCode}>
+      <TouchableOpacity
+        style={styles.saveButton}
+        onPress={handleSendCode}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.send_code')}
+      >
         <Text style={styles.saveButtonText}>{t('common.send_code')}</Text>
       </TouchableOpacity>
     </>
@@ -299,7 +312,7 @@ const UpdatePhoneModal = ({
 
   const renderEnterCode = () => (
     <>
-      <Text style={styles.title}>{t('my_profile.verify_new_phone')}</Text>
+      <AppHeading level={2} style={styles.title}>{t('my_profile.verify_new_phone')}</AppHeading>
       <View style={styles.otpRow}>
         {otp.map((digit, index) => (
           <CustomTextInput
@@ -315,7 +328,13 @@ const UpdatePhoneModal = ({
         ))}
       </View>
       {error && <Text style={styles.errorText}>{error}</Text>}
-      <TouchableOpacity style={styles.saveButton} onPress={handleVerifyCode}>
+      <TouchableOpacity
+        style={styles.saveButton}
+        onPress={handleVerifyCode}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.verify')}
+      >
         <Text style={styles.saveButtonText}>{t('common.verify')}</Text>
       </TouchableOpacity>
     </>
@@ -324,14 +343,26 @@ const UpdatePhoneModal = ({
   return (
     <AppModal visible={visible} transparent={true}>
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
+        <View
+          style={styles.modalContainer}
+          accessibilityViewIsModal={true}
+          role="dialog"
+          aria-modal="true"
+        >
           {(isLoading || internalLoading) && (
             <View style={styles.loadingOverlay}>
               <ActivityIndicator size='large' color={theme.primaryColor} />
             </View>
           )}
-          <TouchableOpacity style={styles.crossButton} onPress={onClose}>
-            <Image source={icons.cross} style={styles.crossIcon} />
+          <TouchableOpacity
+            style={styles.crossButton}
+            onPress={onClose}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close', 'סגור')}
+            hitSlop={ACCESSIBILITY_HIT_SLOP}
+          >
+            <Image source={icons.cross} accessible={false} aria-hidden={true} style={styles.crossIcon} />
           </TouchableOpacity>
 
           {step === 'enterPhone' ? renderEnterPhone() : renderEnterCode()}

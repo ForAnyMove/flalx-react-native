@@ -18,6 +18,8 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import CommentsSection from './CommentsSection';
 import PurchaseModal from './PurchaseModal';
 import AppModal from './ui/AppModal';
+import AppHeading from './ui/AppHeading';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 import { useWebView } from '../context/webViewContext';
 import { useWindowInfo } from '../context/windowContext';
 import { useLocalization } from '../src/services/useLocalization';
@@ -140,6 +142,10 @@ const UserSummaryBlock = ({
       shadowOffsetHeight: scale(-3),
       shadowRadius: scale(4),
       elevation: scale(8),
+      starGap: scale(2),
+      expectationsMarginTop: scale(6),
+      expectationsBadgePaddingV: scale(2),
+      expectationsBadgePaddingH: scale(6),
     };
   }, [isWebLandscape, width, height]);
 
@@ -296,7 +302,7 @@ const UserSummaryBlock = ({
         style={{
           flexDirection: isRTL ? 'row-reverse' : 'row',
           alignItems: 'center',
-          gap: 2,
+          gap: sizes.starGap,
         }}
       >
         {stars}
@@ -321,6 +327,10 @@ const UserSummaryBlock = ({
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={openDetails}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={`${name || ''} ${surname || ''}, ${LICENSES[professions?.[0]] || ''}`}
+        accessibilityHint={t('accessibility.openProfileHint', { defaultValue: 'לחץ לצפייה בפרופיל המלא' })}
         style={[
           styles.summaryContainer,
           // isRTL && { flexDirection: 'row-reverse' },
@@ -469,8 +479,8 @@ const UserSummaryBlock = ({
                 source_timezone,
               }}
               isRTL={isRTL}
-              containerStyle={{ marginTop: 6, justifyContent: isRTL ? 'flex-end' : 'flex-start' }}
-              badgeStyle={{ paddingVertical: 2, paddingHorizontal: 6 }}
+              containerStyle={{ marginTop: sizes.expectationsMarginTop, justifyContent: isRTL ? 'flex-end' : 'flex-start' }}
+              badgeStyle={{ paddingVertical: sizes.expectationsBadgePaddingV, paddingHorizontal: sizes.expectationsBadgePaddingH }}
               textStyle={{ fontSize: sizes.smallFont - 2 }}
             />
           )}
@@ -528,9 +538,15 @@ const UserSummaryBlock = ({
                   setModalVisible(false);
                   setShowContactInfo(false);
                 }}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.back', { defaultValue: 'חזרה' })}
+                hitSlop={ACCESSIBILITY_HIT_SLOP}
               >
                 <Image
                   source={isRTL ? icons.forward : icons.back}
+                  accessible={false}
+                  aria-hidden={true}
                   style={{
                     width: sizes.icon,
                     height: sizes.icon,
@@ -538,7 +554,8 @@ const UserSummaryBlock = ({
                   }}
                 />
               </TouchableOpacity>
-              <Text
+              <AppHeading
+                level={1}
                 style={[
                   styles.modalTitle,
                   {
@@ -548,7 +565,7 @@ const UserSummaryBlock = ({
                 ]}
               >
                 FLALX
-              </Text>
+              </AppHeading>
             </View>
 
             <ScrollView contentContainerStyle={{}}>
@@ -1302,10 +1319,6 @@ const styles = StyleSheet.create({
   },
   aboutText: {
     color: '#444',
-  },
-  contactInfo: {
-    color: '#333',
-    marginVertical: 2,
   },
   modalHeader: {
     flexDirection: 'row',

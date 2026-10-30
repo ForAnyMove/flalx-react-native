@@ -170,6 +170,10 @@ const PaymentFlowStep = ({
                 }
               ]}
               onPress={() => setNewMethodId(methodType)}
+              accessible={true}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: isSelected, selected: isSelected }}
+              accessibilityLabel={t(`payment_modal.method_${methodType}`, { defaultValue: methodType })}
             >
               <Image
                 source={isSelected ? icons.radioOn : icons.radioOff}
@@ -177,6 +181,8 @@ const PaymentFlowStep = ({
                   styles.itemCircle,
                   { tintColor: isSelected ? theme.primaryColor : theme.formInputLabelColor },
                 ]}
+                accessible={false}
+                aria-hidden={true}
               />
               <Image
                 source={icons[`method_${methodType}`]}
@@ -187,6 +193,8 @@ const PaymentFlowStep = ({
                     height: sizes[`${methodType}MethodHeight`] || sizes.methodIconHeight,
                   },
                 ]}
+                accessible={false}
+                aria-hidden={true}
               />
             </TouchableOpacity>
           );

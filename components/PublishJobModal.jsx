@@ -16,6 +16,8 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { formatCurrency } from '../utils/currency_formatter';
 import { RTLView } from './common/RTLView';
 import AppModal from './ui/AppModal';
+import AppHeading from './ui/AppHeading';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 
 export const PublishJobModal = ({
     visible,
@@ -79,6 +81,8 @@ export const PublishJobModal = ({
                 activeOpacity={1}
                 onPress={() => setVisible(false)}
                 style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}
+                accessible={false}
+                importantForAccessibility="no"
             >
                 <View
                     style={[
@@ -102,6 +106,9 @@ export const PublishJobModal = ({
                                 alignItems: 'center',
                             },
                         ]}
+                        accessibilityViewIsModal={true}
+                        role="dialog"
+                        aria-modal="true"
                     >
                         <TouchableOpacity
                             onPress={() => setVisible(false)}
@@ -110,6 +117,10 @@ export const PublishJobModal = ({
                                 top: sizes.modalCrossTopRightPos,
                                 right: sizes.modalCrossTopRightPos,
                             }}
+                            accessible={true}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+                            hitSlop={ACCESSIBILITY_HIT_SLOP}
                         >
                             <Image
                                 source={icons.cross}
@@ -119,10 +130,13 @@ export const PublishJobModal = ({
                                     tintColor: themeController.current?.textColor,
                                 }}
                                 resizeMode='contain'
+                                accessible={false}
+                                aria-hidden={true}
                             />
                         </TouchableOpacity>
                         {/* заголовок */}
-                        <Text
+                        <AppHeading
+                            level={2}
                             style={{
                                 fontSize: sizes.modalTitle,
                                 fontFamily: 'Rubik-Bold',
@@ -137,7 +151,7 @@ export const PublishJobModal = ({
                                 }) : t('publishJobModal.title', {
                                     defaultValue: 'You must pay to publish this ad',
                                 })}
-                        </Text>
+                        </AppHeading>
 
                         <RTLView isRTL={isRTL} gap={10}>
                             <Text
@@ -330,32 +344,6 @@ const styles = StyleSheet.create({
     label: {
         // fontWeight: 'bold',
         // marginBottom: RFValue(4),
-    },
-    input: {
-        width: '100%',
-        fontFamily: 'Rubik-Medium',
-    },
-    autocompleteContainer: {
-        position: 'relative',
-    },
-    suggestionBox: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        zIndex: 999,
-        borderRadius: 6,
-        overflow: 'hidden',
-        ...Platform.select({
-            web: {
-                zIndex: 9999,
-                position: 'absolute', // На всякий случай переопредели
-                overflow: 'auto',
-            },
-        }),
-    },
-    suggestionItem: {
-        borderBottomWidth: 1,
-        borderBottomColor: '#eee',
     },
     addImageButton: {
         justifyContent: 'center',

@@ -35,13 +35,13 @@ export default function JobTypeSelector({
     () => ({
       font: isWebLandscape
         ? scaleByHeight(14, height)
-        : scaleByHeightMobile(14, height),
+        : scaleByHeightMobile(14, height, { maxScale: 1.25 }),
       padH: isWebLandscape
         ? scaleByHeight(11, height)
-        : scaleByHeightMobile(10, height),
+        : scaleByHeightMobile(10, height, { maxScale: 1.25 }),
       height: isWebLandscape
         ? scaleByHeight(34, height)
-        : scaleByHeightMobile(34, height),
+        : scaleByHeightMobile(34, height, { maxScale: 1.35 }),
       radius: isWebLandscape
         ? scaleByHeight(4, height)
         : scaleByHeightMobile(4, height),
@@ -198,6 +198,7 @@ export default function JobTypeSelector({
       <ScrollView
         ref={scrollRef}
         horizontal
+        nestedScrollEnabled={true}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -219,6 +220,12 @@ export default function JobTypeSelector({
                     <TouchableOpacity
                       key={key}
                       onPress={() => toggleType(key)}
+                      accessible={true}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: active }}
+                      accessibilityLabel={label}
+                      role="checkbox"
+                      aria-checked={active}
                       style={[
                         styles.tag,
                         dynamicStyles.tag,
@@ -258,6 +265,9 @@ export default function JobTypeSelector({
       {selectedTypes.length > 0 && (
         <TouchableOpacity
           onPress={clearAll}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={t('misc.reset_filters', { defaultValue: 'Reset filters' })}
           style={[styles.trashButton, dynamicStyles.trashButton]}
         >
           <Text style={[dynamicStyles.resetText]}>

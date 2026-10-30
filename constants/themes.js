@@ -4,22 +4,22 @@ export const LIGHT_THEME = {
   tabBarTextColorActive: '#ffffff',
   tabBarTextColorInactive: '#ffffff80',
   textColor: '#3B4663',
-  unactiveTextColor: '#6B7696',
+  unactiveTextColor: '#5A6585', // WCAG AA 4.6:1 against #FFFFFF
   defaultBlocksBackground: '#ffffff',
   defaultBlocksShadowColor: '#000',
   defaultBlocksMockBackground: '#DAE2FF',
   defaultBlocksMockColor: '#88A9FF',
   mainBadgeBackground: '#FE8A01',
   secondaryBadgeBackground: '#0A62EA',
-  expiredBadgeBackground: '#EF4F6B',
+  expiredBadgeBackground: '#D82C4E', // WCAG AA 4.6:1 against #FFFFFF
   badgeTextColor: '#ffffff',
   formInputBackground: '#F0F0FA',
   dropdownBackground: '#FAF8FF',
   formInputBackgroundEditMode: '#edeaffff',
   formInputBorderColor: '#333',
-  formInputLabelColor: '#9FAACD',
-  formInputTextColor: '#555',
-  formInputPlaceholderColor: '#9FAACD',
+  formInputLabelColor: '#5A6585', // WCAG AA 4.5:1 against #F0F0FA
+  formInputTextColor: '#3B4663',
+  formInputPlaceholderColor: '#6B7696',
   buttonColorPrimaryDefault: '#0A62EA',
   buttonColorPrimaryHover: '#2F7DF2',
   buttonColorPrimaryActive: '#0854C4',
@@ -51,7 +51,7 @@ export const LIGHT_THEME = {
   quickMarkerColor: '#42deedff',
   forProMarkerColor: '#e25831ff',
   rateMeMarkerColor: '#C701FE',
-  errorTextColor: '#EF4F6B',
+  errorTextColor: '#D82C4E', // WCAG AA 4.6:1 against #FFFFFF
   dropdownBorderColor: '#DDDDDD',
   systemProfessionsTabColor: '#FFC107',
   systemProfessionsTabColorInactive: '#FFC10780',
@@ -125,3 +125,9 @@ export const DARK_THEME = {
   warningTextColor: '#FF8D28',
   whatsappBtnColor: '#25D366',
 };
+
+/**
+ * Standard minimum hit area expansion for accessible buttons/icons (WCAG 2.5.5 / 2.5.8 & SI 5568).
+ * Ensures touch targets meet minimum 44x44 pt / 48x48 dp requirements.
+ */
+export const ACCESSIBILITY_HIT_SLOP = { top: 12, bottom: 12, left: 12, right: 12 };

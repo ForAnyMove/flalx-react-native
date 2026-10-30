@@ -1,10 +1,23 @@
-import { Text, TouchableOpacity } from "react-native";
-
+import { Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useComponentContext } from "../../context/globalAppContext";
+import { useWindowInfo } from "../../context/windowContext";
+import { scaleByHeightMobile } from "../../utils/resizeFuncs";
 
-export default function StyledButton(text, mode='primary', style={}, textStyle={}) {
+export default function StyledButton({
+  text,
+  children,
+  mode = 'primary',
+  style = {},
+  textStyle = {},
+  onPress,
+  ...restProps
+} = {}) {
   const { activeThemeStyles } = useComponentContext();
-  function ColorizeByMode () {
+  const { height } = useWindowInfo();
+  const padV = scaleByHeightMobile(6, height);
+  const content = text ?? children;
+
+  function ColorizeByMode() {
     switch (mode) {
       case 'primary':
         return {
@@ -13,8 +26,8 @@ export default function StyledButton(text, mode='primary', style={}, textStyle={
           },
           text: {
             color: activeThemeStyles?.buttonTextColorPrimary,
-          }
-        }
+          },
+        };
       case 'primary-reverse':
         return {
           container: {
@@ -23,9 +36,9 @@ export default function StyledButton(text, mode='primary', style={}, textStyle={
             borderWidth: 1,
           },
           text: {
-            color: activeThemeStyles?.buttonTextColorPrimary,
-          }
-        }
+            color: activeThemeStyles?.buttonColorPrimaryDefault,
+          },
+        };
       case 'secondary':
         return {
           container: {
@@ -33,27 +46,48 @@ export default function StyledButton(text, mode='primary', style={}, textStyle={
           },
           text: {
             color: activeThemeStyles?.buttonTextColorSecondary,
-          }
-        }
+          },
+        };
       case 'secondary-reverse':
         return {
           container: {
-            backgroundColor: activeThemeStyles?.buttonColorPrimaryDefault,
+            backgroundColor: activeThemeStyles?.buttonTextColorSecondary,
             borderColor: activeThemeStyles?.buttonColorSecondaryDefault,
             borderWidth: 1,
           },
           text: {
-            color: activeThemeStyles?.buttonTextColorPrimary,
-          }
-        }
-    
+            color: activeThemeStyles?.buttonColorSecondaryDefault,
+          },
+        };
       default:
-        break;
+        return {
+          container: {
+            backgroundColor: activeThemeStyles?.buttonColorPrimaryDefault,
+          },
+          text: {
+            color: activeThemeStyles?.buttonTextColorPrimary,
+          },
+        };
     }
   }
+
+  const colors = ColorizeByMode();
+  const flatStyle = StyleSheet.flatten([style, colors.container]) || {};
+  const { height: styleHeight, ...restStyle } = flatStyle;
+  const computedContainerStyle = styleHeight != null
+    ? [restStyle, { minHeight: styleHeight, paddingVertical: padV, justifyContent: 'center', alignItems: 'center' }]
+    : flatStyle;
+
   return (
-    <TouchableOpacity style={[style, ColorizeByMode().container]}>
-      <Text style={[textStyle, ColorizeByMode().text]}>{text}</Text>
+    <TouchableOpacity
+      onPress={onPress}
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={typeof content === 'string' ? content : undefined}
+      style={computedContainerStyle}
+      {...restProps}
+    >
+      <Text style={[textStyle, colors.text]} maxFontSizeMultiplier={1.4}>{content}</Text>
     </TouchableOpacity>
   );
-};
+}

@@ -14,6 +14,8 @@ import { useWindowInfo } from '../../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
 import CustomTextInput from '../ui/CustomTextInput';
+import AppHeading from '../ui/AppHeading';
+import { ACCESSIBILITY_HIT_SLOP } from '../../constants/themes';
 import { getAuthErrorMessage } from '../../src/auth/authErrors';
 import { logError } from '../../utils/log_util';
 import AppModal from '../ui/AppModal';
@@ -131,7 +133,9 @@ export default function MfaDisableModal({ visible, onClose, onDisabled }) {
       otpCellHeight: scale(56),
       otpCellFontSize: scale(20),
       btnHeight: scale(52),
+      btnFont: scale(16),
       gap: scale(14),
+      smallGap: scale(8),
       closeIconSize: scale(18),
     };
   }, [isWebLandscape, height]);
@@ -147,6 +151,9 @@ export default function MfaDisableModal({ visible, onClose, onDisabled }) {
         <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' }}>
           <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: undefined })}>
             <View
+              accessibilityViewIsModal={true}
+              role="dialog"
+              aria-modal="true"
               style={{
                 width: sizes.modalWidth,
                 backgroundColor: theme.backgroundColor,
@@ -162,24 +169,31 @@ export default function MfaDisableModal({ visible, onClose, onDisabled }) {
                   zIndex: 10,
                 }}
                 onPress={handleClose}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close', 'סגור')}
+                hitSlop={ACCESSIBILITY_HIT_SLOP}
               >
                 <Image
                   source={icons.cross}
+                  accessible={false}
+                  aria-hidden={true}
                   style={{ width: sizes.closeIconSize, height: sizes.closeIconSize, tintColor: theme.textColor }}
                 />
               </TouchableOpacity>
 
-              <Text
+              <AppHeading
+                level={2}
                 style={{
                   fontSize: sizes.titleFont,
                   fontFamily: 'Rubik-Bold',
                   color: theme.textColor,
                   textAlign: 'center',
-                  marginBottom: 8,
+                  marginBottom: sizes.smallGap,
                 }}
               >
                 {t('my_profile.security.disable_modal_title')}
-              </Text>
+              </AppHeading>
               <Text
                 style={{
                   fontSize: sizes.subtitleFont,
@@ -207,7 +221,7 @@ export default function MfaDisableModal({ visible, onClose, onDisabled }) {
                           height: sizes.otpCellHeight,
                           fontSize: sizes.otpCellFontSize,
                           borderWidth: 1,
-                          borderRadius: 8,
+                          borderRadius: Math.round(sizes.borderRadius * 0.67),
                           textAlign: 'center',
                           fontFamily: 'Rubik-Medium',
                           borderColor: otpError ? theme.errorTextColor : theme.borderColor,
@@ -232,6 +246,10 @@ export default function MfaDisableModal({ visible, onClose, onDisabled }) {
                   <TouchableOpacity
                     onPress={handleDisable}
                     disabled={verifying || otp.join('').length !== OTP_LENGTH}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('my_profile.security.disable_confirm_button')}
+                    accessibilityState={{ disabled: Boolean(verifying || otp.join('').length !== OTP_LENGTH) }}
                     style={{
                       height: sizes.btnHeight,
                       borderRadius: sizes.borderRadius / 1.5,
@@ -245,7 +263,7 @@ export default function MfaDisableModal({ visible, onClose, onDisabled }) {
                     {verifying ? (
                       <ActivityIndicator color={theme.errorTextColor} />
                     ) : (
-                      <Text style={{ color: theme.errorTextColor, fontFamily: 'Rubik-Medium', fontSize: 16 }}>
+                      <Text style={{ color: theme.errorTextColor, fontFamily: 'Rubik-Medium', fontSize: sizes.btnFont }}>
                         {t('my_profile.security.disable_confirm_button')}
                       </Text>
                     )}

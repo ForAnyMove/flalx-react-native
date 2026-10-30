@@ -10,7 +10,9 @@ import {
 import { useComponentContext } from '../context/globalAppContext';
 import JobModalWrapper from './JobModalWrapper';
 import AppModal from './ui/AppModal';
+import AppHeading from './ui/AppHeading';
 import { icons } from '../constants/icons';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
 import {
@@ -305,6 +307,7 @@ function SubscriptionsModalContent({ closeModal }) {
       btnHeight: isWebLandscape
         ? scaleByHeight(52, height)
         : scaleByHeightMobile(40, height),
+      featuresGap: scale(8, height),
     };
   }, [isWebLandscape, height]);
 
@@ -335,6 +338,8 @@ function SubscriptionsModalContent({ closeModal }) {
         style={{
           flex: 1,
         }}
+        accessible={false}
+        importantForAccessibility="no"
       >
         <TouchableOpacity
           activeOpacity={1}
@@ -348,6 +353,9 @@ function SubscriptionsModalContent({ closeModal }) {
           onPress={(e) => {
             e.stopPropagation();
           }}
+          accessibilityViewIsModal={true}
+          role="dialog"
+          aria-modal="true"
         >
           {/* Header */}
           <View
@@ -371,6 +379,10 @@ function SubscriptionsModalContent({ closeModal }) {
               onPress={() => {
                 closeModal(false);
               }}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.back', { defaultValue: 'חזרה' })}
+              hitSlop={ACCESSIBILITY_HIT_SLOP}
             >
               <Image
                 source={isRTL ? icons.forward : icons.back}
@@ -379,9 +391,12 @@ function SubscriptionsModalContent({ closeModal }) {
                   height: sizes.icon,
                   tintColor: themeController.current?.textColor,
                 }}
+                accessible={false}
+                aria-hidden={true}
               />
             </TouchableOpacity>
-            <Text
+            <AppHeading
+              level={1}
               style={[
                 styles.modalTitle,
                 {
@@ -391,7 +406,7 @@ function SubscriptionsModalContent({ closeModal }) {
               ]}
             >
               FLALX
-            </Text>
+            </AppHeading>
           </View>
 
           <ScrollView contentContainerStyle={{}}>
@@ -492,7 +507,7 @@ function SubscriptionsModalContent({ closeModal }) {
                       <View style={{
                         flexDirection: isRTL ? 'row-reverse' : 'row',
                         width: '100%',
-                        gap: 8,
+                        gap: sizes.featuresGap,
                       }}>
                         {(subStatus === 'active' || subStatus === 'past_due' || subStatus === 'grace') && (
                           <TouchableOpacity
@@ -572,7 +587,7 @@ function SubscriptionsModalContent({ closeModal }) {
                         flexDirection: isRTL ? 'row-reverse' : 'row',
                         justifyContent: 'space-between',
                         width: '100%',
-                        marginTop: 8,
+                        marginTop: sizes.featuresGap,
                       }}>
                         <Text style={{
                           fontSize: sizes.subscriptionsFeaturesFont,

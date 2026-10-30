@@ -41,6 +41,8 @@ import CustomTextInput from './ui/CustomTextInput';
 import { getDeviceTimezone } from '../utils/datetimeTimezone';
 import ImageViewerModal from './ui/ImageViewerModal';
 import PublishStatusModal from './PublishStatusModal';
+import AppHeading from './ui/AppHeading';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 
 async function editJobById(jobId, updates, session) {
   try {
@@ -247,7 +249,9 @@ export default function NewJobModal({
       margin: isWebLandscape ? webLandscapeScale(18) : mobileScale(10),
       mobileGap: mobileScale(16),
       borderRadius: isWebLandscape ? webLandscapeScale(8) : mobileScale(8),
-      thumb: isWebLandscape ? webLandscapeScale(128) : mobileScale(128),
+      thumb: isWebLandscape
+        ? webLandscapeScale(128)
+        : mobileScale(85, { maxScale: 1.35 }),
       thumbGap: isWebLandscape ? webLandscapeScale(16) : mobileScale(16),
       headerMargin: isWebLandscape ? webLandscapeScale(30) : mobileScale(5),
       modalPadding: isWebLandscape ? webLandscapeScale(45) : mobileScale(35),
@@ -291,7 +295,9 @@ export default function NewJobModal({
       removeIconPosition: isWebLandscape
         ? webLandscapeScale(3)
         : mobileScale(4),
-      imageSize: isWebLandscape ? webLandscapeScale(32) : height * 0.03,
+      imageSize: isWebLandscape
+        ? webLandscapeScale(32)
+        : mobileScale(32, { maxScale: 1.35 }),
       crossIconSize: isWebLandscape ? webLandscapeScale(24) : mobileScale(20),
       logoSize: isWebLandscape ? webLandscapeScale(24) : mobileScale(18),
       descriptionHeight: isWebLandscape ? height * 0.12 : mobileScale(70),
@@ -394,8 +400,29 @@ export default function NewJobModal({
   const [imageContainerWidth, setImageContainerWidth] = useState(0);
 
   const portraitImageGap = useMemo(() => {
-    return Math.max(6, Math.round(scaleByHeightMobile(8, height)));
+    return Math.max(6, Math.round(scaleByHeightMobile(8, height, { minScale: 0.5, maxScale: 1.35 })));
   }, [height]);
+
+  const portraitBaseItemSize = useMemo(() => {
+    return scaleByHeightMobile(85, height, { minScale: 0.5, maxScale: 1.35 });
+  }, [height]);
+
+  const portraitColumnsCount = useMemo(() => {
+    const available =
+      imageContainerWidth > 0
+        ? imageContainerWidth
+        : width - (sizes.containerPaddingHorizontal || 14) * 2;
+    const cols = Math.floor(
+      (available + portraitImageGap) / (portraitBaseItemSize + portraitImageGap)
+    );
+    return Math.max(1, cols);
+  }, [
+    imageContainerWidth,
+    width,
+    sizes.containerPaddingHorizontal,
+    portraitImageGap,
+    portraitBaseItemSize,
+  ]);
 
   const portraitItemSize = useMemo(() => {
     const availableImageWidth =
@@ -403,14 +430,18 @@ export default function NewJobModal({
         ? imageContainerWidth
         : width - (sizes.containerPaddingHorizontal || 14) * 2;
     return Math.max(
-      40,
-      Math.floor((availableImageWidth - 3 * portraitImageGap) / 4)
+      36,
+      Math.floor(
+        (availableImageWidth - (portraitColumnsCount - 1) * portraitImageGap) /
+          portraitColumnsCount
+      )
     );
   }, [
     imageContainerWidth,
     width,
     sizes.containerPaddingHorizontal,
     portraitImageGap,
+    portraitColumnsCount,
   ]);
 
   const portraitRows = useMemo(() => {
@@ -419,11 +450,12 @@ export default function NewJobModal({
       ...images.map((uri, index) => ({ type: 'image', uri, index })),
     ];
     const rows = [];
-    for (let i = 0; i < items.length; i += 4) {
-      rows.push(items.slice(i, i + 4));
+    const step = portraitColumnsCount > 0 ? portraitColumnsCount : 4;
+    for (let i = 0; i < items.length; i += step) {
+      rows.push(items.slice(i, i + step));
     }
     return rows;
-  }, [images]);
+  }, [images, portraitColumnsCount]);
 
   // Состояния для управления фокусом на полях ввода
   const [focusStates, setFocusStates] = useState([false, false, false]);
@@ -915,6 +947,9 @@ export default function NewJobModal({
                     <TouchableOpacity
                       key='add-btn'
                       onPress={() => setModalVisible(true)}
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('newJob.uploadingPhotos', { defaultValue: 'Add photo' })}
                       style={[
                         styles.addImageButton,
                         {
@@ -928,6 +963,8 @@ export default function NewJobModal({
                     >
                       <Image
                         source={icons.plus}
+                        accessible={false}
+                        aria-hidden={true}
                         style={{
                           width: Math.round(portraitItemSize * 0.32),
                           height: Math.round(portraitItemSize * 0.32),
@@ -954,6 +991,9 @@ export default function NewJobModal({
                       setImagePreviewIndex(item.index);
                       setImagePreviewVisible(true);
                     }}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('showJob.photoIndex', { defaultValue: 'Photo {{index}}', index: item.index + 1 })}
                   >
                     <Image
                       source={{ uri: item.uri }}
@@ -966,6 +1006,8 @@ export default function NewJobModal({
                         },
                       ]}
                       resizeMode='cover'
+                      accessible={false}
+                      aria-hidden={true}
                     />
                     <TouchableOpacity
                       style={[
@@ -980,6 +1022,9 @@ export default function NewJobModal({
                       ]}
                       onPress={() => setPendingRemoveIndex(item.index)}
                       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('common.remove', { defaultValue: 'מחק' })}
                     >
                       <Image
                         source={icons.cross}
@@ -989,6 +1034,8 @@ export default function NewJobModal({
                           tintColor: themeController.current?.textColor,
                         }}
                         resizeMode='contain'
+                        accessible={false}
+                        aria-hidden={true}
                       />
                     </TouchableOpacity>
                   </TouchableOpacity>
@@ -1004,6 +1051,9 @@ export default function NewJobModal({
           {/* Кнопка добавления */}
           <TouchableOpacity
             onPress={() => setModalVisible(true)}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('newJob.uploadingPhotos', { defaultValue: 'Add photo' })}
             style={[
               styles.addImageButton,
               {
@@ -1025,6 +1075,8 @@ export default function NewJobModal({
                 tintColor: themeController.current?.primaryColor,
               }}
               resizeMode='contain'
+              accessible={false}
+              aria-hidden={true}
             />
           </TouchableOpacity>
 
@@ -1049,6 +1101,9 @@ export default function NewJobModal({
                   setImagePreviewIndex(index);
                   setImagePreviewVisible(true);
                 }}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('showJob.photoIndex', { defaultValue: 'Photo {{index}}', index: index + 1 })}
               >
                 <Image
                   source={{ uri }}
@@ -1060,6 +1115,8 @@ export default function NewJobModal({
                       borderRadius: sizes.borderRadius,
                     },
                   ]}
+                  accessible={false}
+                  aria-hidden={true}
                 />
                 <TouchableOpacity
                   style={[
@@ -1073,6 +1130,9 @@ export default function NewJobModal({
                     },
                   ]}
                   onPress={() => setPendingRemoveIndex(index)}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.remove', { defaultValue: 'מחק' })}
                 >
                   <Image
                     source={icons.cross}
@@ -1082,6 +1142,8 @@ export default function NewJobModal({
                       tintColor: themeController.current?.textColor,
                     }}
                     resizeMode='contain'
+                    accessible={false}
+                    aria-hidden={true}
                   />
                 </TouchableOpacity>
               </TouchableOpacity>
@@ -1221,7 +1283,12 @@ export default function NewJobModal({
             isRTL && { flexDirection: 'row-reverse' },
           ]}
         >
-          <TouchableOpacity onPress={() => closeModal()}>
+          <TouchableOpacity
+            onPress={() => closeModal()}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close') || 'סגור'}
+            hitSlop={ACCESSIBILITY_HIT_SLOP}
+          >
             <Image
               source={icons.cross}
               style={{
@@ -1232,7 +1299,8 @@ export default function NewJobModal({
               resizeMode='contain'
             />
           </TouchableOpacity>
-          <Text
+          <AppHeading
+            level={1}
             style={[
               styles.logo,
               {
@@ -1242,7 +1310,7 @@ export default function NewJobModal({
             ]}
           >
             FLALX
-          </Text>
+          </AppHeading>
         </View>
 
         {Platform.OS === 'web' ? (
@@ -1600,6 +1668,9 @@ export default function NewJobModal({
                     >
                       <TouchableOpacity
                         onPress={() => setModalVisible(true)}
+                        accessible={true}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('newJob.uploadingPhotos', { defaultValue: 'Add photo' })}
                         style={[
                           styles.addImageButton,
                           {
@@ -1615,6 +1686,8 @@ export default function NewJobModal({
                       >
                         <Image
                           source={icons.plus}
+                          accessible={false}
+                          aria-hidden={true}
                           style={{
                             width: sizes.imageSize,
                             height: sizes.imageSize,
@@ -1646,6 +1719,9 @@ export default function NewJobModal({
                               setImagePreviewIndex(index);
                               setImagePreviewVisible(true);
                             }}
+                            accessible={true}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('showJob.photoIndex', { defaultValue: 'Photo {{index}}', index: index + 1 })}
                           >
                             <Image
                               source={{ uri }}
@@ -1654,6 +1730,8 @@ export default function NewJobModal({
                                 height: sizes.thumb,
                                 borderRadius: sizes.borderRadius,
                               }}
+                              accessible={false}
+                              aria-hidden={true}
                             />
                             <TouchableOpacity
                               style={[
@@ -1667,6 +1745,9 @@ export default function NewJobModal({
                                 },
                               ]}
                               onPress={() => setPendingRemoveIndex(index)}
+                              accessible={true}
+                              accessibilityRole="button"
+                              accessibilityLabel={t('common.remove', { defaultValue: 'מחק' })}
                             >
                               <Image
                                 source={icons.cross}
@@ -1676,6 +1757,8 @@ export default function NewJobModal({
                                   tintColor: themeController.current?.textColor,
                                 }}
                                 resizeMode='contain'
+                                accessible={false}
+                                aria-hidden={true}
                               />
                             </TouchableOpacity>
                           </TouchableOpacity>
@@ -1862,6 +1945,8 @@ export default function NewJobModal({
                           ? () => handleCreate()
                           : () => setStatusModalVisible(true)
                       }
+                      accessibilityRole="button"
+                      accessibilityLabel={editMode ? (t('common.save') || 'Save') : (t('common.create') || 'Create')}
                     >
                       <Text
                         style={{
@@ -1947,6 +2032,8 @@ export default function NewJobModal({
                   ? () => handleCreate()
                   : () => setStatusModalVisible(true)
               }
+              accessibilityRole="button"
+              accessibilityLabel={editMode ? (t('common.save') || 'Save') : (t('common.create') || 'Create')}
             >
               <Text
                 style={{
@@ -2115,28 +2202,6 @@ const styles = StyleSheet.create({
   input: {
     width: '100%',
     fontFamily: 'Rubik-Medium',
-  },
-  autocompleteContainer: {
-    position: 'relative',
-  },
-  suggestionBox: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    zIndex: 999,
-    borderRadius: 6,
-    overflow: 'hidden',
-    ...Platform.select({
-      web: {
-        zIndex: 9999,
-        position: 'absolute', // На всякий случай переопредели
-        overflow: 'auto',
-      },
-    }),
-  },
-  suggestionItem: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
   addImageButton: {
     justifyContent: 'center',

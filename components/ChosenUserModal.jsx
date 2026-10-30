@@ -15,6 +15,8 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 import JobExpectationsBadge from './ui/JobExpectationsBadge';
 import AppModal from './ui/AppModal';
+import AppHeading from './ui/AppHeading';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 
 const ChosenUserModal = ({
   visible,
@@ -229,7 +231,7 @@ const ChosenUserModal = ({
   const renderInfo = () => (
     <View style={styles.contentContainer}>
       <Image source={icons.chosen_user} style={styles.statusIcon} />
-      <Text style={styles.title}>{t('chosen_user_modal.title_info')}</Text>
+      <AppHeading level={2} style={styles.title}>{t('chosen_user_modal.title_info')}</AppHeading>
       <Text style={styles.desc}>
         <Trans
           i18nKey="chosen_user_modal.desc_info"
@@ -284,9 +286,9 @@ const ChosenUserModal = ({
         <View style={{ width: sizes.statusIconSize, height: sizes.statusIconSize, borderRadius: sizes.statusIconSize / 2, backgroundColor: 'transparent', justifyContent: 'center', alignItems: 'center', marginBottom: sizes.statusIconMarginBottom }}>
           <Image source={icons.logo_large} style={{ width: sizes.statusIconSize, height: sizes.statusIconSize, }} />
         </View>
-        <Text style={styles.title}>{loadingTitle}</Text>
+        <AppHeading level={2} style={styles.title}>{loadingTitle}</AppHeading>
         <Text style={[styles.desc, { marginBottom: 0 }]}>{loadingDesc}</Text>
-        <ActivityIndicator size={sizes.loadingIndicatorSize} color={theme.primaryColor} style={{ marginVertical: 20 }} />
+        <ActivityIndicator size={sizes.loadingIndicatorSize} color={theme.primaryColor} style={{ marginVertical: sizes.statusIconMarginBottom }} />
       </View>
     );
   };
@@ -297,8 +299,8 @@ const ChosenUserModal = ({
       : '';
     return (
       <View style={styles.contentContainer}>
-        <Image source={icons.attention} style={styles.errorIcon} />
-        <Text style={styles.title}>{t('chosen_user_modal.title_retrying')}</Text>
+        <Image source={icons.attention} style={styles.errorIcon} accessible={false} aria-hidden={true} />
+        <AppHeading level={2} style={styles.title}>{t('chosen_user_modal.title_retrying')}</AppHeading>
         <Text style={styles.desc}>
           {t('chosen_user_modal.desc_retrying', {
             attempt: retryInfo?.attempt,
@@ -317,8 +319,8 @@ const ChosenUserModal = ({
 
     return (
       <View style={styles.contentContainer}>
-        <Image source={icons.checkDefault} style={styles.statusIcon} />
-        <Text style={styles.title}>{t('chosen_user_modal.title_success')}</Text>
+        <Image source={icons.checkDefault} style={styles.statusIcon} accessible={false} aria-hidden={true} />
+        <AppHeading level={2} style={styles.title}>{t('chosen_user_modal.title_success')}</AppHeading>
         <Text style={styles.desc}>
           <Trans
             i18nKey={successDescKey}
@@ -326,7 +328,13 @@ const ChosenUserModal = ({
             components={{ highlight: <Text style={{ color: theme.textColor }} /> }}
           />
         </Text>
-        <TouchableOpacity style={[styles.button, styles.primaryButton, { width: '100%' }]} onPress={onClose}>
+        <TouchableOpacity
+          style={[styles.button, styles.primaryButton, { width: '100%' }]}
+          onPress={onClose}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={t('chosen_user_modal.btn_got_it')}
+        >
           <Text style={[styles.buttonText, styles.primaryButtonText]}>
             {t('chosen_user_modal.btn_got_it')}
           </Text>
@@ -346,10 +354,16 @@ const ChosenUserModal = ({
         : 'chosen_user_modal.desc_error';
     return (
       <View style={styles.contentContainer}>
-        <Image source={icons.attention} style={styles.errorIcon} />
-        <Text style={[styles.title, { color: theme.errorTextColor }]}>{t(titleKey)}</Text>
+        <Image source={icons.attention} style={styles.errorIcon} accessible={false} aria-hidden={true} />
+        <AppHeading level={2} style={[styles.title, { color: theme.errorTextColor }]}>{t(titleKey)}</AppHeading>
         <Text style={styles.desc}>{t(descKey)}</Text>
-        <TouchableOpacity style={[styles.button, styles.primaryButton, { width: '100%' }]} onPress={onClose}>
+        <TouchableOpacity
+          style={[styles.button, styles.primaryButton, { width: '100%' }]}
+          onPress={onClose}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={t('chosen_user_modal.btn_close')}
+        >
           <Text style={[styles.buttonText, styles.primaryButtonText]}>
             {t('chosen_user_modal.btn_close')}
           </Text>
@@ -370,11 +384,23 @@ const ChosenUserModal = ({
   };
 
   return (
-    <AppModal visible={visible} transparent>
+    <AppModal visible={visible} transparent onRequestClose={handleCrossPress}>
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <TouchableOpacity style={styles.crossButton} onPress={handleCrossPress}>
-            <Image source={icons.cross} style={styles.crossIcon} />
+        <View
+          style={styles.modalContainer}
+          accessibilityViewIsModal={true}
+          role="dialog"
+          aria-modal="true"
+        >
+          <TouchableOpacity
+            style={styles.crossButton}
+            onPress={handleCrossPress}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+            hitSlop={ACCESSIBILITY_HIT_SLOP}
+          >
+            <Image source={icons.cross} style={styles.crossIcon} accessible={false} aria-hidden={true} />
           </TouchableOpacity>
           {renderContent()}
         </View>

@@ -20,7 +20,7 @@ import InProgressScreen from './jobsTabs/InProgress';
 import DoneScreen from './jobsTabs/Done';
 import ShowJobModal from '../../components/ShowJobModal';
 import JobModalWrapper from '../../components/JobModalWrapper';
-import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
+import { BASE_DESIGN_HEIGHT, scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 
 const TAB_TITLES = ['new', 'waiting', 'in_progress', 'done'];
 const TAB_TITLES_RTL = ['done', 'in_progress', 'waiting', 'new'];
@@ -240,8 +240,8 @@ export default function Jobs() {
   }, [isRTL, orderedTabs]);
 
   const sizes = useMemo(() => {
-    const web = (size) => scaleByHeight(size, height);
-    const mobile = (size) => scaleByHeightMobile(size, height);
+    const web = (size, options) => scaleByHeight(size, height, BASE_DESIGN_HEIGHT, options);
+    const mobile = (size, options) => scaleByHeightMobile(size, height, options);
 
     const panelHeight = isWebLandscape ? web(65) : mobile(83);
     const badgeSize = isWebLandscape ? web(20) : panelHeight * 0.25;
@@ -249,7 +249,7 @@ export default function Jobs() {
     return {
       panelHeight,
       iconSize: isWebLandscape ? web(24) : mobile(24),
-      fontSize: isWebLandscape ? web(12) : mobile(12),
+      fontSize: isWebLandscape ? web(12) : mobile(12, { maxScale: 1.15 }),
       badgeSize,
       underlineHeight: isWebLandscape ? web(2) : mobile(2),
       globalUnderlineSpace: isWebLandscape ? web(10) : mobile(10),
@@ -262,11 +262,11 @@ export default function Jobs() {
       badgeFontSize: badgeSize * 0.6,
       titlePaddingHorizontal: isWebLandscape ? web(4) : mobile(4),
       underlineBorderRadius: isWebLandscape ? web(2) : mobile(2),
-      plusButtonSize: isWebLandscape ? web(64) : mobile(64),
+      plusButtonSize: isWebLandscape ? web(64) : mobile(64, { maxScale: 1.35 }),
       plusButtonLeft: isWebLandscape ? web(24) : mobile(16),
       plusButtonRight: isWebLandscape ? web(24) : mobile(16),
       plusButtonBottom: isWebLandscape ? web(24) : mobile(24),
-      plusIconSize: isWebLandscape ? web(24) : mobile(24),
+      plusIconSize: isWebLandscape ? web(24) : mobile(24, { maxScale: 1.35 }),
       plusButtonShadowColor: '#000',
       plusButtonShadowOffset: {
         width: 0,
@@ -275,7 +275,7 @@ export default function Jobs() {
       plusButtonShadowOpacity: 0.3,
       plusButtonShadowRadius: isWebLandscape ? web(5) : mobile(5),
       plusButtonElevation: isWebLandscape ? 10 : 8,
-      plusButtonLabelFontSize: isWebLandscape ? web(12) : mobile(12),
+      plusButtonLabelFontSize: isWebLandscape ? web(12) : mobile(12, { maxScale: 1.35 }),
       plusButtonLabelMarginTop: isWebLandscape ? web(8) : mobile(8),
     };
   }, [height, isWebLandscape]);
@@ -292,10 +292,14 @@ export default function Jobs() {
         }}
       >
         {orderedTabs.map((title, idx) => {
+          const isSelected = appTabController.activeSubTab ? appTabController.activeSubTab === title : idx === 0;
           return (
             <TouchableOpacity
               key={idx}
               onPress={() => handleTabPress(idx)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isSelected }}
+              accessibilityLabel={t(`tabs.business_${title}`)}
               style={{
                 flex: 1,
                 alignItems: 'center',
@@ -362,6 +366,7 @@ export default function Jobs() {
                   }}
                   numberOfLines={2}
                   ellipsizeMode='tail'
+                  allowFontScaling={false}
                 >
                   {t(`tabs.business_${title}`)}
                 </Animated.Text>
@@ -447,6 +452,8 @@ export default function Jobs() {
             shadowRadius: sizes.plusButtonShadowRadius,
             elevation: sizes.plusButtonElevation,
           }}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.create_request')}
           onPress={async () => {
             setActiveKey(null);
             setNewJobModalVisible(true);

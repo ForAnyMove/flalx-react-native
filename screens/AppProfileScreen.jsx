@@ -14,9 +14,12 @@ import Profession from './mainScreens/profileTabs/Profession';
 import Settings from './mainScreens/profileTabs/Settings';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useWindowInfo } from '../context/windowContext';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 
 export default function AppProfileScreen({ switchToApp }) {
+  const { t } = useTranslation();
   const { session, profileTabController, themeController, languageController } =
     useComponentContext();
   const { width, height, isLandscape } = useWindowInfo();
@@ -28,7 +31,7 @@ export default function AppProfileScreen({ switchToApp }) {
     const mobile = (size) => scaleByHeightMobile(size, height);
 
     return {
-      headerHeight: isWebLandscape ? web(50) : height * 0.07,
+      headerHeight: isWebLandscape ? web(50) : mobile(56),
       headerPaddingHorizontal: isWebLandscape ? web(7) : mobile(3),
       headerMarginHorizontal: isWebLandscape ? web(24) : mobile(5),
       headerMargin: isWebLandscape ? web(30) : mobile(5),
@@ -58,7 +61,7 @@ export default function AppProfileScreen({ switchToApp }) {
           {
             backgroundColor: themeController.current?.backgroundColor,
             borderBottomColor: themeController.current?.profileDefaultBackground,
-            height: sizes.headerHeight,
+            minHeight: sizes.headerHeight,
             paddingHorizontal: sizes.headerPaddingHorizontal,
             marginHorizontal: sizes.headerMarginHorizontal,
             marginTop: sizes.headerMargin,
@@ -68,10 +71,16 @@ export default function AppProfileScreen({ switchToApp }) {
       >
         <TouchableOpacity
           onPress={() => switchToApp()}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back', { defaultValue: 'Back' })}
+          hitSlop={ACCESSIBILITY_HIT_SLOP}
           style={[styles.backBtn, { paddingHorizontal: sizes.backBtnPadding }]}
         >
           <Image
             source={isRTL ? icons.forward : icons.back}
+            accessible={false}
+            aria-hidden={true}
             style={{
               width: sizes.iconSize,
               height: sizes.iconSize,

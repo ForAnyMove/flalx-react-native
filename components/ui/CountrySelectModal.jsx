@@ -84,15 +84,25 @@ export default function CountrySelectModal({ visible, onClose, onSelect, transla
     const web = (size) => scaleByHeight(size, height);
     const mobile = (size) => scaleByHeightMobile(size, height);
     const scale = isWebLandscape ? web : mobile;
+    const flagW = scale(26);
     return {
       modalWidth: isWebLandscape ? scale(400) : '88%',
       modalHeight: isWebLandscape ? scale(520) : '75%',
       borderRadius: scale(12),
       headerPadding: scale(16),
       searchHeight: scale(44),
+      searchPaddingH: scale(12),
+      searchMarginH: scale(8),
+      closeBtnPadding: scale(6),
+      closeIconSize: scale(18),
       rowPaddingVertical: scale(12),
       rowPaddingHorizontal: scale(16),
       fontSize: scale(16),
+      flagWidth: flagW,
+      flagHeight: Math.round((flagW * 2) / 3),
+      flagRadius: scale(2),
+      rowTextMarginH: scale(10),
+      marginTopLarge: scale(24),
     };
   }, [height, isWebLandscape]);
 
@@ -125,16 +135,16 @@ export default function CountrySelectModal({ visible, onClose, onSelect, transla
           height: sizes.searchHeight,
           backgroundColor: theme.formInputBackground,
           borderRadius: sizes.borderRadius / 2,
-          paddingHorizontal: 12,
+          paddingHorizontal: sizes.searchPaddingH,
           color: theme.formInputTextColor,
           fontSize: sizes.fontSize,
           textAlign: isRTL ? 'right' : 'left',
-          marginRight: isRTL ? 0 : 8,
-          marginLeft: isRTL ? 8 : 0,
+          marginRight: isRTL ? 0 : sizes.searchMarginH,
+          marginLeft: isRTL ? sizes.searchMarginH : 0,
           ...Platform.select({ web: { outlineStyle: 'none' } }),
         },
-        closeButton: { padding: 4 },
-        closeIcon: { width: 18, height: 18, tintColor: theme.textColor },
+        closeButton: { padding: sizes.closeBtnPadding, justifyContent: 'center', alignItems: 'center' },
+        closeIcon: { width: sizes.closeIconSize, height: sizes.closeIconSize, tintColor: theme.textColor },
         row: {
           flexDirection: isRTL ? 'row-reverse' : 'row',
           alignItems: 'center',
@@ -144,16 +154,16 @@ export default function CountrySelectModal({ visible, onClose, onSelect, transla
           borderBottomColor: theme.borderColor,
         },
         flag: {
-          width: 26,
-          height: Math.round((26 * 2) / 3),
-          borderRadius: 2,
+          width: sizes.flagWidth,
+          height: sizes.flagHeight,
+          borderRadius: sizes.flagRadius,
           overflow: 'hidden',
         },
         rowText: {
           flex: 1,
           fontSize: sizes.fontSize,
           color: theme.textColor,
-          marginHorizontal: 10,
+          marginHorizontal: sizes.rowTextMarginH,
           textAlign: isRTL ? 'right' : 'left',
           fontFamily: 'Rubik-Medium',
         },
@@ -164,29 +174,37 @@ export default function CountrySelectModal({ visible, onClose, onSelect, transla
         emptyText: {
           textAlign: 'center',
           color: theme.unactiveTextColor,
-          marginTop: 24,
+          marginTop: sizes.marginTopLarge,
           fontSize: sizes.fontSize,
         },
-        loading: { marginTop: 24 },
+        loading: { marginTop: sizes.marginTopLarge },
       }),
     [sizes, isRTL, theme]
   );
 
   const renderItem = ({ item }) => {
     const xml = flagSvgFor(item.cca2);
+    const cName = countryName(item, translation);
+    const code = item.callingCode?.[0];
     return (
-      <TouchableOpacity style={styles.row} onPress={() => onSelect(item)}>
+      <TouchableOpacity
+        style={styles.row}
+        onPress={() => onSelect(item)}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={`${cName}${code ? `, +${code}` : ''}`}
+      >
         {xml ? (
-          <View style={styles.flag}>
+          <View style={styles.flag} accessible={false} aria-hidden={true}>
             <SvgXml xml={xml} width='100%' height='100%' />
           </View>
         ) : (
-          <View style={[styles.flag, { backgroundColor: theme.formInputBackground }]} />
+          <View style={[styles.flag, { backgroundColor: theme.formInputBackground }]} accessible={false} aria-hidden={true} />
         )}
         <Text style={styles.rowText} numberOfLines={1}>
-          {countryName(item, translation)}
+          {cName}
         </Text>
-        <Text style={styles.callingCode}>+{item.callingCode?.[0]}</Text>
+        <Text style={styles.callingCode}>+{code}</Text>
       </TouchableOpacity>
     );
   };
@@ -199,6 +217,7 @@ export default function CountrySelectModal({ visible, onClose, onSelect, transla
             <CustomTextInput
               style={styles.searchInput}
               placeholder={t('common.search')}
+              accessibilityLabel={t('common.search')}
               placeholderTextColor={theme.formInputPlaceholderColor}
               value={query}
               onChangeText={setQuery}
@@ -206,8 +225,14 @@ export default function CountrySelectModal({ visible, onClose, onSelect, transla
               autoCapitalize='none'
               autoCorrect={false}
             />
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Image source={icons.cross} style={styles.closeIcon} />
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={onClose}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.close', 'סגור')}
+            >
+              <Image source={icons.cross} style={styles.closeIcon} accessible={false} aria-hidden={true} />
             </TouchableOpacity>
           </View>
           {loading ? (

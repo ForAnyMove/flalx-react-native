@@ -15,8 +15,10 @@ import { useWindowInfo } from '../context/windowContext';
 import { useWebView } from '../context/webViewContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 import PaymentLegalNotice from './PaymentLegalNotice';
 import AppModal from './ui/AppModal';
+import AppHeading from './ui/AppHeading';
 
 const PaymentMethodsModal = ({ visible, onClose }) => {
   const { themeController, languageController, paymentsManagerController } =
@@ -153,6 +155,8 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
       itemHeight: scale(52),
       itemBorderRadius: scale(4),
       itemPaddingHorizontal: scale(8),
+      itemPaddingVertical: scale(6),
+      touchablePadding: scale(4),
       itemMarginBottom: scale(16),
       itemCircleSize: scale(24),
       itemInnerCircleSize: scale(11),
@@ -225,16 +229,17 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
     },
     itemContainer: {
       width: '100%',
-      height: sizes.itemHeight,
+      minHeight: sizes.itemHeight,
       borderRadius: sizes.itemBorderRadius,
       paddingHorizontal: sizes.itemPaddingHorizontal,
+      paddingVertical: sizes.itemPaddingVertical,
       alignItems: 'center',
       justifyContent: 'flex-start',
       marginBottom: sizes.itemMarginBottom,
       flexDirection: 'row',
     },
     itemCircleTouchable: {
-      padding: 4,
+      padding: sizes.touchablePadding,
     },
     itemCircle: {
       width: sizes.itemCircleSize,
@@ -264,7 +269,7 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
       textAlign: isRTL ? 'right' : 'left',
     },
     itemDeleteButton: {
-      padding: 4, // Increase touchable area
+      padding: sizes.touchablePadding, // Increase touchable area
     },
     itemDeleteIcon: {
       width: sizes.itemDeleteIconSize,
@@ -318,10 +323,11 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
     },
     button: {
       width: '100%',
-      height: sizes.buttonHeight,
+      minHeight: sizes.buttonHeight,
       borderRadius: sizes.borderRadius,
       justifyContent: 'center',
       alignItems: 'center',
+      paddingVertical: sizes.itemPaddingVertical,
       marginTop: sizes.buttonMarginTop,
     },
     primaryButton: {
@@ -369,10 +375,16 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
         <TouchableOpacity
           style={styles.itemCircleTouchable}
           onPress={() => handleSetDefault(item.id)}
+          accessible={true}
+          accessibilityRole="radio"
+          accessibilityState={{ checked: isDefault, selected: isDefault }}
+          accessibilityLabel={`${getMethodLabel(item)}, ${isDefault ? (t('payment_modal.default_method') || 'Default') : (t('payment_modal.set_default') || 'Set as default')}`}
         >
           <Image
             source={isDefault ? icons.radioOn : icons.radioOff}
             style={[styles.itemCircle]}
+            accessible={false}
+            aria-hidden={true}
           />
         </TouchableOpacity>
         <Text style={styles.itemTitle} numberOfLines={1} ellipsizeMode='tail'>
@@ -381,6 +393,9 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
         <TouchableOpacity
           style={styles.itemDeleteButton}
           onPress={() => handleDeletePress(item)}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={`${t('common.remove', { defaultValue: 'מחק' })} ${getMethodLabel(item)}`}
         >
           <Image
             source={icons.deleteCross}
@@ -392,6 +407,8 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
                   : theme.formInputLabelColor,
               },
             ]}
+            accessible={false}
+            aria-hidden={true}
           />
         </TouchableOpacity>
       </View>
@@ -415,7 +432,7 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
   );
 
   const renderListHeader = () => (
-    <Text style={styles.title}>{t('my_profile.payment')}</Text>
+    <AppHeading level={2} style={styles.title}>{t('my_profile.payment')}</AppHeading>
   );
 
   const renderList = () => (
@@ -439,9 +456,9 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
 
   const renderAddMethod = () => (
     <View style={styles.statusContainer}>
-      <Text style={styles.title}>
+      <AppHeading level={2} style={styles.title}>
         {t('payment_modal.select_method_title')}
-      </Text>
+      </AppHeading>
 
       <PaymentLegalNotice
         title={t('payment_modal.legal_add_payment_method_title')}
@@ -469,6 +486,10 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
               },
             ]}
             onPress={() => setSelectedSetupMethod(methodType)}
+            accessible={true}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: isSelected, selected: isSelected }}
+            accessibilityLabel={t(`payment_modal.method_${methodType}`, { defaultValue: methodType })}
           >
             <Image
               source={isSelected ? icons.radioOn : icons.radioOff}
@@ -476,6 +497,8 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
                 styles.itemCircle,
                 { tintColor: isSelected ? theme.primaryColor : theme.formInputLabelColor },
               ]}
+              accessible={false}
+              aria-hidden={true}
             />
             <Image
               source={icons[`method_${methodType}`]}
@@ -611,9 +634,22 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
   };
 
   return (
-    <AppModal visible={visible} transparent={true}>
+    <AppModal
+      visible={visible}
+      transparent={true}
+      onRequestClose={() =>
+        step === 'addMethod' || step === 'confirmDelete' || step === 'cantDelete'
+          ? setStep('list')
+          : onClose()
+      }
+    >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
+        <View
+          style={styles.modalContainer}
+          accessibilityViewIsModal={true}
+          role="dialog"
+          aria-modal="true"
+        >
           {isLoading && (
             <View style={styles.loadingOverlay}>
               <ActivityIndicator size='large' color={theme.primaryColor} />
@@ -626,8 +662,17 @@ const PaymentMethodsModal = ({ visible, onClose }) => {
                 ? setStep('list')
                 : onClose()
             }
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+            hitSlop={ACCESSIBILITY_HIT_SLOP}
           >
-            <Image source={icons.cross} style={styles.crossIcon} />
+            <Image
+              source={icons.cross}
+              style={styles.crossIcon}
+              accessible={false}
+              aria-hidden={true}
+            />
           </TouchableOpacity>
           {renderContent()}
         </View>

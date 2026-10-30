@@ -1,14 +1,18 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
+import { useWindowInfo } from '../../context/windowContext';
+import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import Step3_PhoneVerify from './Step3_PhoneVerify';
+import AppHeading from '../../components/ui/AppHeading';
 import { getAuthErrorMessage } from '../../src/auth/authErrors';
 import { logError } from '../../utils/log_util';
 
@@ -30,6 +34,24 @@ export default function MfaVerifyScreen() {
   const { t } = useTranslation();
   const { session, themeController } = useComponentContext();
   const theme = themeController.current;
+  const { height, isLandscape } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+  const sizes = useMemo(() => {
+    const scale = isWebLandscape
+      ? (s) => scaleByHeight(s, height)
+      : (s) => scaleByHeightMobile(s, height);
+    return {
+      mfaGap: scale(12),
+      mfaTitleFontSize: scale(18),
+      mfaTitleMarginBottom: scale(12),
+      factorBtnBorderRadius: scale(8),
+      factorBtnPaddingVertical: scale(14),
+      factorBtnPaddingHorizontal: scale(24),
+      factorBtnMinWidth: scale(220),
+      logoutMarginTop: scale(16),
+    };
+  }, [isWebLandscape, height]);
 
   const [step, setStep] = useState('loading'); // loading | select | verify
   const [factors, setFactors] = useState([]);
@@ -115,15 +137,26 @@ export default function MfaVerifyScreen() {
   if (step === 'select') {
     return (
       <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
-        <View style={styles.centerBlock}>
-          <Text style={[styles.title, { color: theme.unactiveTextColor }]}>
+        <View style={[styles.centerBlock, { gap: sizes.mfaGap }]}>
+          <AppHeading level={2} style={[styles.title, { color: theme.unactiveTextColor, fontSize: sizes.mfaTitleFontSize, marginBottom: sizes.mfaTitleMarginBottom }]}>
             {t('auth.select_factor')}
-          </Text>
+          </AppHeading>
           {factors.map((f) => (
             <TouchableOpacity
               key={f.id}
               onPress={() => selectFactor(f)}
-              style={[styles.factorBtn, { borderColor: theme.primaryColor }]}
+              accessibilityRole="button"
+              accessibilityLabel={f.type === 'phone' ? (f.phone || t('auth.phone_label')) : f.type.toUpperCase()}
+              style={[
+                styles.factorBtn,
+                {
+                  borderColor: theme.primaryColor,
+                  borderRadius: sizes.factorBtnBorderRadius,
+                  paddingVertical: sizes.factorBtnPaddingVertical,
+                  paddingHorizontal: sizes.factorBtnPaddingHorizontal,
+                  minWidth: sizes.factorBtnMinWidth,
+                },
+              ]}
             >
               <Text style={{ color: theme.primaryColor, fontFamily: 'Rubik-Medium' }}>
                 {f.type === 'phone' ? (f.phone || t('auth.phone_label')) : f.type.toUpperCase()}
@@ -133,7 +166,12 @@ export default function MfaVerifyScreen() {
           {!!error && (
             <Text style={{ color: theme.errorTextColor, textAlign: 'center' }}>{error}</Text>
           )}
-          <TouchableOpacity onPress={() => session.logout()} style={{ marginTop: 16 }}>
+          <TouchableOpacity
+            onPress={() => session.logout()}
+            accessibilityRole="button"
+            accessibilityLabel={t('auth.back_to_sign_in') || 'Back to sign in'}
+            style={{ marginTop: sizes.logoutMarginTop }}
+          >
             <Text style={{ color: theme.formInputLabelColor, textDecorationLine: 'underline' }}>
               {t('auth.back_to_sign_in')}
             </Text>
@@ -173,20 +211,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: '6%',
-    gap: 12,
   },
   title: {
     fontFamily: 'Rubik-SemiBold',
-    fontSize: 18,
-    marginBottom: 12,
     textAlign: 'center',
   },
   factorBtn: {
     borderWidth: 1.5,
-    borderRadius: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
     alignItems: 'center',
-    minWidth: 220,
   },
 });

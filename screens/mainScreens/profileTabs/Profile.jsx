@@ -13,6 +13,7 @@ import {
 import { useComponentContext } from '../../../context/globalAppContext';
 import { useMemo, useState, useEffect } from 'react';
 import { icons } from '../../../constants/icons';
+import { ACCESSIBILITY_HIT_SLOP } from '../../../constants/themes';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
 import ImagePickerModal from '../../../components/ui/ImagePickerModal';
@@ -23,6 +24,7 @@ import { getUserExportData } from '../../../src/api/dataExport';
 import CouponsModal from '../../../components/CouponsModal';
 import { logError, logInfo } from '../../../utils/log_util';
 import CustomTextInput from '../../../components/ui/CustomTextInput';
+import AppHeading from '../../../components/ui/AppHeading';
 import { Linking } from 'react-native';
 import PaymentMethodsModal from '../../../components/PaymentMethodsModal';
 import UpdateUserDataModal from '../../../components/modals/UpdateUserDataModal';
@@ -155,6 +157,10 @@ export default function Profile() {
       statusBadgeBorderRadius: isWebLandscape ? web(20) : mobile(20),
       statusBadgeDotSize: isWebLandscape ? web(8) : mobile(8),
       statusBadgeDotMargin: isWebLandscape ? web(6) : mobile(6),
+      commentMarginTop: isWebLandscape ? web(2) : mobile(2),
+      securityTitleMarginBottom: isWebLandscape ? web(2) : mobile(2),
+      infoFieldPaddingV: isWebLandscape ? web(8) : mobile(8),
+      errorTextMarginTop: isWebLandscape ? web(2) : mobile(2),
     };
   }, [width, height, isWebLandscape]);
 
@@ -497,8 +503,11 @@ export default function Profile() {
                   },
                 ]}
                 onPress={() => setPickerVisible(true)}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('my_profile.change_photo', { defaultValue: 'החלף תמונה' })}
               >
-                <Image source={icons.camera} style={styles.cameraIcon} />
+                <Image source={icons.camera} style={styles.cameraIcon} accessible={false} aria-hidden={true} />
               </TouchableOpacity>
             </View>
             <Text
@@ -585,6 +594,9 @@ export default function Profile() {
                       marginLeft: isRTL ? 0 : sizes.editPanelGap,
                       marginRight: isRTL ? sizes.editPanelGap : 0,
                     }}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
                   >
                     <Image
                       source={icons.cross}
@@ -593,6 +605,8 @@ export default function Profile() {
                         height: sizes.iconSize * 0.6,
                         tintColor: themeController.current?.textColor,
                       }}
+                      accessible={false}
+                      aria-hidden={true}
                     />
                   </TouchableOpacity>
                 </View>
@@ -601,7 +615,7 @@ export default function Profile() {
                     style={{
                       fontSize: sizes.labelFont * 0.9,
                       color: themeController.current?.textColorSecondary || '#666',
-                      marginTop: 2,
+                      marginTop: sizes.commentMarginTop,
                       textAlign: isRTL ? 'right' : 'left',
                     }}
                   >
@@ -642,6 +656,9 @@ export default function Profile() {
             onPress={() => setBaseInfoEditMode(true)}
             disabled={isUpdating}
             style={{ visibility: baseInfoEditMode || isUpdating ? 'hidden' : 'visible' }}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.edit', { defaultValue: 'ערוך' })}
           >
             <Image
               source={icons.edit}
@@ -651,6 +668,8 @@ export default function Profile() {
                 resizeMode: 'contain',
                 tintColor: themeController.current?.unactiveTextColor,
               }}
+              accessible={false}
+              aria-hidden={true}
             />
           </TouchableOpacity>
         </View>
@@ -760,6 +779,9 @@ export default function Profile() {
                       marginLeft: isRTL ? 0 : sizes.labelMarginBottom,
                       marginRight: isRTL ? sizes.labelMarginBottom : 0,
                     }}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
                   >
                     <Image
                       source={icons.cross}
@@ -768,6 +790,8 @@ export default function Profile() {
                         height: sizes.iconSize * 0.5,
                         tintColor: themeController.current?.errorTextColor,
                       }}
+                      accessible={false}
+                      aria-hidden={true}
                     />
                   </TouchableOpacity>
                 </View>
@@ -956,17 +980,18 @@ export default function Profile() {
 
         {/* Security */}
         <View style={{ width: '100%', marginBottom: sizes.infoFieldsGap }}>
-          <Text
+          <AppHeading
+            level={2}
             style={{
               fontSize: sizes.btnFont,
               fontFamily: 'Rubik-SemiBold',
               color: themeController.current?.textColor,
               textAlign: isRTL ? 'right' : 'left',
-              marginBottom: 2,
+              marginBottom: sizes.securityTitleMarginBottom,
             }}
           >
             {t('my_profile.security.title')}
-          </Text>
+          </AppHeading>
           <Text
             style={{
               fontSize: sizes.labelFont,
@@ -985,7 +1010,8 @@ export default function Profile() {
             padding: sizes.infoFieldPaddingH,
           }}
         >
-          <Text
+          <AppHeading
+            level={3}
             style={{
               fontSize: sizes.fieldFont,
               fontFamily: 'Rubik-SemiBold',
@@ -995,7 +1021,7 @@ export default function Profile() {
             }}
           >
             {t('my_profile.security.mfa_title')}
-          </Text>
+          </AppHeading>
           <View
             style={{
               flexDirection: isRTL ? 'row-reverse' : 'row',
@@ -1307,6 +1333,9 @@ export default function Profile() {
               },
               isWebLandscape && { height: sizes.modalHeight },
             ]}
+            accessibilityViewIsModal={true}
+            role="dialog"
+            aria-modal="true"
           >
             <TouchableOpacity
               style={[
@@ -1317,6 +1346,10 @@ export default function Profile() {
                 },
               ]}
               onPress={() => setAcceptModalVisible(false)}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+              hitSlop={ACCESSIBILITY_HIT_SLOP}
             >
               <Image
                 source={icons.cross}
@@ -1325,6 +1358,8 @@ export default function Profile() {
                   height: sizes.modalIconSize,
                   tintColor: themeController.current?.textColor,
                 }}
+                accessible={false}
+                aria-hidden={true}
               />
             </TouchableOpacity>
             <Text
@@ -1415,6 +1450,9 @@ export default function Profile() {
               },
               // isWebLandscape && { height: sizes.modalHeight },
             ]}
+            accessibilityViewIsModal={true}
+            role="dialog"
+            aria-modal="true"
           >
             <TouchableOpacity
               style={[
@@ -1425,6 +1463,10 @@ export default function Profile() {
                 },
               ]}
               onPress={() => showPasswordModal(false)}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+              hitSlop={ACCESSIBILITY_HIT_SLOP}
             >
               <Image
                 source={icons.cross}
@@ -1433,6 +1475,8 @@ export default function Profile() {
                   height: sizes.modalIconSize,
                   tintColor: themeController.current?.textColor,
                 }}
+                accessible={false}
+                aria-hidden={true}
               />
             </TouchableOpacity>
             <Text
@@ -1507,6 +1551,13 @@ export default function Profile() {
                       top: '56%',
                       transform: [{ translateY: -sizes.iconSize / 2 }],
                     }}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      showOldPassword
+                        ? t('auth.hide_password', { defaultValue: 'הסתר סיסמה' })
+                        : t('auth.show_password', { defaultValue: 'הצג סיסמה' })
+                    }
                   >
                     <Image
                       source={showOldPassword ? icons.eyeOpen : icons.eyeClosed}
@@ -1515,6 +1566,8 @@ export default function Profile() {
                         height: sizes.iconSize,
                         tintColor: themeController.current?.formInputLabelColor,
                       }}
+                      accessible={false}
+                      aria-hidden={true}
                     />
                   </TouchableOpacity>
                 </View>
@@ -1572,6 +1625,13 @@ export default function Profile() {
                     top: '56%',
                     transform: [{ translateY: -sizes.iconSize / 2 }],
                   }}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    showNewPassword
+                      ? t('auth.hide_password', { defaultValue: 'הסתר סיסמה' })
+                      : t('auth.show_password', { defaultValue: 'הצג סיסמה' })
+                  }
                 >
                   <Image
                     source={showNewPassword ? icons.eyeOpen : icons.eyeClosed}
@@ -1580,6 +1640,8 @@ export default function Profile() {
                       height: sizes.iconSize,
                       tintColor: themeController.current?.formInputLabelColor,
                     }}
+                    accessible={false}
+                    aria-hidden={true}
                   />
                 </TouchableOpacity>
               </View>
@@ -1824,6 +1886,7 @@ function InfoField({
   loading = false,
 }) {
   const { themeController } = useComponentContext();
+  const { t } = useTranslation();
   const [currentValue, setCurrentValue] = useState(value);
 
   // const handleSave = () => {
@@ -1847,7 +1910,8 @@ function InfoField({
               : Platform.OS === 'web' && isLandscape && multiline
                 ? '48.5%'
                 : '100%',
-          height: btnHeight,
+          minHeight: btnHeight,
+          paddingVertical: sizes.infoFieldPaddingV,
           marginBottom: fieldMargin,
           backgroundColor: editMode
             ? themeController.current?.formInputBackgroundEditMode
@@ -1871,7 +1935,6 @@ function InfoField({
               paddingVertical: sizes.fieldPaddingVertical,
               alignItems: 'flex-start',
               flex: 1,
-              height: '100%',
               justifyContent: !editMode && footer ? 'space-between' : 'flex-start',
             }
             : { flex: 1 }
@@ -1934,7 +1997,7 @@ function InfoField({
                 },
                 multiline
                   ? { overflow: 'auto' }
-                  : { overflow: 'hidden', maxHeight: sizes.oneLineInputHeight },
+                  : { minHeight: sizes.oneLineInputHeight },
               ]}
             >
               {field === 'phoneNumber' ? formatPhoneDisplay(value) : value}
@@ -1945,7 +2008,7 @@ function InfoField({
               style={{
                 fontSize: sizes.labelFont,
                 color: themeController.current?.errorTextColor,
-                marginTop: 2,
+                marginTop: sizes.errorTextMarginTop,
               }}
             >
               {errorText}
@@ -2001,6 +2064,9 @@ function InfoField({
         <TouchableOpacity
           onPress={onEditPress}
           style={[multiline && { marginTop: sizes.fieldPaddingVertical }]}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.edit', { defaultValue: 'ערוך' })}
         >
           <Image
             source={icons.edit}
@@ -2010,6 +2076,8 @@ function InfoField({
               resizeMode: 'contain',
               tintColor: themeController.current?.unactiveTextColor,
             }}
+            accessible={false}
+            aria-hidden={true}
           />
         </TouchableOpacity>
       )}

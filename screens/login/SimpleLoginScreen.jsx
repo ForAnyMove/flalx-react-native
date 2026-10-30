@@ -20,6 +20,9 @@ import CustomTextInput from '../../components/ui/CustomTextInput';
 import CustomPicker from '../../components/ui/CustomPicker';
 import PhoneOrEmailInput from '../../components/ui/PhoneOrEmailInput';
 import Step3_PhoneVerify from '../register/Step3_PhoneVerify';
+import AppHeading from '../../components/ui/AppHeading';
+import AppModal from '../../components/ui/AppModal';
+import AccessibilityStatementScreen from '../AccessibilityStatementScreen';
 import { getAuthErrorMessage } from '../../src/auth/authErrors';
 import { toE164 } from '../../src/auth/phoneFormat';
 
@@ -27,7 +30,15 @@ const EMAIL_RE = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@
 
 function PrimaryOutlineButton({ title, onPress, disabled, buttonStyle, textStyle }) {
   return (
-    <TouchableOpacity onPress={onPress} disabled={disabled} style={[buttonStyle, { opacity: disabled ? 0.6 : 1 }]}>
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={disabled}
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: Boolean(disabled) }}
+      accessibilityLabel={typeof title === 'string' ? title : undefined}
+      style={[buttonStyle, { opacity: disabled ? 0.6 : 1 }]}
+    >
       {typeof title === 'string' ? <Text style={textStyle}>{title}</Text> : title}
     </TouchableOpacity>
   );
@@ -64,6 +75,7 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [statementVisible, setStatementVisible] = useState(false);
 
   // MFA (login) state — same shape as MultiStepLoginScreen.jsx.
   const [factors, setFactors] = useState([]);
@@ -200,6 +212,28 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
       passwordInput: {
         paddingRight: !isRTL ? (isWebLandscape ? scaleByHeight(40, h) : scaleByHeightMobile(40, h)) : 0,
         paddingLeft: isRTL ? (isWebLandscape ? scaleByHeight(40, h) : scaleByHeightMobile(40, h)) : 0,
+      },
+      centerBlock: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: '6%',
+        gap: isWebLandscape ? scaleByHeight(12, h) : scaleByHeightMobile(12, h),
+      },
+      mfaTitle: {
+        fontFamily: 'Rubik-SemiBold',
+        fontSize: isWebLandscape ? scaleByHeight(18, h) : scaleByHeightMobile(18, h),
+        marginBottom: isWebLandscape ? scaleByHeight(12, h) : scaleByHeightMobile(12, h),
+        textAlign: 'center',
+        color: theme.unactiveTextColor,
+      },
+      factorBtn: {
+        borderWidth: 1.5,
+        borderRadius: isWebLandscape ? scaleByHeight(8, h) : scaleByHeightMobile(8, h),
+        paddingVertical: isWebLandscape ? scaleByHeight(14, h) : scaleByHeightMobile(14, h),
+        paddingHorizontal: isWebLandscape ? scaleByHeight(24, h) : scaleByHeightMobile(24, h),
+        alignItems: 'center',
+        minWidth: isWebLandscape ? scaleByHeight(220, h) : scaleByHeightMobile(220, h),
+        borderColor: theme.primaryColor,
       },
     };
   }, [width, height, isWebLandscape, isRTL, theme]);
@@ -339,15 +373,15 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
   const renderStep = () => {
     if (step === 'mfa_select') {
       return (
-        <View style={styles.centerBlock}>
-          <Text style={[styles.title, { color: theme.unactiveTextColor }]}>
+        <View style={dynamicStyles.centerBlock}>
+          <Text style={dynamicStyles.mfaTitle}>
             {t('auth.select_factor')}
           </Text>
           {factors.map((f) => (
             <TouchableOpacity
               key={f.id}
               onPress={() => selectFactor(f)}
-              style={[styles.factorBtn, { borderColor: theme.primaryColor }]}
+              style={dynamicStyles.factorBtn}
             >
               <Text style={{ color: theme.primaryColor, fontFamily: 'Rubik-Medium' }}>
                 {f.type === 'phone' ? (f.phone || t('auth.phone_label')) : f.type.toUpperCase()}
@@ -408,7 +442,7 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
         <ScrollView contentContainerStyle={dynamicStyles.scroll} keyboardShouldPersistTaps='handled'>
           <Animated.View style={[dynamicStyles.contentBlock, { opacity: fadeAnim }]}>
             <Text style={dynamicStyles.brand}>{t('auth.app_name')}</Text>
-            <Text style={dynamicStyles.title}>{t('auth.email_title')}</Text>
+            <AppHeading level={1} style={dynamicStyles.title}>{t('auth.email_title')}</AppHeading>
             <Text style={dynamicStyles.subtitle}>{t('auth.login_subtitle')}</Text>
 
             {/* LOGIN FIELD (phone or email, tab-selectable) */}
@@ -456,10 +490,19 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
               />
               <TouchableOpacity
                 onPress={() => setShowPassword((prev) => !prev)}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  showPassword
+                    ? t('auth.hide_password', { defaultValue: 'הסתר סיסמה' })
+                    : t('auth.show_password', { defaultValue: 'הצג סיסמה' })
+                }
                 style={dynamicStyles.eyeIconContainer}
               >
                 <Image
                   source={showPassword ? icons.eyeOpen : icons.eyeClosed}
+                  accessible={false}
+                  aria-hidden={true}
                   style={dynamicStyles.eyeIcon}
                   resizeMode='contain'
                 />
@@ -468,15 +511,29 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
 
             {/* LINKS ROW */}
             <View style={dynamicStyles.linksRow}>
-              <TouchableOpacity onPress={onGoToForgottenPassword}>
+              <TouchableOpacity
+                onPress={onGoToForgottenPassword}
+                accessible={true}
+                accessibilityRole="link"
+                accessibilityLabel={t('auth.forgot_password')}
+              >
                 <Text style={dynamicStyles.link}>{t('auth.forgot_password')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => onGoToRegister?.()}>
+              <TouchableOpacity
+                onPress={() => onGoToRegister?.()}
+                accessible={true}
+                accessibilityRole="link"
+                accessibilityLabel={t('auth.create_user')}
+              >
                 <Text style={dynamicStyles.link}>{t('auth.create_user')}</Text>
               </TouchableOpacity>
             </View>
 
-            {!!error && <Text style={dynamicStyles.error}>{error}</Text>}
+            {!!error && (
+              <View accessibilityLiveRegion="polite" accessibilityRole="alert">
+                <Text style={dynamicStyles.error}>{error}</Text>
+              </View>
+            )}
 
             <PrimaryOutlineButton
               title={sending ? <ActivityIndicator color={theme.primaryColor} /> : t('auth.sign_in')}
@@ -485,6 +542,18 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
               buttonStyle={dynamicStyles.primaryButton}
               textStyle={dynamicStyles.primaryButtonText}
             />
+
+            <TouchableOpacity
+              onPress={() => setStatementVisible(true)}
+              accessible={true}
+              accessibilityRole="link"
+              accessibilityLabel={t('accessibility.statementTitle', 'הצהרת נגישות')}
+              style={{ marginTop: scaleByHeightMobile(16, height), alignSelf: 'center', padding: scaleByHeightMobile(8, height) }}
+            >
+              <Text style={[dynamicStyles.link, { textDecorationLine: 'underline', fontSize: scaleByHeightMobile(13, height) }]}>
+                {t('accessibility.statementTitle', 'הצהרת נגישות')}
+              </Text>
+            </TouchableOpacity>
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -507,6 +576,15 @@ export default function SimpleLoginScreen({ onGoToRegister, onGoToForgottenPassw
         />
       </View>
       {renderStep()}
+      <AppModal
+        visible={statementVisible}
+        onRequestClose={() => setStatementVisible(false)}
+        transparent={false}
+      >
+        <AccessibilityStatementScreen
+          onBack={() => setStatementVisible(false)}
+        />
+      </AppModal>
     </View>
   );
 }
@@ -517,25 +595,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-  },
-  centerBlock: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: '6%',
-    gap: 12,
-  },
-  title: {
-    fontFamily: 'Rubik-SemiBold',
-    fontSize: 18,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  factorBtn: {
-    borderWidth: 1.5,
-    borderRadius: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    minWidth: 220,
   },
 });

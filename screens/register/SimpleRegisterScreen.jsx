@@ -21,12 +21,23 @@ import CustomTextInput from '../../components/ui/CustomTextInput';
 import CustomPicker from '../../components/ui/CustomPicker';
 import PhoneField from '../../components/ui/PhoneField';
 import Step3_PhoneVerify from './Step3_PhoneVerify';
+import AppHeading from '../../components/ui/AppHeading';
+import AppModal from '../../components/ui/AppModal';
+import AccessibilityStatementScreen from '../AccessibilityStatementScreen';
 import { getAuthErrorMessage } from '../../src/auth/authErrors';
 import { useNotification } from '../../src/render';
 
 function PrimaryOutlineButton({ title, onPress, disabled, buttonStyle, textStyle }) {
   return (
-    <TouchableOpacity onPress={onPress} disabled={disabled} style={[buttonStyle, { opacity: disabled ? 0.6 : 1 }]}>
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={disabled}
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: Boolean(disabled) }}
+      accessibilityLabel={typeof title === 'string' ? title : undefined}
+      style={[buttonStyle, { opacity: disabled ? 0.6 : 1 }]}
+    >
       {typeof title === 'string' ? <Text style={textStyle}>{title}</Text> : title}
     </TouchableOpacity>
   );
@@ -74,6 +85,7 @@ export default function SimpleRegisterScreen() {
   const [confirmPasswordError, setConfirmPasswordError] = useState(null);
   const [generalError, setGeneralError] = useState(null);
   const [sending, setSending] = useState(false);
+  const [statementVisible, setStatementVisible] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -376,7 +388,7 @@ export default function SimpleRegisterScreen() {
         <ScrollView contentContainerStyle={dynamicStyles.scroll} keyboardShouldPersistTaps='handled'>
           <Animated.View style={[dynamicStyles.contentBlock, { opacity: fadeAnim }]}>
             <Text style={dynamicStyles.brand}>{t('auth.app_name')}</Text>
-            <Text style={dynamicStyles.title}>{t('auth.create_user_title')}</Text>
+            <AppHeading level={1} style={dynamicStyles.title}>{t('auth.create_user_title')}</AppHeading>
             <Text style={dynamicStyles.subtitle}>{t('auth.create_user_subtitle')}</Text>
 
             {/* PHONE FIELD */}
@@ -436,16 +448,29 @@ export default function SimpleRegisterScreen() {
               />
               <TouchableOpacity
                 onPress={() => setShowPassword((prev) => !prev)}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  showPassword
+                    ? t('auth.hide_password', { defaultValue: 'הסתר סיסמה' })
+                    : t('auth.show_password', { defaultValue: 'הצג סיסמה' })
+                }
                 style={dynamicStyles.eyeIconContainer}
               >
                 <Image
                   source={showPassword ? icons.eyeOpen : icons.eyeClosed}
+                  accessible={false}
+                  aria-hidden={true}
                   style={dynamicStyles.eyeIcon}
                   resizeMode='contain'
                 />
               </TouchableOpacity>
             </View>
-            {!!passwordError && <Text style={dynamicStyles.fieldError}>{passwordError}</Text>}
+            {!!passwordError && (
+              <View accessibilityLiveRegion="polite" accessibilityRole="alert">
+                <Text style={dynamicStyles.fieldError}>{passwordError}</Text>
+              </View>
+            )}
 
             {/* CONFIRM PASSWORD FIELD */}
             <View style={dynamicStyles.fieldContainer}>
@@ -469,12 +494,21 @@ export default function SimpleRegisterScreen() {
             {!!confirmPasswordError && <Text style={dynamicStyles.fieldError}>{confirmPasswordError}</Text>}
 
             <View style={dynamicStyles.linksRow}>
-              <TouchableOpacity onPress={() => registerControl.leaveRegisterScreen()}>
+              <TouchableOpacity
+                onPress={() => registerControl.leaveRegisterScreen()}
+                accessible={true}
+                accessibilityRole="link"
+                accessibilityLabel={t('auth.back_to_sign_in')}
+              >
                 <Text style={dynamicStyles.link}>{t('auth.back_to_sign_in')}</Text>
               </TouchableOpacity>
             </View>
 
-            {!!generalError && <Text style={dynamicStyles.error}>{generalError}</Text>}
+            {!!generalError && (
+              <View accessibilityLiveRegion="polite" accessibilityRole="alert">
+                <Text style={dynamicStyles.error}>{generalError}</Text>
+              </View>
+            )}
 
             <PrimaryOutlineButton
               title={sending ? <ActivityIndicator color={theme.primaryColor} /> : t('register.create_account')}
@@ -483,9 +517,30 @@ export default function SimpleRegisterScreen() {
               buttonStyle={dynamicStyles.primaryButton}
               textStyle={dynamicStyles.primaryButtonText}
             />
+
+            <TouchableOpacity
+              onPress={() => setStatementVisible(true)}
+              accessible={true}
+              accessibilityRole="link"
+              accessibilityLabel={t('accessibility.statementTitle', 'הצהרת נגישות')}
+              style={{ marginTop: scaleByHeightMobile(16, height), alignSelf: 'center', padding: scaleByHeightMobile(8, height) }}
+            >
+              <Text style={[dynamicStyles.link, { textDecorationLine: 'underline', fontSize: scaleByHeightMobile(13, height) }]}>
+                {t('accessibility.statementTitle', 'הצהרת נגישות')}
+              </Text>
+            </TouchableOpacity>
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <AppModal
+        visible={statementVisible}
+        onRequestClose={() => setStatementVisible(false)}
+        transparent={false}
+      >
+        <AccessibilityStatementScreen
+          onBack={() => setStatementVisible(false)}
+        />
+      </AppModal>
     </View>
   );
 }

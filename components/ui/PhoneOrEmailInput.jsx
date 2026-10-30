@@ -2,10 +2,10 @@ import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } fr
 import { View, Text, TouchableOpacity, Platform, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../../context/globalAppContext';
+import { useWindowInfo } from '../../context/windowContext';
+import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import CustomTextInput from './CustomTextInput';
 import PhoneField from './PhoneField';
-
-const TAB_HEIGHT = 36;
 
 /**
  * A "Phone" / "Email" tab pair attached on top of a normal input field — the
@@ -86,6 +86,12 @@ const PhoneOrEmailInput = forwardRef(function PhoneOrEmailInput(
     return `${hex}${alpha}`;
   };
 
+  const { height, isLandscape } = useWindowInfo();
+  const isWebLandscape = Platform.OS === 'web' && isLandscape;
+  const tabHeight = isWebLandscape ? scaleByHeight(36, height) : scaleByHeightMobile(36, height);
+  const tabMarginBottom = isWebLandscape ? scaleByHeight(4, height) : scaleByHeightMobile(4, height);
+  const tabGap = isWebLandscape ? scaleByHeight(5, height) : scaleByHeightMobile(5, height);
+
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -96,17 +102,17 @@ const PhoneOrEmailInput = forwardRef(function PhoneOrEmailInput(
           // reference frame for the (much taller) input below. Without this,
           // the row's height is ambiguous on web and the tab text ends up
           // centering against the wrong box.
-          height: TAB_HEIGHT,
+          height: tabHeight,
           // Narrower than the input and centered above it — tabs are a
           // decoration attached on top, not a full-width part of the field.
           width: '100%',
           alignSelf: 'center',
-          marginBottom: 4,
-          gap: 5,
+          marginBottom: tabMarginBottom,
+          gap: tabGap,
         },
         tab: {
           flex: 1,
-          height: TAB_HEIGHT,
+          height: tabHeight,
           alignItems: 'center',
           justifyContent: 'center',
           borderRadius: borderRadius,

@@ -39,9 +39,21 @@ export default function MultiStepLoginScreen({ onGoToRegister, onGoToForgottenPa
   const [factor, setFactor] = useState(null);
   const [challengeId, setChallengeId] = useState(null);
 
-  const sizes = useMemo(() => ({
-    skipBtnTop: isWebLandscape ? scaleByHeight(103) : scaleByHeightMobile(10),
-  }), [isWebLandscape]);
+  const sizes = useMemo(() => {
+    const scale = isWebLandscape
+      ? (s) => scaleByHeight(s, height)
+      : (s) => scaleByHeightMobile(s, height);
+    return {
+      skipBtnTop: isWebLandscape ? scaleByHeight(103, height) : scaleByHeightMobile(10, height),
+      mfaGap: scale(12),
+      mfaTitleFontSize: scale(18),
+      mfaTitleMarginBottom: scale(12),
+      factorBtnBorderRadius: scale(8),
+      factorBtnPaddingVertical: scale(14),
+      factorBtnPaddingHorizontal: scale(24),
+      factorBtnMinWidth: scale(220),
+    };
+  }, [isWebLandscape, height]);
 
   // Begin the MFA step once the backend requires it after the first factor.
   const beginMfa = useCallback(async (mfa) => {
@@ -195,15 +207,24 @@ export default function MultiStepLoginScreen({ onGoToRegister, onGoToForgottenPa
         );
       case 'mfa_select':
         return (
-          <View style={styles.centerBlock}>
-            <Text style={[styles.title, { color: theme.unactiveTextColor }]}>
+          <View style={[styles.centerBlock, { gap: sizes.mfaGap }]}>
+            <Text style={[styles.title, { color: theme.unactiveTextColor, fontSize: sizes.mfaTitleFontSize, marginBottom: sizes.mfaTitleMarginBottom }]}>
               {t('auth.select_factor')}
             </Text>
             {factors.map((f) => (
               <TouchableOpacity
                 key={f.id}
                 onPress={() => selectFactor(f)}
-                style={[styles.factorBtn, { borderColor: theme.primaryColor }]}
+                style={[
+                  styles.factorBtn,
+                  {
+                    borderColor: theme.primaryColor,
+                    borderRadius: sizes.factorBtnBorderRadius,
+                    paddingVertical: sizes.factorBtnPaddingVertical,
+                    paddingHorizontal: sizes.factorBtnPaddingHorizontal,
+                    minWidth: sizes.factorBtnMinWidth,
+                  },
+                ]}
               >
                 <Text style={{ color: theme.primaryColor, fontFamily: 'Rubik-Medium' }}>
                   {f.type === 'phone' ? (f.phone || t('auth.phone_label')) : f.type.toUpperCase()}
@@ -275,20 +296,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: '6%',
-    gap: 12,
   },
   title: {
     fontFamily: 'Rubik-SemiBold',
-    fontSize: 18,
-    marginBottom: 12,
     textAlign: 'center',
   },
   factorBtn: {
     borderWidth: 1.5,
-    borderRadius: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
     alignItems: 'center',
-    minWidth: 220,
   },
 });

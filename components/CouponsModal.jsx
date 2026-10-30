@@ -14,8 +14,10 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 import CustomTextInput from './ui/CustomTextInput';
 import AppModal from './ui/AppModal';
+import AppHeading from './ui/AppHeading';
 
 const CouponsModal = ({ visible, onClose }) => {
   const { themeController, languageController, couponsManagerController, user } = useComponentContext();
@@ -192,14 +194,31 @@ const CouponsModal = ({ visible, onClose }) => {
   });
 
   return (
-    <AppModal visible={visible} transparent={true}>
+    <AppModal visible={visible} transparent={true} onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <TouchableOpacity style={styles.crossButton} onPress={onClose}>
-            <Image source={icons.cross} style={styles.crossIcon} />
+        <View
+          style={styles.modalContainer}
+          accessibilityViewIsModal={true}
+          role="dialog"
+          aria-modal="true"
+        >
+          <TouchableOpacity
+            style={styles.crossButton}
+            onPress={onClose}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+            hitSlop={ACCESSIBILITY_HIT_SLOP}
+          >
+            <Image
+              source={icons.cross}
+              style={styles.crossIcon}
+              accessible={false}
+              aria-hidden={true}
+            />
           </TouchableOpacity>
 
-          <Text style={styles.title}>{t('coupons.title')}</Text>
+          <AppHeading level={2} style={styles.title}>{t('coupons.title')}</AppHeading>
 
           <View style={styles.couponSection}>
             <Text style={styles.couponText}>

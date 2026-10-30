@@ -154,8 +154,11 @@ export const SubmitModal = ({ visible, onClose, onSubmitted }) => {
                             top: sizes.crossSpace,
                             right: sizes.crossSpace,
                         }}
+                        accessible={true}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
                     >
-                        <Image source={icons.cross} style={styles.crossIcon} />
+                        <Image source={icons.cross} style={styles.crossIcon} accessible={false} aria-hidden={true} />
                     </TouchableOpacity>
                 </>
             </View>

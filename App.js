@@ -45,7 +45,7 @@ import usePushNotifications from './managers/pushNotificationsManager';
 //   return originalCreateElement(type, props, ...children);
 // };
 
-// --- Глобальное применение шрифта ---
+// --- Глобальное применение шрифта и масштабирование интерфейса ---
 const originalTextRender = Text.render;
 Text.render = function render(props, ref) {
   // Проверяем, не задан ли уже fontFamily в стилях
@@ -53,6 +53,7 @@ Text.render = function render(props, ref) {
   const fontFamily = style.fontFamily || 'Rubik-Medium'; // По умолчанию Rubik-Medium
 
   const newProps = {
+    maxFontSizeMultiplier: 1.5,
     ...props,
     style: [style, { fontFamily }], // Применяем либо существующий, либо дефолтный
   };
@@ -62,12 +63,12 @@ Text.render = function render(props, ref) {
 export default function AppWrapper() {
   return (
     <ComponentProvider>
-      <NotificationProvider>
-        <WindowProvider>
+      <WindowProvider>
+        <NotificationProvider>
           <App />
-        </WindowProvider>
-        <GlobalNotificationHandler />
-      </NotificationProvider>
+          <GlobalNotificationHandler />
+        </NotificationProvider>
+      </WindowProvider>
     </ComponentProvider>
   );
 }

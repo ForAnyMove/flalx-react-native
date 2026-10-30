@@ -114,6 +114,7 @@ export default function ForgottenPasswordScreen() {
       linksRowMarginBottom: isWebLandscape ? web(8) : mobile(12),
       linksRowWidth: isWebLandscape ? web(314) : '90%',
       linkFontSize: isWebLandscape ? web(14) : mobile(14),
+      errorMarginBottom: isWebLandscape ? web(8) : mobile(8),
     };
   }, [isWebLandscape, height]);
 
@@ -190,7 +191,7 @@ export default function ForgottenPasswordScreen() {
               </View>
 
               {!!emailError && (
-                <Text style={{ color: theme.errorTextColor, fontSize: sizes.errorFontSize, marginBottom: 8 }}>
+                <Text style={{ color: theme.errorTextColor, fontSize: sizes.errorFontSize, marginBottom: sizes.errorMarginBottom }}>
                   {emailError}
                 </Text>
               )}

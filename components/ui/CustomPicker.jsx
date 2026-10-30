@@ -29,8 +29,9 @@ const CustomPicker = ({
   placeholderColor = null,
   bottomDropdown = true,
   headerStyle = false,
-  iconOnly = false, // compact mode: globe icon only, content-width dropdown
+  iconOnly = false,
   insideModal = false,
+  accessibilityLabel = null,
 }) => {
   const { themeController } = useComponentContext();
   const { width, height, isLandscape } = useWindowInfo();
@@ -54,6 +55,11 @@ const CustomPicker = ({
       headerInputContainerPaddingLeft: scale(24),
       headerInputContainerPaddingRight: scale(20),
       labelGap: scale(3),
+      arrowPaddingLeft: scale(10),
+      modalPadding: scale(10),
+      scrollBarWidth: scale(6),
+      scrollBarRadius: scale(3),
+      scrollBarRight: scale(2),
     };
   }, [isWebLandscape, height]);
 
@@ -131,11 +137,13 @@ const CustomPicker = ({
     });
 
     return (
-      <View style={styles.scrollBarTrack}>
+      <View style={[styles.scrollBarTrack, { width: sizes.scrollBarWidth, borderRadius: sizes.scrollBarRadius, right: sizes.scrollBarRight }]}>
         <Animated.View
           style={[
             styles.scrollBarIndicator,
             {
+              width: sizes.scrollBarWidth,
+              borderRadius: sizes.scrollBarRadius,
               height: indicatorHeight,
               transform: [{ translateY: indicatorTranslateY }],
               opacity: 0.5,
@@ -162,6 +170,10 @@ const CustomPicker = ({
     return (
       <TouchableOpacity
         {...webHoverProps}
+        accessible={true}
+        accessibilityRole="menuitem"
+        accessibilityState={{ selected: isSelected }}
+        accessibilityLabel={item.label}
         style={[
           styles.option,
           {
@@ -220,6 +232,7 @@ const CustomPicker = ({
             styles.fullScreenModalContent,
             {
               backgroundColor: themeController.current?.formInputBackground,
+              padding: sizes.modalPadding,
             },
           ]}
           onLayout={(e) => setContentHeight(e.nativeEvent.layout.height)}
@@ -309,6 +322,19 @@ const CustomPicker = ({
       <>
         <TouchableOpacity
           ref={pickerRef}
+          accessible={true}
+          accessibilityRole="combobox"
+          accessibilityState={{ expanded: modalVisible }}
+          accessibilityLabel={
+            accessibilityLabel ||
+            (iconOnly
+              ? isRTL
+                ? 'בחירת שפה'
+                : 'Select language'
+              : `${selectedLabel || ''}`)
+          }
+          aria-expanded={modalVisible}
+          aria-haspopup="listbox"
           style={[
             styles.headerPickerContainer,
             {
@@ -353,6 +379,8 @@ const CustomPicker = ({
         >
           <Image
             source={icons.language}
+            accessible={false}
+            aria-hidden={true}
             style={{
               width: sizes.langIconSize,
               height: sizes.langIconSize,
@@ -399,6 +427,15 @@ const CustomPicker = ({
     <>
       <TouchableOpacity
         ref={pickerRef}
+        accessible={true}
+        accessibilityRole="combobox"
+        accessibilityState={{ expanded: modalVisible }}
+        accessibilityLabel={
+          accessibilityLabel ||
+          `${label ? label + ': ' : ''}${placeholder ? placeholder : selectedLabel}`
+        }
+        aria-expanded={modalVisible}
+        aria-haspopup="listbox"
         style={[
           styles.pickerContainer,
           {
@@ -466,7 +503,7 @@ const CustomPicker = ({
             {placeholder ? placeholder : selectedLabel}
           </Text>
         </View>
-        <View style={styles.arrowContainer}>
+        <View style={[styles.arrowContainer, { paddingLeft: sizes.arrowPaddingLeft }]}>
           <Image
             source={icons.arrowDown}
             style={[
@@ -502,7 +539,6 @@ const styles = StyleSheet.create({
   arrowContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    paddingLeft: 10,
   },
   arrowIcon: {
     resizeMode: 'contain',
@@ -518,7 +554,6 @@ const styles = StyleSheet.create({
     bottom: '25%',
     width: '80%',
     maxHeight: '50%',
-    padding: 10,
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -541,18 +576,13 @@ const styles = StyleSheet.create({
     // paddingHorizontal: 15,
   },
   scrollBarTrack: {
-    width: 6,
     height: '100%',
     backgroundColor: 'transparent', // Прозрачный фон
-    borderRadius: 3,
     position: 'absolute',
-    right: 2,
     top: 0,
     bottom: 0,
   },
   scrollBarIndicator: {
-    width: 6,
-    borderRadius: 3,
   },
 });
 

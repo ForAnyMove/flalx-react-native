@@ -165,6 +165,9 @@ const ProfessionDocumentsBlock = ({ value, onChange, width }) => {
           <TouchableOpacity
             style={styles.removeButton}
             onPress={() => handleRemoveImage(index, type)}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.remove', { defaultValue: 'מחק' })}
           >
             <Image
               source={icons.cross}
@@ -173,6 +176,8 @@ const ProfessionDocumentsBlock = ({ value, onChange, width }) => {
                 height: sizes.removeIconSize,
                 tintColor: themeController.current?.textColor,
               }}
+              accessible={false}
+              aria-hidden={true}
             />
           </TouchableOpacity>
         </View>

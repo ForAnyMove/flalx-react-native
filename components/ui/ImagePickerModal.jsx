@@ -19,6 +19,7 @@ import CustomTextInput from './CustomTextInput';
 import ImageViewerModal from './ImageViewerModal';
 import AppModal from './AppModal';
 import { useNotification } from '../../src/render';
+import { ACCESSIBILITY_HIT_SLOP } from '../../constants/themes';
 
 let nextId = 0;
 const makeId = () => `img-${Date.now()}-${nextId++}`;
@@ -85,6 +86,10 @@ export default function ImagePickerModal({ visible, onClose, onAdd, limitType, m
       smallGap: scale(8, height),
       footerBtnHeight: scale(48, height),
       closeIconSize: scale(18, height),
+      removeBtnSize: scale(22, height),
+      removeBtnOffset: scale(6, height),
+      removeIconSize: scale(14, height),
+      marginTopSmall: scale(4, height),
     };
   }, [isWebLandscape, height]);
 
@@ -256,18 +261,35 @@ export default function ImagePickerModal({ visible, onClose, onAdd, limitType, m
 
   const PreviewTile = ({ uri, onPress, onRemove }) => (
     <View style={{ width: sizes.previewSize, height: sizes.previewSize }}>
-      <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={{ width: '100%', height: '100%' }}>
-        <Image source={{ uri }} style={{ width: '100%', height: '100%', borderRadius: sizes.smallGap }} resizeMode='cover' />
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.85}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={t('imagePicker.previewLabel', 'תצוגה מקדימה')}
+        style={{ width: '100%', height: '100%' }}
+      >
+        <Image
+          source={{ uri }}
+          accessible={true}
+          accessibilityLabel={t('imagePicker.previewLabel', 'תצוגה מקדימה')}
+          style={{ width: '100%', height: '100%', borderRadius: sizes.smallGap }}
+          resizeMode='cover'
+        />
       </TouchableOpacity>
       <TouchableOpacity
         onPress={onRemove}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.delete', 'מחק')}
+        hitSlop={ACCESSIBILITY_HIT_SLOP}
         style={{
           position: 'absolute',
-          top: -6,
-          [isRTL ? 'left' : 'right']: -6,
-          width: 22,
-          height: 22,
-          borderRadius: 11,
+          top: -sizes.removeBtnOffset,
+          [isRTL ? 'left' : 'right']: -sizes.removeBtnOffset,
+          width: sizes.removeBtnSize,
+          height: sizes.removeBtnSize,
+          borderRadius: sizes.removeBtnSize / 2,
           backgroundColor: theme.backgroundColor,
           alignItems: 'center',
           justifyContent: 'center',
@@ -275,7 +297,7 @@ export default function ImagePickerModal({ visible, onClose, onAdd, limitType, m
           borderColor: theme.borderColor,
         }}
       >
-        <Ionicons name='close' size={14} color={theme.textColor} />
+        <Ionicons name='close' size={sizes.removeIconSize} color={theme.textColor} accessible={false} aria-hidden={true} />
       </TouchableOpacity>
     </View>
   );
@@ -311,9 +333,17 @@ export default function ImagePickerModal({ visible, onClose, onAdd, limitType, m
             >
               {title}
             </Text>
-            <TouchableOpacity onPress={handleCancel}>
+            <TouchableOpacity
+              onPress={handleCancel}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.close', 'סגור')}
+              hitSlop={ACCESSIBILITY_HIT_SLOP}
+            >
               <Image
                 source={icons.cross}
+                accessible={false}
+                aria-hidden={true}
                 style={{ width: sizes.closeIconSize, height: sizes.closeIconSize, tintColor: theme.textColor }}
               />
             </TouchableOpacity>
@@ -323,7 +353,7 @@ export default function ImagePickerModal({ visible, onClose, onAdd, limitType, m
               style={{
                 fontSize: sizes.subtitleFontSize,
                 color: theme.unactiveTextColor,
-                marginTop: 4,
+                marginTop: sizes.marginTopSmall,
                 textAlign,
               }}
             >
@@ -382,7 +412,13 @@ export default function ImagePickerModal({ visible, onClose, onAdd, limitType, m
               }}
             />
             {multiple && !!url.trim() && (
-              <TouchableOpacity onPress={commitUrl} style={{ marginLeft: isRTL ? 0 : sizes.smallGap, marginRight: isRTL ? sizes.smallGap : 0 }}>
+              <TouchableOpacity
+                onPress={commitUrl}
+                style={{ marginLeft: isRTL ? 0 : sizes.smallGap, marginRight: isRTL ? sizes.smallGap : 0 }}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.add', { defaultValue: 'הוסף' })}
+              >
                 <Ionicons name='add-circle' size={22} color={theme.primaryColor} />
               </TouchableOpacity>
             )}
@@ -400,6 +436,9 @@ export default function ImagePickerModal({ visible, onClose, onAdd, limitType, m
           {/* Device gallery */}
           <TouchableOpacity
             onPress={pickImageFromDevice}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('imagePicker.pickFromDevice')}
             style={[
               row,
               {
@@ -416,6 +455,8 @@ export default function ImagePickerModal({ visible, onClose, onAdd, limitType, m
               name='image-outline'
               size={20}
               color={theme.primaryColor}
+              accessible={false}
+              aria-hidden={true}
               style={{ marginRight: isRTL ? 0 : sizes.smallGap, marginLeft: isRTL ? sizes.smallGap : 0 }}
             />
             <Text style={{ color: theme.primaryColor, fontFamily: 'Rubik-Medium', fontSize: sizes.buttonFontSize }}>
@@ -424,7 +465,13 @@ export default function ImagePickerModal({ visible, onClose, onAdd, limitType, m
           </TouchableOpacity>
 
           {Platform.OS !== 'web' && (
-            <TouchableOpacity onPress={openCameraFromDevice} style={{ alignItems: 'center', marginTop: sizes.smallGap * 1.5 }}>
+            <TouchableOpacity
+              onPress={openCameraFromDevice}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('imagePicker.openCamera')}
+              style={{ alignItems: 'center', marginTop: sizes.smallGap * 1.5 }}
+            >
               <Text style={{ color: theme.primaryColor, fontSize: sizes.subtitleFontSize, fontFamily: 'Rubik-Medium' }}>
                 {t('imagePicker.openCamera')}
               </Text>

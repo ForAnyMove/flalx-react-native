@@ -189,6 +189,7 @@ const AddressPicker = ({
     <TouchableOpacity
       activeOpacity={1}
       onPress={() => inputRef.current?.focus()}
+      accessible={false}
       style={[
         styles.pickerContainer,
         {
@@ -203,6 +204,8 @@ const AddressPicker = ({
     >
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <Text
+          accessible={true}
+          accessibilityRole="text"
           style={[
             styles.label,
             {
@@ -232,7 +235,12 @@ const AddressPicker = ({
           }}
           onFocus={handleFocus}
           ref={inputRef}
-
+          textInputProps={{
+            accessible: true,
+            accessibilityLabel: label || placeholder,
+            accessibilityRole: 'search',
+            accessibilityState: { disabled: false },
+          }}
           debounceDelay={300}
           minCharsToFetch={3}
         />

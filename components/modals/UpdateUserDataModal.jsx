@@ -16,6 +16,8 @@ import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
 import { validatePersonName } from '../../utils/nameValidation';
 import CustomTextInput from '../ui/CustomTextInput';
+import AppHeading from '../ui/AppHeading';
+import { ACCESSIBILITY_HIT_SLOP } from '../../constants/themes';
 import AppModal from '../ui/AppModal';
 
 const UpdateUserDataModal = ({
@@ -195,17 +197,29 @@ const UpdateUserDataModal = ({
   return (
     <AppModal visible={visible} transparent={true}>
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
+        <View
+          style={styles.modalContainer}
+          accessibilityViewIsModal={true}
+          role="dialog"
+          aria-modal="true"
+        >
           {isLoading && (
             <View style={styles.loadingOverlay}>
               <ActivityIndicator size='large' color={theme.primaryColor} />
             </View>
           )}
-          <TouchableOpacity style={styles.crossButton} onPress={onClose}>
-            <Image source={icons.cross} style={styles.crossIcon} />
+          <TouchableOpacity
+            style={styles.crossButton}
+            onPress={onClose}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close', 'סגור')}
+            hitSlop={ACCESSIBILITY_HIT_SLOP}
+          >
+            <Image source={icons.cross} accessible={false} aria-hidden={true} style={styles.crossIcon} />
           </TouchableOpacity>
 
-          <Text style={styles.title}>{t('my_profile.update_user_data')}</Text>
+          <AppHeading level={2} style={styles.title}>{t('my_profile.update_user_data')}</AppHeading>
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>{t('my_profile.first_name')}</Text>
@@ -235,7 +249,13 @@ const UpdateUserDataModal = ({
             />
           </View>
 
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={handleSave}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.save')}
+          >
             <Text style={styles.saveButtonText}>{t('common.save')}</Text>
           </TouchableOpacity>
         </View>

@@ -46,13 +46,13 @@ export default function NewJobTemplateButton({
                 : scaleByHeightMobile(4, height),
             font: isWebLandscape
                 ? scaleByHeight(14, height)
-                : scaleByHeightMobile(14, height),
+                : scaleByHeightMobile(14, height, { maxScale: 1.25 }),
             paddingVertical: isWebLandscape
                 ? scaleByHeight(15, height)
-                : scaleByHeightMobile(12, height),
+                : scaleByHeightMobile(8, height, { maxScale: 1.2 }),
             paddingHorizontal: isWebLandscape
                 ? scaleByHeight(16, height)
-                : scaleByHeightMobile(12, height),
+                : scaleByHeightMobile(10, height, { maxScale: 1.2 }),
             iconSize: isWebLandscape
                 ? scaleByHeight(24, height)
                 : scaleByHeightMobile(20, height),
@@ -67,7 +67,7 @@ export default function NewJobTemplateButton({
                 card: {
                     margin: fullWidth ? 0 : sizes.cardMargin,
                     width: sizes.cardWidth,
-                    height: sizes.cardHeight,
+                    minHeight: sizes.cardHeight,
                     borderRadius: sizes.cardRadius,
                     backgroundColor: themeController.current?.formInputBackground,
                     paddingVertical: sizes.paddingVertical,
@@ -110,7 +110,6 @@ export default function NewJobTemplateButton({
 
 const styles = StyleSheet.create({
     card: {
-        overflow: 'hidden',
         alignItems: 'center',
     },
     title: {

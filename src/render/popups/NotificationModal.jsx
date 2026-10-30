@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from 'react';
-import { Modal, View, Text, Pressable, Animated, Dimensions, Platform } from 'react-native';
+import React, { useEffect, useRef, useMemo } from 'react';
+import { Modal, View, Text, Pressable, Animated, Platform, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
 import { useComponentContext } from '../../../context/globalAppContext';
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+import { useWindowInfo } from '../../../context/windowContext';
+import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 
 const getTypeConfig = (type) => {
     switch (type) {
@@ -47,6 +47,34 @@ export const NotificationModal = ({
     const { languageController, themeController } = useComponentContext();
     const isRTL = languageController?.isRTL;
     const theme = themeController?.current;
+    const windowInfo = useWindowInfo();
+    const width = windowInfo?.width ?? Dimensions.get('window').width;
+    const height = windowInfo?.height ?? Dimensions.get('window').height;
+    const isLandscape = windowInfo?.isLandscape ?? false;
+    const isWebLandscape = Platform.OS === 'web' && isLandscape;
+
+    const sizes = useMemo(() => {
+        const scale = isWebLandscape
+            ? (s) => scaleByHeight(s, height)
+            : (s) => scaleByHeightMobile(s, height);
+        return {
+            paddingTop: scale(80),
+            paddingHorizontal: scale(20),
+            borderRadius: scale(16),
+            cardPadding: scale(20),
+            btnPaddingH: scale(20),
+            btnPaddingV: scale(12),
+            btnRadius: scale(8),
+            btnMargin: scale(10),
+            btnMinWidth: scale(80),
+            btnFontSize: scale(16),
+            iconSize: scale(32),
+            minCardHeight: scale(120),
+            contentMarginBottom: scale(20),
+            maxWidth: isWebLandscape ? scale(550) : Math.min(width - scale(40), scale(400)),
+            minWidth: isWebLandscape ? scale(400) : scale(280),
+        };
+    }, [isWebLandscape, width, height]);
 
     const typeConfig = getTypeConfig(type);
     const markdownStyle = {
@@ -94,15 +122,18 @@ export const NotificationModal = ({
     const renderButton = (button, index) => (
         <Pressable
             key={index}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={button.title}
             style={[
                 {
                     backgroundColor: button.backgroundColor || theme?.buttonColorSecondaryDefault || '#E5E7EB',
-                    paddingHorizontal: 20,
-                    paddingVertical: 12,
-                    borderRadius: 8,
-                    marginLeft: !isRTL && index > 0 ? 10 : 0,
-                    marginRight: isRTL && index > 0 ? 10 : 0,
-                    minWidth: 80,
+                    paddingHorizontal: sizes.btnPaddingH,
+                    paddingVertical: sizes.btnPaddingV,
+                    borderRadius: sizes.btnRadius,
+                    marginLeft: !isRTL && index > 0 ? sizes.btnMargin : 0,
+                    marginRight: isRTL && index > 0 ? sizes.btnMargin : 0,
+                    minWidth: sizes.btnMinWidth,
                     alignItems: 'center',
                 }
             ]}
@@ -114,7 +145,7 @@ export const NotificationModal = ({
             <Text style={{
                 color: button.textColor || theme?.buttonTextColorSecondaryDefault || '#374151',
                 fontWeight: '400',
-                fontSize: 16,
+                fontSize: sizes.btnFontSize,
                 textAlign: isRTL ? 'right' : 'left',
             }}>
                 {button.title}
@@ -136,8 +167,8 @@ export const NotificationModal = ({
                         backgroundColor: 'rgba(0, 0, 0, 0.5)',
                         justifyContent: 'flex-start',
                         alignItems: 'center',
-                        paddingTop: 100,
-                        paddingHorizontal: 20,
+                        paddingTop: sizes.paddingTop,
+                        paddingHorizontal: sizes.paddingHorizontal,
                         zIndex: 999999,
                     },
                     { opacity: fadeAnim }
@@ -153,14 +184,16 @@ export const NotificationModal = ({
                         bottom: 0,
                     }}
                     onPress={handleBackdropPress}
+                    accessible={false}
+                    importantForAccessibility="no"
                 />
                 <Animated.View
                     style={[
                         {
                             backgroundColor: theme?.backgroundColor || '#FFFFFF',
-                            borderRadius: 16,
-                            maxWidth: 550,
-                            minWidth: 400,
+                            borderRadius: sizes.borderRadius,
+                            maxWidth: sizes.maxWidth,
+                            minWidth: sizes.minWidth,
                             shadowColor: '#000',
                             shadowOffset: { width: 0, height: 4 },
                             shadowOpacity: 0.25,
@@ -180,14 +213,14 @@ export const NotificationModal = ({
                         style={{
                             backgroundColor: typeConfig.backgroundColor,
                             width: '15%',
-                            minHeight: 120,
+                            minHeight: sizes.minCardHeight,
                             justifyContent: 'center',
                             alignItems: 'center',
                         }}
                     >
                         <Ionicons
                             name={typeConfig.icon}
-                            size={32}
+                            size={sizes.iconSize}
                             color={typeConfig.color}
                         />
                     </View>
@@ -196,12 +229,12 @@ export const NotificationModal = ({
                     <View
                         style={{
                             flex: 1,
-                            padding: 20,
+                            padding: sizes.cardPadding,
                             justifyContent: 'center',
                         }}
                     >
                         {/* Сообщение */}
-                        <View style={{ marginBottom: buttons.length > 0 ? 20 : 0 }}>
+                        <View style={{ marginBottom: buttons.length > 0 ? sizes.contentMarginBottom : 0 }}>
                             <Markdown style={markdownStyle}>
                                 {message}
                             </Markdown>
@@ -242,8 +275,8 @@ export const NotificationModal = ({
                         backgroundColor: 'rgba(0, 0, 0, 0.5)',
                         justifyContent: 'flex-start',
                         alignItems: 'center',
-                        paddingTop: 80,
-                        paddingHorizontal: 20,
+                        paddingTop: sizes.paddingTop,
+                        paddingHorizontal: sizes.paddingHorizontal,
                     },
                     { opacity: fadeAnim }
                 ]}
@@ -251,15 +284,17 @@ export const NotificationModal = ({
                 <Pressable
                     style={{ flex: 1, width: '100%', alignItems: 'center' }}
                     onPress={handleBackdropPress}
+                    accessible={false}
+                    importantForAccessibility="no"
                 >
                     <Animated.View
                         style={[
                             {
                                 backgroundColor: theme?.backgroundColor || '#FFFFFF',
-                                borderRadius: 16,
-                                marginHorizontal: 20,
-                                maxWidth: Platform.OS === 'web' ? 550 : Math.min(screenWidth - 40, 400),
-                                minWidth: Platform.OS === 'web' ? 400 : 280,
+                                borderRadius: sizes.borderRadius,
+                                marginHorizontal: sizes.paddingHorizontal,
+                                maxWidth: sizes.maxWidth,
+                                minWidth: sizes.minWidth,
                                 alignSelf: 'center',
                                 shadowColor: '#000',
                                 shadowOffset: { width: 0, height: 4 },
@@ -268,7 +303,6 @@ export const NotificationModal = ({
                                 elevation: 999,
                                 flexDirection: isRTL ? 'row-reverse' : 'row',
                                 overflow: 'hidden',
-                                elevation: 999,
                             },
                             {
                                 transform: [{ translateY: slideAnim }]
@@ -281,14 +315,14 @@ export const NotificationModal = ({
                             style={{
                                 backgroundColor: typeConfig.backgroundColor,
                                 width: '15%',
-                                minHeight: 120,
+                                minHeight: sizes.minCardHeight,
                                 justifyContent: 'center',
                                 alignItems: 'center',
                             }}
                         >
                             <Ionicons
                                 name={typeConfig.icon}
-                                size={32}
+                                size={sizes.iconSize}
                                 color={typeConfig.color}
                             />
                         </View>
@@ -297,12 +331,12 @@ export const NotificationModal = ({
                         <View
                             style={{
                                 flex: 1,
-                                padding: 20,
+                                padding: sizes.cardPadding,
                                 justifyContent: 'center',
                             }}
                         >
                             {/* Сообщение */}
-                            <View style={{ marginBottom: buttons.length > 0 ? 20 : 0 }}>
+                            <View style={{ marginBottom: buttons.length > 0 ? sizes.contentMarginBottom : 0 }}>
                                 <Markdown style={markdownStyle}>
                                     {message}
                                 </Markdown>

@@ -11,8 +11,10 @@ import {
 import { useComponentContext } from '../context/globalAppContext';
 import JobModalWrapper from './JobModalWrapper';
 import AppModal from './ui/AppModal';
+import AppHeading from './ui/AppHeading';
 import { useWindowInfo } from '../context/windowContext';
 import { icons } from '../constants/icons';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 import { scaleByHeight } from '../utils/resizeFuncs';
 import { useTranslation } from 'react-i18next';
 import {
@@ -111,7 +113,7 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
         : scaleByHeightMobile(128, height),
       imageSize: isWebLandscape
         ? scaleByHeight(32, height)
-        : height * 0.03,
+        : scaleByHeightMobile(32, height, { maxScale: 1.35 }),
       margin: isWebLandscape
         ? scaleByHeight(18, height)
         : scaleByHeightMobile(10, height),
@@ -307,6 +309,8 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
       style={{
         flex: 1,
       }}
+      accessible={false}
+      importantForAccessibility="no"
     >
       <TouchableOpacity
         activeOpacity={1}
@@ -320,6 +324,9 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
         onPress={(e) => {
           e.stopPropagation();
         }}
+        accessibilityViewIsModal={true}
+        role="dialog"
+        aria-modal="true"
       >
         {/* Header */}
         <View style={dynamicStyles.modalHeader}>
@@ -327,24 +334,30 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
             onPress={() => {
               closeModal(false);
             }}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.back', { defaultValue: 'חזרה' })}
+            hitSlop={ACCESSIBILITY_HIT_SLOP}
           >
             <Image
               source={isRTL ? icons.forward : icons.back}
               style={dynamicStyles.backButtonImage}
+              accessible={false}
+              aria-hidden={true}
             />
           </TouchableOpacity>
-          <Text style={dynamicStyles.modalTitle}>FLALX</Text>
+          <AppHeading level={1} style={dynamicStyles.modalTitle}>FLALX</AppHeading>
         </View>
 
-        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: sizes.containerPaddingHorizontal }}>
           <View
             style={{
               alignSelf: 'center',
             }}
           >
-            <Text style={dynamicStyles.titleText}>
+            <AppHeading level={2} style={dynamicStyles.titleText}>
               {t('showJob.completeModal.title')}
-            </Text>
+            </AppHeading>
             <Text style={dynamicStyles.subtitleText}>
               {t('showJob.completeModal.sub_title')}
             </Text>
@@ -384,11 +397,16 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
                 <TouchableOpacity
                   onPress={() => setImageModalVisible(true)}
                   style={dynamicStyles.addImageButton}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('newJob.uploadingPhotos', { defaultValue: 'Add photo' })}
                 >
                   <Image
                     source={icons.plus}
                     style={dynamicStyles.plusIcon}
                     resizeMode='contain'
+                    accessible={false}
+                    aria-hidden={true}
                   />
                 </TouchableOpacity>
 
@@ -404,11 +422,16 @@ function CompleteJobModalContent({ closeModal, completeFunc }) {
                       <TouchableOpacity
                         style={dynamicStyles.removeIconContainer}
                         onPress={() => setPendingRemoveIndex(index)}
+                        accessible={true}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('common.remove', { defaultValue: 'מחק' })}
                       >
                         <Image
                           source={icons.cross}
                           style={dynamicStyles.crossIcon}
                           resizeMode='contain'
+                          accessible={false}
+                          aria-hidden={true}
                         />
                       </TouchableOpacity>
                     </View>

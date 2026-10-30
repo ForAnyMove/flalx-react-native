@@ -19,7 +19,7 @@ export function scaleByHeight(
   designValue,
   currentHeight = Dimensions.get('window').height,
   baseHeight = BASE_DESIGN_HEIGHT,
-  { round = true } = {},
+  { round = true, isFont = false, minScale = 0.5, maxScale = 2.0 } = {},
   isRevertResize = false,
 ) {
   if (typeof designValue !== 'number' || !isFinite(designValue)) return 0;
@@ -45,7 +45,18 @@ export function scaleByHeight(
     }
   }
 
-  const result = designValue * scale * resizeKef;
+  // Display Size scaling (applies to all layout elements):
+  let result = designValue * scale * resizeKef;
+
+  // Font Size scaling (applies ONLY to text when isFont is explicitly requested):
+  if (isFont) {
+    const fontScale =
+      typeof PixelRatio.getFontScale === 'function' ? PixelRatio.getFontScale() : 1;
+    const rawScale =
+      typeof fontScale === 'number' && fontScale > 0 ? fontScale : 1;
+    const scaleFactor = Math.min(Math.max(rawScale, minScale), maxScale);
+    result = result * scaleFactor;
+  }
 
   return round ? PixelRatio.roundToNearestPixel(result) : result;
 }
@@ -53,9 +64,34 @@ export function scaleByHeight(
 export function scaleByHeightMobile(
   designValue,
   currentHeight = Dimensions.get('window').height,
-  { round = true } = {},
+  options = {},
 ) {
-  return scaleByHeight(designValue, currentHeight, MOBILE_DESIGN_HEIGHT, {
-    round,
+  return scaleByHeight(designValue, currentHeight, MOBILE_DESIGN_HEIGHT, options);
+}
+
+/**
+ * Масштабирует размер шрифта с учётом как высоты экрана (Display Size),
+ * так и системного масштаба шрифта (Font Size / PixelRatio.getFontScale).
+ */
+export function scaleFontSize(
+  designValue,
+  currentHeight = Dimensions.get('window').height,
+  options = {},
+) {
+  return scaleByHeight(designValue, currentHeight, BASE_DESIGN_HEIGHT, {
+    ...options,
+    isFont: true,
   });
 }
+
+export function scaleFontSizeMobile(
+  designValue,
+  currentHeight = Dimensions.get('window').height,
+  options = {},
+) {
+  return scaleByHeight(designValue, currentHeight, MOBILE_DESIGN_HEIGHT, {
+    ...options,
+    isFont: true,
+  });
+}
+

@@ -15,6 +15,7 @@ import { useComponentContext } from '../../context/globalAppContext';
 import { useWindowInfo } from '../../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import AppModal from './AppModal';
+import { ACCESSIBILITY_HIT_SLOP } from '../../constants/themes';
 import {
   formatDisplayDateTime,
   formatLocalDateTime,
@@ -109,6 +110,30 @@ export default function CustomDateTimeInput({
       buttonHeight: scale(44),
       gap: scale(10),
       androidDayCellHeight: isWebLandscape ? undefined : (width * 0.92 - 2 * scale(16)) / 7,
+      cardMaxWidth: scale(420),
+      headerMarginBottom: scale(12),
+      navButtonSize: scale(40),
+      timezoneMarginBottom: scale(12),
+      timezoneGap: scale(8),
+      timezoneFontSize: scale(12),
+      timezoneSearchFontSize: scale(13),
+      timezoneSearchPaddingH: scale(10),
+      timezoneSearchPaddingV: scale(8),
+      timezoneDropdownMaxHeight: scale(170),
+      timezoneOptionPaddingH: scale(10),
+      timezoneOptionPaddingV: scale(9),
+      weekdayMarginBottom: scale(6),
+      timeSectionMarginTop: scale(14),
+      timeColumnMaxHeight: scale(132),
+      timeColumnWidth: scale(72),
+      timeOptionHeight: scale(34),
+      timeOptionMarginBottom: scale(6),
+      timeOptionFontSize: scale(16),
+      actionsMarginTop: scale(16),
+      actionTextFontSize: scale(16),
+      validationFontSize: scale(13),
+      validationMarginTop: scale(10),
+      labelMarginBottom: scale(8),
     };
   }, [width, height, isWebLandscape]);
 
@@ -243,6 +268,12 @@ export default function CustomDateTimeInput({
       <TouchableOpacity
         activeOpacity={readOnly ? 1 : 0.75}
         onPress={openPicker}
+        disabled={readOnly}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={`${label || ''}: ${displayWithTimezone || placeholder || ''}`}
+        accessibilityHint={t('accessibility.selectDateTimeHint', { defaultValue: 'לחץ לבחירת תאריך ושעה' })}
+        accessibilityState={{ disabled: readOnly, expanded: isOpen }}
         style={[
           styles.input,
           {
@@ -264,6 +295,7 @@ export default function CustomDateTimeInput({
               {
                 color: error ? (theme?.errorTextColor || 'red') : theme?.formInputLabelColor || theme?.unactiveTextColor,
                 fontSize: sizes.labelSize,
+                marginBottom: sizes.labelMarginBottom,
                 textAlign: isRTL ? 'right' : 'left',
               },
               labelStyle,
@@ -273,7 +305,7 @@ export default function CustomDateTimeInput({
           </Text>
         )}
 
-        <View style={[styles.valueRow, isRTL && { flexDirection: 'row-reverse' }]}>
+        <View style={[styles.valueRow, { gap: sizes.gap }, isRTL && { flexDirection: 'row-reverse' }]}>
           <Text
             style={[
               styles.valueText,
@@ -290,6 +322,8 @@ export default function CustomDateTimeInput({
           </Text>
           <Image
             source={mode === 'date' ? icons.calendar : icons.access_time}
+            accessible={false}
+            aria-hidden={true}
             style={{ width: sizes.iconSize, height: sizes.iconSize, tintColor: theme?.formInputLabelColor }}
           />
         </View>
@@ -302,14 +336,22 @@ export default function CustomDateTimeInput({
               styles.pickerCard,
               {
                 width: sizes.modalWidth,
+                maxWidth: sizes.cardMaxWidth,
                 backgroundColor: theme?.backgroundColor,
                 borderRadius: sizes.borderRadius,
                 padding: sizes.modalPadding,
               },
             ]}
           >
-            <View style={[styles.header, isRTL && { flexDirection: 'row-reverse' }]}>
-              <TouchableOpacity onPress={() => changeMonth(-1)} style={styles.navButton}>
+            <View style={[styles.header, { marginBottom: sizes.headerMarginBottom }, isRTL && { flexDirection: 'row-reverse' }]}>
+              <TouchableOpacity
+                onPress={() => changeMonth(-1)}
+                style={[styles.navButton, { width: sizes.navButtonSize, height: sizes.navButtonSize }]}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('accessibility.prevMonth', { defaultValue: 'חודש קודם' })}
+                hitSlop={ACCESSIBILITY_HIT_SLOP}
+              >
                 <Text style={[styles.navText, { color: theme?.primaryColor, fontSize: sizes.navSize }]}>
                   {isRTL ? '>' : '<'}
                 </Text>
@@ -317,7 +359,14 @@ export default function CustomDateTimeInput({
               <Text style={[styles.title, { color: theme?.textColor, fontSize: sizes.titleSize }]}>
                 {monthTitle}
               </Text>
-              <TouchableOpacity onPress={() => changeMonth(1)} style={styles.navButton}>
+              <TouchableOpacity
+                onPress={() => changeMonth(1)}
+                style={[styles.navButton, { width: sizes.navButtonSize, height: sizes.navButtonSize }]}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('accessibility.nextMonth', { defaultValue: 'חודש הבа' })}
+                hitSlop={ACCESSIBILITY_HIT_SLOP}
+              >
                 <Text style={[styles.navText, { color: theme?.primaryColor, fontSize: sizes.navSize }]}>
                   {isRTL ? '<' : '>'}
                 </Text>
@@ -331,17 +380,17 @@ export default function CustomDateTimeInput({
             >
 
               {showTimezone && (
-                <View style={[styles.timezoneBlock, timezoneListOpen && styles.timezoneBlockOpen]}>
+                <View style={[styles.timezoneBlock, { marginBottom: sizes.timezoneMarginBottom }, timezoneListOpen && styles.timezoneBlockOpen]}>
                   <View
-                    style={[styles.timezoneRow, isRTL && { flexDirection: 'row-reverse' }]}
+                    style={[styles.timezoneRow, { gap: sizes.timezoneGap }, isRTL && { flexDirection: 'row-reverse' }]}
                     onLayout={(e) => setTimezoneRowHeight(e.nativeEvent.layout.height)}
                   >
-                    <Text style={[styles.timezoneText, { color: theme?.formInputLabelColor }]}>
+                    <Text style={[styles.timezoneText, { color: theme?.formInputLabelColor, fontSize: sizes.timezoneFontSize }]}>
                       {t('dateTimePicker.timezone')}: {formatTimezoneLabel(selectedTimezone)}
                     </Text>
                     {onTimezoneChange && (
                       <TouchableOpacity onPress={() => setTimezoneListOpen((v) => !v)}>
-                        <Text style={[styles.timezoneChangeText, { color: theme?.primaryColor }]}>
+                        <Text style={[styles.timezoneChangeText, { color: theme?.primaryColor, fontSize: sizes.timezoneFontSize }]}>
                           {t('dateTimePicker.change')}
                         </Text>
                       </TouchableOpacity>
@@ -354,6 +403,7 @@ export default function CustomDateTimeInput({
                         styles.timezoneDropdown,
                         {
                           top: timezoneRowHeight + 4,
+                          borderRadius: sizes.borderRadius,
                           backgroundColor: theme?.backgroundColor,
                           borderColor: theme?.defaultBlocksMockBackground || '#ccc',
                         },
@@ -369,12 +419,15 @@ export default function CustomDateTimeInput({
                           styles.timezoneSearchInput,
                           {
                             color: theme?.textColor,
+                            fontSize: sizes.timezoneSearchFontSize,
+                            paddingHorizontal: sizes.timezoneSearchPaddingH,
+                            paddingVertical: sizes.timezoneSearchPaddingV,
                             borderBottomColor: theme?.defaultBlocksMockBackground || '#ccc',
                             textAlign: isRTL ? 'right' : 'left',
                           },
                         ]}
                       />
-                      <ScrollView style={styles.timezoneDropdownList} keyboardShouldPersistTaps="handled" nestedScrollEnabled={true}>
+                      <ScrollView style={[styles.timezoneDropdownList, { maxHeight: sizes.timezoneDropdownMaxHeight }]} keyboardShouldPersistTaps="handled" nestedScrollEnabled={true}>
                         {filteredTimezones.map((option) => {
                           const isSelected = option === selectedTimezone;
                           return (
@@ -382,6 +435,10 @@ export default function CustomDateTimeInput({
                               key={option}
                               style={[
                                 styles.timezoneOption,
+                                {
+                                  paddingHorizontal: sizes.timezoneOptionPaddingH,
+                                  paddingVertical: sizes.timezoneOptionPaddingV,
+                                },
                                 isSelected && { backgroundColor: `${theme?.primaryColor || '#000'}14` },
                               ]}
                               onPress={() => {
@@ -395,6 +452,7 @@ export default function CustomDateTimeInput({
                                   styles.timezoneOptionText,
                                   {
                                     color: isSelected ? theme?.primaryColor : theme?.textColor,
+                                    fontSize: sizes.timezoneSearchFontSize,
                                     textAlign: isRTL ? 'right' : 'left',
                                   },
                                 ]}
@@ -414,7 +472,7 @@ export default function CustomDateTimeInput({
                 {weekdayLabels.map((dayLabel) => (
                   <Text
                     key={dayLabel}
-                    style={[styles.weekday, { color: theme?.formInputLabelColor, fontSize: sizes.weekdaySize }]}
+                    style={[styles.weekday, { color: theme?.formInputLabelColor, fontSize: sizes.weekdaySize, marginBottom: sizes.weekdayMarginBottom }]}
                   >
                     {dayLabel}
                   </Text>
@@ -435,8 +493,13 @@ export default function CustomDateTimeInput({
                       key={`${index}-${day || 'blank'}`}
                       disabled={!day}
                       onPress={() => day && selectDate(day)}
+                      accessible={Boolean(day)}
+                      accessibilityRole="button"
+                      accessibilityLabel={day ? `${day} ${monthTitle}` : undefined}
+                      accessibilityState={{ selected: Boolean(isSelected) }}
                       style={[
                         styles.dayCell,
+                        { borderRadius: sizes.borderRadius },
                         Platform.OS === 'android' && !isWebLandscape && { height: sizes.androidDayCellHeight },
                         isToday && !isSelected && {
                           backgroundColor: `${theme?.primaryColor || '#000'}14`,
@@ -465,14 +528,14 @@ export default function CustomDateTimeInput({
 
               {mode === 'datetime' && (
                 <>
-                  <Text style={[styles.selectedTimeText, { color: theme?.textColor, fontSize: sizes.timeTextSize }]}>
+                  <Text style={[styles.selectedTimeText, { color: theme?.textColor, fontSize: sizes.timeTextSize, marginTop: sizes.timeSectionMarginTop }]}>
                     {pad(draftDate.getHours())}:{pad(draftDate.getMinutes())}
                   </Text>
 
-                  <View style={[styles.timeSection, isRTL && { flexDirection: 'row-reverse' }]}>
+                  <View style={[styles.timeSection, { marginTop: sizes.timeSectionMarginTop, gap: sizes.gap }, isRTL && { flexDirection: 'row-reverse' }]}>
                     <ScrollView
                       ref={hourScrollRef}
-                      style={styles.timeColumn}
+                      style={[styles.timeColumn, { maxHeight: sizes.timeColumnMaxHeight, width: sizes.timeColumnWidth }]}
                       contentContainerStyle={styles.timeColumnContent}
                       nestedScrollEnabled={true}
                       showsVerticalScrollIndicator={false}
@@ -482,6 +545,11 @@ export default function CustomDateTimeInput({
                           key={hour}
                           style={[
                             styles.timeOption,
+                            {
+                              height: sizes.timeOptionHeight,
+                              marginBottom: sizes.timeOptionMarginBottom,
+                              borderRadius: sizes.borderRadius,
+                            },
                             draftDate.getHours() === hour && { backgroundColor: theme?.primaryColor },
                           ]}
                           onPress={() => setTimePart('hour', hour)}
@@ -489,7 +557,7 @@ export default function CustomDateTimeInput({
                           <Text
                             style={[
                               styles.timeOptionText,
-                              { color: draftDate.getHours() === hour ? theme?.buttonTextColorPrimary : theme?.textColor },
+                              { fontSize: sizes.timeOptionFontSize, color: draftDate.getHours() === hour ? theme?.buttonTextColorPrimary : theme?.textColor },
                             ]}
                           >
                             {pad(hour)}
@@ -500,7 +568,7 @@ export default function CustomDateTimeInput({
                     <Text style={[styles.timeSeparator, { color: theme?.textColor, fontSize: sizes.timeTextSize }]}>:</Text>
                     <ScrollView
                       ref={minuteScrollRef}
-                      style={styles.timeColumn}
+                      style={[styles.timeColumn, { maxHeight: sizes.timeColumnMaxHeight, width: sizes.timeColumnWidth }]}
                       contentContainerStyle={styles.timeColumnContent}
                       nestedScrollEnabled={true}
                       showsVerticalScrollIndicator={false}
@@ -510,6 +578,11 @@ export default function CustomDateTimeInput({
                           key={minute}
                           style={[
                             styles.timeOption,
+                            {
+                              height: sizes.timeOptionHeight,
+                              marginBottom: sizes.timeOptionMarginBottom,
+                              borderRadius: sizes.borderRadius,
+                            },
                             draftDate.getMinutes() === minute && { backgroundColor: theme?.primaryColor },
                           ]}
                           onPress={() => setTimePart('minute', minute)}
@@ -517,7 +590,7 @@ export default function CustomDateTimeInput({
                           <Text
                             style={[
                               styles.timeOptionText,
-                              { color: draftDate.getMinutes() === minute ? theme?.buttonTextColorPrimary : theme?.textColor },
+                              { fontSize: sizes.timeOptionFontSize, color: draftDate.getMinutes() === minute ? theme?.buttonTextColorPrimary : theme?.textColor },
                             ]}
                           >
                             {pad(minute)}
@@ -531,12 +604,15 @@ export default function CustomDateTimeInput({
 
             </ScrollView>
 
-            <View style={[styles.actions, isRTL && { flexDirection: 'row-reverse' }]}>
+            <View style={[styles.actions, { gap: sizes.gap, marginTop: sizes.actionsMarginTop }, isRTL && { flexDirection: 'row-reverse' }]}>
               <TouchableOpacity
-                style={[styles.actionButton, { height: sizes.buttonHeight, borderColor: theme?.primaryColor }]}
+                style={[styles.actionButton, { height: sizes.buttonHeight, borderRadius: sizes.borderRadius, borderColor: theme?.primaryColor }]}
                 onPress={closePicker}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.cancel')}
               >
-                <Text style={[styles.actionText, { color: theme?.primaryColor }]}>
+                <Text style={[styles.actionText, { fontSize: sizes.actionTextFontSize, color: theme?.primaryColor }]}>
                   {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
@@ -544,18 +620,21 @@ export default function CustomDateTimeInput({
                 style={[
                   styles.actionButton,
                   styles.primaryAction,
-                  { height: sizes.buttonHeight, backgroundColor: theme?.primaryColor },
+                  { height: sizes.buttonHeight, borderRadius: sizes.borderRadius, backgroundColor: theme?.primaryColor },
                 ]}
                 onPress={applyPicker}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('dateTimePicker.apply')}
               >
-                <Text style={[styles.actionText, { color: theme?.buttonTextColorPrimary }]}>
+                <Text style={[styles.actionText, { fontSize: sizes.actionTextFontSize, color: theme?.buttonTextColorPrimary }]}>
                   {t('dateTimePicker.apply')}
                 </Text>
               </TouchableOpacity>
             </View>
 
             {validationError ? (
-              <Text style={[styles.validationText, { color: theme?.errorTextColor || 'red' }]}>
+              <Text style={[styles.validationText, { color: theme?.errorTextColor || 'red', fontSize: sizes.validationFontSize, marginTop: sizes.validationMarginTop }]}>
                 {validationError}
               </Text>
             ) : null}
@@ -573,13 +652,11 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: 'Rubik-Medium',
-    marginBottom: 8,
   },
   valueRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
   },
   valueText: {
     flex: 1,
@@ -592,18 +669,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pickerCard: {
-    maxWidth: 420,
     maxHeight: '92%',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
   },
   navButton: {
-    width: 40,
-    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -617,7 +690,6 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   timezoneBlock: {
-    marginBottom: 12,
   },
   timezoneBlockOpen: {
     zIndex: 100,
@@ -627,17 +699,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
   },
   timezoneText: {
     fontFamily: 'Rubik-Medium',
-    fontSize: 12,
     textAlign: 'center',
     flexShrink: 1,
   },
   timezoneChangeText: {
     fontFamily: 'Rubik-Bold',
-    fontSize: 12,
   },
   timezoneDropdown: {
     position: 'absolute',
@@ -646,7 +715,6 @@ const styles = StyleSheet.create({
     zIndex: 100,
     elevation: 8,
     borderWidth: 1,
-    borderRadius: 8,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
@@ -655,21 +723,14 @@ const styles = StyleSheet.create({
   },
   timezoneSearchInput: {
     fontFamily: 'Rubik-Medium',
-    fontSize: 13,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
     borderBottomWidth: 1,
   },
   timezoneDropdownList: {
-    maxHeight: 170,
   },
   timezoneOption: {
-    paddingHorizontal: 10,
-    paddingVertical: 9,
   },
   timezoneOptionText: {
     fontFamily: 'Rubik-Medium',
-    fontSize: 13,
   },
   grid: {
     flexDirection: 'row',
@@ -679,14 +740,12 @@ const styles = StyleSheet.create({
     width: '14.2857%',
     textAlign: 'center',
     fontFamily: 'Rubik-Medium',
-    marginBottom: 6,
   },
   dayCell: {
     width: '14.2857%',
     aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 8,
   },
   dayText: {
     fontFamily: 'Rubik-Medium',
@@ -695,43 +754,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 14,
-    gap: 10,
   },
   selectedTimeText: {
     fontFamily: 'Rubik-Bold',
     textAlign: 'center',
-    marginTop: 14,
   },
   timeColumn: {
-    maxHeight: 132,
-    width: 72,
   },
   timeColumnContent: {
   },
   timeOption: {
-    height: 34,
-    marginBottom: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 8,
   },
   timeOptionText: {
     fontFamily: 'Rubik-Medium',
-    fontSize: 16,
   },
   timeSeparator: {
     fontFamily: 'Rubik-Bold',
   },
   actions: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 16,
   },
   actionButton: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -740,12 +787,9 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontFamily: 'Rubik-Bold',
-    fontSize: 16,
   },
   validationText: {
     fontFamily: 'Rubik-Medium',
-    fontSize: 13,
-    marginTop: 10,
     textAlign: 'center',
   },
 });

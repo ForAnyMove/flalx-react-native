@@ -88,6 +88,7 @@ export default function NewScreen({
       refreshBtnFont: isWebLandscape ? web(14) : mobile(14),
       refreshBtnIcon: isWebLandscape ? web(16) : mobile(16),
       refreshBtnGap: isWebLandscape ? web(12) : mobile(12),
+      textContentPaddingVertical: isWebLandscape ? web(10) : mobile(10),
     };
   }, [width, height, isWebLandscape]);
 
@@ -217,16 +218,12 @@ export default function NewScreen({
           {filteredJobsList
             .slice()
             .sort((a, b) => {
-              const priority = {
-                top: 1,
-                quick: 2,
-                pro: 3,
-              };
-
-              const aPriority = priority[a.jobType?.toLowerCase()] ?? 999;
-              const bPriority = priority[b.jobType?.toLowerCase()] ?? 999;
-
-              return aPriority - bPriority;
+              const priorityOrder = ['top', 'quick', 'pro'];
+              const aPriority = priorityOrder.indexOf(a.jobType?.toLowerCase());
+              const bPriority = priorityOrder.indexOf(b.jobType?.toLowerCase());
+              const aVal = aPriority === -1 ? 999 : aPriority;
+              const bVal = bPriority === -1 ? 999 : bPriority;
+              return aVal - bVal;
             })
             .map((job, index) => {
               const hasImage = job.images && job.images.length > 0;
@@ -372,7 +369,7 @@ export default function NewScreen({
                         </View>
                       )}
                     </View>
-                    <View style={styles.textContent}>
+                    <View style={[styles.textContent, { paddingVertical: sizes.textContentPaddingVertical }]}>
                       <Text
                         style={[
                           styles.title,
@@ -484,25 +481,11 @@ const styles = {
   textContent: {
     flex: 1,
     justifyContent: 'center',
-    paddingVertical: 10,
   },
   title: {
     // fontWeight: '600',
   },
   description: {},
-  badge: {
-    position: 'absolute',
-    borderRadius: 999,
-    paddingHorizontal: 2,
-    paddingVertical: 2,
-    minWidth: 16,
-    height: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeText: {
-    // fontWeight: 'bold',
-  },
   specialMarkerContainer: {
     position: 'absolute',
     top: 0,

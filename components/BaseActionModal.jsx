@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import {
   View,
   TouchableOpacity,
@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { icons } from '../constants/icons';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 import AppModal from './ui/AppModal';
 
 const BaseActionModal = ({
@@ -18,6 +19,7 @@ const BaseActionModal = ({
   children,
   overlayColor = 'rgba(0, 0, 0, 0.5)',
   isRTL = false,
+  closeAccessibilityLabel = 'סגור',
 }) => {
   if (!sizes || !theme) {
     return null; // Ensure sizes and theme are provided
@@ -67,20 +69,34 @@ const BaseActionModal = ({
   });
 
   return (
-    <AppModal visible={visible} transparent>
+    <AppModal visible={visible} transparent onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
+        <View
+          style={styles.modalContainer}
+          accessibilityViewIsModal={true}
+          role="dialog"
+          aria-modal="true"
+        >
           {isLoading && (
             <View style={styles.loadingOverlay}>
               <ActivityIndicator size="large" color={theme.primaryColor} />
             </View>
           )}
 
-          <TouchableOpacity onPress={onClose} style={styles.crossButton}>
+          <TouchableOpacity
+            onPress={onClose}
+            style={styles.crossButton}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={closeAccessibilityLabel}
+            hitSlop={ACCESSIBILITY_HIT_SLOP}
+          >
             <Image
               source={icons.cross}
               style={styles.crossIcon}
               resizeMode="contain"
+              accessible={false}
+              aria-hidden={true}
             />
           </TouchableOpacity>
 

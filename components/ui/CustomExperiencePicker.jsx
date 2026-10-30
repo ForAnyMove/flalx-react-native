@@ -390,6 +390,10 @@ const CustomExperiencePicker = ({
     return (
       <TouchableOpacity
         {...webHoverProps}
+        accessible={true}
+        accessibilityRole="menuitem"
+        accessibilityLabel={item.label}
+        accessibilityState={{ selected: Boolean(isSelected) }}
         style={[
           styles.option,
           {
@@ -498,7 +502,7 @@ const CustomExperiencePicker = ({
       >
         <TouchableOpacity
           onPress={() => setViewMode('list')}
-          style={{ paddingVertical: 4, paddingHorizontal: 6 }}
+          style={{ paddingVertical: sizes.counterUnitPaddingV, paddingHorizontal: sizes.counterLabelMarginBottom }}
         >
           <Text
             style={{
@@ -514,7 +518,7 @@ const CustomExperiencePicker = ({
 
         <TouchableOpacity
           onPress={() => setModalVisible(false)}
-          style={{ paddingVertical: 4, paddingHorizontal: 6 }}
+          style={{ paddingVertical: sizes.counterUnitPaddingV, paddingHorizontal: sizes.counterLabelMarginBottom }}
         >
           <Text
             style={{
@@ -559,7 +563,6 @@ const CustomExperiencePicker = ({
             <TouchableOpacity
               style={styles.counterButton}
               onPress={() => handleExperienceChange('years', 1)}
-              hitSlop={{ top: 8, bottom: 4, left: 8, right: 8 }}
             >
               <Text style={styles.counterButtonText}>+</Text>
             </TouchableOpacity>
@@ -576,7 +579,6 @@ const CustomExperiencePicker = ({
             <TouchableOpacity
               style={styles.counterButton}
               onPress={() => handleExperienceChange('years', -1)}
-              hitSlop={{ top: 4, bottom: 8, left: 8, right: 8 }}
             >
               <Text style={styles.counterButtonText}>−</Text>
             </TouchableOpacity>
@@ -606,7 +608,6 @@ const CustomExperiencePicker = ({
             <TouchableOpacity
               style={styles.counterButton}
               onPress={() => handleExperienceChange('months', 1)}
-              hitSlop={{ top: 8, bottom: 4, left: 8, right: 8 }}
             >
               <Text style={styles.counterButtonText}>+</Text>
             </TouchableOpacity>
@@ -627,7 +628,6 @@ const CustomExperiencePicker = ({
             <TouchableOpacity
               style={styles.counterButton}
               onPress={() => handleExperienceChange('months', -1)}
-              hitSlop={{ top: 4, bottom: 8, left: 8, right: 8 }}
             >
               <Text style={styles.counterButtonText}>−</Text>
             </TouchableOpacity>
@@ -759,6 +759,11 @@ const CustomExperiencePicker = ({
     >
       <TouchableOpacity
         ref={pickerRef}
+        accessible={true}
+        accessibilityRole="combobox"
+        accessibilityLabel={`${label || ''}: ${getSelectedLabel() || ''}`}
+        accessibilityState={{ expanded: modalVisible }}
+        accessibilityHint={t('accessibility.pickerHint', { defaultValue: 'לחץ לבחירה מתוך הרשימה' })}
         style={[
           styles.pickerContainer,
           {
@@ -797,9 +802,11 @@ const CustomExperiencePicker = ({
             {getSelectedLabel()}
           </Text>
         </View>
-        <View style={styles.arrowContainer}>
+        <View style={styles.arrowContainer} accessible={false} aria-hidden={true}>
           <Image
             source={icons.arrowDown}
+            accessible={false}
+            aria-hidden={true}
             style={[
               styles.arrowIcon,
               {

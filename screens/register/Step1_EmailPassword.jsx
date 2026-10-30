@@ -565,6 +565,13 @@ export default function Step1_EmailPassword({ onSubmit, onSwitchMethod }) {
                 justifyContent: 'center',
                 alignItems: 'center',
               }}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={
+                showPassword
+                  ? t('auth.hide_password', { defaultValue: 'הסתר סיסמה' })
+                  : t('auth.show_password', { defaultValue: 'הצג סיסמה' })
+              }
             >
               <Image
                 source={showPassword ? icons.eyeOpen : icons.eyeClosed}
@@ -574,6 +581,8 @@ export default function Step1_EmailPassword({ onSubmit, onSwitchMethod }) {
                   tintColor: theme.formInputLabelColor,
                 }}
                 resizeMode='contain'
+                accessible={false}
+                aria-hidden={true}
               />
             </TouchableOpacity>
           </View>
@@ -767,8 +776,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   input: {
-    borderWidth: 1,
-    borderRadius: 8,
     fontWeight: '500',
   },
   outlineBtn: {

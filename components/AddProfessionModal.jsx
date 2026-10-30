@@ -14,7 +14,9 @@ import { useTranslation } from 'react-i18next';
 import { useComponentContext } from '../context/globalAppContext';
 import ImagePickerModal from './ui/ImagePickerModal';
 import AppModal from './ui/AppModal';
+import AppHeading from './ui/AppHeading';
 import { icons } from '../constants/icons';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 import { uploadImageAsset } from '../src/files/uploadFile';
 import { logError } from '../utils/log_util';
 import { useNotification } from '../src/render';
@@ -295,6 +297,9 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
           <TouchableOpacity
             style={styles.removeButton}
             onPress={() => handleRemoveImage(index, type)}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.remove', { defaultValue: 'מחק' })}
           >
             <Image
               source={icons.cross}
@@ -311,9 +316,14 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
   );
 
   return (
-    <AppModal visible={visible} transparent={true}>
+    <AppModal visible={visible} transparent={true} onRequestClose={handleClose}>
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
+        <View
+          style={styles.modalContainer}
+          accessibilityViewIsModal={true}
+          role="dialog"
+          aria-modal="true"
+        >
           {isSubmitted ? (
             <>
               <View style={styles.successContainer}>
@@ -324,15 +334,23 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
                       width: sizes.successIconSize,
                       height: sizes.successIconSize,
                     }}
+                    accessible={false}
+                    aria-hidden={true}
                   />
                 </View>
-                <Text style={styles.successTitle}>
+                <AppHeading level={2} style={styles.successTitle}>
                   {t('professions.verification.success_title')}
-                </Text>
+                </AppHeading>
                 <Text style={styles.successDescription}>
                   {t('professions.verification.success_description')}
                 </Text>
-                <TouchableOpacity style={styles.okButton} onPress={handleClose}>
+                <TouchableOpacity
+                  style={styles.okButton}
+                  onPress={handleClose}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.ok')}
+                >
                   <Text style={styles.okButtonText}>{t('common.ok')}</Text>
                 </TouchableOpacity>
               </View>
@@ -343,16 +361,20 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
                   top: sizes.crossSpace,
                   right: sizes.crossSpace,
                 }}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+                hitSlop={ACCESSIBILITY_HIT_SLOP}
               >
-                <Image source={icons.cross} style={styles.crossIcon} />
+                <Image source={icons.cross} style={styles.crossIcon} accessible={false} aria-hidden={true} />
               </TouchableOpacity>
             </>
           ) : (
             <>
               <View style={styles.header}>
-                <Text style={styles.title}>
+                <AppHeading level={2} style={styles.title}>
                   {t('professions.verification.title')}
-                </Text>
+                </AppHeading>
               </View>
               <TouchableOpacity
                 onPress={handleClose}
@@ -361,14 +383,21 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
                   top: sizes.crossSpace,
                   right: sizes.crossSpace,
                 }}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+                hitSlop={ACCESSIBILITY_HIT_SLOP}
               >
-                <Image source={icons.cross} style={styles.crossIcon} />
+                <Image source={icons.cross} style={styles.crossIcon} accessible={false} aria-hidden={true} />
               </TouchableOpacity>
               <ScrollView style={{ width: '100%' }}>
                 {/* Passport Upload */}
                 <TouchableOpacity
                   style={styles.uploadRow}
                   onPress={() => handleOpenPicker('passport')}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('professions.verification.passport')}
                 >
                   <View style={styles.uploadRowInfo}>
                     <Image

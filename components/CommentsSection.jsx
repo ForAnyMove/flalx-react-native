@@ -18,6 +18,8 @@ import { useWindowInfo } from '../context/windowContext';
 import CustomTextInput from './ui/CustomTextInput';
 import AppModal from './ui/AppModal';
 import { useNotification } from '../src/render';
+import AppHeading from './ui/AppHeading';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 
 export default function CommentsSection({
   jobId,
@@ -322,10 +324,19 @@ export default function CommentsSection({
             ]}
           >
             <View style={styles.modalHeader}>
-              <Text style={{ fontSize: sizes.font, color: themeController.current?.textColor }}>{t('comments.add')}</Text>
+              <AppHeading
+                level={2}
+                style={{ fontSize: sizes.font, color: themeController.current?.textColor }}
+              >
+                {t('comments.add')}
+              </AppHeading>
             </View>
             <TouchableOpacity
               onPress={() => setAddModal(false)}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.close', 'סגור')}
+              hitSlop={ACCESSIBILITY_HIT_SLOP}
               style={{
                 position: 'absolute',
                 top: sizes.modalCrossTop,
@@ -334,6 +345,8 @@ export default function CommentsSection({
             >
               <Image
                 source={icons.cross}
+                accessible={false}
+                aria-hidden={true}
                 style={{
                   width: sizes.icon,
                   height: sizes.icon,
@@ -346,6 +359,10 @@ export default function CommentsSection({
                 <TouchableOpacity
                   key={star}
                   onPress={() => setRating(star)}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: star === rating }}
+                  accessibilityLabel={isRTL ? `${star} מתוך 5 כוכבים` : `${star} of 5 stars`}
                   onPressIn={() => setHoverRating(star)}
                   onPressOut={() => setHoverRating(0)}
                   onMouseEnter={() => Platform.OS === 'web' && setHoverRating(star)}
@@ -353,6 +370,8 @@ export default function CommentsSection({
                 >
                   <Image
                     source={icons.star}
+                    accessible={false}
+                    aria-hidden={true}
                     style={{
                       width: sizes.icon * 1.5,
                       height: sizes.icon * 1.5,
@@ -369,6 +388,7 @@ export default function CommentsSection({
               value={newText}
               onChangeText={setNewText}
               placeholder={t('comments.placeholder')}
+              accessibilityLabel={t('comments.placeholder')}
               placeholderTextColor={themeController.current?.formInputPlaceholderColor}
               multiline
               style={[

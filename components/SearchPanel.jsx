@@ -25,7 +25,7 @@ export default function SearchPanel({ searchValue, setSearchValue }) {
     () => ({
       padding: isWebLandscape
         ? scaleByHeight(12, height)
-        : scaleByHeightMobile(20, height),
+        : scaleByHeightMobile(10, height, { maxScale: 1.2 }),
       borderRadius: isWebLandscape
         ? scaleByHeight(8, height)
         : scaleByHeightMobile(8, height),
@@ -37,11 +37,13 @@ export default function SearchPanel({ searchValue, setSearchValue }) {
         : scaleByHeightMobile(48, height),
       inputPadding: isWebLandscape
         ? scaleByHeight(16, height)
-        : scaleByHeightMobile(16, height),
-      icon: isWebLandscape ? scaleByHeight(24, height) : scaleByHeightMobile(24, height),
+        : scaleByHeightMobile(10, height, { maxScale: 1.2 }),
+      icon: isWebLandscape
+        ? scaleByHeight(24, height)
+        : scaleByHeightMobile(20, height, { maxScale: 1.3 }),
       fontSize: isWebLandscape
         ? scaleByHeight(14, height)
-        : scaleByHeightMobile(14, height),
+        : scaleByHeightMobile(14, height, { maxScale: 1.25 }),
       containerWidth: isWebLandscape ? scaleByHeight(384, height) : '100%',
     }),
     [isWebLandscape, height]
@@ -90,6 +92,9 @@ export default function SearchPanel({ searchValue, setSearchValue }) {
     >
       <CustomTextInput
         placeholder={t('common.search')}
+        accessibilityLabel={t('common.search')}
+        accessibilityRole="search"
+        role="searchbox"
         value={searchValue}
         onChangeText={setSearchValue}
         style={[styles.searchInput, dynamicStyles.searchInput]}
@@ -99,7 +104,12 @@ export default function SearchPanel({ searchValue, setSearchValue }) {
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
       />
-      <Image source={icons.search} style={dynamicStyles.searchIcon} />
+      <Image
+        source={icons.search}
+        accessible={false}
+        aria-hidden={true}
+        style={dynamicStyles.searchIcon}
+      />
     </View>
   );
 }

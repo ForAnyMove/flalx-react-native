@@ -27,6 +27,8 @@ import PurchaseModal from './PurchaseModal';
 import AppModal from './ui/AppModal';
 import { formatCurrency } from '../utils/currency_formatter';
 import { formatPhoneDisplay } from '../src/phone/phoneUtils';
+import AppHeading from './ui/AppHeading';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 
 const ProviderSummaryBlock = ({ user, chooseUser }) => {
   const { t } = useTranslation();
@@ -358,6 +360,9 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
       {/* Summary Block */}
       <TouchableOpacity
         onPress={() => setModalVisible(true)}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={`${name || ''} ${surname || ''}, ${LICENSES[professions?.[0]] || ''}`}
         style={[styles.visitButton, dynamicStyles.visitButton]}
       >
         <View style={dynamicStyles.summaryContainer}>
@@ -365,6 +370,8 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
             {avatar ? (
               <Image
                 source={{ uri: avatar }}
+                accessible={false}
+                aria-hidden={true}
                 style={[styles.avatar, dynamicStyles.avatar]}
               />
             ) : (
@@ -373,6 +380,8 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                   styles.avatarPlaceholder,
                   dynamicStyles.avatarPlaceholder,
                 ]}
+                accessible={false}
+                aria-hidden={true}
               >
                 <Image
                   source={
@@ -380,6 +389,8 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                       ? icons.defaultAvatar
                       : icons.monotoneAvatar
                   }
+                  accessible={false}
+                  aria-hidden={true}
                   style={{ width: '100%', height: '100%' }}
                 />
               </View>
@@ -434,9 +445,15 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                   setModalVisible(false);
                   setShowContactInfo(false);
                 }}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.back', 'חזרה')}
+                hitSlop={ACCESSIBILITY_HIT_SLOP}
               >
                 <Image
                   source={isRTL ? icons.forward : icons.back}
+                  accessible={false}
+                  aria-hidden={true}
                   style={{
                     width: sizes.icon,
                     height: sizes.icon,
@@ -444,9 +461,12 @@ const ProviderSummaryBlock = ({ user, chooseUser }) => {
                   }}
                 />
               </TouchableOpacity>
-              <Text style={[styles.modalTitle, dynamicStyles.modalTitle]}>
+              <AppHeading
+                level={1}
+                style={[styles.modalTitle, dynamicStyles.modalTitle]}
+              >
                 FLALX
-              </Text>
+              </AppHeading>
             </View>
             <ScrollView contentContainerStyle={{}}>
               {avatar ? (

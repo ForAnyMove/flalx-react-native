@@ -15,6 +15,8 @@ import { useWindowInfo } from '../context/windowContext';
 import CustomPicker from './ui/CustomPicker';
 import { useTranslation } from 'react-i18next';
 
+import AppHeading from './ui/AppHeading';
+
 export default function Header({ switchToProfile }) {
   const { themeController, user, languageController } = useComponentContext();
   const { connected: wsConnected } = useWebSocket();
@@ -26,7 +28,7 @@ export default function Header({ switchToProfile }) {
 
   const sizes = useMemo(() => {
     return {
-      headerHeight: isWebLandscape ? scaleByHeight(50, height) : height * 0.07,
+      headerHeight: isWebLandscape ? scaleByHeight(50, height) : scaleByHeightMobile(56, height),
       headerPaddingHorizontal: isWebLandscape ? scaleByHeight(6, height) : scaleByHeightMobile(10, height),
       headerMarginHorizontal: isWebLandscape ? scaleByHeight(31, height) : 0,
       headerMargin: isWebLandscape ? scaleByHeight(30, height) : scaleByHeightMobile(0, height),
@@ -35,6 +37,7 @@ export default function Header({ switchToProfile }) {
       avatarSize: isWebLandscape ? scaleByHeight(32, height) : scaleByHeightMobile(32, height),
       avatarBorderRadius: isWebLandscape ? scaleByHeight(16, height) : scaleByHeightMobile(16, height),
       wsIndicatorBorderWidth: isWebLandscape ? scaleByHeight(2, height) : scaleByHeightMobile(2, height),
+      logoGap: isWebLandscape ? scaleByHeight(8, height) : scaleByHeightMobile(8, height),
     };
   }, [isWebLandscape, height]);
 
@@ -45,7 +48,7 @@ export default function Header({ switchToProfile }) {
         {
           backgroundColor: themeController.current?.backgroundColor,
           // borderBottomColor: themeController.current?.profileDefaultBackground,
-          height: sizes.headerHeight,
+          minHeight: sizes.headerHeight,
           marginHorizontal: sizes.headerMarginHorizontal,
           paddingHorizontal: sizes.headerPaddingHorizontal,
           marginTop: sizes.headerMargin,
@@ -64,9 +67,11 @@ export default function Header({ switchToProfile }) {
         isRTL={isRTL}
         headerStyle={true}
         iconOnly={true}
+        accessibilityLabel={isRTL ? 'בחירת שפה' : 'Select language'}
       />
-      <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 8 }}>
-        <Text
+      <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: sizes.logoGap }}>
+        <AppHeading
+          level={1}
           style={[
             styles.logoText,
             {
@@ -76,11 +81,18 @@ export default function Header({ switchToProfile }) {
           ]}
         >
           Flalx
-        </Text>
+        </AppHeading>
       </View>
-      <TouchableOpacity onPress={() => switchToProfile()}>
+      <TouchableOpacity
+        onPress={() => switchToProfile()}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={t('profile.title', { defaultValue: isRTL ? 'פרופיל משתמש' : 'User profile' })}
+      >
         <Image
           source={userAvatar ? { uri: userAvatar } : icons.defaultAvatarInverse}
+          accessible={false}
+          aria-hidden={true}
           style={{
             width: sizes.avatarSize,
             height: sizes.avatarSize,

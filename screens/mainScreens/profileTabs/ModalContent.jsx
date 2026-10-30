@@ -17,6 +17,7 @@ import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import CustomPicker from '../../../components/ui/CustomPicker';
 import CustomTextInput from '../../../components/ui/CustomTextInput';
 import { icons } from '../../../constants/icons';
+import { ACCESSIBILITY_HIT_SLOP } from '../../../constants/themes';
 import { useComponentContext } from '../../../context/globalAppContext';
 import { useWindowInfo } from '../../../context/windowContext';
 
@@ -214,6 +215,8 @@ export function ModalContent({
         },
       ]}
       onPress={() => onClose()}
+      accessible={false}
+      importantForAccessibility="no"
     >
       <TouchableOpacity
         activeOpacity={1}
@@ -242,6 +245,9 @@ export function ModalContent({
               justifyContent: 'space-between',
             },
         ]}
+        accessibilityViewIsModal={true}
+        role="dialog"
+        aria-modal="true"
       >
         <TouchableOpacity
           style={[
@@ -253,6 +259,10 @@ export function ModalContent({
             },
           ]}
           onPress={() => onClose()}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+          hitSlop={ACCESSIBILITY_HIT_SLOP}
         >
           <Image
             source={icons.cross}
@@ -261,6 +271,8 @@ export function ModalContent({
               height: sizes.modalIconSize,
               tintColor: themeController.current?.textColor,
             }}
+            accessible={false}
+            aria-hidden={true}
           />
         </TouchableOpacity>
         {showSuccessModal ? (

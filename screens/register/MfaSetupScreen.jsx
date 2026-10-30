@@ -17,6 +17,7 @@ import { useComponentContext } from '../../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { useWindowInfo } from '../../context/windowContext';
 import CustomTextInput from '../../components/ui/CustomTextInput';
+import AppHeading from '../../components/ui/AppHeading';
 import { getAuthErrorMessage } from '../../src/auth/authErrors';
 import { logError } from '../../utils/log_util';
 
@@ -168,6 +169,11 @@ export default function MfaSetupScreen({ optional = false, onDone, onSkip }) {
       btnWidth: isWebLandscape ? scaleByHeight(330, height) : '100%',
       contentWidth: isWebLandscape ? height * 0.5 : '100%',
       gap: isWebLandscape ? scaleByHeight(14, height) : scaleByHeightMobile(14, height),
+      scrollPaddingVertical: isWebLandscape ? scaleByHeight(24, height) : scaleByHeightMobile(40, height),
+      borderRadius: isWebLandscape ? scaleByHeight(8, height) : scaleByHeightMobile(8, height),
+      btnFontSize: isWebLandscape ? scaleByHeight(20, height) : scaleByHeightMobile(20, height),
+      secretMarginTop: isWebLandscape ? scaleByHeight(4, height) : scaleByHeightMobile(4, height),
+      skipMarginTop: isWebLandscape ? scaleByHeight(8, height) : scaleByHeightMobile(8, height),
     }),
     [isWebLandscape, height]
   );
@@ -180,17 +186,18 @@ export default function MfaSetupScreen({ optional = false, onDone, onSkip }) {
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
+          { paddingVertical: sizes.scrollPaddingVertical },
           isWebLandscape && { justifyContent: 'center', alignItems: 'center', flexGrow: 1 },
         ]}
         keyboardShouldPersistTaps='handled'
       >
         <View style={[styles.content, { width: sizes.contentWidth, gap: sizes.gap }]}>
-          <Text style={[styles.brand, { color: theme.primaryColor, fontSize: sizes.brandFontSize }]}>
+          <AppHeading level={1} style={[styles.brand, { color: theme.primaryColor, fontSize: sizes.brandFontSize }]}>
             {t('auth.app_name')}
-          </Text>
-          <Text style={[styles.title, { color: theme.unactiveTextColor, fontSize: sizes.titleFontSize }]}>
+          </AppHeading>
+          <AppHeading level={2} style={[styles.title, { color: theme.unactiveTextColor, fontSize: sizes.titleFontSize }]}>
             {t('auth.mfa_setup_title')}
-          </Text>
+          </AppHeading>
           <Text style={[styles.subtitle, { color: theme.unactiveTextColor, fontSize: sizes.subtitleFontSize }]}>
             {optional ? t('auth.mfa_setup_recommend_subtitle') : t('auth.mfa_setup_subtitle')}
           </Text>
@@ -232,13 +239,18 @@ export default function MfaSetupScreen({ optional = false, onDone, onSkip }) {
               )}
 
               {!!totp?.secret && (
-                <TouchableOpacity onPress={copySecret} style={{ alignItems: 'center' }}>
+                <TouchableOpacity
+                  onPress={copySecret}
+                  style={{ alignItems: 'center' }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('auth.mfa_secret_label')}
+                >
                   <Text style={[styles.subtitle, { color: theme.unactiveTextColor, fontSize: sizes.subtitleFontSize }]}>
                     {t('auth.mfa_secret_label')}
                   </Text>
                   <Text
                     selectable
-                    style={{ color: theme.primaryColor, fontFamily: 'Rubik-Medium', letterSpacing: 2, marginTop: 4 }}
+                    style={{ color: theme.primaryColor, fontFamily: 'Rubik-Medium', letterSpacing: 2, marginTop: sizes.secretMarginTop }}
                   >
                     {totp.secret}
                   </Text>
@@ -255,6 +267,7 @@ export default function MfaSetupScreen({ optional = false, onDone, onSkip }) {
                       {
                         height: sizes.otpCellHeight,
                         fontSize: sizes.otpCellFontSize,
+                        borderRadius: sizes.borderRadius,
                         borderColor: otpError ? theme.errorTextColor : theme.borderColor,
                         color: theme.formInputTextColor,
                         backgroundColor: theme.formInputBackground,
@@ -263,6 +276,7 @@ export default function MfaSetupScreen({ optional = false, onDone, onSkip }) {
                     keyboardType='number-pad'
                     maxLength={1}
                     value={digit}
+                    accessibilityLabel={t('auth.digit_label', { defaultValue: `ספרה ${idx + 1}`, index: idx + 1 })}
                     onChangeText={(text) => onChangeOtpCell(text, idx)}
                     onKeyPress={(e) => onKeyPressOtp(e, idx)}
                   />
@@ -276,11 +290,14 @@ export default function MfaSetupScreen({ optional = false, onDone, onSkip }) {
               <TouchableOpacity
                 onPress={handleVerify}
                 disabled={verifying || otp.join('').length !== OTP_LENGTH}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.confirm') || 'Confirm'}
                 style={[
                   styles.primaryBtn,
                   {
                     height: sizes.btnHeight,
                     width: sizes.btnWidth,
+                    borderRadius: sizes.borderRadius,
                     borderColor: theme.primaryColor,
                     opacity: verifying || otp.join('').length !== OTP_LENGTH ? 0.6 : 1,
                   },
@@ -289,14 +306,19 @@ export default function MfaSetupScreen({ optional = false, onDone, onSkip }) {
                 {verifying ? (
                   <ActivityIndicator color={theme.primaryColor} />
                 ) : (
-                  <Text style={[styles.primaryBtnText, { color: theme.primaryColor }]}>
+                  <Text style={[styles.primaryBtnText, { color: theme.primaryColor, fontSize: sizes.btnFontSize }]}>
                     {t('common.confirm')}
                   </Text>
                 )}
               </TouchableOpacity>
 
               {optional && (
-                <TouchableOpacity onPress={() => onSkip?.()} style={{ alignItems: 'center', marginTop: 8 }}>
+                <TouchableOpacity
+                  onPress={() => onSkip?.()}
+                  style={{ alignItems: 'center', marginTop: sizes.skipMarginTop }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('auth.skip_for_now') || 'Skip for now'}
+                >
                   <Text style={{ color: theme.formInputLabelColor, fontFamily: 'Rubik-Medium' }}>
                     {t('auth.skip_for_now')}
                   </Text>
@@ -312,7 +334,7 @@ export default function MfaSetupScreen({ optional = false, onDone, onSkip }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, width: '100%' },
-  scroll: { paddingHorizontal: '6%', paddingVertical: 40, flexGrow: 1, justifyContent: 'center' },
+  scroll: { paddingHorizontal: '6%', flexGrow: 1, justifyContent: 'center' },
   content: { alignSelf: 'center', alignItems: 'center' },
   brand: { fontWeight: 'bold', textAlign: 'center', fontFamily: 'Rubik-Bold' },
   title: { fontWeight: '600', textAlign: 'center', fontFamily: 'Rubik-SemiBold' },
@@ -321,7 +343,6 @@ const styles = StyleSheet.create({
   otpCell: {
     width: `${100 / OTP_LENGTH - 2}%`,
     borderWidth: 1,
-    borderRadius: 8,
     textAlign: 'center',
     fontFamily: 'Rubik-Medium',
   },
@@ -330,8 +351,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
-    borderRadius: 8,
     alignSelf: 'center',
   },
-  primaryBtnText: { fontFamily: 'Rubik-Medium', fontSize: 20 },
+  primaryBtnText: { fontFamily: 'Rubik-Medium' },
 });

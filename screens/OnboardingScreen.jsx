@@ -15,6 +15,8 @@ import { useComponentContext } from '../context/globalAppContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useWindowInfo } from '../context/windowContext';
 import CustomPicker from '../components/ui/CustomPicker';
+import AppHeading from '../components/ui/AppHeading';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 
 export default function OnboardingScreen({ onFinish }) {
   const { t } = useTranslation();
@@ -125,6 +127,10 @@ export default function OnboardingScreen({ onFinish }) {
         {/* Кнопка пропуска */}
         <TouchableOpacity
           onPress={onFinish}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={t('onboarding.skip')}
+          hitSlop={ACCESSIBILITY_HIT_SLOP}
           style={[styles.skipButton, skipBtnStyle]}
         >
           <Text
@@ -160,11 +166,15 @@ export default function OnboardingScreen({ onFinish }) {
             },
             isWebLandscape && { flex: 0.9 },
           ]}
+          accessible={false}
+          aria-hidden={true}
         >
           <Image
             source={slides[step].image}
             style={styles.image}
             resizeMode='contain'
+            accessible={false}
+            aria-hidden={true}
           />
         </View>
 
@@ -181,7 +191,8 @@ export default function OnboardingScreen({ onFinish }) {
           ]}
         >
           <View style={[styles.partContainer]}>
-            <Text
+            <AppHeading
+              level={1}
               style={[
                 styles.title,
                 {
@@ -192,7 +203,7 @@ export default function OnboardingScreen({ onFinish }) {
               ]}
             >
               {slides[step].title}
-            </Text>
+            </AppHeading>
             <Text
               style={[
                 styles.description,
@@ -245,6 +256,9 @@ export default function OnboardingScreen({ onFinish }) {
             {/* Кнопка */}
             <TouchableOpacity
               onPress={handleNext}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={slides[step].button}
               style={[
                 styles.button,
                 isWebLandscape && {

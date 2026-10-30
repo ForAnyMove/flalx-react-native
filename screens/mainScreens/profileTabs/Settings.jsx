@@ -16,13 +16,16 @@ import { icons } from '../../../constants/icons';
 import { useState, useMemo, useEffect } from 'react';
 import { useWindowInfo } from '../../../context/windowContext';
 import { useTranslation } from 'react-i18next';
-import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
+import { BASE_DESIGN_HEIGHT, scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import { sendFeedback, sendMessage } from '../../../src/api/support';
 import { useNotification } from '../../../src/render';
 import { logError, logInfo } from '../../../utils/log_util';
 import CustomSwitch from '../../../components/ui/CustomSwitch';
 import CustomTextInput from '../../../components/ui/CustomTextInput';
+import AppHeading from '../../../components/ui/AppHeading';
+import AccessibilityStatementScreen from '../../AccessibilityStatementScreen';
+import { ACCESSIBILITY_HIT_SLOP } from '../../../constants/themes';
 
 // getResponsiveSize helper was unused and removed
 
@@ -40,15 +43,17 @@ export default function Settings() {
   // Modals
   const [aboutVisible, setAboutVisible] = useState(false);
   const [regulationsVisible, setRegulationsVisible] = useState(false);
+  const [accessibilityVisible, setAccessibilityVisible] = useState(false);
 
   const sizes = useMemo(() => {
-    const web = (size) => scaleByHeight(size, height);
-    const mobile = (size) => scaleByHeightMobile(size, height);
+    const web = (size, options) => scaleByHeight(size, height, BASE_DESIGN_HEIGHT, options);
+    const mobile = (size, options) => scaleByHeightMobile(size, height, options);
 
     return {
-      baseFont: isWebLandscape ? web(16) : mobile(16),
-      font: isWebLandscape ? web(12) : mobile(12),
-      questionsFont: isWebLandscape ? web(18) : mobile(14),
+      scrollPaddingBottom: isWebLandscape ? web(40) : mobile(120),
+      baseFont: isWebLandscape ? web(16) : mobile(16, { maxScale: 1.25 }),
+      font: isWebLandscape ? web(12) : mobile(12, { maxScale: 1.25 }),
+      questionsFont: isWebLandscape ? web(18) : mobile(14, { maxScale: 1.25 }),
       iconCircleSize: isWebLandscape ? web(40) : mobile(40),
       iconSize: isWebLandscape ? web(18) : mobile(18),
       containerPaddingVertical: isWebLandscape ? web(24) : mobile(14),
@@ -58,7 +63,7 @@ export default function Settings() {
       colGap: isWebLandscape ? height * 0.02 : mobile(12),
       switchMargin: isWebLandscape ? height * 0.02 : mobile(16),
       btnPadding: isWebLandscape ? height * 0.015 : mobile(12),
-      btnFont: isWebLandscape ? web(20) : mobile(20),
+      btnFont: isWebLandscape ? web(20) : mobile(18, { maxScale: 1.25 }),
       rowsWidth: isWebLandscape ? '65%' : '100%',
       rowsAlign: isWebLandscape
         ? isRTL
@@ -164,8 +169,10 @@ export default function Settings() {
       ]}
     >
       <ScrollView
+        style={{ flex: 1 }}
         contentContainerStyle={{
           paddingBottom: sizes.scrollPaddingBottom,
+          flexGrow: 1,
         }}
       >
         {/* Break Line */}
@@ -248,6 +255,8 @@ export default function Settings() {
             <CustomSwitch
               value={geolocationController.enabled}
               onValueChange={geolocationController.toggleGeolocation}
+              accessibilityLabel={t('settings.location')}
+              label={t('settings.location')}
               width={sizes.switchWidth}
               height={sizes.switchHeight}
               circleSize={sizes.switchCircleSize}
@@ -319,6 +328,9 @@ export default function Settings() {
               },
             ]}
             onPress={() => setAboutVisible(true)}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.about')}
           >
             <Text
               style={[
@@ -350,6 +362,9 @@ export default function Settings() {
               },
             ]}
             onPress={() => setRegulationsVisible(true)}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.regulations')}
           >
             <Text
               style={[
@@ -361,6 +376,42 @@ export default function Settings() {
               ]}
             >
               {t('settings.regulations')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Accessibility Statement Button */}
+        <View style={rowStyle}>
+          <TouchableOpacity
+            style={[
+              styles.primaryBtn,
+              {
+                backgroundColor:
+                  themeController.current?.buttonColorPrimaryDefault,
+                padding: sizes.btnPadding,
+                borderRadius: sizes.borderRadius,
+                flex: isWebLandscape ? 1 : undefined,
+                height: sizes.btnHeightWeb,
+              },
+              isWebLandscape && {
+                alignItems: 'center',
+                justifyContent: 'center',
+              },
+            ]}
+            onPress={() => setAccessibilityVisible(true)}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('accessibility.statementTitle', 'הצהרת נגישות')}
+          >
+            <Text
+              style={[
+                {
+                  color: themeController.current?.buttonTextColorPrimary,
+                  fontSize: sizes.btnFont,
+                },
+              ]}
+            >
+              {t('accessibility.statementTitle', 'הצהרת נגישות')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -468,6 +519,17 @@ export default function Settings() {
           content={t('settings.regulations_content')}
           isRTL={isRTL}
           height={height}
+        />
+      </AppModal>
+
+      {/* Accessibility Statement Modal */}
+      <AppModal
+        visible={accessibilityVisible}
+        onRequestClose={() => setAccessibilityVisible(false)}
+        transparent={false}
+      >
+        <AccessibilityStatementScreen
+          onBack={() => setAccessibilityVisible(false)}
         />
       </AppModal>
     </View>
@@ -603,6 +665,8 @@ function ModalContent({
         },
       ]}
       onPress={() => onClose()}
+      accessible={false}
+      importantForAccessibility="no"
     >
       <TouchableOpacity
         activeOpacity={1}
@@ -626,6 +690,9 @@ function ModalContent({
             borderRadius: sizes.borderRadius,
           },
         ]}
+        accessibilityViewIsModal={true}
+        role="dialog"
+        aria-modal="true"
       >
         <TouchableOpacity
           style={[
@@ -637,9 +704,15 @@ function ModalContent({
             },
           ]}
           onPress={() => onClose()}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.close', 'סגור')}
+          hitSlop={ACCESSIBILITY_HIT_SLOP}
         >
           <Image
             source={icons.cross}
+            accessible={false}
+            aria-hidden={true}
             style={{
               width: sizes.modalIconSize,
               height: sizes.modalIconSize,
@@ -699,7 +772,8 @@ function ModalContent({
           </View>
         ) : (
           <View style={[!isWebLandscape && { height: '100%', justifyContent: 'space-between' }]}>
-            <Text
+            <AppHeading
+              level={2}
               style={[
                 {
                   fontSize: sizes.regulationsModalTitle,
@@ -713,7 +787,7 @@ function ModalContent({
               ]}
             >
               {title}
-            </Text>
+            </AppHeading>
             {avatar && (
               <View
                 style={{

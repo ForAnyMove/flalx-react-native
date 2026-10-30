@@ -146,6 +146,9 @@ export default function RegisterScreen() {
       roleDescFontSize: isWebLandscape ? web(13) : mobile(13),
       roleIconMargin: isWebLandscape ? web(18) : mobile(18),
       roleSectionMarginBottom: isWebLandscape ? web(20) : mobile(20),
+      roleTitleMarginBottom: isWebLandscape ? web(4) : mobile(4),
+      step3SubtitleMarginTop: isWebLandscape ? web(2) : mobile(2),
+      step3PlusGap: isWebLandscape ? web(8) : mobile(8),
     };
   }, [isWebLandscape, height]);
 
@@ -349,7 +352,7 @@ export default function RegisterScreen() {
               fontSize: sizes.roleTitleFontSize,
               color: theme.textColor,
               fontFamily: 'Rubik-SemiBold',
-              marginBottom: 4,
+              marginBottom: sizes.roleTitleMarginBottom,
             }}
           >
             {title}
@@ -459,11 +462,16 @@ export default function RegisterScreen() {
           [isRTL ? 'right' : 'left']: sizes.backArrowSide,
         },
       ]}
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={t('common.back', { defaultValue: 'חזרה' })}
     >
       <Image
         style={styles.backArrowImage}
         source={isRTL ? icons.arrowRight : icons.arrowLeft}
         tintColor={themeController?.current.unactiveTextColor}
+        accessible={false}
+        aria-hidden={true}
       />
     </TouchableOpacity>
   );
@@ -742,8 +750,11 @@ export default function RegisterScreen() {
                       },
                     ]}
                     onPress={() => setPickerVisible(true)}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('my_profile.change_photo', { defaultValue: 'החלף תמונה' })}
                   >
-                    <Image source={icons.camera} style={styles.cameraIcon} />
+                    <Image source={icons.camera} style={styles.cameraIcon} accessible={false} aria-hidden={true} />
                   </TouchableOpacity>
                 </View>
                 <Text
@@ -1165,7 +1176,7 @@ export default function RegisterScreen() {
                             style={{
                               fontSize: sizes.step3DescFontSize,
                               color: theme.textColor,
-                              marginTop: 2,
+                              marginTop: sizes.step3SubtitleMarginTop,
                             }}
                             numberOfLines={1}
                           >
@@ -1179,6 +1190,9 @@ export default function RegisterScreen() {
                             )
                           }
                           style={{ [isRTL ? 'marginRight' : 'marginLeft']: sizes.step3CardBorderRadius }}
+                          accessible={true}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${t('common.remove', { defaultValue: 'מחק' })} ${profession.subtitle || ''}`}
                         >
                           <Image
                             source={icons.cross}
@@ -1187,6 +1201,8 @@ export default function RegisterScreen() {
                               height: sizes.step3RemoveIconSize,
                               tintColor: theme.errorTextColor,
                             }}
+                            accessible={false}
+                            aria-hidden={true}
                           />
                         </TouchableOpacity>
                       </View>
@@ -1203,7 +1219,7 @@ export default function RegisterScreen() {
                         alignItems: 'center',
                         marginBottom: sizes.step3CardBorderRadius,
                         flexDirection: 'row',
-                        gap: 8,
+                        gap: sizes.step3PlusGap,
                       }}
                     >
                       <Image

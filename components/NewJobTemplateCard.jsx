@@ -13,6 +13,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
 import { useMemo } from 'react';
 import { useWindowInfo } from '../context/windowContext';
+import AppHeading from './ui/AppHeading';
 
 export default function NewJobTemplateCard({
   templateTitle,
@@ -109,16 +110,23 @@ export default function NewJobTemplateCard({
   );
 
   return (
-    <View style={[styles.card, dynamicStyles.card]}>
-      <View style={dynamicStyles.imageContainer}>
+    <View
+      style={[styles.card, dynamicStyles.card]}
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={`${templateTitle}, ${t('common.readMore')}`}
+    >
+      <View style={dynamicStyles.imageContainer} accessible={false} aria-hidden={true}>
         {imageSource ? (
           <Image
             source={{ uri: imageSource }}
             style={styles.image}
             resizeMode='cover'
+            accessible={false}
+            aria-hidden={true}
           />
         ) : (
-          <View style={[styles.placeholder, dynamicStyles.placeholder]}>
+          <View style={[styles.placeholder, dynamicStyles.placeholder]} accessible={false} aria-hidden={true}>
             <Ionicons
               name='image-outline'
               size={sizes.icon}
@@ -127,14 +135,15 @@ export default function NewJobTemplateCard({
           </View>
         )}
       </View>
-      <Text
+      <AppHeading
+        level={3}
         style={[styles.title, dynamicStyles.titleText]}
         numberOfLines={1}
         ellipsizeMode='tail'
       >
         {`${templateTitle}`}
-      </Text>
-      <Text style={[styles.title, dynamicStyles.readMoreText]}>
+      </AppHeading>
+      <Text style={[styles.title, dynamicStyles.readMoreText]} accessible={false} aria-hidden={true}>
         {t(`common.readMore`)}
       </Text>
       {/* <TouchableOpacity

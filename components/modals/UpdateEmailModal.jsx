@@ -14,6 +14,8 @@ import { useWindowInfo } from '../../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { icons } from '../../constants/icons';
 import CustomTextInput from '../ui/CustomTextInput';
+import AppHeading from '../ui/AppHeading';
+import { ACCESSIBILITY_HIT_SLOP } from '../../constants/themes';
 import { getResendCooldownUntil, setResendCooldownUntil } from '../../src/auth/emailResendCooldown';
 import AppModal from '../ui/AppModal';
 
@@ -153,6 +155,7 @@ const UpdateEmailModal = ({
       inputMarginBottom: scale(16),
       inputPaddingHorizontal: scale(16),
       inputPaddingTop: scale(15),
+      labelTop: scale(8),
       labelSize: scale(16),
       inputSize: scale(18),
       saveButtonHeight: scale(62),
@@ -213,7 +216,7 @@ const UpdateEmailModal = ({
       fontSize: sizes.labelSize,
       color: theme.formInputLabelColor,
       position: 'absolute',
-      top: 8,
+      top: sizes.labelTop,
       left: sizes.inputPaddingHorizontal,
       right: sizes.inputPaddingHorizontal,
       textAlign: isRTL ? 'right' : 'left',
@@ -276,7 +279,7 @@ const UpdateEmailModal = ({
 
   const renderEnterEmail = () => (
     <>
-      <Text style={styles.title}>{t('my_profile.change_email')}</Text>
+      <AppHeading level={2} style={styles.title}>{t('my_profile.change_email')}</AppHeading>
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('my_profile.email')}</Text>
         <CustomTextInput
@@ -295,6 +298,10 @@ const UpdateEmailModal = ({
         style={styles.saveButton}
         onPress={handleSave}
         disabled={inCooldown}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={saveButtonLabel}
+        accessibilityState={{ disabled: Boolean(inCooldown) }}
       >
         <Text style={styles.saveButtonText}>{saveButtonLabel}</Text>
       </TouchableOpacity>
@@ -313,14 +320,26 @@ const UpdateEmailModal = ({
   return (
     <AppModal visible={visible} transparent={true}>
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
+        <View
+          style={styles.modalContainer}
+          accessibilityViewIsModal={true}
+          role="dialog"
+          aria-modal="true"
+        >
           {(isLoading || internalLoading) && (
             <View style={styles.loadingOverlay}>
               <ActivityIndicator size='large' color={theme.primaryColor} />
             </View>
           )}
-          <TouchableOpacity style={styles.crossButton} onPress={onClose}>
-            <Image source={icons.cross} style={styles.crossIcon} />
+          <TouchableOpacity
+            style={styles.crossButton}
+            onPress={onClose}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close', 'סגור')}
+            hitSlop={ACCESSIBILITY_HIT_SLOP}
+          >
+            <Image source={icons.cross} accessible={false} aria-hidden={true} style={styles.crossIcon} />
           </TouchableOpacity>
 
           {step === 'enterEmail' ? renderEnterEmail() : renderSuccess()}

@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,8 +14,10 @@ import { useComponentContext } from '../context/globalAppContext';
 import { useWindowInfo } from '../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 import PaymentLegalNotice from './PaymentLegalNotice';
 import AppModal from './ui/AppModal';
+import AppHeading from './ui/AppHeading';
 
 /**
  * PurchaseModal вЂ” modal for selecting a payment method and completing a purchase.
@@ -282,6 +284,7 @@ const PurchaseModal = ({
       changeLinkTextSize: scale(16),
       legalNoticeFontSize: scale(11),
       legalNoticeMarginVertical: scale(14),
+      priceGap: scale(4),
     };
   }, [height, width, isWebLandscape]);
 
@@ -371,7 +374,7 @@ const PurchaseModal = ({
     priceRow: {
       flexDirection: 'row',
       alignItems: 'baseline',
-      gap: 4,
+      gap: sizes.priceGap,
     },
     priceLabel: {
       fontSize: sizes.priceLabelSize,
@@ -533,11 +536,11 @@ const PurchaseModal = ({
 
     return (
       <View style={styles.contentContainer}>
-        <Text style={[styles.title, { fontSize: sizes.firstTitleSize }]}>
+        <AppHeading level={2} style={[styles.title, { fontSize: sizes.firstTitleSize }]}>
           {isSubscription
             ? t('payment_modal.subscription_title')
             : title ?? t('payment_modal.select_title')}
-        </Text>
+        </AppHeading>
 
         {price != null && (
           <View
@@ -624,9 +627,9 @@ const PurchaseModal = ({
 
     return (
       <View style={styles.contentContainer}>
-        <Text style={styles.title}>
+        <AppHeading level={2} style={styles.title}>
           {t('payment_modal.select_method_title')}
-        </Text>
+        </AppHeading>
 
         {renderLegalNotice()}
 
@@ -653,10 +656,16 @@ const PurchaseModal = ({
                 setSelectedMethodId(methodType);
                 setSelectedSource('available');
               }}
+              accessible={true}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: isSelected, selected: isSelected }}
+              accessibilityLabel={t(`payment_modal.method_${methodType}`, { defaultValue: methodType })}
             >
               <Image
                 source={isSelected ? icons.radioOn : icons.radioOff}
                 style={styles.itemCircle}
+                accessible={false}
+                aria-hidden={true}
               />
               <Image
                 source={icons[`method_${methodType}`]}
@@ -667,6 +676,8 @@ const PurchaseModal = ({
                     height: sizes[`${methodType}MethodHeight`],
                   },
                 ]}
+                accessible={false}
+                aria-hidden={true}
               />
             </TouchableOpacity>
           );
@@ -841,9 +852,14 @@ const PurchaseModal = ({
 
   // в”Ђв”Ђв”Ђ Render в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
   return (
-    <AppModal visible={visible} transparent>
+    <AppModal visible={visible} transparent onRequestClose={handleCrossPress}>
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
+        <View
+          style={styles.modalContainer}
+          accessibilityViewIsModal={true}
+          role="dialog"
+          aria-modal="true"
+        >
           {isLoading && (
             <View style={styles.loadingOverlay}>
               <ActivityIndicator size='large' color={theme.primaryColor} />
@@ -852,8 +868,17 @@ const PurchaseModal = ({
           <TouchableOpacity
             style={styles.crossButton}
             onPress={handleCrossPress}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+            hitSlop={ACCESSIBILITY_HIT_SLOP}
           >
-            <Image source={icons.cross} style={styles.crossIcon} />
+            <Image
+              source={icons.cross}
+              style={styles.crossIcon}
+              accessible={false}
+              aria-hidden={true}
+            />
           </TouchableOpacity>
           <ScrollView style={{ width: '100%' }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             {renderContent()}

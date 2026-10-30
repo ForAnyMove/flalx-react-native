@@ -13,7 +13,9 @@ import { useComponentContext } from '../context/globalAppContext';
 import { useWindowInfo } from '../context/windowContext';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { icons } from '../constants/icons';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 import AppModal from './ui/AppModal';
+import AppHeading from './ui/AppHeading';
 
 const ConfirmSelectProviderModal = ({
   visible,
@@ -186,8 +188,8 @@ const ConfirmSelectProviderModal = ({
 
   const renderConfirm = () => (
     <View style={styles.contentContainer}>
-      <Image source={icons.chosen_user} style={styles.statusIcon} />
-      <Text style={styles.title}>{t('selectProviderModal.confirm_title')}</Text>
+      <Image source={icons.chosen_user} style={styles.statusIcon} accessible={false} aria-hidden={true} />
+      <AppHeading level={2} style={styles.title}>{t('selectProviderModal.confirm_title')}</AppHeading>
       <Text style={styles.desc}>
         <Trans
           i18nKey="selectProviderModal.confirm_description"
@@ -197,12 +199,24 @@ const ConfirmSelectProviderModal = ({
       </Text>
 
       <View style={styles.buttonsRow}>
-        <TouchableOpacity style={[styles.button, styles.outlineButton, { flex: sizes.flexOne }]} onPress={handleCancel}>
+        <TouchableOpacity
+          style={[styles.button, styles.outlineButton, { flex: sizes.flexOne }]}
+          onPress={handleCancel}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.cancel')}
+        >
           <Text style={[styles.buttonText, styles.outlineButtonText]}>
             {t('common.cancel')}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.primaryButton, { flex: sizes.flexOne }]} onPress={handleConfirm}>
+        <TouchableOpacity
+          style={[styles.button, styles.primaryButton, { flex: sizes.flexOne }]}
+          onPress={handleConfirm}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={t('selectProviderModal.confirm_button')}
+        >
           <Text style={[styles.buttonText, styles.primaryButtonText]}>
             {t('selectProviderModal.confirm_button')}
           </Text>
@@ -219,8 +233,8 @@ const ConfirmSelectProviderModal = ({
 
   const renderSuccess = () => (
     <View style={styles.contentContainer}>
-      <Image source={icons.checkDefault} style={styles.statusIcon} />
-      <Text style={styles.title}>{t('selectProviderModal.success_title')}</Text>
+      <Image source={icons.checkDefault} style={styles.statusIcon} accessible={false} aria-hidden={true} />
+      <AppHeading level={2} style={styles.title}>{t('selectProviderModal.success_title')}</AppHeading>
       <Text style={styles.desc}>
         <Trans
           i18nKey="selectProviderModal.success_description"
@@ -228,7 +242,13 @@ const ConfirmSelectProviderModal = ({
           components={{ highlight: <Text style={{ color: theme.textColor }} /> }}
         />
       </Text>
-      <TouchableOpacity style={[styles.button, styles.primaryButton, { width: sizes.widthFull }]} onPress={onSuccessClose}>
+      <TouchableOpacity
+        style={[styles.button, styles.primaryButton, { width: sizes.widthFull }]}
+        onPress={onSuccessClose}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={t('selectProviderModal.success_button')}
+      >
         <Text style={[styles.buttonText, styles.primaryButtonText]}>
           {t('selectProviderModal.success_button')}
         </Text>
@@ -238,9 +258,15 @@ const ConfirmSelectProviderModal = ({
 
   const renderError = () => (
     <View style={styles.contentContainer}>
-      <Image source={icons.attention} style={styles.statusIcon} />
-      <Text style={[styles.title, { color: theme.errorTextColor }]}>{t('errors.unexpected_error')}</Text>
-      <TouchableOpacity style={[styles.button, styles.primaryButton, { width: sizes.widthFull }]} onPress={handleCancel}>
+      <Image source={icons.attention} style={styles.statusIcon} accessible={false} aria-hidden={true} />
+      <AppHeading level={2} style={[styles.title, { color: theme.errorTextColor }]}>{t('errors.unexpected_error')}</AppHeading>
+      <TouchableOpacity
+        style={[styles.button, styles.primaryButton, { width: sizes.widthFull }]}
+        onPress={handleCancel}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.close')}
+      >
         <Text style={[styles.buttonText, styles.primaryButtonText]}>
           {t('common.close')}
         </Text>
@@ -264,11 +290,23 @@ const ConfirmSelectProviderModal = ({
   };
 
   return (
-    <AppModal visible={visible} transparent>
+    <AppModal visible={visible} transparent onRequestClose={handleCrossPress}>
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <TouchableOpacity style={styles.crossButton} onPress={handleCrossPress}>
-            <Image source={icons.cross} style={styles.crossIcon} />
+        <View
+          style={styles.modalContainer}
+          accessibilityViewIsModal={true}
+          role="dialog"
+          aria-modal="true"
+        >
+          <TouchableOpacity
+            style={styles.crossButton}
+            onPress={handleCrossPress}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+            hitSlop={ACCESSIBILITY_HIT_SLOP}
+          >
+            <Image source={icons.cross} style={styles.crossIcon} accessible={false} aria-hidden={true} />
           </TouchableOpacity>
           {renderContent()}
         </View>

@@ -55,8 +55,29 @@ const CustomTextInput = forwardRef((props, ref) => {
     };
   }, [uniqueId, removeFocusedInput, isMobileWeb]);
 
+  const accessibilityLabel =
+    props.accessibilityLabel ||
+    (typeof props.label === 'string' ? props.label : undefined) ||
+    props.placeholder ||
+    undefined;
+
+  const isInvalid = Boolean(props.error || props.isInvalid);
+  const isDisabled = props.editable === false || props.disabled === true;
+
   return (
     <TextInput
+      allowFontScaling={false}
+      maxFontSizeMultiplier={props.maxFontSizeMultiplier ?? 1.35}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={props.accessibilityHint}
+      accessibilityState={{
+        disabled: isDisabled,
+        ...(isInvalid ? { error: true } : {}),
+        ...props.accessibilityState,
+      }}
+      aria-label={accessibilityLabel}
+      aria-invalid={isInvalid ? true : props['aria-invalid']}
+      aria-required={props.required ? true : props['aria-required']}
       {...props}
       style={[
         Platform.OS === 'android' ? { padding: 0, textAlignVertical: props.multiline ? 'top' : 'center', includeFontPadding: false } : {},

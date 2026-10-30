@@ -41,6 +41,12 @@ export default function NewJobTemplateGrouped({
             titlePaddingHorizontal: isWebLandscape
                 ? scaleByHeight(8, height)
                 : scaleByHeightMobile(8, height),
+            paddingBottom: isWebLandscape
+                ? scaleByHeight(20, height)
+                : scaleByHeightMobile(20, height),
+            buttonsMarginTop: isWebLandscape
+                ? scaleByHeight(10, height)
+                : scaleByHeightMobile(10, height),
         }),
         [isWebLandscape, height]
     );
@@ -50,6 +56,12 @@ export default function NewJobTemplateGrouped({
             StyleSheet.create({
                 groupContainer: {
                     marginBottom: sizes.groupMarginBottom,
+                },
+                contentContainer: {
+                    paddingBottom: sizes.paddingBottom,
+                },
+                buttonsWrapper: {
+                    marginTop: sizes.buttonsMarginTop,
                 },
             }),
         [sizes]
@@ -93,7 +105,7 @@ export default function NewJobTemplateGrouped({
     return (
         <ScrollView
             style={styles.container}
-            contentContainerStyle={styles.contentContainer}
+            contentContainerStyle={[styles.contentContainer, dynamicStyles.contentContainer]}
         >
             {filteredData.map((type) => {
                 const isExpanded = !!expandedTypes[type.key];
@@ -110,7 +122,7 @@ export default function NewJobTemplateGrouped({
                             iconStyle={{ transform: [{ rotate: rotation }] }}
                         />
                         {isExpanded && (
-                            <View style={styles.buttonsWrapper}>
+                            <View style={[styles.buttonsWrapper, dynamicStyles.buttonsWrapper]}>
                                 {type.subtypes?.map((subType) => (
                                     <NewJobTemplateButton
                                         key={subType.key}
@@ -132,13 +144,11 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     contentContainer: {
-        paddingBottom: 20,
     },
     groupContainer: {},
     buttonsWrapper: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'flex-start',
-        marginTop: 10,
     },
 });

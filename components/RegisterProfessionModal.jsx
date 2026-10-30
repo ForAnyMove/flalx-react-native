@@ -21,6 +21,8 @@ import CustomTextInput from './ui/CustomTextInput';
 import CustomExperiencePicker from './ui/CustomExperiencePicker';
 import AddProfessionModal from './AddProfessionModal';
 import AppModal from './ui/AppModal';
+import AppHeading from './ui/AppHeading';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 import { useLocalization } from '../src/services/useLocalization';
 import ProfessionDocumentsBlock from './ProfessionDocumentsBlock';
 
@@ -378,7 +380,12 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-              <View style={styles.modalContainer}>
+              <View
+                style={styles.modalContainer}
+                accessibilityViewIsModal={true}
+                role="dialog"
+                aria-modal="true"
+              >
             {isSubmitted ? (
               <>
                 <View style={styles.successContainer}>
@@ -389,15 +396,23 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
                         width: sizes.successIconSize,
                         height: sizes.successIconSize,
                       }}
+                      accessible={false}
+                      aria-hidden={true}
                     />
                   </View>
-                  <Text style={styles.successTitle}>
+                  <AppHeading level={2} style={styles.successTitle}>
                     {t('professions.register_modal.success_title')}
-                  </Text>
+                  </AppHeading>
                   <Text style={styles.successDescription}>
                     {t('professions.register_modal.success_description')}
                   </Text>
-                  <TouchableOpacity style={styles.okButton} onPress={handleClose}>
+                  <TouchableOpacity
+                    style={styles.okButton}
+                    onPress={handleClose}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('professions.register_modal.ok_button')}
+                  >
                     <Text style={styles.okButtonText}>
                       {t('professions.register_modal.ok_button')}
                     </Text>
@@ -410,16 +425,20 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
                     top: sizes.crossSpace,
                     right: sizes.crossSpace,
                   }}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+                  hitSlop={ACCESSIBILITY_HIT_SLOP}
                 >
-                  <Image source={icons.cross} style={styles.crossIcon} />
+                  <Image source={icons.cross} style={styles.crossIcon} accessible={false} aria-hidden={true} />
                 </TouchableOpacity>
               </>
             ) : (
               <>
                 <View style={styles.header}>
-                  <Text style={styles.title}>
+                  <AppHeading level={2} style={styles.title}>
                     {t('professions.register_modal.title')}
-                  </Text>
+                  </AppHeading>
                 </View>
                 <TouchableOpacity
                   onPress={handleClose}
@@ -428,8 +447,12 @@ const RegisterProfessionModal = ({ visible, onClose, onRequestDone, onBack }) =>
                     top: sizes.crossSpace,
                     right: sizes.crossSpace,
                   }}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.close', { defaultValue: 'סגור' })}
+                  hitSlop={ACCESSIBILITY_HIT_SLOP}
                 >
-                  <Image source={icons.cross} style={styles.crossIcon} />
+                  <Image source={icons.cross} style={styles.crossIcon} accessible={false} aria-hidden={true} />
                 </TouchableOpacity>
 
                 <Text style={styles.description}>

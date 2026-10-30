@@ -19,6 +19,8 @@ import CustomTextInput from '../ui/CustomTextInput';
 import CustomPicker from '../ui/CustomPicker';
 import UpdateEmailModal from './UpdateEmailModal';
 import AppModal from '../ui/AppModal';
+import AppHeading from '../ui/AppHeading';
+import { ACCESSIBILITY_HIT_SLOP } from '../../constants/themes';
 import { sendSupportRequest } from '../../src/api/support';
 import { parsePhone, formatAsYouType, callingCodeFor } from '../../src/phone/phoneUtils';
 import { logError } from '../../utils/log_util';
@@ -176,6 +178,10 @@ export default function ContactSupportModal({ visible, onClose }) {
       secureNoteFont: scale(12),
       gap: scale(16),
       smallGap: scale(8),
+      badgeRadius: scale(20),
+      tinyPadding: scale(2),
+      tinyMargin: scale(4),
+      btnPaddingV: scale(6),
     };
   }, [height, isWebLandscape]);
 
@@ -296,8 +302,8 @@ export default function ContactSupportModal({ visible, onClose }) {
           style={{
             backgroundColor: `${theme.verifiedMarkerColor}26`,
             paddingHorizontal: sizes.smallGap,
-            paddingVertical: 2,
-            borderRadius: 20,
+            paddingVertical: sizes.tinyPadding,
+            borderRadius: sizes.badgeRadius,
           }}
         >
           <Text style={{ fontSize: sizes.badgeFont, color: theme.verifiedMarkerColor, fontFamily: 'Rubik-Medium' }}>
@@ -337,7 +343,7 @@ export default function ContactSupportModal({ visible, onClose }) {
           fontFamily: 'Rubik-SemiBold',
           color: theme.textColor,
           textAlign: 'center',
-          marginBottom: 4,
+          marginBottom: sizes.tinyMargin,
         }}
       >
         {title}
@@ -390,9 +396,12 @@ export default function ContactSupportModal({ visible, onClose }) {
           <Ionicons name='chatbubbles' size={sizes.headerIconInner} color={theme.primaryColor} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: sizes.titleFont, fontFamily: 'Rubik-Bold', color: theme.textColor, textAlign }}>
+          <AppHeading
+            level={2}
+            style={{ fontSize: sizes.titleFont, fontFamily: 'Rubik-Bold', color: theme.textColor, textAlign }}
+          >
             {t('settings.modals.contact_support.title')}
-          </Text>
+          </AppHeading>
           <Text style={{ fontSize: sizes.subtitleFont, color: theme.unactiveTextColor, textAlign }}>
             {t('settings.modals.contact_support.subtitle')}
           </Text>
@@ -446,7 +455,7 @@ export default function ContactSupportModal({ visible, onClose }) {
             />
           </View>
           {!!errors.subject && (
-            <Text style={{ fontSize: sizes.helpTextFont, color: theme.errorTextColor, textAlign, marginTop: 4 }}>
+            <Text style={{ fontSize: sizes.helpTextFont, color: theme.errorTextColor, textAlign, marginTop: sizes.tinyMargin }}>
               {errors.subject}
             </Text>
           )}
@@ -482,7 +491,7 @@ export default function ContactSupportModal({ visible, onClose }) {
             />
           </View>
           {!!errors.message && (
-            <Text style={{ fontSize: sizes.helpTextFont, color: theme.errorTextColor, textAlign, marginTop: 4 }}>
+            <Text style={{ fontSize: sizes.helpTextFont, color: theme.errorTextColor, textAlign, marginTop: sizes.tinyMargin }}>
               {errors.message}
             </Text>
           )}
@@ -492,7 +501,7 @@ export default function ContactSupportModal({ visible, onClose }) {
                 name='shield-checkmark-outline'
                 size={14}
                 color={theme.unactiveTextColor}
-                style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }}
+                style={{ marginRight: isRTL ? 0 : sizes.tinyMargin, marginLeft: isRTL ? sizes.tinyMargin : 0 }}
               />
               <HelpText style={{ flex: 1 }}>
                 {t('settings.modals.contact_support.message.privacy_hint')}
@@ -599,7 +608,7 @@ export default function ContactSupportModal({ visible, onClose }) {
                     borderColor: theme.primaryColor,
                     borderRadius: sizes.borderRadius / 2,
                     paddingHorizontal: sizes.smallGap,
-                    paddingVertical: 6,
+                    paddingVertical: sizes.btnPaddingV,
                     marginLeft: isRTL ? 0 : sizes.smallGap,
                     marginRight: isRTL ? sizes.smallGap : 0,
                   }}
@@ -635,6 +644,10 @@ export default function ContactSupportModal({ visible, onClose }) {
           <TouchableOpacity
             onPress={handleSubmit}
             disabled={submitting}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.modals.contact_support.submit')}
+            accessibilityState={{ disabled: submitting }}
             style={[
               row,
               {
@@ -713,6 +726,9 @@ export default function ContactSupportModal({ visible, onClose }) {
         }}
       >
         <View
+          accessibilityViewIsModal={true}
+          role="dialog"
+          aria-modal="true"
           style={{
             width: sizes.modalWidth,
             maxHeight: sizes.modalMaxHeight,
@@ -731,9 +747,15 @@ export default function ContactSupportModal({ visible, onClose }) {
               zIndex: 10,
             }}
             onPress={handleClose}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close', 'סגור')}
+            hitSlop={ACCESSIBILITY_HIT_SLOP}
           >
             <Image
               source={icons.cross}
+              accessible={false}
+              aria-hidden={true}
               style={{ width: sizes.closeIconSize, height: sizes.closeIconSize, tintColor: theme.textColor }}
             />
           </TouchableOpacity>

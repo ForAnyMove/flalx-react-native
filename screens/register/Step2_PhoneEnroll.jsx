@@ -411,9 +411,6 @@ const styles = StyleSheet.create({
   link: {
     textDecorationLine: 'underline',
   },
-  error: {
-    marginTop: 4,
-  },
   phoneDescription: {
     textAlign: 'center',
     fontWeight: '500',

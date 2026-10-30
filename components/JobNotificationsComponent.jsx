@@ -17,6 +17,8 @@ import { icons } from '../constants/icons';
 import { ActivityIndicator } from 'react-native-paper';
 import { logError } from '../utils/log_util';
 import { useWindowInfo } from '../context/windowContext';
+import AppHeading from './ui/AppHeading';
+import { ACCESSIBILITY_HIT_SLOP } from '../constants/themes';
 
 if (
   Platform.OS === 'android' &&
@@ -57,6 +59,7 @@ const JobNotificationsComponent = ({ notifications = [], onClose }) => {
       shadowRadius: 4,
       containerWidth: isWebLandscape ? '60%' : '100%',
       containerMarginBottom: isWebLandscape ? web(8) : mobile(8),
+      messageMarginTop: scale(4),
     };
   }, [isWebLandscape, height]);
 
@@ -91,7 +94,7 @@ const JobNotificationsComponent = ({ notifications = [], onClose }) => {
       message: {
         fontSize: sizes.messageFontSize,
         color: themeController.current?.unactiveTextColor,
-        marginTop: 4,
+        marginTop: sizes.messageMarginTop,
       },
       closeButton: {
         position: 'absolute',
@@ -160,7 +163,7 @@ const JobNotificationsComponent = ({ notifications = [], onClose }) => {
 
         return (
           <View key={notification.id} style={[styles.card, cardStyle]}>
-            <Text style={styles.title}>{notification.rejectionType == 'initial_rejection' ? t('job_notifications.rejected_title') : t('job_notifications.update_rejected_title')} {notification.title}</Text>
+            <AppHeading level={3} style={styles.title}>{notification.rejectionType == 'initial_rejection' ? t('job_notifications.rejected_title') : t('job_notifications.update_rejected_title')} {notification.title}</AppHeading>
             <Text style={styles.message} numberOfLines={3} ellipsizeMode='tail'>
               {notification.message != null ? t('job_notifications.rejected_message_reason', { reason: notification.message, jobType: notification.jobType, jobSubtype: notification.jobSubtype }) :
                 (notification.rejectionType == 'initial_rejection' ? t('job_notifications.rejected_message', { jobType: notification.jobType, jobSubtype: notification.jobSubtype }) : t('job_notifications.update_rejected_message', { jobType: notification.jobType, jobSubtype: notification.jobSubtype }))}
@@ -169,6 +172,9 @@ const JobNotificationsComponent = ({ notifications = [], onClose }) => {
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={() => closeNotification(notification.id)}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close') || 'סגור'}
+                hitSlop={ACCESSIBILITY_HIT_SLOP}
               >
                 <Image source={icons.cross} style={styles.closeIcon} />
               </TouchableOpacity>
