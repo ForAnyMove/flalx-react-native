@@ -360,27 +360,70 @@ export default function NewJobModal({
   const [isExperienceRequired, setIsExperienceRequired] = useState(false);
   const [experience, setExperience] = useState(editDraft.experience ?? initialJob?.experience ?? null);
 
+  // Вспомогательная функция для надежного сопоставления типа/подтипа по key, id, name и локализованным названиям
+  const matchJobTypeOrSubtype = (item, val) => {
+    if (!item || val === undefined || val === null || val === '') return false;
+    let target = val;
+    if (typeof target === 'object') {
+      target = target.key || target.id || target.name || '';
+    }
+    const targetStr = String(target).trim().toLowerCase();
+    if (!targetStr) return false;
+
+    const candidates = [
+      item.key,
+      item.id,
+      item.name,
+      item.name_he,
+      item.name_en,
+      item.name_ru,
+      item.name_i18n?.en,
+      item.name_i18n?.he,
+      item.name_i18n?.ru,
+      item.translations?.en,
+      item.translations?.he,
+      item.translations?.ru,
+    ];
+
+    return candidates.some(
+      (c) => c !== undefined && c !== null && String(c).trim().toLowerCase() === targetStr
+    );
+  };
+
   // Хук для отслеживания смены type или subType и отображения поля ввода опыта, если профессия требует опыта
   useEffect(() => {
     let requiresExperience = false;
-    if (jobTypesController.jobTypesWithSubtypes) {
+    if (jobTypesController.jobTypesWithSubtypes && type) {
       const selectedTypeObj = jobTypesController.jobTypesWithSubtypes.find(
-        (t) => t.key === type || t.id === type || t.name === type
+        (t) => matchJobTypeOrSubtype(t, type)
       );
       // Проверяем, требует ли верификации выбранный тип
       const typeRequiresVerification = selectedTypeObj?.requires_verification === true;
 
-      // Проверяем, требует ли верификации выбранный подтип внутри выбранного типа
-      const subTypeRequiresVerification = selectedTypeObj?.subtypes?.find(
-        (st) => st.key === subType || st.id === subType || st.name === subType
-      )?.requires_verification === true;
+      // Проверяем, требует ли верификации выбранный подтип внутри выбранного типа (или глобально)
+      let subTypeRequiresVerification = false;
+      if (subType) {
+        const foundSubtype =
+          selectedTypeObj?.subtypes?.find((st) => matchJobTypeOrSubtype(st, subType)) ||
+          jobTypesController.jobTypesWithSubtypes
+            .flatMap((t) => t.subtypes || [])
+            .find((st) => matchJobTypeOrSubtype(st, subType));
+        subTypeRequiresVerification = foundSubtype?.requires_verification === true;
+      }
 
       if (typeRequiresVerification || subTypeRequiresVerification) {
         requiresExperience = true;
       }
     }
+
+    if (editDraft.experience !== undefined && editDraft.experience !== null) {
+      requiresExperience = true;
+    } else if (initialJob?.experience !== undefined && initialJob?.experience !== null) {
+      requiresExperience = true;
+    }
+
     setIsExperienceRequired(requiresExperience);
-  }, [type, subType, jobTypesController.jobTypesWithSubtypes]);
+  }, [type, subType, jobTypesController.jobTypesWithSubtypes, editDraft.experience, initialJob?.experience]);
 
 
   const [statusModalVisible, setStatusModalVisible] = useState(false);
@@ -735,6 +778,18 @@ export default function NewJobModal({
       isWebLandscape={isWebLandscape}
       sizeOverrides={sizes}
     />,
+    isExperienceRequired ? (
+      <CustomExperiencePicker
+        key='experience'
+        label={t('register.experience_label')}
+        selectedValue={experience}
+        onValueChange={setExperience}
+        isRTL={isRTL}
+        containerStyle={{
+          marginBottom: sizes.typeTagsSelectorMarginBottom,
+        }}
+      />
+    ) : null,
     <AddressPicker
       key='location'
       label={t('newJob.location', { defaultValue: 'Location' })}
@@ -1106,17 +1161,6 @@ export default function NewJobModal({
         destructive
       />
     </View>,
-    isExperienceRequired ? (
-      <CustomExperiencePicker
-        label={t('register.experience_label')}
-        selectedValue={experience}
-        onValueChange={setExperience}
-        isRTL={isRTL}
-        containerStyle={{
-          marginBottom: sizes.typeTagsSelectorMarginBottom,
-        }}
-      />
-    ) : null,
     !isClient && (
       <View
         style={[
@@ -1270,16 +1314,26 @@ export default function NewJobModal({
                         330,
                         height
                       )}px)`,
-                      gridTemplateRows: `
-                        ${scaleByHeight(64, height)}px 
-                        ${scaleByHeight(64, height)}px 
-                        ${scaleByHeight(64, height)}px 
-                        ${scaleByHeight(75, height)}px 
-                        ${scaleByHeight(75, height)}px 
-                        ${scaleByHeight(64, height)}px 
-                        ${scaleByHeight(64, height)}px 
-                        ${scaleByHeight(64, height)}px 
-                      `,
+                      gridTemplateRows: isExperienceRequired
+                        ? `
+                          ${scaleByHeight(64, height)}px 
+                          ${scaleByHeight(64, height)}px 
+                          ${scaleByHeight(64, height)}px 
+                          ${scaleByHeight(64, height)}px 
+                          ${scaleByHeight(75, height)}px 
+                          ${scaleByHeight(75, height)}px 
+                          ${scaleByHeight(64, height)}px 
+                          ${scaleByHeight(64, height)}px 
+                        `
+                        : `
+                          ${scaleByHeight(64, height)}px 
+                          ${scaleByHeight(64, height)}px 
+                          ${scaleByHeight(64, height)}px 
+                          ${scaleByHeight(75, height)}px 
+                          ${scaleByHeight(75, height)}px 
+                          ${scaleByHeight(64, height)}px 
+                          ${scaleByHeight(64, height)}px 
+                        `,
                     },
                   ]}
                 >
@@ -1339,7 +1393,13 @@ export default function NewJobModal({
                       {
                         // marginBottom: sizes.margin,
                         zIndex: 9,
-                        gridArea: isRTL ? '1 / 1 / 3 / 2' : '1 / 2 / 3 / 3',
+                        gridArea: isExperienceRequired
+                          ? isRTL
+                            ? '1 / 1 / 4 / 2'
+                            : '1 / 2 / 4 / 3'
+                          : isRTL
+                            ? '1 / 1 / 3 / 2'
+                            : '1 / 2 / 3 / 3',
                       },
                     ]}
                   >
@@ -1456,14 +1516,42 @@ export default function NewJobModal({
                     />
                   </View>
 
-                  {/* Row 3: Profession (1/2) + Location (1/2) */}
+                  {/* Row 3: Experience (1/2, when required) */}
+                  {isExperienceRequired && (
+                    <View
+                      style={[
+                        styles.gridHalf,
+                        {
+                          zIndex: 7,
+                          gridArea: isRTL ? '3 / 2 / 4 / 3' : '3 / 1 / 4 / 2',
+                        },
+                      ]}
+                    >
+                      <CustomExperiencePicker
+                        label={t('register.experience_label')}
+                        selectedValue={experience}
+                        onValueChange={setExperience}
+                        isRTL={isRTL}
+                        containerStyle={{
+                          marginBottom: sizes.typeTagsSelectorMarginBottom,
+                        }}
+                      />
+                    </View>
+                  )}
+
+                  {/* Row 3 (or Row 4 if experience required): Location (1/2) */}
                   <View
                     style={[
                       styles.gridHalf,
                       {
-                        // marginBottom: sizes.margin,
-                        zIndex: 7,
-                        gridArea: isRTL ? '3 / 2 / 4 / 3' : '3 / 1 / 4 / 2',
+                        zIndex: 6,
+                        gridArea: isExperienceRequired
+                          ? isRTL
+                            ? '4 / 2 / 5 / 3'
+                            : '4 / 1 / 5 / 2'
+                          : isRTL
+                            ? '3 / 2 / 4 / 3'
+                            : '3 / 1 / 4 / 2',
                       },
                     ]}
                   >
@@ -1488,9 +1576,14 @@ export default function NewJobModal({
                       style={[
                         styles.gridHalf,
                         {
-                          // marginBottom: sizes.margin,
-                          zIndex: 6,
-                          gridArea: isRTL ? '3 / 1 / 4 / 2' : '3 / 2 / 4 / 3',
+                          zIndex: 5,
+                          gridArea: isExperienceRequired
+                            ? isRTL
+                              ? '4 / 1 / 5 / 2'
+                              : '4 / 2 / 5 / 3'
+                            : isRTL
+                              ? '3 / 1 / 4 / 2'
+                              : '3 / 2 / 4 / 3',
                         },
                       ]}
                     >
@@ -1571,8 +1664,10 @@ export default function NewJobModal({
                       styles.gridFull,
                       {
                         // marginBottom: sizes.margin,
-                        zIndex: 5,
-                        gridArea: isRTL ? '4 / 1 / 6 / 3' : '4 / 1 / 6 / 3',
+                        zIndex: 4,
+                        gridArea: isExperienceRequired
+                          ? '5 / 1 / 7 / 3'
+                          : '4 / 1 / 6 / 3',
                       },
                     ]}
                   >
@@ -1699,29 +1794,6 @@ export default function NewJobModal({
                     confirmText={t('common.remove')}
                     destructive
                   />
-
-                  {isExperienceRequired && (
-                    <View
-                      style={[
-                        styles.gridHalf,
-                        {
-                          // marginBottom: sizes.margin,
-                          zIndex: 4,
-                          gridArea: isRTL ? '6 / 2 / 7 / 3' : '6 / 1 / 7 / 2',
-                        },
-                      ]}
-                    >
-                      <CustomExperiencePicker
-                        label={t('register.experience_label')}
-                        selectedValue={experience}
-                        onValueChange={setExperience}
-                        isRTL={isRTL}
-                        containerStyle={{
-                          marginBottom: sizes.typeTagsSelectorMarginBottom,
-                        }}
-                      />
-                    </View>
-                  )}
 
                   {/* Дата и время начала */}
                   {!isClient && (

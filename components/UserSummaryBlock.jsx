@@ -691,7 +691,7 @@ const UserSummaryBlock = ({
                           p.yearsOfExperience ??
                           p.years_experience ??
                           (professions?.length === 1 ? (experience ?? _userData?.years_of_experience ?? _userData?.yearsOfExperience) : null);
-                        const expLabel = formatExperience(rawExp, t);
+                        const expLabel = formatExperience(rawExp, t, p.verified_at || p.updated_at || p.created_at);
                         const hasExperience = Boolean(expLabel && expLabel !== '-');
                         return (
                           <View

@@ -132,10 +132,15 @@ export const WebSocketProvider = ({ children }) => {
         paymentsManagerController?.refreshSavedMethods?.();
         break;
       }
-      case 'JOB_CREATED': { // notify all users
-        // const jobId = message.payload?.jobId;
-        // const job = message.payload?.job;
-        // jobsController.reloadExecutor();
+      case 'JOB_CREATED':
+      case 'JOB_UPDATED':
+      case 'JOB_PRICE_UPDATED': {
+        jobsController?.reloadAll?.();
+        break;
+      }
+      case 'JOB_SUBTYPE_CREATED':
+      case 'JOB_TYPE_CREATED': {
+        jobTypesController?.reloadJobTypes?.();
         break;
       }
       case 'JOB_DELETED': { // notify all users
@@ -210,13 +215,20 @@ export const WebSocketProvider = ({ children }) => {
         const commentId = message.payload?.commentId;
         const authorId = message.payload?.authorId;
         const userId = message.payload?.userId; // кому оставили комментарий
-        const content = message.payload?.content;
+        const content = message.payload?.text || message.payload?.content;
         const rating = message.payload?.rating;
+        const role = message.payload?.role || 'recipient';
 
-        switch (message.payload?.role) {
-          case 'recipient':
-            // notify user who received the comment
+        switch (role) {
+          case 'recipient': {
+            const ratingText = rating ? ` (${rating}★)` : '';
+            const commentText = content ? `\n"${content}"` : '';
+            showInfo(`${t('comments.new_review_received', { defaultValue: 'You received a new review' })}${ratingText}${commentText}`);
+            if (user?.current?.id) {
+              providersController?.refreshUserComments?.(user.current.id);
+            }
             break;
+          }
           case 'author':
             // notify author that comment was successfully posted
             break;

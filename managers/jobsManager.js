@@ -124,6 +124,18 @@ export default function jobsManager({ session, user, geolocation }) {
     return getJobProducts(session);
   }
 
+  async function refreshProducts() {
+    if (!serverURL || !session?.status) return;
+    try {
+      const products = await loadJobProducts();
+      if (!alive.current) return;
+      if (products?.jobProducts) setJobProducts(products.jobProducts);
+      if (products?.providerProducts) setProviderProducts(products.providerProducts);
+    } catch (e) {
+      logError("Failed to refresh products:", e);
+    }
+  }
+
   async function reloadCreator() {
     if (!serverURL || !session?.status || !userId) return;
     setLoadingCreator(true);
@@ -340,6 +352,7 @@ export default function jobsManager({ session, user, geolocation }) {
     reloadCreator,
     reloadExecutor,
     reloadExecutorNew,
+    refreshProducts,
     loading: {
       any: loadingCreator || loadingExecutor,
       creator: loadingCreator,

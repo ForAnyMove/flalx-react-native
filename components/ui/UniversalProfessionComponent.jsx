@@ -13,13 +13,23 @@ import { scaleByHeight, scaleByHeightMobile } from '../../utils/resizeFuncs';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { PROFESSION_TYPES } from '../../constants/enums';
 import { icons } from '../../constants/icons';
+import { useTranslation } from 'react-i18next';
+import { formatExperience } from '../../utils/experience_ulit';
 
 const UniversalProfessionComponent = ({ item, onPress }) => {
   const { themeController } = useComponentContext();
   const { height, isLandscape } = useWindowInfo();
+  const { t } = useTranslation();
   const isWebLandscape = Platform.OS === 'web' && isLandscape;
 
-  const { type, title, subtitle, extra } = item;
+  const { type, title, subtitle, extra, years_of_experience, experience, verified_at, updated_at, created_at } = item;
+  const expData = years_of_experience || experience;
+  const verifiedDate = verified_at || updated_at || created_at;
+  const formattedExp = useMemo(() => {
+    if (!expData) return null;
+    const formatted = formatExperience(expData, t, verifiedDate);
+    return formatted !== '-' ? formatted : null;
+  }, [expData, verifiedDate, t]);
 
   const sizes = useMemo(() => {
     const web = (size) => scaleByHeight(size, height);
@@ -113,6 +123,19 @@ const UniversalProfessionComponent = ({ item, onPress }) => {
       fontSize: sizes.subtitleSize,
       color: typeConfig.titleColor,
     },
+    experienceBadge: {
+      marginTop: sizes.commentTitleMarginBottom + 2,
+      alignSelf: 'flex-start',
+      backgroundColor: `${themeController.current?.primaryColor || '#007AFF'}15`,
+      paddingHorizontal: sizes.badgePaddingH,
+      paddingVertical: sizes.badgePaddingV,
+      borderRadius: sizes.badgeBorderRadius,
+    },
+    experienceText: {
+      fontSize: sizes.commentTitleSize,
+      color: themeController.current?.primaryColor || '#007AFF',
+      fontFamily: 'Rubik-Medium',
+    },
     statusContainer: {
       marginLeft: sizes.padding,
       alignItems: 'flex-end',
@@ -186,6 +209,13 @@ const UniversalProfessionComponent = ({ item, onPress }) => {
         <View style={styles.textContainer}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.subtitle}>{subtitle}</Text>
+          {formattedExp && (
+            <View style={styles.experienceBadge}>
+              <Text style={styles.experienceText}>
+                {t('register.experience_label', { defaultValue: 'Experience' })}: {formattedExp}
+              </Text>
+            </View>
+          )}
         </View>
         <View style={styles.statusContainer}>
           <Text style={styles.statusText}>{typeConfig.statusText}</Text>

@@ -424,7 +424,13 @@ const AddProfessionModal = ({ visible, onClose, onSubmit }) => {
                   renderImageGrid(certificatePhotos, 'certificate')}
               </ScrollView>
               <TouchableOpacity
-                style={styles.submitButton}
+                disabled={passportPhotos.length === 0 || certificatePhotos.length === 0}
+                style={[
+                  styles.submitButton,
+                  (passportPhotos.length === 0 || certificatePhotos.length === 0) && {
+                    opacity: 0.5,
+                  },
+                ]}
                 onPress={handleSubmit}
               >
                 <Text style={styles.submitButtonText}>

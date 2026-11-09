@@ -56,6 +56,8 @@ export const ComponentProvider = ({ children }) => {
       ) {
         if (session.status === 'loggedIn') {
           jobsController.reloadAll();
+          jobsController?.refreshProducts?.();
+          jobTypesController?.reloadJobTypes?.();
           jobTypesController?.reloadProfessionRequests?.();
         }
       }
