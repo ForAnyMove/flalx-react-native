@@ -7,7 +7,7 @@ export const icons = {
   business: require("../assets/icon/jobs-light.png"),
   profile: require("../assets/icon/profile-light.png"),
   professions: require("../assets/icon/professions-light.png"),
-  user_view: require("../assets/icon/eye-open.png"),
+  user_view: require("../assets/icon/providers-light.png"),
   settings: require("../assets/icon/settings-light.png"),
   new: require("../assets/icon/new-light.png"),
   waiting: require("../assets/icon/waiting-light.png"),
