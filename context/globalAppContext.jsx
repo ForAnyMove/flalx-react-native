@@ -19,7 +19,7 @@ const ComponentContext = createContext();
 
 const appTabsList = ['client', 'business'];
 // const appTabsList = ['client', 'providers', 'business'];
-const profileTabsList = ['profile', 'professions', 'settings'];
+const profileTabsList = ['profile', 'professions', 'user_view', 'settings'];
 
 export const ComponentProvider = ({ children }) => {
   const themeController = themeManager();

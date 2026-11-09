@@ -11,6 +11,7 @@ import { useComponentContext } from '../context/globalAppContext';
 import { icons } from '../constants/icons';
 import Profile from './mainScreens/profileTabs/Profile';
 import Profession from './mainScreens/profileTabs/Profession';
+import UserView from './mainScreens/profileTabs/UserView';
 import Settings from './mainScreens/profileTabs/Settings';
 import { scaleByHeight, scaleByHeightMobile } from '../utils/resizeFuncs';
 import { useMemo } from 'react';
@@ -47,6 +48,8 @@ export default function AppProfileScreen({ switchToApp }) {
         return <Profile />;
       case 'professions':
         return <Profession />;
+      case 'user_view':
+        return <UserView />;
       case 'settings':
         return <Settings />;
       default:

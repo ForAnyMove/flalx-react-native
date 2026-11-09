@@ -45,8 +45,13 @@ const MyProfessions = ({ openSystemRegistration, onBackFromSystemRegistration, i
       const reuqestObject = {
         title: tField(typeObj, 'name') || request.requested_type_name,
         subtitle: tField(subtypeObj, 'name') || request.requested_subtype_name,
-        years_of_experience: request.years_of_experience,
-        verified_at: request.updated_at || request.created_at,
+        years_of_experience:
+          request.years_of_experience ??
+          request.experience ??
+          request.yearsOfExperience ??
+          request.years_experience ??
+          request.work_experience,
+        verified_at: request.verified_at || request.updated_at || request.created_at,
         type: (() => {
           switch (request.status) {
             case "pending":

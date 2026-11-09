@@ -37,6 +37,11 @@ const SystemProfessions = ({ openSystemRegistration }) => {
       const reuqestObject = {
         title: request.final_type_name || request.requested_type_name,
         subtitle: request.final_subtype_name || request.requested_subtype_name,
+        years_of_experience:
+          request.years_of_experience ??
+          request.experience ??
+          request.work_experience,
+        verified_at: request.updated_at || request.created_at,
         type: (() => {
           switch (request.status) {
             case "pending":
@@ -196,6 +201,8 @@ const SystemProfessions = ({ openSystemRegistration }) => {
                 title: request.title,
                 subtitle: request.subtitle,
                 extra: request.extra || null,
+                years_of_experience: request.years_of_experience,
+                verified_at: request.verified_at,
               }}
               onPress={() => { }}
             />)}
