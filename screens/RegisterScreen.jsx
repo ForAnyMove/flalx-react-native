@@ -15,7 +15,8 @@ import { useTranslation } from 'react-i18next';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import { useComponentContext } from '../context/globalAppContext';
 import ImagePickerModal from '../components/ui/ImagePickerModal';
-import { uploadImageAsset } from '../src/files/uploadFile';
+import { uploadAvatarForModeration } from '../src/api/images';
+import { convertImageToBase64 } from '../utils/imageToBase64';
 import { icons } from '../constants/icons';
 import {
   BASE_DESIGN_HEIGHT,
@@ -189,6 +190,7 @@ export default function RegisterScreen() {
         job_subtype_id: data.job_subtype_id,
         passport_photo_urls: data.passport_photo_urls ?? null,
         certificate_photo_urls: data.certificate_photo_urls ?? null,
+        years_of_experience: data.years_of_experience ?? null,
         title: tField(typeInfo, 'name') || '',
         subtitle: tField(subtypeInfo, 'name') || '',
         type: PROFESSION_TYPES.PENDING,
@@ -214,14 +216,19 @@ export default function RegisterScreen() {
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [pickerVisible, setPickerVisible] = useState(false);
 
-  // загрузка на backend storage
+  // загрузка аватара через очередь модерации
   async function uploadImage(uri) {
     setAppLoading(true);
     try {
-      const res = await uploadImageAsset(uri, { purpose: 'avatar', fileName: 'avatar' });
-      setAvatarUrl(res.url);
+      const { base64, fileType } = await convertImageToBase64(uri);
+      const res = await uploadAvatarForModeration(base64, fileType, session);
+      const pendingUrl = res?.pending_avatar;
+      if (pendingUrl) {
+        setAvatarUrl(pendingUrl);
+        user.setPendingAvatar?.(pendingUrl);
+      }
     } catch (e) {
-      logError('Ошибка загрузки аватара:', e);
+      logError('Ошибка загрузки аватара на модерацию:', e);
       showError(e?.message || t('errors.unexpected_error'));
     } finally {
       setAppLoading(false);
@@ -239,7 +246,9 @@ export default function RegisterScreen() {
       updatedUser.name = nameCheck.value;
       updatedUser.surname = surnameCheck.value;
       if (form.description) updatedUser.about = form.description;
-      if (avatarUrl) updatedUser.avatar = avatarUrl;
+      if (avatarUrl) {
+        user.setPendingAvatar?.(avatarUrl);
+      }
       if (selectedJobTypes.length > 0) updatedUser.jobTypes = selectedJobTypes;
       if (selectedLicenseTypes.length > 0)
         updatedUser.professions = selectedLicenseTypes;
@@ -248,9 +257,7 @@ export default function RegisterScreen() {
       updatedUser.account_type = form.role || 'client';
       // if (experience) updatedUser.experience = experience;
 
-      await user.update({ ...updatedUser, is_password_exist: true });
-
-      // Submit professions only when user registered as business/provider
+      // 1. Submit professions first while user is still in registration screen
       if (selectedRole === 'business' && registrationProfessions.length > 0) {
         await Promise.allSettled(
           registrationProfessions.map((p) =>
@@ -260,6 +267,7 @@ export default function RegisterScreen() {
                 job_subtype_id: p?.job_subtype_id,
                 passport_photo_urls: p?.passport_photo_urls ?? null,
                 certificate_photo_urls: p?.certificate_photo_urls ?? null,
+                years_of_experience: p?.years_of_experience ?? null,
               })
               .then(() => { })
               .catch((err) => {
@@ -301,6 +309,13 @@ export default function RegisterScreen() {
           ),
         );
       }
+
+      // 2. Complete registration via user.update
+      await user.update({ ...updatedUser, is_password_exist: true });
+      if (avatarUrl) {
+        user.setPendingAvatar?.(avatarUrl);
+      }
+      jobTypesController?.userToUserRequest?.reload?.();
 
       setFinished(true);
       setTimeout(() => {

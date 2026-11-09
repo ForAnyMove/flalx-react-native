@@ -20,6 +20,7 @@ import { scaleByHeight, scaleByHeightMobile } from '../../../utils/resizeFuncs';
 import { useLocalization } from '../../../src/services/useLocalization';
 import { useJobDetailNavigation } from '../../../src/services/useJobDetailNavigation';
 import { logInfo } from '../../../utils/log_util';
+import { getExperienceMonths, calculateCurrentExperience } from '../../../utils/experience_ulit';
 
 export default function NewScreen({
   setShowJobModalVisible,
@@ -27,7 +28,7 @@ export default function NewScreen({
   setJobModalStatus,
   setJobStatusInfo,
 }) {
-  const { themeController, jobsController, languageController, geolocationController } =
+  const { themeController, jobsController, languageController, geolocationController, user, jobTypesController } =
     useComponentContext();
   const openJobDetail = useJobDetailNavigation({ setCurrentJobId, setShowJobModalVisible, setJobModalStatus, setJobStatusInfo });
   const { tField } = useLocalization(languageController.current);
@@ -92,6 +93,73 @@ export default function NewScreen({
     };
   }, [width, height, isWebLandscape]);
 
+  const getContractorExperienceForJob = (job) => {
+    const jobTypeId = job.type?.id || job.type_id;
+    const jobSubTypeId = job.subType?.id || job.sub_type_id || job.subtype_id;
+    const jobTypeKey = job.type?.key;
+    const jobSubTypeKey = job.subType?.key;
+
+    // 1. Check user.current.professions (if objects)
+    const userProfs = Array.isArray(user?.current?.professions) ? user.current.professions : [];
+    const matchInUser = userProfs.find((p) => {
+      if (!p || typeof p !== 'object') return false;
+      const pTypeId = p.job_type_id || p.job_type?.id;
+      const pSubTypeId = p.job_subtype_id || p.job_subtype?.id;
+      const pTypeKey = p.job_type?.key;
+      const pSubTypeKey = p.job_subtype?.key;
+
+      if (jobSubTypeId || jobSubTypeKey) {
+        return (jobSubTypeId && pSubTypeId === jobSubTypeId) || (jobSubTypeKey && pSubTypeKey === jobSubTypeKey);
+      }
+      if (jobTypeId || jobTypeKey) {
+        return (jobTypeId && pTypeId === jobTypeId) || (jobTypeKey && pTypeKey === jobTypeKey);
+      }
+      return false;
+    });
+    if (matchInUser) {
+      const raw = matchInUser.years_of_experience || matchInUser.experience;
+      const date = matchInUser.verified_at || matchInUser.updated_at || matchInUser.created_at;
+      const current = calculateCurrentExperience(raw, date);
+      return getExperienceMonths(current || raw);
+    }
+
+    // 2. Check approved profession requests in userToUserRequest.list
+    const reqs = Array.isArray(jobTypesController?.userToUserRequest?.list)
+      ? jobTypesController.userToUserRequest.list
+      : [];
+    const matchInReqs = reqs.find((r) => {
+      const isApproved = r.status === 'approved' || r.is_verified === true;
+      if (!isApproved) return false;
+
+      const rSubTypeId = r.job_subtype_id || r.job_subtype?.id;
+      const rTypeId = r.job_type_id || r.job_type?.id;
+      const rSubTypeKey = r.job_subtype?.key;
+      const rTypeKey = r.job_type?.key;
+
+      if (jobSubTypeId || jobSubTypeKey) {
+        return (jobSubTypeId && rSubTypeId === jobSubTypeId) || (jobSubTypeKey && rSubTypeKey === jobSubTypeKey);
+      }
+      if (jobTypeId || jobTypeKey) {
+        return (jobTypeId && rTypeId === jobTypeId) || (jobTypeKey && rTypeKey === jobTypeKey);
+      }
+      return false;
+    });
+    if (matchInReqs) {
+      const raw = matchInReqs.years_of_experience || matchInReqs.experience;
+      const date = matchInReqs.verified_at || matchInReqs.updated_at || matchInReqs.created_at;
+      const current = calculateCurrentExperience(raw, date);
+      return getExperienceMonths(current || raw);
+    }
+
+    // 3. Fallback to general user experience
+    if (user?.current?.years_of_experience || user?.current?.experience) {
+      const raw = user.current.years_of_experience || user.current.experience;
+      return getExperienceMonths(raw);
+    }
+
+    return 0;
+  };
+
   const filteredJobsList =
     jobsController == null ||
       jobsController.executor == null ||
@@ -104,6 +172,12 @@ export default function NewScreen({
             filteredJobs.includes(job.subType.key)
             : true
         )
+        .filter((job) => {
+          const reqMonths = getExperienceMonths(job.experience);
+          if (reqMonths <= 0) return true;
+          const contractorMonths = getContractorExperienceForJob(job);
+          return contractorMonths >= reqMonths;
+        })
         .filter((job) =>
           [tField(job.type, 'name'), job.description].some((field) =>
             field?.toLowerCase()?.includes(searchValue?.toLowerCase())

@@ -40,6 +40,7 @@ import { dismissAboutRejection } from '../../../src/api/users';
 import { convertImageToBase64 } from '../../../utils/imageToBase64';
 import { exportHtmlToPdf } from '../../../utils/htmlToPdf';
 import { validatePersonName } from '../../../utils/nameValidation';
+import CommentsSection from '../../../components/CommentsSection';
 
 export default function Profile() {
   const { user, themeController, languageController, session, setAppLoading } =
@@ -968,6 +969,24 @@ export default function Profile() {
             />
           ))}
         </View>
+
+        {user.current?.id && (
+          <>
+            <View
+              style={[
+                styles.breakLine,
+                {
+                  backgroundColor: themeController.current?.breakLineColor,
+                  marginVertical: sizes.breakLineMarginVertical,
+                },
+              ]}
+            />
+            <View style={{ width: '100%', marginBottom: sizes.infoFieldsGap }}>
+              <CommentsSection userId={user.current.id} allowAdd={false} />
+            </View>
+          </>
+        )}
+
         <View
           style={[
             styles.breakLine,

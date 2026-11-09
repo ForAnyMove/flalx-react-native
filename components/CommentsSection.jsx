@@ -226,6 +226,7 @@ export default function CommentsSection({
 
 
           <ScrollView
+            nestedScrollEnabled
             style={{ maxHeight: sizes.scrollHeight }}
             contentContainerStyle={{
               paddingVertical: sizes.commentsPaddingVertical,

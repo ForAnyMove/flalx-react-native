@@ -481,7 +481,16 @@ export default function sessionManager({ setAppLoading } = {}) {
         data: updates,
       });
       const updatedUser = res?.data?.profile ?? res?.data ?? null;
-      if (updatedUser) setUser(updatedUser);
+      if (updatedUser) {
+        setUser((prev) => ({
+          ...prev,
+          ...updatedUser,
+          pending_avatar: updatedUser.pending_avatar !== undefined ? updatedUser.pending_avatar : prev?.pending_avatar,
+          pending_about: updatedUser.pending_about !== undefined ? updatedUser.pending_about : prev?.pending_about,
+          rejected_avatar: updatedUser.rejected_avatar !== undefined ? updatedUser.rejected_avatar : prev?.rejected_avatar,
+          rejected_about: updatedUser.rejected_about !== undefined ? updatedUser.rejected_about : prev?.rejected_about,
+        }));
+      }
       return updatedUser;
     } catch (err) {
       logError('Ошибка updateUser:', err.message);

@@ -236,21 +236,64 @@ export default function CustomDateTimeInput({
     ...Array.from({ length: firstDay }, () => null),
     ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
   ];
+  const timeOptionHeight = Number(sizes.timeOptionHeight) || 34;
+  const timeOptionMarginBottom = Number(sizes.timeOptionMarginBottom) || 6;
+  const timeColumnMaxHeight = Number(sizes.timeColumnMaxHeight) || 132;
+  const timeColumnWidth = Number(sizes.timeColumnWidth) || 72;
+  const timeSectionMarginTop = Number(sizes.timeSectionMarginTop) || 14;
+  const itemStep = timeOptionHeight + timeOptionMarginBottom;
+  const columnVerticalPadding = Math.max((timeColumnMaxHeight - timeOptionHeight) / 2, 0) || 0;
+
+  const selectHour = (hour) => {
+    setTimePart('hour', hour);
+    hourScrollRef.current?.scrollTo({
+      y: hour * itemStep,
+      animated: true,
+    });
+  };
+
+  const selectMinute = (minute) => {
+    setTimePart('minute', minute);
+    minuteScrollRef.current?.scrollTo({
+      y: minute * itemStep,
+      animated: true,
+    });
+  };
+
+  const handleScrollEnd = (part, event) => {
+    const y = event.nativeEvent?.contentOffset?.y ?? 0;
+    const step = itemStep || 40;
+    const index = Math.round(y / step);
+    if (part === 'hour') {
+      const clamped = Math.max(0, Math.min(23, index));
+      if (clamped !== draftDate.getHours()) {
+        setTimePart('hour', clamped);
+      }
+    } else {
+      const clamped = Math.max(0, Math.min(59, index));
+      if (clamped !== draftDate.getMinutes()) {
+        setTimePart('minute', clamped);
+      }
+    }
+  };
+
   const scrollTimeToSelected = () => {
     if (mode !== 'datetime') return;
     hourScrollRef.current?.scrollTo({
-      y: Math.max(draftDate.getHours() * TIME_OPTION_HEIGHT - TIME_OPTION_HEIGHT, 0),
+      y: draftDate.getHours() * itemStep,
       animated: false,
     });
     minuteScrollRef.current?.scrollTo({
-      y: Math.max(draftDate.getMinutes() * TIME_OPTION_HEIGHT - TIME_OPTION_HEIGHT, 0),
+      y: draftDate.getMinutes() * itemStep,
       animated: false,
     });
   };
 
   useEffect(() => {
     if (!isOpen || mode !== 'datetime') return;
-    const frame = requestAnimationFrame(scrollTimeToSelected);
+    const frame = requestAnimationFrame(() => {
+      setTimeout(scrollTimeToSelected, 60);
+    });
     return () => cancelAnimationFrame(frame);
   }, [isOpen, mode]);
 
@@ -528,17 +571,29 @@ export default function CustomDateTimeInput({
 
               {mode === 'datetime' && (
                 <>
-                  <Text style={[styles.selectedTimeText, { color: theme?.textColor, fontSize: sizes.timeTextSize, marginTop: sizes.timeSectionMarginTop }]}>
+                  <Text style={[styles.selectedTimeText, { color: theme?.textColor, fontSize: sizes.timeTextSize, marginTop: timeSectionMarginTop, writingDirection: 'ltr' }]}>
                     {pad(draftDate.getHours())}:{pad(draftDate.getMinutes())}
                   </Text>
 
-                  <View style={[styles.timeSection, { marginTop: sizes.timeSectionMarginTop, gap: sizes.gap }, isRTL && { flexDirection: 'row-reverse' }]}>
+                  <View style={[styles.timeSection, { marginTop: timeSectionMarginTop, gap: sizes.gap, flexDirection: 'row', direction: 'ltr' }]}>
                     <ScrollView
                       ref={hourScrollRef}
-                      style={[styles.timeColumn, { maxHeight: sizes.timeColumnMaxHeight, width: sizes.timeColumnWidth }]}
-                      contentContainerStyle={styles.timeColumnContent}
+                      style={[
+                        styles.timeColumn,
+                        { maxHeight: timeColumnMaxHeight, width: timeColumnWidth },
+                        Platform.OS === 'web' && { scrollSnapType: 'y mandatory' },
+                      ]}
+                      contentContainerStyle={[
+                        styles.timeColumnContent,
+                        { paddingVertical: columnVerticalPadding },
+                      ]}
                       nestedScrollEnabled={true}
                       showsVerticalScrollIndicator={false}
+                      snapToInterval={itemStep}
+                      snapToAlignment="start"
+                      decelerationRate="fast"
+                      onMomentumScrollEnd={(e) => handleScrollEnd('hour', e)}
+                      onScrollEndDrag={(e) => handleScrollEnd('hour', e)}
                     >
                       {Array.from({ length: 24 }, (_, hour) => (
                         <TouchableOpacity
@@ -546,13 +601,14 @@ export default function CustomDateTimeInput({
                           style={[
                             styles.timeOption,
                             {
-                              height: sizes.timeOptionHeight,
-                              marginBottom: sizes.timeOptionMarginBottom,
+                              height: timeOptionHeight,
+                              marginBottom: timeOptionMarginBottom,
                               borderRadius: sizes.borderRadius,
                             },
+                            Platform.OS === 'web' && { scrollSnapAlign: 'center' },
                             draftDate.getHours() === hour && { backgroundColor: theme?.primaryColor },
                           ]}
-                          onPress={() => setTimePart('hour', hour)}
+                          onPress={() => selectHour(hour)}
                         >
                           <Text
                             style={[
@@ -568,10 +624,22 @@ export default function CustomDateTimeInput({
                     <Text style={[styles.timeSeparator, { color: theme?.textColor, fontSize: sizes.timeTextSize }]}>:</Text>
                     <ScrollView
                       ref={minuteScrollRef}
-                      style={[styles.timeColumn, { maxHeight: sizes.timeColumnMaxHeight, width: sizes.timeColumnWidth }]}
-                      contentContainerStyle={styles.timeColumnContent}
+                      style={[
+                        styles.timeColumn,
+                        { maxHeight: timeColumnMaxHeight, width: timeColumnWidth },
+                        Platform.OS === 'web' && { scrollSnapType: 'y mandatory' },
+                      ]}
+                      contentContainerStyle={[
+                        styles.timeColumnContent,
+                        { paddingVertical: columnVerticalPadding },
+                      ]}
                       nestedScrollEnabled={true}
                       showsVerticalScrollIndicator={false}
+                      snapToInterval={itemStep}
+                      snapToAlignment="start"
+                      decelerationRate="fast"
+                      onMomentumScrollEnd={(e) => handleScrollEnd('minute', e)}
+                      onScrollEndDrag={(e) => handleScrollEnd('minute', e)}
                     >
                       {Array.from({ length: 60 }, (_, minute) => minute).map((minute) => (
                         <TouchableOpacity
@@ -579,13 +647,14 @@ export default function CustomDateTimeInput({
                           style={[
                             styles.timeOption,
                             {
-                              height: sizes.timeOptionHeight,
-                              marginBottom: sizes.timeOptionMarginBottom,
+                              height: timeOptionHeight,
+                              marginBottom: timeOptionMarginBottom,
                               borderRadius: sizes.borderRadius,
                             },
+                            Platform.OS === 'web' && { scrollSnapAlign: 'center' },
                             draftDate.getMinutes() === minute && { backgroundColor: theme?.primaryColor },
                           ]}
-                          onPress={() => setTimePart('minute', minute)}
+                          onPress={() => selectMinute(minute)}
                         >
                           <Text
                             style={[

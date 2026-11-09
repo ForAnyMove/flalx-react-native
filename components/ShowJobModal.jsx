@@ -165,7 +165,7 @@ function formatFieldValue(field, value, jobTypesController, t) {
     case 'location':
       return typeof value === 'object' ? (value?.address || String(value)) : String(value);
     case 'experience':
-      return typeof value === 'object' ? `${value.min || 0}-${value.max || 0}` : String(value);
+      return formatExperience(value, t);
     case 'images':
       return Array.isArray(value)
         ? t('showJob.messages.photosCount', { count: value.length, defaultValue: `${value.length} photo(s)` })

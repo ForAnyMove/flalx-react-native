@@ -500,10 +500,10 @@ const RequestProfessionModal = ({
                     )}
 
                     <TouchableOpacity
-                      disabled={!type || !subType || type === '' || subType === ''}
+                      disabled={!type || !subType || type === '' || subType === '' || (requiresVerification && !experience)}
                       style={[
                         styles.sendButton,
-                        (!type || !subType || type === '' || subType === '') && {
+                        (!type || !subType || type === '' || subType === '' || (requiresVerification && !experience)) && {
                           opacity: 0.5,
                         },
                       ]}
